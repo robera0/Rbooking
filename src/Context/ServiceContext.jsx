@@ -16,15 +16,20 @@ export const ServiceProvider = ({ children }) => {
   const [notification,setNotification]=useState(false)
   const [profile,setProfile]=useState(false)
   const[Time,setTime]=useState(false)
-   const [activeIndex, setActiveIndex] = useState(null); 
+ const [activeIndex, setActiveIndex] = useState(null); 
  const [toggleOn, setToggleOn] = useState(false);
+ const[timeInfo,setTimeInfo]=useState(false)
+const hadnleSideInfo=(index) => {
+  setTimeInfo(prev => prev === index ? null : index);
+}
 
+ 
   return (
     <ServiceContext.Provider value={
       {service,setService,hour,setHour,notification,setNotification,profile,setProfile,
        ellipis, setEllipis ,Time,setTime,addservice,setAddservice,description,setDescription ,
     serviceName,setServiceName,photoUrl, setPhotoUrl,price, setPrice ,currency, setCurrency,
-    edit, setEdit,activeIndex, setActiveIndex,toggleOn, setToggleOn
+    edit, setEdit,activeIndex, setActiveIndex,hadnleSideInfo,toggleOn, setToggleOn,timeInfo,setTimeInfo
     }}>
       {children}
     </ServiceContext.Provider>

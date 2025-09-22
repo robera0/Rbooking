@@ -1,23 +1,19 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useService } from "../../Context/ServiceContext";
-import { faToggleOff, faToggleOn} from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import {Duration,Price,URL,Photo} from './AddServiceMenue'
-
+import Toggle from "../../components/Toggle";
 const AddService = () => {
   const
    { 
     setAddservice ,description,setDescription ,serviceName,
-    setServiceName,photoUrl,price, setPrice
+    setServiceName,photoUrl,price, setPrice,toggleOn, setToggleOn
   } = useService();
   const cancelAddService = () => setAddservice(false);
-  const [toggleOn, setToggleOn] = useState(false);
   const [duration, setDuration] = useState(false);
   const [photo, setPhoto]=useState(false)
   const [selectedDuration, setSelectedDuration] = useState("5 minutes");
   const handleSericeName=(e)=>setServiceName(e.target.value)
   const handleDescription=(e)=>setDescription(e.target.value)
-  const handleToggle = () => setToggleOn(prev => !prev);
   const handleDuration = () => setDuration(prev => !prev);
   const handlePhoto = () =>{setPhoto(prev => !prev)
     if(photoUrl){
@@ -120,20 +116,9 @@ const AddService = () => {
 
         {/* Age Section */}
         <div className="w-[90%] pt-3 h-32 mt-3 bg-[#343434] space-y-5 rounded-md">
-          <div className="flex justify-between">
-            <h3 className="text-md w-20 pl-3 text-white flex justify-center items-center font-semibold">
-              Age
-            </h3>
-            <button
-              className="mr-4 cursor-pointer w-10"
-              onClick={handleToggle}
-            >
-              <FontAwesomeIcon
-                className="text-3xl text-[#168FF4] transition ease-in-out duration-300"
-                icon={toggleOn ? faToggleOn : faToggleOff}
-              />
-            </button>
-          </div>
+          <Toggle
+           name="Age Restriction"
+          />
           {toggleOn && (
             <div className="flex justify-start pl-5">
               <select className="px-3 text-[#168FF4] bg-gray-700 cursor-pointer outline-none">
