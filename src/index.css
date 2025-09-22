@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.file-input {
+    display: none; 
+  }
+  .file-label {
+    display: inline-block; 
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+  }
