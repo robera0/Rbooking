@@ -13,3 +13,26 @@
     font-weight: 500;
     transition: background 0.3s;
   }
+  .scroll-hidden::-webkit-scrollbar {
+  display: none; 
+}
+
+.scroll-hidden {
+  -ms-overflow-style: none;  
+  scrollbar-width: none;  
+}
+.calendar-only::-webkit-clear-button {
+  display: none;
+}
+
+/* Hide the spin buttons */
+.calendar-only::-webkit-inner-spin-button {
+  display: none;
+}
+
+/* Show only the calendar picker icon */
+.calendar-only::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  display: block;
+  cursor: pointer;
+}

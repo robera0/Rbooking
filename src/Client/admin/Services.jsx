@@ -32,7 +32,8 @@ const Services = () => {
                  <div className="w-70 h-12 bg-[#343434] rounded-lg">
                     <button onClick={handleAddservice} className="flex space-x-2  justify-center items-center w-full h-full hover:bg-gray-700 duration-300 rounded-md cursor-pointer">
                       <FontAwesomeIcon className="text-lg text-[#168FF4]" icon={faPlus} />
-                      <h3 className=" text-[#168FF4] text-md">Add Service</h3></button>   
+                      <h3 className=" text-[#168FF4] text-md">Add Service</h3>
+                      </button>   
                      </div>
                    {/*Event Posted */}
              <div className="w-78 bg-[#343434] rounded-lg">
