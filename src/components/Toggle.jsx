@@ -6,7 +6,7 @@ const Toggle = ({name}) => {
      const handleToggle = () => setToggleOn(prev => !prev);
   return (
      <div className="flex w-full justify-between">
-        <h3 className="text-md w-40  text-white flex justify-center items-center font-semibold">
+        <h3 className="text-md w-64 text-left  text-white flex justify-center items-center font-semibold">
               {name}
          </h3>
             <button

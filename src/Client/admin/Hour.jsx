@@ -70,7 +70,7 @@ const TimeInput=({action})=>{
 const Hour = () => {
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const [sidetime,setSideTime] = useState(false) // for the side time
-    const{timeInfo,setTimeInfo, toggleOn, startTime, setStartTime,Endtime, setEndTime}=useService()
+    const{timeInfo,setTimeInfo, toggleOn, startTime, setStartTime,Endtime, setEndTime,setService}=useService()
     const [deletehr,setdeletehr]=useState(false)
     const[dateSpecefic,setDateSpecefic]=useState(false)
     const[minhr,setminhr]=useState(false)

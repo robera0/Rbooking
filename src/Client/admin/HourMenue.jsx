@@ -4,7 +4,6 @@ import { useService } from "../../Context/ServiceContext";
 import { useState, useRef } from "react";
 import { Calendar } from "lucide-react";
 
-
 // CancelPopUp 
 export const CancelPopUp = ({ onClose, onDiscard }) => {
   return (

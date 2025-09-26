@@ -13,6 +13,17 @@
     font-weight: 500;
     transition: background 0.3s;
   }
+
+.logo-input {
+    display: none; 
+  }
+  .logo-label {
+    display: inline-block; 
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+  }
   .scroll-hidden::-webkit-scrollbar {
   display: none; 
 }
