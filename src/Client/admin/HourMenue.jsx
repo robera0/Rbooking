@@ -38,7 +38,25 @@ export const DateSpecific = () => {
   const [addhr, setAddhr] = useState(false);
   const [date, setDate] = useState("");
   const [showCancel, setShowCancel] = useState(false);
+  const{ startTime,setStartTime,Endtime,setEndTime,
+    startDateSpecefic,setstartDateSpecefic,EndDateSpecefic,setEndDateSpecefic
+  }=useService()
 
+  const StartdateInputRef =useRef()
+  const EnddateInputRef =useRef()
+  
+  const handleEndRef=()=>{
+    if(EnddateInputRef){
+    EnddateInputRef.current.showPicker?.()
+    EndDateSpecefic.current.click?.()
+  }
+}
+  const handledateRef = ()=>{
+    if(StartdateInputRef){
+   StartdateInputRef.current.showPicker?.()
+   StartdateInputRef.current.click?.()
+  }
+}
   return (
     <>
       {/* Button to open panel */}
@@ -77,21 +95,53 @@ export const DateSpecific = () => {
             </button>
           </div>
 
-          {/* Start Date */}
-          <div className="group w-full h-12 flex items-center justify-between bg-[#343434] border-t border-black hover:bg-[#323232] rounded">
-            <label className="pl-4 text-white font-light">Start Date</label>
-            <button className="pl-4 h-full text-white font-light cursor-pointer">
-              <Calendar className="text-sm mr-4 text-[#168FF4]" />
-            </button>
-          </div>
+         
+         {/* Start Date */}
+        <div className="group w-full h-12 flex items-center justify-between bg-[#343434] border-t border-black hover:bg-[#323232] rounded">
+          <label className="pl-4 text-white font-light">
+            {startDateSpecefic || "Start Date"}
+          </label>
 
-          {/* End Date */}
-          <div className="group w-full h-12 flex items-center justify-between bg-[#343434] border-t border-b border-black hover:bg-[#323232] rounded">
-            <label className="pl-4 text-white font-light">End Date</label>
-            <button className="pl-4 h-full text-white font-light cursor-pointer">
+          <div className="pl-4 h-full flex items-center">
+            {/* Hidden input */}
+            <input
+              type="date"
+              ref={StartdateInputRef}
+              className="hidden"
+              value={startDateSpecefic}
+              onChange={(e)=> setstartDateSpecefic(e.target.value)}
+            />
+
+            {/* Trigger button */}
+            <button type="button" onClick={handledateRef} className="cursor-pointer">
               <Calendar className="text-sm mr-4 text-[#168FF4]" />
             </button>
           </div>
+        </div>
+
+        {/* End Date */}
+        <div className="group w-full h-12 flex items-center justify-between bg-[#343434] border-t border-b border-black hover:bg-[#323232] rounded">
+          <label className="pl-4 text-white font-light">
+            {EndDateSpecefic || "End Date"}
+          </label>
+
+          <div className="pl-4 h-full flex items-center">
+            {/* Hidden input */}
+            <input
+              ref={EnddateInputRef}
+              type="date"
+              value={EndDateSpecefic}
+              onChange={(e) => setEndDateSpecefic(e.target.value)}
+              className="hidden"
+            />
+
+            {/* Trigger button */}
+            <button type="button" onClick={handleEndRef} className="cursor-pointer">
+              <Calendar className="text-sm mr-4 text-[#168FF4]" />
+            </button>
+          </div>
+        </div>
+
 
           {/* Availability */}
           <div className="w-[90%] mt-4">
@@ -121,7 +171,7 @@ export const DateSpecific = () => {
 
       {/* Cancel Popup Overlay */}
       {showCancel && (
-        <div className="absolute fixed top-80 left-122  h-32 inset-0 z-50 ">
+        <div className="absolute fixed top-80 left-128  h-32 inset-0 z-50 ">
           <CancelPopUp
             onClose={() => setShowCancel(false)}
             onDiscard={() => {

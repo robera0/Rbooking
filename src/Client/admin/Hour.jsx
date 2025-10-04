@@ -7,6 +7,8 @@ import { Check,ChevronRight,Trash2 } from 'lucide-react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import {Duration} from './AddServiceMenue'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 
 const MaxDuration = ({ selected, setSelected, close }) => { 
 const days = Array.from({ length: 14 }, (_, i) => `${i + 1} day${i + 1 > 1 ? "s" : ""}`);
@@ -70,13 +72,54 @@ const TimeInput=({action})=>{
 const Hour = () => {
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const [sidetime,setSideTime] = useState(false) // for the side time
-    const{timeInfo,setTimeInfo, toggleOn, startTime, setStartTime,Endtime, setEndTime,setService}=useService()
+    const{timeInfo,setTimeInfo, toggleOn, startTime, setStartTime,Endtime, setEndTime,setService, setAddservice ,description,setDescription ,serviceName,price,
+    setServiceName,photoUrl,pricepreview,setPricepreview, setToggleOn,
+    age,setage,photoFile, setPhotoFile,header,setHour,setrefetchActive,duration, setDuration}=useService()
     const [deletehr,setdeletehr]=useState(false)
     const[dateSpecefic,setDateSpecefic]=useState(false)
     const[minhr,setminhr]=useState(false)
     const[maxbooking,setmaxBokking]=useState(false)
     const [selectedDuration, setSelectedDuration] = useState("5 minutes");
     const [selectedMonth, setSelectedMax] = useState("5 minutes");
+      
+    //add events
+  const addEvents=(eventData)=>{
+    const res= axios.post('http://localhost:5000/api/events',eventData)
+    return res.data
+  }
+const queryClient = useQueryClient()  
+    const mutation = useMutation({
+      mutationFn:addEvents,
+      onSuccess:()=>{
+        queryClient.invalidateQueries(['events'])
+         setAddservice(false)
+      }
+    })
+
+
+      const handleEvents=()=>{
+    const formData = new FormData()
+
+    formData.append('name',serviceName)
+    formData.append('description',description)
+    formData.append('duration', Number(duration)||5)
+    formData.append('price',price)
+    formData.append('age',age)
+    formData.append('start_time',startTime)
+    formData.append('end_time',Endtime)
+    formData.append("header", header || "Default Header");
+
+    if(photoFile) formData.append('picture',photoFile)
+      mutation.mutate(formData)
+     setrefetchActive(true)
+     if(mutation.isSuccess){
+         refetch()
+     }
+    setHour(false)
+    setService(true)
+
+  }  
+   
   return (
       <div className=' scroll-hidden h-screen  overflow-auto '>
        <div className='  space-y-8 '>
@@ -92,7 +135,7 @@ const Hour = () => {
                     {/*sideTime info */}
     {timeInfo==index && <>
       <div>
-         <div className='absolute top-16  left-116 pl-4 w-[20%] h-72 bg-[#202020] flex flex-col justify-around rounded-lg'>
+         <div className='absolute top-16  left-124 pl-4 w-[20%] h-72 bg-[#202020] flex flex-col justify-around rounded-lg'>
            <div className=" w-[90%] flex h-12 bg-[#343434] hover:bg-[#323232] cursor-pointer rounded-sm">
               <Toggle
                 name="Avialable"
@@ -221,7 +264,7 @@ const Hour = () => {
        
        </div>
           <div  className='flex mb-12 justify-center items-center'>
-                <button className=' w-56 h-12 text-center text-white font-semibold bg-[#343434] cursor-pointer rounded'> Done </button>
+                <button onClick={handleEvents} className=' w-56 h-12 text-center text-white font-semibold bg-[#343434] cursor-pointer rounded'> Done </button>
              </div>
         </div>
    </div>

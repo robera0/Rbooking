@@ -7,4 +7,10 @@ export default defineConfig({
   plugins: [react(),
           tailwindcss(),
   ],
+   optimizeDeps: {
+    include: ['react', 'react-dom']
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom']
+  }
 })

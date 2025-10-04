@@ -4,14 +4,29 @@ import { useService } from "../../Context/ServiceContext";
 import AddService from "./AddService";
 import EditService from "./EditService";
 import {EllipisMenue } from "./AddServiceMenue";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 const Services = () => {
-    const{ellipis, setEllipis,addservice,setAddservice, edit}=useService();
-    const handleEllipis=()=>setEllipis(prev=>!prev)
+    const{ellipis, setEllipis,addservice,header,setHeader,setAddservice, edit}=useService();
+    const handleEllipis=(index)=>{
+      setEllipis(prev=>prev === index ? null: index)
+    }
+
     const handleAddservice=()=>setAddservice(true)
+    const [activeEllips,setActiveEllips]=useState(null)  
+    const fetchEvents=async()=>{
+      const res= await fetch('http://localhost:5000/api/events')
+       return res.json()
+    }
+
+    const {data:events,isLoading ,error}=useQuery({
+      queryFn:fetchEvents,
+      queryKey:['event']
+    })
+
   return (
-    <div className="">
-      <div className=" flex w-full h-full fixed">            
+      <div className="  w-full h-full ">            
     {/*Main content */}
         {
          addservice ? 
@@ -20,7 +35,7 @@ const Services = () => {
             </>
                : 
           <>
-           <div className="w-[22%] h-400px bg-[#202020]">
+           <div className=" bg- h-400px bg-[#202020]">
              {edit ? 
              <div className="flex justify-center items-center ">
               <EditService/>
@@ -36,65 +51,39 @@ const Services = () => {
                       </button>   
                      </div>
                    {/*Event Posted */}
-             <div className="w-78 bg-[#343434] rounded-lg">
-                {/* Row 1 */}
-                <div className="flex items-center justify-between px-3 border-b h-16">
-                    <div className="flex items-centehandletoggler space-x-4">
+             <div className="w-78 bg-[#343434]  rounded-lg">
+               
+                   {events?.map((e,index)=>(
+                      <>
+                       <div key={index} className="flex items-center justify-between px-3 border-b h-16">
+                        <div  className="flex items-centehandletoggler space-x-4">
                     {/* Image box */}
                     <div className="w-12 h-12 bg-gray-400 flex justify-center items-center rounded">
-                        <img src="Event-Booking-1.jpg" alt="" />
+                        <img className="w-full h-full object-cover" src={e.picture ? e?.picture :'/defaultAvater.jpg'} alt="" />
                     </div>
                     <div>
-                        <h4 className="text-white">Birthday Party Booking</h4>
-                        <p className="text-gray-400 text-sm">$250</p>
+                        <h4 className="text-white text-sm">{e?.name}</h4>
+                        <p className="text-gray-400 text-sm">${e?.price}</p>
                     </div>
                     </div>
-                    <button onClick={handleEllipis} className={`cursor-pointer rounded-sm hover:bg-gray-500 duration-300
-                                        ${ellipis&&'bg-gray-500 duration-300'}`}>
+                    <button onClick={()=>handleEllipis(index)} className={`cursor-pointer rounded-sm hover:bg-gray-500 duration-300
+                                        ${ellipis==index &&'bg-gray-500 duration-300'}`}>
                     <FontAwesomeIcon className="text-lg text-[#168FF4]" icon={faEllipsis} />
                     </button>
-                    {ellipis && <>
+                    {ellipis == index && <>
                     <div className="absolute z-10 left-95 top-54 transition ease-in-out shadow-xl">
                         <EllipisMenue/>
                       </div>
-                    </>}            
-                </div>
-                  
-                {/* Row 2 */}
-                <div className="flex items-center justify-between px-3 border-b h-16">
-                    <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-400 flex justify-center items-center rounded">
-                        <img src="Event-Booking-1.jpg" alt="" />
-                    </div>
-                    <div>
-                        <h4 className="text-white">Corporate Event Booking</h4>
-                        <p className="text-gray-400 text-sm">$450</p>
-                    </div>
-                    </div>
-                    <button onClick={handleEllipis} className="cursor-pointer rounded-sm hover:bg-gray-500 duration-300">
-                    <FontAwesomeIcon className="text-lg text-[#168FF4]" icon={faEllipsis} />
-                    </button>
-                </div>
-                {/* Row 3 */}
-                <div className="flex items-center justify-between px-3 border-b h-16">
-                    <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-400 flex justify-center items-center rounded">
-                        <img src="Event-Booking-1.jpg" alt="" />
-                    </div>
-                    <div>
-                        <h4 className="text-white">Wedding Reception Setup</h4>
-                        <p className="text-gray-400 text-sm">$1250</p>
-                    </div>
-                    </div>
-                    <button onClick={handleEllipis} className="cursor-pointer rounded-sm hover:bg-gray-500 duration-300">
-                    <FontAwesomeIcon className="text-lg text-[#168FF4]" icon={faEllipsis} />
-                    </button>
-                </div>
+                    </>}  
+                    </div>          
+                      </>
+                   ))}       
+                
                 </div>
                 {/*header name */}
                   <div className="w-78 h-16 bg-[#343434] rounded-lg">
                      <h3 className="text-gray-300 pl-4 pt-2 text-sm">Header title</h3>
-                     <input className="w-full text-white outline-none pl-4 pt-1" type="text" />
+                     <input value={header} onChange={(e)=>setHeader(e.target.value)}className="w-full text-white outline-none pl-4 pt-1" type="text" />
                  </div>
              </div>
               </div>
@@ -108,7 +97,6 @@ const Services = () => {
 
       </div>
  
-    </div>
   );
 };
 

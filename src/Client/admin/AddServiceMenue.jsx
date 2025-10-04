@@ -1,8 +1,9 @@
 import { useService } from "../../Context/ServiceContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
-import {  faPen, faCaretDown,faSearch, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faEyeSlash, } from "@fortawesome/free-regular-svg-icons";
+import {  faPen, faCaretDown,faSearch,faUpload,faLink, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 const EllipisMenue = ()=>{
    const{ setEdit }=useService()
@@ -44,6 +45,7 @@ const Duration = ({ selected, setSelected, close }) => {
     ...minutes.map(m => `${m} minutes`),
     ...hours.map(h => `${h}h`)
   ];
+  const{setDuration}=useService()
   return (
     <div className="flex pt-3 w-60 bg-[#343434] flex-col text-white rounded-md space-y-2">
       {/* Header */}
@@ -69,9 +71,11 @@ const Duration = ({ selected, setSelected, close }) => {
             <input
               type="radio"
               name="duration"
-              value={t}
+               value={Duration ?? ""} 
               checked={selected === t}
-              onChange={() => setSelected(t)}
+              onChange={() => {setSelected(t)
+                setDuration(t)
+              }}
               className="cursor-pointer"
             />
             <span>{t}</span>
@@ -87,26 +91,26 @@ const Duration = ({ selected, setSelected, close }) => {
   );
 };
  // photo upload
-  const Photo = () => { 
+  const Photo = ({actionFile}) => { 
      const{ setPhotoUrl } = useService();
      const handlePhotoUrl = () => setPhotoUrl(prev =>!prev);
   return (
 
       <div className=" h-[36px] w-40   justify-center items-center text-white rounded-md space-y-1"> 
           <button  className="flex pl-2 pt-2 justify-between w-full h-full cursor-pointer hover:bg-[#545151] duration-300">
-           <input type="file" id="fileUpload" class="file-input" />
+           <input onChange={actionFile} accept="image/*"  type="file" id="fileUpload" class="file-input" />
             <label for="fileUpload" class="file-label">Upload File</label>
              <FontAwesomeIcon className="text-md pr-3" icon={faUpload} />
         </button>
         <button onClick={handlePhotoUrl} className="flex pl-2 pt-1 justify-between w-full h-full  cursor-pointer hover:bg-[#545151] duration-300">
-           Upload URL
+              Upload URL
              <FontAwesomeIcon className="text-md pr-3 flex  justify-center items-center"  icon={faLink} />
         </button>                  
      </div>
   );
 };
 //  phot from URL
-const URL=()=>{
+const URL=({actionUrl})=>{
     const{ setPhotoUrl } = useService();
   return (
      <div className="">
@@ -138,8 +142,16 @@ const URL=()=>{
 
 const Price=()=>{
 
-  const{currency, setCurrency,setPrice } = useService();
-    const[active,setActive]=useState(false)
+  const{currency, setCurrency,price, setPrice,pricepreview,setPricepreview } = useService();
+    const[active,setActive]=useState("fixed")
+
+    const handleActicve=(indx)=>{
+
+      setActive(prev => prev === indx ? null : indx)
+    }
+
+
+      
   return (
      <div className="">
     <div className="flex pt-3 w-86 h-64 bg-[#343434] flex-col text-white rounded-md space-y-2">
@@ -148,7 +160,7 @@ const Price=()=>{
 
         <h3 className="text-md font-bold">Price</h3>
         <button  
-         onClick={()=>setPrice(false)}
+         onClick={()=>setPricepreview(false)}
           className="text-[#168FF4] font-bold w-14 h-8 cursor-pointer"
         >
           Done
@@ -156,26 +168,26 @@ const Price=()=>{
       </div>
        <div className="pt-3">
          <div className="flex  w-70  ml-6  h-10  border-inherit bg-[#484646] items-center ">
-           <button onClick={()=>setActive(prev=>!prev)} className={`w-18 h-full border-r border-black text-white  cursor-pointer
-            ${active&& 'bg-[#168FF4]'}`}>Fixed</button>
-            <button onClick={()=>setActive(prev=>!prev)} className={`w-18 h-full border-r border-black text-white  cursor-pointer
-            ${active&& 'bg-[#168FF4]'}`}>From</button>
-           <button onClick={()=>setActive(prev=>!prev)} className={`w-18 h-full border-r border-black text-white  cursor-pointer
-            ${active&& 'bg-[#168FF4]'}`}>Free</button>
-           <button onClick={()=>setActive(prev=>!prev)} className={`w-18 h-full border-r border-black text-white  cursor-pointer
-            ${active&& 'bg-[#168FF4]'}`}>Hidden</button>
+           <button onClick={()=>handleActicve('fixed')} className={`w-18 h-full border-r border-black text-white  cursor-pointer
+            ${active=='fixed'&& 'bg-[#168FF4]'}`}>Fixed</button>
+            <button onClick={()=>handleActicve('from')} className={`w-18 h-full border-r border-black text-white  cursor-pointer
+            ${active=='from'&& 'bg-[#168FF4]'}`}>From</button>
+           <button onClick={()=>handleActicve('free')} className={`w-18 h-full border-r border-black text-white  cursor-pointer
+            ${active=='free'&& 'bg-[#168FF4]'}`}>Free</button>
+           <button onClick={()=>handleActicve("hidden")} className={`w-18 h-full border-r border-black text-white  cursor-pointer
+            ${active=='hidden'&& 'bg-[#168FF4]'}`}>Hidden</button>
          </div>
        </div>
 
        <div> 
-         
+        {
+         (active === 'fixed' || active === 'from') &&
+         <>
         <div className="flex h-16 w-full justify-between mr-4 border-b border-black">
             <h1 className="text-lg w-20 pl-3 text-white flex justify-center items-center font-light">
               Price
             </h1>
-            <button className="text-[#168FF4] font-bold ] mr-8 cursor-pointer">
-              100
-            </button>
+            <input value={price} onChange={(e)=>setPrice(e.target.value)} className="text-[#168FF4] font-bold ] w-24 px-8 outline-none "/>
             </div>
 
           <div className=" relative flex h-full w-full justify-between mr-4">
@@ -202,8 +214,14 @@ const Price=()=>{
                           type="text" /> 
                       </div>    
                  </div>   
-                  )}  
+                
+                
+                )}  
          </div>
+          </>
+        }
+         
+
        </div>
         
       </div>

@@ -2,12 +2,32 @@ import { useService } from "../../Context/ServiceContext";
 import { useState } from "react";
 import {Duration,Price,URL,Photo} from './AddServiceMenue'
 import Toggle from "../../components/Toggle";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
+
 const AddService = () => {
   const
    { 
-    setAddservice ,description,setDescription ,serviceName,
-    setServiceName,photoUrl,price, setPrice,toggleOn, setToggleOn
+    setAddservice ,description,setDescription ,serviceName,price,
+    setServiceName,photoUrl,pricepreview,setPricepreview,toggleOn, setToggleOn,
+    age,setage,photoFile, setPhotoFile,header,setHour,setService
   } = useService();
+  
+  //add events
+  const addEvents=(eventData)=>{
+    const res= axios.post('http://localhost:5000/api/events',eventData)
+    return res.data
+  }
+const queryClient = useQueryClient()  
+    const mutation = useMutation({
+      mutationFn:addEvents,
+      onSuccess:()=>{
+        queryClient.invalidateQueries(['events'])
+         setAddservice(false)
+      }
+    })
+  
+
   const cancelAddService = () => setAddservice(false);
   const [duration, setDuration] = useState(false);
   const [photo, setPhoto]=useState(false)
@@ -20,10 +40,41 @@ const AddService = () => {
       setPhoto(false)
     }
   };
-   const handlePrice= () => setPrice(prev => !prev);
- 
+   const handlePrice= () => setPricepreview(prev => !prev);
+  const handleAge=(e)=>setage(e.target.value)
+
+  const [photoPreviewer,setPhotoPreviewr]=useState(null)
+
+  const handlePhotoPreviewer=(e)=>{
+     const file = e.target.files[0];
+         if(file){
+       setPhotoFile(file);
+    const previewUrl =  window.URL.createObjectURL(file);
+        setPhotoPreviewr(previewUrl);
+             if(previewUrl){
+             setPhoto(false)
+                   }
+                  }
+
+  }
+
+  const handleEvents=()=>{
+    const formData = new FormData()
+
+    formData.append('name',serviceName)
+    formData.append('description',description)
+    formData.append('duration',duration)
+    formData.append('price',price)
+    formData.append('age',age)
+    formData.append('start_time',"")
+    formData.append('end_time',"")
+    formData.append('header',header)
+
+    if(photo) formData.append('picture',photoFile)
+      mutation.mutate(formData)
+  }
   return (
-    <div className="w-[22%] h-400px bg-[#202020]">
+    <div className="w-full h-400px bg-[#202020]">
       <div className="flex justify-between flex-wrap space-y-8 pt-8">
         <button
           onClick={cancelAddService}
@@ -54,16 +105,31 @@ const AddService = () => {
             className="border border-[#2A2A2A] w-full h-16 border-b outline-none pl-4 text-white"
             type="text"
           />
-          <div className="relative flex h-16 w-full justify-between mr-4">
+          <div className={`relative flex ${photoPreviewer ? 'h-22':'h-16'}  w-full justify-between mr-4`}>
             <h1 className="text-md w-20 pl-3 text-white flex justify-center items-center font-semibold">
               Picture
             </h1>
+            { photoPreviewer  ?
+              <div className="w-16 h-16  mr-2  mt-4 rounded-md  bg-center bg-cover overflow-hidden">
+               <img 
+                  src={photoPreviewer} 
+                  alt="photo preview" 
+                  className="w-full h-full object-cover"
+                />
+                </div>
+                :
+              <>
             <button onClick={handlePhoto} className="text-[#168FF4] mr-3 font-light cursor-pointer">
               Add
             </button>
+              </>
+ 
+            }
+           
              {photo && (
               <div className="absolute h-[86px] bg-[#343434]  z-30 left-90 top-5 rounded-sm  shadow-xl transition ease-in-out ">
-                <Photo/>
+                <Photo
+                actionFile={handlePhotoPreviewer} />
               </div>
             )}
             {photoUrl && (
@@ -103,9 +169,9 @@ const AddService = () => {
               Price
             </h1>
             <button onClick={handlePrice} className="text-[#168FF4] mr-3 font-light cursor-pointer">
-              100$
+              {price}$
             </button>
-             {price && (
+             {pricepreview && (
                 <div className="absolute h-[86px] bg-[#343434]  z-30 left-90 top-5 rounded-sm  shadow-xl transition ease-in-out ">
                 <Price/>
               </div>
@@ -121,7 +187,7 @@ const AddService = () => {
           />
           {toggleOn && (
             <div className="flex justify-start pl-5">
-              <select className="px-3 text-[#168FF4] bg-gray-700 cursor-pointer outline-none">
+              <select value={age} onChange={handleAge} className="px-3 text-[#168FF4] bg-gray-700 cursor-pointer outline-none">
                 <option value="18+">18+</option>
                 <option value="21+">21+</option>
                 <option value="25+">25+</option>
@@ -129,6 +195,11 @@ const AddService = () => {
             </div>
           )}
         </div>
+         <div  className='flex  justify-center items-center'>
+                               <button onClick={()=>{setHour(true)
+                                setService(false)
+                               }} className=' w-32 h-8 text-center text-white font-semibold bg-[#343434] cursor-pointer rounded'> Next </button>
+                     </div>
       </div>
     </div>
   );
