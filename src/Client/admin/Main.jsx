@@ -1,4 +1,4 @@
-import { Info } from "./Profile"
+import { motion, AnimatePresence } from "framer-motion";
 import { Phone,Clock ,MapPin,Mail, InstagramIcon,ChevronDown,RotateCcw} from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import { useState,useRef } from "react";
@@ -7,7 +7,6 @@ import { useService } from "../../Context/ServiceContext";
 const Main = () => {
 const {refetchActive,setrefetchActive,header}=useService()
   const [loadingRefetch, setLoadingRefetch] = useState(false);
-
 const getEvents=async()=>{
   
 const res= await fetch('http://localhost:5000/api/events')
@@ -18,6 +17,15 @@ const res= await fetch('http://localhost:5000/api/events')
         queryKey:['event']
   })
 
+const getBussinesProfile=async()=>{
+  
+const res= await fetch('http://localhost:5000/api/profile')
+       return res.json()
+  }
+  const{data:businesses ,BusinessisLoading,Busineserror,Busines_refetch} =useQuery({
+        queryFn:getBussinesProfile,
+        queryKey:['business']
+  })
 const formatDuration =(minutes)=> {
   if (minutes < 60) {
     return `${minutes} min`;
@@ -29,10 +37,16 @@ const formatDuration =(minutes)=> {
   }
   return `${hours}h ${remainingMinutes}m`;
 }
+ const itemVariants = {
+    hidden: { opacity: 0, x: -30 },
+    visible: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 30 },
+  };
 
   return (
     <div className='w-full  flex '>
-      {loadingRefetch ? <Loader/> :
+      {loadingRefetch ? 
+      <Loader/> :
        <>
         <div className="w-[60%] pt-12  h-screen">
        <div className='w-full h-12 flex justify-between border-b border-gray-300'>
@@ -44,10 +58,15 @@ const formatDuration =(minutes)=> {
      {isLoading && <div>Loading events...</div>}
 
     {error && <div>Error: {error.message}</div>}
-
+     <AnimatePresence>
     { events?.map((event,index)=>(
-<div  
-  key={index}  
+         <motion.div  
+             key={index}
+             variants={itemVariants}
+             initial="hidden"
+             animate="visible"
+             exit="exit"
+            transition={{ duration: 0.3, delay: index * 0.05 }}
   className="flex items-center justify-between px-3 border-b border-gray-300 h-32"
 >
   {/* Left side */}
@@ -77,78 +96,88 @@ const formatDuration =(minutes)=> {
         <p className="text-gray-400">· {formatDuration(event.duration)}</p>
       </div>
     </div>
+    
   </div>
-</div>
-
+  
+</motion.div>
   ))}
+  </AnimatePresence>
    </div>
    {/*business info box */}
      <div className="flex-1 flex pt-12  justify-center h-screen">
         {/*background Image */}
-      <div className='w-[80%] h-180 rounded-2xl shadow-2xl space-y-12'>
-          <div className='relative bg-gray-200 rounded-xl h-32 w-full'>
-            {/*Logo image */}
-          <div className="absolute top-24 left-12 w-22 h-22 bg-gray-200  outline outline-2 outline-white rounded-full"></div>
-          </div>
-          {/*header */}
-          <div className='pl-8 pt-8'>
-            <h1 className='text-lg font-bold'>Eventure</h1>
-            <p className='text-sm w-[95%]'>Eventure helps you host ecents with zero hassle and 100% wow facts.from birthday to wedding ,our cozy and customizable spaces..</p>
-            <button className='text-sm text-gray-400 cursor-pointer'>Read More</button>
-          </div>
-          {/*personal info */}
-             
-          <div className='pl-4 space-y-6 text-sm'>
-           <div className='flex '>
-             {/*icon */}
-          <div className='w-12  flex text-[#FF7800] justify-center items-center'>       
-           <Phone className="w-5 h-5"/> 
-         </div>
-          <p>+251935385438</p>
-      </div>
-          
-          <div className='flex gap- '>
-             {/*icon */}
-          <div className='w-12  flex text-[#FF7800] justify-center items-center'>       
-           <InstagramIcon className="w-5 h-5"/> 
-         </div>
-          <p>@Eventure</p>
-      </div>
+      <div className='w-[80%] h-180 rounded-2xl shadow-2xl'>
+               {businesses?.map((business, index) => (
+                <div className=" space-y-12" key={index}>
+                  {/* Header Image */}
+                  <div 
+                style={{
+                        backgroundImage: `url(${business.cover || 'gray-200'})`,
+                      }}
+                  className="relative bg-center bg-cover border border-gray-200 rounded-xl h-32 w-full">
 
-       <div className='flex gap- '>
-             {/*icon */}
-          <div className='w-12  flex text-[#FF7800] justify-center items-center'>       
-           <MapPin className="w-5 h-5"/> 
-         </div>
-          <p>1234 Fashion Avenue ,koye feche ,KFC 1000</p>
-      </div>
-        <div className='flex gap- '>
-             {/*icon */}
-          <div className='w-12  flex text-[#FF7800] justify-center items-center'>       
-           <Mail className="w-5 h-5"/> 
-         </div>
-          <p>contact@eventure.com</p>
-      </div>
-       
-       <div className='flex gap- '>
-             {/*icon */}
-          <div className='w-12  flex text-[#FF7800] justify-center items-center'>       
-           <Clock className="w-5 h-5"/> 
-         </div>
-          <div className="flex gap-2">
-           <p>Closed</p>
-           <div className="flex">
-             <button className="cursor-pointer">
-              <ChevronDown className="w-4 h-4"/>
-             </button> 
-           <p className="text-gray-400 text-sm">Opens on Monday at 9:00 AM</p>
-           </div>
-           
-          </div>
+                    <div className="absolute top-24 left-12 w-22 h-22  bg-center bg-cover overflow-hidden outline outline-2 outline-white rounded-full">
+                         <img 
+                        src={business.logo} 
+                        alt="photo preview" 
+                        className="w-full h-full object-cover"
+                />
+                    </div>
+                  </div>
 
-          
-      </div>
-    </div>
+                  {/* Info */}
+                  <div className="pl-8 pt-8">
+                    <h1 className="text-lg font-bold">{business.name}</h1>
+                    <p className="text-sm w-[95%] text-gray-700">
+                      {business.description}
+                    </p>
+                    <button className="text-sm text-gray-400 cursor-pointer">
+                      Read More
+                    </button>
+                  </div>
+
+                  {/* Contact Info */}
+                  <div className="pl-4 space-y-6 text-sm">
+                    {/* Phone */}
+                    {business.info.map((info,index)=>(
+                       <>
+                        <div className="flex">
+                      <div className="w-12 flex text-[#FF7800] justify-center items-center">
+                        {info.info_type=='phone' && <>
+                        <Phone className="w-5 h-5" />
+                        </>}
+
+                         {info.info_type=='instagram' && <>
+                        <InstagramIcon className="w-5 h-5" />
+                        </>}
+                         {info.info_type=='address' && <>
+                        <MapPin className="w-5 h-5" />
+                        </>}
+                         {info.info_type=='email' && <>
+                         <Mail className="w-5 h-5" />
+                        </>}
+                        
+                      </div>
+                      <p>{info.value}</p>
+                    </div>
+                       </>
+                    ))}
+                    {/* Opening Hours */}
+                    <div className="flex">
+                      <div className="w-12 flex text-[#FF7800] justify-center items-center">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <p>Closed</p>
+                        <ChevronDown className="w-4 h-4 cursor-pointer" />
+                        <p className="text-gray-400 text-sm">
+                          Opens on Monday at 9:00 AM
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
       </div>
    </div>
        </>

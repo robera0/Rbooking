@@ -3,100 +3,195 @@ import { faEllipsis, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useService } from "../../Context/ServiceContext";
 import AddService from "./AddService";
 import EditService from "./EditService";
-import {EllipisMenue } from "./AddServiceMenue";
+import { EllipisMenue } from "./AddServiceMenue";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Services = () => {
-    const{ellipis, setEllipis,addservice,header,setHeader,setAddservice, edit}=useService();
-    const handleEllipis=(index)=>{
-      setEllipis(prev=>prev === index ? null: index)
-    }
+  const {
+    ellipis,
+    setEllipis,
+    addservice,
+    header,
+    setHeader,
+    setAddservice,
+    edit,
+  } = useService();
 
-    const handleAddservice=()=>setAddservice(true)
-    const [activeEllips,setActiveEllips]=useState(null)  
-    const fetchEvents=async()=>{
-      const res= await fetch('http://localhost:5000/api/events')
-       return res.json()
-    }
+  const buttonRefs = useRef([]);
 
-    const {data:events,isLoading ,error}=useQuery({
-      queryFn:fetchEvents,
-      queryKey:['event']
-    })
+  // Fetch events
+  const fetchEvents = async () => {
+    const res = await fetch("http://localhost:5000/api/events");
+    return res.json();
+  };
+
+  const { data: events, isLoading, error } = useQuery({
+    queryFn: fetchEvents,
+    queryKey: ["event"],
+  });
+
+  const handleAddservice = () => setAddservice(true);
+  const handleEllipis = (index) => setEllipis(ellipis === index ? null : index);
+
+  // Motion variants for sliding
+  const panelVariants = {
+    hidden: { opacity: 0, x: "100%" },
+    visible: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: "-100%" },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -30 },
+    visible: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 30 },
+  };
 
   return (
-      <div className="  w-full h-full ">            
-    {/*Main content */}
-        {
-         addservice ? 
-            <>
-              <AddService/>
-            </>
-               : 
-          <>
-           <div className=" bg- h-400px bg-[#202020]">
-             {edit ? 
-             <div className="flex justify-center items-center ">
-              <EditService/>
-             </div> :
-               <>
-                   <div>
-                   <h1 className="text-xl text-white pt-8 font-semi-bold text-center ">Service</h1>
-              <div className="w-full h-full flex flex-col flex-wrap space-y-8 items-center mt-8">
-                 <div className="w-70 h-12 bg-[#343434] rounded-lg">
-                    <button onClick={handleAddservice} className="flex space-x-2  justify-center items-center w-full h-full hover:bg-gray-700 duration-300 rounded-md cursor-pointer">
-                      <FontAwesomeIcon className="text-lg text-[#168FF4]" icon={faPlus} />
-                      <h3 className=" text-[#168FF4] text-md">Add Service</h3>
-                      </button>   
-                     </div>
-                   {/*Event Posted */}
-             <div className="w-78 bg-[#343434]  rounded-lg">
-               
-                   {events?.map((e,index)=>(
-                      <>
-                       <div key={index} className="flex items-center justify-between px-3 border-b h-16">
-                        <div  className="flex items-centehandletoggler space-x-4">
-                    {/* Image box */}
-                    <div className="w-12 h-12 bg-gray-400 flex justify-center items-center rounded">
-                        <img className="w-full h-full object-cover" src={e.picture ? e?.picture :'/defaultAvater.jpg'} alt="" />
-                    </div>
-                    <div>
-                        <h4 className="text-white text-sm">{e?.name}</h4>
-                        <p className="text-gray-400 text-sm">${e?.price}</p>
-                    </div>
-                    </div>
-                    <button onClick={()=>handleEllipis(index)} className={`cursor-pointer rounded-sm hover:bg-gray-500 duration-300
-                                        ${ellipis==index &&'bg-gray-500 duration-300'}`}>
-                    <FontAwesomeIcon className="text-lg text-[#168FF4]" icon={faEllipsis} />
-                    </button>
-                    {ellipis == index && <>
-                    <div className="absolute z-10 left-95 top-54 transition ease-in-out shadow-xl">
-                        <EllipisMenue/>
-                      </div>
-                    </>}  
-                    </div>          
-                      </>
-                   ))}       
-                
-                </div>
-                {/*header name */}
-                  <div className="w-78 h-16 bg-[#343434] rounded-lg">
-                     <h3 className="text-gray-300 pl-4 pt-2 text-sm">Header title</h3>
-                     <input value={header} onChange={(e)=>setHeader(e.target.value)}className="w-full text-white outline-none pl-4 pt-1" type="text" />
-                 </div>
-             </div>
-              </div>
-               </>
-             }
-          
-          
-          </div>
-                  </>
-            }
+    <div className="w-full h-full relative overflow-hidden">
+      <AnimatePresence exitBeforeEnter>
+        {/* Add Service Panel */}
+        {addservice ? (
+          <motion.div
+            key="addService"
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="absolute w-full h-full top-0 left-0"
+          >
+            <AddService />
+          </motion.div>
+        ) : edit ? (
+          // Edit Service Panel
+          <motion.div
+            key="editService"
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="absolute bottom-40 w-full h-full flex justify-center items-center"
+          >
+            <EditService />
+          </motion.div>
+        ) : (
+          // Service List Panel
+          <motion.div
+            key="serviceList"
+            variants={panelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="absolute w-full h-full top-0 left-0 bg-[#202020] rounded-lg overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent p-6"
+          >
+            <h1 className="text-xl text-white font-semibold text-center mb-6">
+              Services
+            </h1>
 
-      </div>
- 
+            {/* Add Service Button */}
+            <div className="w-full max-w-[18rem] h-12 bg-[#343434] rounded-lg mb-6 mx-auto">
+              <button
+                onClick={handleAddservice}
+                className="flex space-x-2 justify-center items-center w-full h-full hover:bg-gray-700 duration-300 rounded-md"
+              >
+                <FontAwesomeIcon
+                  className="text-lg text-[#168FF4]"
+                  icon={faPlus}
+                />
+                <h3 className="text-[#168FF4] text-md">Add Service</h3>
+              </button>
+            </div>
+
+            {/* Event List */}
+            <div className="relative w-full max-w-[18rem] bg-[#343434] rounded-lg p-2 mx-auto mb-6">
+              {isLoading ? (
+                <p className="text-gray-400 text-center py-4">Loading...</p>
+              ) : error ? (
+                <p className="text-red-400 text-center py-4">
+                  Failed to load events
+                </p>
+              ) : (
+                <AnimatePresence>
+                  {events?.map((e, index) => (
+                    <motion.div
+                      key={index}
+                      variants={itemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className="relative flex items-center justify-between px-3 border-b border-gray-600 h-16 hover:bg-[#2A2A2A] transition-all rounded-md"
+                    >
+                      <div className="flex items-center space-x-4">
+                        {/* Image */}
+                        <div className="w-12 h-12 bg-gray-500 flex justify-center items-center rounded">
+                          <img
+                            className="w-full h-full object-cover rounded"
+                            src={e.picture || "/defaultAvater.jpg"}
+                            alt={e.name}
+                          />
+                        </div>
+
+                        {/* Event Info */}
+                        <div>
+                          <h4 className="text-white text-sm">{e.name}</h4>
+                          <p className="text-gray-400 text-sm">${e.price}</p>
+                        </div>
+                      </div>
+
+                      {/* Ellipsis Button */}
+                      <button
+                        ref={(el) => (buttonRefs.current[index] = el)}
+                        onClick={() => handleEllipis(index)}
+                        className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-500 duration-300 ${
+                          ellipis === index && "bg-gray-500"
+                        }`}
+                      >
+                        <FontAwesomeIcon
+                          className="text-lg text-[#168FF4]"
+                          icon={faEllipsis}
+                        />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {ellipis === index && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute right-10 top-12 z-20"
+                        >
+                          <div className="bg-[#2A2A2A] rounded-lg shadow-lg py-2 px-3 w-32">
+                            <EllipisMenue />
+                          </div>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              )}
+            </div>
+
+            {/* Header Input */}
+            <div className="w-full max-w-[18rem] h-16 bg-[#343434] rounded-lg px-4 py-2 mx-auto">
+              <h3 className="text-gray-300 text-sm mb-1">Header title</h3>
+              <input
+                value={header}
+                onChange={(e) => setHeader(e.target.value)}
+                className="w-full bg-transparent text-white outline-none border-none text-sm"
+                type="text"
+                placeholder="Enter a title..."
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
