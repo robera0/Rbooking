@@ -7,7 +7,6 @@ import { EllipisMenue } from "./AddServiceMenue";
 import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
 const Services = () => {
   const {
     ellipis,
@@ -17,6 +16,7 @@ const Services = () => {
     setHeader,
     setAddservice,
     edit,
+    selectedEvent, setSelectedEvent
   } = useService();
 
   const buttonRefs = useRef([]);
@@ -33,7 +33,15 @@ const Services = () => {
   });
 
   const handleAddservice = () => setAddservice(true);
-  const handleEllipis = (index) => setEllipis(ellipis === index ? null : index);
+  
+
+  const handleEllipis = async(index) => { 
+    setEllipis(ellipis === index ? null : index);
+    const event = events?.find((e) => e._id === index);
+    setSelectedEvent(event);
+ }
+
+
 
   // Motion variants for sliding
   const panelVariants = {
@@ -118,7 +126,7 @@ const Services = () => {
                 <AnimatePresence>
                   {events?.map((e, index) => (
                     <motion.div
-                      key={index}
+                      key={e._id}
                       variants={itemVariants}
                       initial="hidden"
                       animate="visible"
@@ -145,10 +153,10 @@ const Services = () => {
 
                       {/* Ellipsis Button */}
                       <button
-                        ref={(el) => (buttonRefs.current[index] = el)}
-                        onClick={() => handleEllipis(index)}
+                        ref={(el) => (buttonRefs.current[e._id] = el)}
+                        onClick={() => handleEllipis(e._id)}
                         className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-500 duration-300 ${
-                          ellipis === index && "bg-gray-500"
+                          ellipis === e._id && "bg-gray-500"
                         }`}
                       >
                         <FontAwesomeIcon
@@ -158,7 +166,7 @@ const Services = () => {
                       </button>
 
                       {/* Dropdown Menu */}
-                      {ellipis === index && (
+                      {ellipis === e._id && (
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -166,8 +174,10 @@ const Services = () => {
                           transition={{ duration: 0.2 }}
                           className="absolute right-10 top-12 z-20"
                         >
-                          <div className="bg-[#2A2A2A] rounded-lg shadow-lg py-2 px-3 w-32">
-                            <EllipisMenue />
+                          <div className="  py-2 px-3 w-32">
+                            <EllipisMenue
+                            eventId={e._id }
+                            />
                           </div>
                         </motion.div>
                       )}

@@ -55,9 +55,9 @@ const Home = () => {
   return (
     <div className="flex w-full h-screen">
       {/* Left Section */}
-      <div className="flex h-full w-[30%]">
+      <div className="flex z-40 h-screen w-[30%]">
         {/* Sidebar */}
-        <div className="flex pt-20 border-r w-[20%] bg-[#202020] flex-col space-y-5">
+        <div className="flex pt-20 border-r w-[20%]  h-full bg-[#202020] flex-col space-y-5">
           <SideIcons action={handleService} icons={faPenNib} name="Service" />
           <SideIcons action={handleHour} icons={faClock} name="Hours" />
           <SideIcons action={handleProfile} icons={faUser} name="Profile" />
@@ -65,7 +65,7 @@ const Home = () => {
         </div>
 
         {/* Main content (inside left section) */}
-        <div className="w-[70%] h-full bg-[#202020] relative overflow-hidden">
+        <div className="w-[70%] h-full bg-[#202020] relative">
           <AnimatePresence exitBeforeEnter>
             {service && (
               <motion.div

@@ -1,40 +1,67 @@
 import { useService } from "../../Context/ServiceContext";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy, faEyeSlash, } from "@fortawesome/free-regular-svg-icons";
 import {  faPen, faCaretDown,faSearch,faUpload,faLink, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+const EllipisMenue = ({ eventId }) => {
+  const { setEdit, setEllipis } = useService();
+  const queryClient = useQueryClient();
 
-const EllipisMenue = ()=>{
-   const{ setEdit }=useService()
-    return(
-        <>
-     {/*edit bar */}
-      <div className=" flex  flex-col flex-wrap w-36 h-36 pt-2 text-white font-light space-y-2 bg-[#323232] rounded-sm ">
-           {/*Edite */}
-         <button onClick={()=>setEdit(true)} className={`flex items-center justify-between cursor-pointer hover:bg-gray-500 duration-300 `}>
-              <p className="test-sm pl-2 ">Edit</p>
-                <FontAwesomeIcon className="text-sm mr-3 text-white" icon={faPen} />
-         </button>
-             {/*Duplicate */}
-            <button className="flex items-center justify-between cursor-pointer hover:bg-gray-500 duration-300 ">
-             <p className="test-sm pl-2 ">Duplicate</p>
-               <FontAwesomeIcon className="text-sm mr-3 text-white" icon={faCopy} />
-           </button>
-         {/*Hide */}
-          <button className="flex items-center justify-between cursor-pointer hover:bg-gray-500 duration-300  ">
-              <p className="test-sm pl-2 ">Hide</p>
-              <FontAwesomeIcon className="text-sm mr-3 text-white" icon={faEyeSlash} />
-           </button>
-            {/*Delete */}
-            <button className=" group flex items-center justify-between cursor-pointer hover:bg-red-400 duration-300  ">
-             <p className="test-sm pl-2 ">delete</p>
-             <FontAwesomeIcon className="text-sm flex mr-3  items-center text-red-500 group-hover:text-red-800" icon={faTrash} />
-          </button>
-     </div>
-        </>
-    )
-}
+  //  fetch single event for edit
+  const editmutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await fetch(`http://localhost:5000/api/events/${id}`);
+      if (!res.ok) throw new Error("Failed to show edited event");
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries(["event"]),
+  });
+
+  // delete mutation
+  const deletemutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await fetch(`http://localhost:5000/api/events/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete event");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["event"]);
+       setEllipis(null)
+    },
+    onError: (error) => console.error("Delete failed:", error),
+  });
+
+  return (
+    <div className="flex flex-col w-36 h-full mb-4 pt-2 py-2 px-3 text-white font-light space-y-2 bg-[#2A2A2A] rounded-lg shadow-lg">
+      {/* Edit */}
+      <button
+        onClick={() => {
+          setEdit(true);
+           setEllipis(null)
+          editmutation.mutate(eventId);
+        }}
+        className="flex items-center justify-between cursor-pointer hover:bg-gray-500 duration-300"
+      >
+        <p className="text-sm pl-2">Edit</p>
+        <FontAwesomeIcon className="text-sm mr-3 text-white" icon={faPen} />
+      </button>
+
+      {/* Delete */}
+      <button
+        onClick={() => deletemutation.mutate(eventId)}
+        className="group flex items-center justify-between cursor-pointer hover:bg-red-400 duration-300"
+      >
+        <p className="text-sm pl-2">Delete</p>
+        <FontAwesomeIcon
+          className="text-sm flex mr-3 items-center text-red-500 group-hover:text-red-800"
+          icon={faTrash}
+        />
+      </button>
+    </div>
+  );
+};
 
 const Duration = ({ selected, setSelected, close }) => { 
   // 5m, 10m, ... 55m

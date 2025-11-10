@@ -2,34 +2,18 @@ import { useService } from "../../Context/ServiceContext";
 import { useState } from "react";
 import {Duration,Price,URL,Photo} from './AddServiceMenue'
 import Toggle from "../../components/Toggle";
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
 
 const AddService = () => {
   const
    { 
     setAddservice ,description,setDescription ,serviceName,price,
     setServiceName,photoUrl,pricepreview,setPricepreview,toggleOn, setToggleOn,
-    age,setage,photoFile, setPhotoFile,header,setHour,setService
+    age,setage,photoFile, setPhotoFile,header,setHour,setService,duration, setDuration
   } = useService();
   
-  //add events
-  const addEvents=(eventData)=>{
-    const res= axios.post('http://localhost:5000/api/events',eventData)
-    return res.data
-  }
-const queryClient = useQueryClient()  
-    const mutation = useMutation({
-      mutationFn:addEvents,
-      onSuccess:()=>{
-        queryClient.invalidateQueries(['events'])
-         setAddservice(false)
-      }
-    })
   
-
   const cancelAddService = () => setAddservice(false);
-  const [duration, setDuration] = useState(false);
+ 
   const [photo, setPhoto]=useState(false)
   const [selectedDuration, setSelectedDuration] = useState("5 minutes");
   const handleSericeName=(e)=>setServiceName(e.target.value)
@@ -58,21 +42,7 @@ const queryClient = useQueryClient()
 
   }
 
-  const handleEvents=()=>{
-    const formData = new FormData()
 
-    formData.append('name',serviceName)
-    formData.append('description',description)
-    formData.append('duration',duration)
-    formData.append('price',price)
-    formData.append('age',age)
-    formData.append('start_time',"")
-    formData.append('end_time',"")
-    formData.append('header',header)
-
-    if(photo) formData.append('picture',photoFile)
-      mutation.mutate(formData)
-  }
   return (
     <div className="w-full h-400px bg-[#202020]">
       <div className="flex justify-between flex-wrap space-y-8 pt-8">

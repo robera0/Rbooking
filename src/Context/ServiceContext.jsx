@@ -39,6 +39,7 @@ export const ServiceProvider = ({ children }) => {
  const[EndDateSpecefic,setEndDateSpecefic]=useState('')
   const [duration, setDuration] = useState(false);
 const [refetchActive,setrefetchActive]=useState(false)
+const [selectedEvent, setSelectedEvent] = useState(null);
 
 
   const hadnleSideInfo=(indx) => {
@@ -55,7 +56,7 @@ const [refetchActive,setrefetchActive]=useState(false)
   startTime,setStartTime,Endtime,setEndTime,duration, setDuration,age,setage,businessname,setBusinessname,businessDescription,setBusinessDescription,
   cover,setCover,logo,setlogo,info_type,setInfo_type,phone,setphone,instagram,setInstagram,location,setlocation,
   email,setEmail,website,setWebsite,pricepreview,setPricepreview,photoFile, setPhotoFile,startDateSpecefic,setstartDateSpecefic,EndDateSpecefic,setEndDateSpecefic,
-  refetchActive,setrefetchActive
+  refetchActive,setrefetchActive,selectedEvent, setSelectedEvent
 }}>
   {children}
 </ServiceContext.Provider>

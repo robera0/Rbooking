@@ -22,7 +22,7 @@ const getBussinesProfile=async()=>{
 const res= await fetch('http://localhost:5000/api/profile')
        return res.json()
   }
-  const{data:businesses ,BusinessisLoading,Busineserror,Busines_refetch} =useQuery({
+  const{data:businesses,BusinessisLoading,Busineserror,Busines_refetch} =useQuery({
         queryFn:getBussinesProfile,
         queryKey:['business']
   })
@@ -59,7 +59,7 @@ const formatDuration =(minutes)=> {
 
     {error && <div>Error: {error.message}</div>}
      <AnimatePresence>
-    { events?.map((event,index)=>(
+    {events?.map((event,index)=>(
          <motion.div  
              key={index}
              variants={itemVariants}
@@ -70,9 +70,9 @@ const formatDuration =(minutes)=> {
   className="flex items-center justify-between px-3 border-b border-gray-300 h-32"
 >
   {/* Left side */}
-  <div className="flex items-center space-x-4 overflow-hidden">
+  <div className="flex items-center space-x-4 ">
     {/* Image box */}
-    <div className="w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
+    <div className="w-16 h-16 flex-shrink-0 rounded-xl  bg-gray-100">
       <img 
         className="w-full h-full object-cover"  
         src={event.picture ? event?.picture:'/defaultAvater.jpg'} 
