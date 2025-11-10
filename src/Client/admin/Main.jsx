@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState,useRef } from "react";
 import  Loader from '../../components/Loader'
 import { useService } from "../../Context/ServiceContext";
+import Profile from "./Profile";
 const Main = () => {
-const {refetchActive,setrefetchActive,header}=useService()
+const {refetchActive,setrefetchActive,header,profileView}=useService()
   const [loadingRefetch, setLoadingRefetch] = useState(false);
 const getEvents=async()=>{
   
@@ -104,7 +105,18 @@ const formatDuration =(minutes)=> {
   </AnimatePresence>
    </div>
    {/*business info box */}
-     <div className="flex-1 flex pt-12  justify-center h-screen">
+
+   {profileView ?
+       <AnimatePresence exitBeforeEnter>
+           <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.4 }}
+                className=" w-full h-full"
+              >
+                     <div className="flex-1 flex pt-12  justify-center h-screen">
         {/*background Image */}
       <div className='w-[80%] h-180 rounded-2xl shadow-2xl'>
                {businesses?.map((business, index) => (
@@ -176,10 +188,18 @@ const formatDuration =(minutes)=> {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> 
               ))}
       </div>
    </div>
+              </motion.div>
+         </AnimatePresence>
+         :
+                <>
+                 {null}
+                </>
+   }
+
        </>
       }
      

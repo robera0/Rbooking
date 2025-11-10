@@ -32,11 +32,15 @@ const Profile = () => {
 const {businessname,setBusinessname,businessDescription,setBusinessDescription,
     cover,setCover,logo,setlogo,
     phone,setphone,instagram,setInstagram,location,setlocation,
-    email,setEmail,website,setWebsite}=useService()
+    email,setEmail,website,setWebsite,setProfielView
+     }=useService()
+     const [toggleOn, setToggleOn] = useState(true);
+
 
     const [loader,setLoader]=useState(false)
+          
 
-const addprofile_info=(profileData)=>{
+  const addprofile_info=(profileData)=>{
 
     const res = axios.post('http://localhost:5000/api/profile',profileData)
     return res.data
@@ -59,8 +63,6 @@ const mutation = useMutation({
     alert('Failed to create profile: ' + (error.response?.data?.message || error.message));
   }
 });
-
-
 
    const handleSubmit = () => {
     const formData = new FormData();
@@ -101,7 +103,7 @@ const mutation = useMutation({
       setLogoPreview(previewUrl);
     }
   };
-  
+
   return (
       <div className=' scroll-hidden h-screen  overflow-auto '>
         {loader ?
@@ -112,11 +114,14 @@ const mutation = useMutation({
            <div className='  space-y-8 '>
          <h1 className="text-xl text-white pt-8 font-semi-bold text-center ">Business Profile</h1>
             <div className='pl-4  space-y-4  w-[90%] '>
-               <div className="  flex h-12 bg-[#343434] hover:bg-[#323232] cursor-pointer rounded-sm">
-             <Toggle
+               <button className="  flex h-12 bg-[#343434] hover:bg-[#323232] cursor-pointer rounded-sm">
+               <Toggle
+               toggleOn={toggleOn}
+               toggle={() => setToggleOn(prev => !prev)}
+               action={() => setProfielView(prev => !prev)}
                name="Show Business Profile"
           />
-           </div>
+           </button>
              <p  className='text-[#8C8484]'>Display your business information and provide customers with additional contact options. Also, business information can be used in email notifications.</p>
             </div>
 

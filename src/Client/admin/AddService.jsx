@@ -38,7 +38,7 @@ const AddService = () => {
              if(previewUrl){
              setPhoto(false)
                    }
-                  }
+            }
 
   }
 
