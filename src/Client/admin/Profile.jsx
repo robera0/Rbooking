@@ -5,6 +5,7 @@ import { Phone,Instagram ,MapPin,Mail} from 'lucide-react';
 import {  useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Loader from '../../components/Loader';
+import { useQuery } from "@tanstack/react-query";
 
 export const Info=({header,icon,infos,action})=>{
   return(
@@ -29,41 +30,37 @@ export const Info=({header,icon,infos,action})=>{
   )
 }
 const Profile = () => {
-const {businessname,setBusinessname,businessDescription,setBusinessDescription,
+
+  const {businessname,setBusinessname,businessDescription,setBusinessDescription,
     cover,setCover,logo,setlogo,
     phone,setphone,instagram,setInstagram,location,setlocation,
     email,setEmail,website,setWebsite,setProfielView
      }=useService()
      const [toggleOn, setToggleOn] = useState(true);
 
-
     const [loader,setLoader]=useState(false)
-          
 
-  const addprofile_info=(profileData)=>{
+    // get the bussiness info
 
-    const res = axios.post('http://localhost:5000/api/profile',profileData)
-    return res.data
-   }
-
-   const queryClient =useQueryClient()
-const mutation = useMutation({
-  mutationFn: addprofile_info,
-  onSuccess: () => {
-    queryClient.invalidateQueries(['profile_info']);
-    setLoader(true)
-      setTimeout(()=>{
-    setLoader(false)
-  },3000)
-
-
-  },
-  onError: (error) => {
-    console.error('Error creating profile:', error);
-    alert('Failed to create profile: ' + (error.response?.data?.message || error.message));
+    const getBussinesProfile=async()=>{
+        const res= await fetch('http://localhost:5000/api/profile')
+              return res.json()
   }
+
+const { data: businesses, BusinessisLoading, Busineserror } = useQuery({
+  queryKey: ["business"],
+  queryFn: getBussinesProfile,
 });
 
+
+const business = businesses?.[0];
+const phonevalue = business?.info?.find(i => i.info_type === "phone")?.value || "";
+const instavalue = business?.info?.find(i => i.info_type === "instagram")?.value || "";
+const emailvalue = business?.info?.find(i => i.info_type === "email")?.value || "";
+const addressvalue = business?.info?.find(i => i.info_type === "address")?.value || "";
+
+  /*
+  
    const handleSubmit = () => {
     const formData = new FormData();
     formData.append('name', businessname);
@@ -79,7 +76,7 @@ const mutation = useMutation({
 
     mutation.mutate(formData);
   };
-
+*/
 
   const [coverPreview, setCoverPreview] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
@@ -104,6 +101,8 @@ const mutation = useMutation({
     }
   };
 
+
+
   return (
       <div className=' scroll-hidden h-screen  overflow-auto '>
         {loader ?
@@ -114,32 +113,50 @@ const mutation = useMutation({
            <div className='  space-y-8 '>
          <h1 className="text-xl text-white pt-8 font-semi-bold text-center ">Business Profile</h1>
             <div className='pl-4  space-y-4  w-[90%] '>
-               <button className="  flex h-12 bg-[#343434] hover:bg-[#323232] cursor-pointer rounded-sm">
+               <div className="  flex h-12 bg-[#343434] hover:bg-[#323232] cursor-pointer rounded-sm">
                <Toggle
                toggleOn={toggleOn}
                toggle={() => setToggleOn(prev => !prev)}
                action={() => setProfielView(prev => !prev)}
                name="Show Business Profile"
           />
-           </button>
+           </div>
              <p  className='text-[#8C8484]'>Display your business information and provide customers with additional contact options. Also, business information can be used in email notifications.</p>
             </div>
-
+            {BusinessisLoading && <div>Loading business Profile...</div>}
+          {Busineserror && <div>Error: {error.message}</div>}                
          <div className="w-[90%] ml-4 bg-[#343434] rounded-md">
-          <input 
-            placeholder="Business  Name"
-            value={businessname}
-            onChange={(e)=>setBusinessname(e.target.value)}
-            className="border border-[#2A2A2A] w-full h-16 border-b outline-none pl-4 text-white"
-            type="text" 
-          />
-          <input
-            placeholder="Description"
-            value={businessDescription}
-            onChange={(e)=>setBusinessDescription(e.target.value)}
-            className="border border-[#2A2A2A] w-full h-16 border-b outline-none pl-4 text-white"
-            type="text"
-          />
+            {businesses?.map((business)=>{
+              return(
+            <>
+            <div className="w-full pl-4 pt-4 gap- ">
+          <label className="text-lg font-light text-center text-[#645D5D]" htmlFor="">Service Name</label>          
+          <textarea
+               id="Bussiness Name"
+              value={businessname || business?.name || ""}
+              onChange={(e) => {
+                setBusinessname(e);
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              placeholder="Enter service description..."
+              className="border-b border-[#2A2A2A] w-full rounded-md bg-transparent outline-none  text-white placeholder-gray-500 resize-none overflow-hidden"
+            ></textarea>
+          </div>
+         <div className="w-full pl-4 pt-4 gap- ">
+          <label className="text-lg font-light text-center text-[#645D5D]" htmlFor="">Service Name</label>          
+          <textarea
+              id="Bussiness description"
+              value={businessDescription ||business?.description || ""}
+              onChange={(e) => {
+                setBusinessDescription(e);
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              placeholder="Enter service description..."
+              className="border-b border-[#2A2A2A] w-full rounded-md bg-transparent outline-none  text-white placeholder-gray-500 resize-none overflow-hidden"
+            ></textarea>
+          </div>
        <div className="relative flex h-16 w-full justify-between items-center pr-4 border-b border-[#2A2A2A]">
             <label className="text-md pl-4 text-white flex justify-center items-center font-semibold cursor-pointer">
               Cover
@@ -151,9 +168,9 @@ const mutation = useMutation({
               />
             </label>
             <div className="w-12 h-12 mr-2 rounded-md bg-gray-400 bg-center bg-cover overflow-hidden">
-              {coverPreview ? (
+              {coverPreview || business.cover ? (
                 <img 
-                  src={coverPreview} 
+                  src={coverPreview || business.cover } 
                   alt="Cover preview" 
                   className="w-full h-full object-cover"
                 />
@@ -177,9 +194,9 @@ const mutation = useMutation({
               />
             </label>
             <div className="w-12 h-12 mr-2 rounded-md bg-gray-400 bg-center bg-cover overflow-hidden">
-              {logoPreview ? (
+              {logoPreview ||business.logo  ? (
                 <img 
-                  src={logoPreview} 
+                  src={logoPreview || business.logo } 
                   alt="Logo preview" 
                   className="w-full h-full object-cover"
                 />
@@ -190,33 +207,31 @@ const mutation = useMutation({
               )}
             </div>
           </div>
-        </div>
-
-
-        {/*Socials*/}
+                   {/*Socials*/}
           <div className="w-[90%] h-full  ml-4 bg-[#343434] rounded-md">
-          <Info
+           
+              <Info
           header="Phone"
           icon={<Phone/>}
-          infos={phone}
+          infos={phonevalue}
           action={(e)=>setphone(e.target.value)}
           />
             <Info
           header="instagram"
           icon={<Instagram/>}
-          infos={instagram}
+          infos={instavalue}
           action={(e)=>setInstagram(e.target.value)}
           />
             <Info
           header="Address"
           icon={<MapPin/>}
-          infos={location}
+          infos={addressvalue}
           action={(e)=>setlocation(e.target.value)}
           />
            <Info
           header="Email"
           icon={<Mail/>}
-          infos={email}
+          infos={emailvalue}
            action={(e)=>setEmail(e.target.value)}
           />
            <Info
@@ -224,13 +239,18 @@ const mutation = useMutation({
           infos={website}
           action={(e)=>setWebsite(e.target.value)}
           />
+          
          </div>
+            </>
+              )
+          })}
+        </div>
+
           <div  className='flex mb-12 justify-center items-center'>
-           <button onClick={handleSubmit}
-            disabled={mutation.isLoading}
+           <button 
             className='w-56 h-12 text-center text-white font-semibold bg-[#343434] cursor-pointer rounded hover:bg-[#404040] disabled:opacity-50'
           >
-            {mutation.isLoading ? 'Creating...' : 'Done'}</button>
+           Done</button>
              </div>
           
          
