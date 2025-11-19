@@ -4,33 +4,33 @@
 @tailwind utilities;
 
 .file-input {
-    display: none; 
-  }
-  .file-label {
-    display: inline-block; 
-    color: white;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.3s;
-  }
+  display: none;
+}
+.file-label {
+  display: inline-block;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
 
 .logo-input {
-    display: none; 
-  }
-  .logo-label {
-    display: inline-block; 
-    color: white;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.3s;
-  }
-  .scroll-hidden::-webkit-scrollbar {
-  display: none; 
+  display: none;
+}
+.logo-label {
+  display: inline-block;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
 }
 
 .scroll-hidden {
-  -ms-overflow-style: none;  
-  scrollbar-width: none;  
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 .calendar-only::-webkit-clear-button {
   display: none;
@@ -46,4 +46,25 @@
   opacity: 1;
   display: block;
   cursor: pointer;
+}
+.custom-timepicker .rdtPicker {
+  background: #2b2b2b;
+  color: white;
+  border: 1px solid #444;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+}
+
+.custom-timepicker .rdtTimeToggle {
+  color: #168ff4;
+}
+
+.custom-timepicker .rdtPicker td,
+.custom-timepicker .rdtPicker th {
+  color: white;
+}
+
+.custom-timepicker .rdtPicker td.rdtActive {
+  background: #168ff4;
+  border-radius: 6px;
 }

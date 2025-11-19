@@ -1,47 +1,61 @@
 import { useService } from "../../Context/ServiceContext";
 import { useState } from "react";
-import {Duration,Price,URL,Photo} from './AddServiceMenue'
+import { Duration, Price, URL, Photo } from "./AddServiceMenu";
 import Toggle from "../../components/Toggle";
 
 const AddService = () => {
-  const
-   { 
-    setAddservice ,description,setDescription ,serviceName,price,
-    setServiceName,photoUrl,pricepreview,setPricepreview,toggleOn, setToggleOn,
-    age,setage,photoFile, setPhotoFile,header,setHour,setService,duration, setDuration
+  const {
+    setAddservice,
+    description,
+    setDescription,
+    serviceName,
+    price,
+    setServiceName,
+    photoUrl,
+    pricepreview,
+    setPricepreview,
+    toggleOn,
+    setToggleOn,
+    age,
+    setage,
+    photoFile,
+    setPhotoFile,
+    header,
+    setHour,
+    setService,
+    duration,
+    setDuration,
   } = useService();
-  
-  
+
   const cancelAddService = () => setAddservice(false);
- 
-  const [photo, setPhoto]=useState(false)
+
+  const [photo, setPhoto] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState("5 minutes");
-  const handleSericeName=(e)=>setServiceName(e.target.value)
-  const handleDescription=(e)=>setDescription(e.target.value)
-  const handleDuration = () => setDuration(prev => !prev);
-  const handlePhoto = () =>{setPhoto(prev => !prev)
-    if(photoUrl){
-      setPhoto(false)
+  const handleSericeName = (e) => setServiceName(e.target.value);
+  const handleDescription = (e) => setDescription(e.target.value);
+  const handleDuration = () => setDuration((prev) => !prev);
+  const handlePhoto = () => {
+    setPhoto((prev) => !prev);
+    if (photoUrl) {
+      setPhoto(false);
     }
   };
-   const handlePrice= () => setPricepreview(prev => !prev);
-  const handleAge=(e)=>setage(e.target.value)
+  const handlePrice = () => setPricepreview((prev) => !prev);
+  const handleAge = (e) => setage(e.target.value);
 
-  const [photoPreviewer,setPhotoPreviewr]=useState(null)
+  const [photoPreviewer, setPhotoPreviewr] = useState(null);
 
-  const handlePhotoPreviewer=(e)=>{
-     const file = e.target.files[0];
-         if(file){
-       setPhotoFile(file);
-    const previewUrl =  window.URL.createObjectURL(file);
-        setPhotoPreviewr(previewUrl);
-             if(previewUrl){
-             setPhoto(false)
-                   }
-            }
-
-  }
-
+  const handlePhotoPreviewer = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhotoFile(file);
+      const previewUrl = window.URL.createObjectURL(file);
+      setPhotoPreviewr(previewUrl);
+      if (previewUrl) {
+        setPhoto(false);
+      }
+    }
+  };
 
   return (
     <div className="w-full h-400px bg-[#202020]">
@@ -64,7 +78,7 @@ const AddService = () => {
       <div className="flex flex-col w-full h-full items-center space-y-4 ">
         <div className="w-[90%] bg-[#343434] rounded-md">
           <input
-           onChange={handleSericeName}
+            onChange={handleSericeName}
             placeholder="Service Name"
             className="border border-[#2A2A2A] w-full h-16 border-b outline-none pl-4 text-white"
             type="text"
@@ -75,39 +89,43 @@ const AddService = () => {
             className="border border-[#2A2A2A] w-full h-16 border-b outline-none pl-4 text-white"
             type="text"
           />
-          <div className={`relative flex ${photoPreviewer ? 'h-22':'h-16'}  w-full justify-between mr-4`}>
+          <div
+            className={`relative flex ${
+              photoPreviewer ? "h-22" : "h-16"
+            }  w-full justify-between mr-4`}
+          >
             <h1 className="text-md w-20 pl-3 text-white flex justify-center items-center font-semibold">
               Picture
             </h1>
-            { photoPreviewer  ?
+            {photoPreviewer ? (
               <div className="w-16 h-16  mr-2  mt-4 rounded-md  bg-center bg-cover overflow-hidden">
-               <img 
-                  src={photoPreviewer} 
-                  alt="photo preview" 
+                <img
+                  src={photoPreviewer}
+                  alt="photo preview"
                   className="w-full h-full object-cover"
                 />
-                </div>
-                :
+              </div>
+            ) : (
               <>
-            <button onClick={handlePhoto} className="text-[#168FF4] mr-3 font-light cursor-pointer">
-              Add
-            </button>
+                <button
+                  onClick={handlePhoto}
+                  className="text-[#168FF4] mr-3 font-light cursor-pointer"
+                >
+                  Add
+                </button>
               </>
- 
-            }
-           
-             {photo && (
+            )}
+
+            {photo && (
               <div className="absolute h-[86px] bg-[#343434]  z-30 left-90 top-5 rounded-sm  shadow-xl transition ease-in-out ">
-                <Photo
-                actionFile={handlePhotoPreviewer} />
+                <Photo actionFile={handlePhotoPreviewer} />
               </div>
             )}
             {photoUrl && (
-                <div className="absolute h-[86px] bg-[#343434]  z-30 left-90 top-5 rounded-sm  shadow-xl transition ease-in-out ">
-                <URL/>
+              <div className="absolute h-[86px] bg-[#343434]  z-30 left-90 top-5 rounded-sm  shadow-xl transition ease-in-out ">
+                <URL />
               </div>
-              )
-            }
+            )}
           </div>
         </div>
 
@@ -119,10 +137,10 @@ const AddService = () => {
             </h1>
             {duration && (
               <div className="absolute z-10 left-20 top-15 transition ease-in-out shadow-xl">
-                <Duration 
-                  selected={selectedDuration} 
-                  setSelected={setSelectedDuration} 
-                  close={() => setDuration(false)} 
+                <Duration
+                  selected={selectedDuration}
+                  setSelected={setSelectedDuration}
+                  close={() => setDuration(false)}
                 />
               </div>
             )}
@@ -138,26 +156,30 @@ const AddService = () => {
             <h1 className="text-md w-20 pl-3 text-white flex justify-center items-center font-semibold">
               Price
             </h1>
-            <button onClick={handlePrice} className="text-[#168FF4] mr-3 font-light cursor-pointer">
+            <button
+              onClick={handlePrice}
+              className="text-[#168FF4] mr-3 font-light cursor-pointer"
+            >
               {price}$
             </button>
-             {pricepreview && (
-                <div className="absolute h-[86px] bg-[#343434]  z-30 left-90 top-5 rounded-sm  shadow-xl transition ease-in-out ">
-                <Price/>
+            {pricepreview && (
+              <div className="absolute h-[86px] bg-[#343434]  z-30 left-90 top-5 rounded-sm  shadow-xl transition ease-in-out ">
+                <Price />
               </div>
-              )
-            }
+            )}
           </div>
         </div>
 
         {/* Age Section */}
         <div className="w-[90%] pt-3 h-32 mt-3 bg-[#343434] space-y-5 rounded-md">
-          <Toggle
-           name="Age Restriction"
-          />
+          <Toggle name="Age Restriction" />
           {toggleOn && (
             <div className="flex justify-start pl-5">
-              <select value={age} onChange={handleAge} className="px-3 text-[#168FF4] bg-gray-700 cursor-pointer outline-none">
+              <select
+                value={age}
+                onChange={handleAge}
+                className="px-3 text-[#168FF4] bg-gray-700 cursor-pointer outline-none"
+              >
                 <option value="18+">18+</option>
                 <option value="21+">21+</option>
                 <option value="25+">25+</option>
@@ -165,11 +187,18 @@ const AddService = () => {
             </div>
           )}
         </div>
-         <div  className='flex  justify-center items-center'>
-                               <button onClick={()=>{setHour(true)
-                                setService(false)
-                               }} className=' w-32 h-8 text-center text-white font-semibold bg-[#343434] cursor-pointer rounded'> Next </button>
-                     </div>
+        <div className="flex  justify-center items-center">
+          <button
+            onClick={() => {
+              setHour(true);
+              setService(false);
+            }}
+            className=" w-32 h-8 text-center text-white font-semibold bg-[#343434] cursor-pointer rounded"
+          >
+            {" "}
+            Next{" "}
+          </button>
+        </div>
       </div>
     </div>
   );

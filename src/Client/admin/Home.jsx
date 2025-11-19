@@ -1,20 +1,24 @@
 import { motion, AnimatePresence } from "framer-motion";
-import SideIcons from "./SideIconMenue";
+import SideIcons from "./SideIconMenu";
 import { faClock, faUser, faBell } from "@fortawesome/free-regular-svg-icons";
 import { faPenNib } from "@fortawesome/free-solid-svg-icons";
 import { useService } from "../../Context/ServiceContext";
 import Services from "./Services";
 import Hour from "./Hour";
-import Profile from './Profile';
-import Notification from './Notification';
+import Profile from "./Profile";
+import Notification from "./Notification";
 import Main from "./Main";
 
 const Home = () => {
   const {
-    service, setService,
-    hour, setHour,
-    notification, setNotification,
-    profile, setProfile
+    service,
+    setService,
+    hour,
+    setHour,
+    notification,
+    setNotification,
+    profile,
+    setProfile,
   } = useService();
 
   const handleService = () => {
@@ -23,22 +27,22 @@ const Home = () => {
     setProfile(false);
     setNotification(false);
   };
-  
+
   const handleHour = () => {
     setHour(true);
     setProfile(false);
     setService(false);
     setNotification(false);
   };
-  
+
   const handleProfile = () => {
     setProfile(true);
     setService(false);
     setNotification(false);
     setHour(false);
   };
-  
-  const handleNotificatio = () => {
+
+  const handleNotification = () => {
     setNotification(true);
     setHour(false);
     setService(false);
@@ -61,7 +65,11 @@ const Home = () => {
           <SideIcons action={handleService} icons={faPenNib} name="Service" />
           <SideIcons action={handleHour} icons={faClock} name="Hours" />
           <SideIcons action={handleProfile} icons={faUser} name="Profile" />
-          <SideIcons action={handleNotificatio} icons={faBell} name="Notification" />
+          <SideIcons
+            action={handleNotification}
+            icons={faBell}
+            name="Notification"
+          />
         </div>
 
         {/* Main content (inside left section) */}

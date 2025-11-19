@@ -1,10 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsis, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { useService } from "../../Context/ServiceContext";
+import { eventService } from "../../Context/ApiEvent";
 import AddService from "./AddService";
 import EditService from "./EditService";
-import { EllipisMenue } from "./AddServiceMenue";
-import { useQuery } from "@tanstack/react-query";
+import { EllipisMenu } from "./AddServiceMenu";
 import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 const Services = () => {
@@ -16,32 +16,18 @@ const Services = () => {
     setHeader,
     setAddservice,
     edit,
-    selectedEvent, setSelectedEvent
+    setSelectedEvent,
   } = useService();
-
+  const { events, isLoading, error } = eventService();
   const buttonRefs = useRef([]);
 
-  // Fetch events
-  const fetchEvents = async () => {
-    const res = await fetch("http://localhost:5000/api/events");
-    return res.json();
-  };
-
-  const { data: events, isLoading, error } = useQuery({
-    queryFn: fetchEvents,
-    queryKey: ["event"],
-  });
-
   const handleAddservice = () => setAddservice(true);
-  
 
-  const handleEllipis = async(index) => { 
+  const handleEllipis = async (index) => {
     setEllipis(ellipis === index ? null : index);
     const event = events?.find((e) => e._id === index);
     setSelectedEvent(event);
- }
-
-
+  };
 
   // Motion variants for sliding
   const panelVariants = {
@@ -175,9 +161,7 @@ const Services = () => {
                           className="absolute right-10 top-12 z-20"
                         >
                           <div className="  py-2 px-3 w-32">
-                            <EllipisMenue
-                            eventId={e._id }
-                            />
+                            <EllipisMenu eventId={e._id} />
                           </div>
                         </motion.div>
                       )}

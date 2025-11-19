@@ -4,16 +4,16 @@ import { useService } from "../../Context/ServiceContext";
 import { useState, useRef } from "react";
 import { Calendar } from "lucide-react";
 
-// CancelPopUp 
+// CancelPopUp
 export const CancelPopUp = ({ onClose, onDiscard }) => {
   return (
-<div className=' w-[32%] h-full flex flex-col text-white justify-center items-center bg-[#242424] rounded'>  
-    <div>
-       <p className="text-center mb-6">
-        Are you sure you want to discard all changes?
-      </p>
-    </div>
-  
+    <div className=" w-[32%] h-full flex flex-col text-white justify-center items-center bg-[#242424] rounded">
+      <div>
+        <p className="text-center mb-6">
+          Are you sure you want to discard all changes?
+        </p>
+      </div>
+
       <div className="flex mb-4 text-sm space-x-4">
         <button
           onClick={onClose}
@@ -32,31 +32,32 @@ export const CancelPopUp = ({ onClose, onDiscard }) => {
   );
 };
 
-
-// DateSpecific 
+// DateSpecific
 export const DateSpecific = () => {
   const [addhr, setAddhr] = useState(false);
-  const [date, setDate] = useState("");
   const [showCancel, setShowCancel] = useState(false);
-  const{ startTime,setStartTime,Endtime,setEndTime,
-    startDateSpecefic,setstartDateSpecefic,EndDateSpecefic,setEndDateSpecefic
-  }=useService()
+  const {
+    startDateSpecefic,
+    setstartDateSpecefic,
+    EndDateSpecefic,
+    setEndDateSpecefic,
+  } = useService();
 
-  const StartdateInputRef =useRef()
-  const EnddateInputRef =useRef()
-  
-  const handleEndRef=()=>{
-    if(EnddateInputRef){
-    EnddateInputRef.current.showPicker?.()
-    EndDateSpecefic.current.click?.()
-  }
-}
-  const handledateRef = ()=>{
-    if(StartdateInputRef){
-   StartdateInputRef.current.showPicker?.()
-   StartdateInputRef.current.click?.()
-  }
-}
+  const StartdateInputRef = useRef();
+  const EnddateInputRef = useRef();
+
+  const handleEndRef = () => {
+    if (EnddateInputRef) {
+      EnddateInputRef.current.showPicker?.();
+      EndDateSpecefic.current.click?.();
+    }
+  };
+  const handledateRef = () => {
+    if (StartdateInputRef) {
+      StartdateInputRef.current.showPicker?.();
+      StartdateInputRef.current.click?.();
+    }
+  };
   return (
     <>
       {/* Button to open panel */}
@@ -65,13 +66,8 @@ export const DateSpecific = () => {
           onClick={() => setAddhr((prev) => !prev)}
           className="flex space-x-2 justify-center items-center w-full h-full hover:bg-gray-700 duration-300 rounded cursor-pointer"
         >
-          <FontAwesomeIcon
-            className="text-lg text-[#168FF4]"
-            icon={faPlus}
-          />
-          <h3 className="text-[#168FF4] text-md">
-            Add Date-Specific Hours
-          </h3>
+          <FontAwesomeIcon className="text-lg text-[#168FF4]" icon={faPlus} />
+          <h3 className="text-[#168FF4] text-md">Add Date-Specific Hours</h3>
         </button>
       </div>
 
@@ -95,53 +91,59 @@ export const DateSpecific = () => {
             </button>
           </div>
 
-         
-         {/* Start Date */}
-        <div className="group w-full h-12 flex items-center justify-between bg-[#343434] border-t border-black hover:bg-[#323232] rounded">
-          <label className="pl-4 text-white font-light">
-            {startDateSpecefic || "Start Date"}
-          </label>
+          {/* Start Date */}
+          <div className="group w-full h-12 flex items-center justify-between bg-[#343434] border-t border-black hover:bg-[#323232] rounded">
+            <label className="pl-4 text-white font-light">
+              {startDateSpecefic || "Start Date"}
+            </label>
 
-          <div className="pl-4 h-full flex items-center">
-            {/* Hidden input */}
-            <input
-              type="date"
-              ref={StartdateInputRef}
-              className="hidden"
-              value={startDateSpecefic}
-              onChange={(e)=> setstartDateSpecefic(e.target.value)}
-            />
+            <div className="pl-4 h-full flex items-center">
+              {/* Hidden input */}
+              <input
+                type="date"
+                ref={StartdateInputRef}
+                className="hidden"
+                value={startDateSpecefic}
+                onChange={(e) => setstartDateSpecefic(e.target.value)}
+              />
 
-            {/* Trigger button */}
-            <button type="button" onClick={handledateRef} className="cursor-pointer">
-              <Calendar className="text-sm mr-4 text-[#168FF4]" />
-            </button>
+              {/* Trigger button */}
+              <button
+                type="button"
+                onClick={handledateRef}
+                className="cursor-pointer"
+              >
+                <Calendar className="text-sm mr-4 text-[#168FF4]" />
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* End Date */}
-        <div className="group w-full h-12 flex items-center justify-between bg-[#343434] border-t border-b border-black hover:bg-[#323232] rounded">
-          <label className="pl-4 text-white font-light">
-            {EndDateSpecefic || "End Date"}
-          </label>
+          {/* End Date */}
+          <div className="group w-full h-12 flex items-center justify-between bg-[#343434] border-t border-b border-black hover:bg-[#323232] rounded">
+            <label className="pl-4 text-white font-light">
+              {EndDateSpecefic || "End Date"}
+            </label>
 
-          <div className="pl-4 h-full flex items-center">
-            {/* Hidden input */}
-            <input
-              ref={EnddateInputRef}
-              type="date"
-              value={EndDateSpecefic}
-              onChange={(e) => setEndDateSpecefic(e.target.value)}
-              className="hidden"
-            />
+            <div className="pl-4 h-full flex items-center">
+              {/* Hidden input */}
+              <input
+                ref={EnddateInputRef}
+                type="date"
+                value={EndDateSpecefic}
+                onChange={(e) => setEndDateSpecefic(e.target.value)}
+                className="hidden"
+              />
 
-            {/* Trigger button */}
-            <button type="button" onClick={handleEndRef} className="cursor-pointer">
-              <Calendar className="text-sm mr-4 text-[#168FF4]" />
-            </button>
+              {/* Trigger button */}
+              <button
+                type="button"
+                onClick={handleEndRef}
+                className="cursor-pointer"
+              >
+                <Calendar className="text-sm mr-4 text-[#168FF4]" />
+              </button>
+            </div>
           </div>
-        </div>
-
 
           {/* Availability */}
           <div className="w-[90%] mt-4">
@@ -185,10 +187,9 @@ export const DateSpecific = () => {
   );
 };
 
-
-// AvailableHrs 
+// AvailableHrs
 export const AvailableHrs = ({ dayName, indx }) => {
-  const { timeInfo, hadnleSideInfo } = useService();
+  const { timeInfo, action, startValue, EndValue } = useService();
 
   return (
     <div className="relative flex justify-between w-[90%] h-12 bg-[#343434] hover:bg-[#323232] cursor-pointer rounded-lg">
@@ -196,10 +197,10 @@ export const AvailableHrs = ({ dayName, indx }) => {
         {dayName}
       </h1>
       <button
-        onClick={() => hadnleSideInfo(indx)}
+        onClick={action}
         className="text-[#168FF4] font-light mr-3 cursor-pointer"
       >
-        9:00 AM - 9:00 PM
+        {{ startValue } - { EndValue } || "9:00 Am - 5:00 PM"}
         <FontAwesomeIcon
           icon={faCaretDown}
           className={`ml-2 transition-transform duration-300 ${
