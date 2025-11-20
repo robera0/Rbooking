@@ -4,6 +4,7 @@ import { ApiProvider } from "./Context/ApiEvent";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./Client/admin/Home";
 import Main from "./Client/user/Main";
+import UserHome from "./Client/user/UserHome";
 import LoginUser from "./Client/user/LoginUser";
 const queryClient = new QueryClient();
 const App = () => {
@@ -15,6 +16,15 @@ const App = () => {
             <Routes>
               <Route path="/" element={<LoginUser />} />
               <Route path="/home" element={<Home />} />
+
+              <Route
+                path="/event_home"
+                element={
+                  <Main>
+                    <UserHome />
+                  </Main>
+                }
+              />
             </Routes>
           </ApiProvider>
         </ServiceProvider>

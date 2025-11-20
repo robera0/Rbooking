@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
+  // GET EVENTS
   const fetchEvents = async () => {
     const res = await fetch("http://localhost:5000/api/events");
     return res.json();
@@ -31,6 +32,20 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["business"],
     queryFn: getBussinesProfile,
   });
+  // GET USERS
+
+  const fetchUsers = async () => {
+    const res = await fetch("http://localhost:5000/api/login");
+    return res.json();
+  };
+  const {
+    data: users,
+    UserIsLoading,
+    UserError,
+  } = useQuery({
+    queryFn: fetchUsers,
+    queryKey: ["user"],
+  });
 
   return (
     <ApiContext.Provider
@@ -41,6 +56,9 @@ export const ApiProvider = ({ children }) => {
         businesses,
         BusinessIsLoading,
         BusinessError,
+        users,
+        UserIsLoading,
+        UserError,
       }}
     >
       {children}

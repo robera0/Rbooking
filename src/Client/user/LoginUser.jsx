@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -15,30 +15,26 @@ const LoginUser = () => {
     setPassword(e.target.value);
   };
 
-  const fetchAdmin = async () => {
-    const res = await fetch("http://localhost:8000/api/admins");
-    return res.json();
+  const sendUsers = (userData) => {
+    const res = axios.post("http://localhost:5000/api/login", userData);
+    return res.data;
   };
-  const { data: admins } = useQuery({
-    queryKey: ["admin"],
-    queryFn: fetchAdmin,
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: sendUsers,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["events"]);
+      setAddservice(false);
+    },
   });
 
-  const findAdmins = admins?.find(
-    (ad) => ad?.username === username && ad?.password === password
-  );
-
   const handleSignin = () => {
-    console.log(findAdmins);
-    if (findAdmins) {
-      navigate(
-        `/dashboard?username=${encodeURIComponent(
-          username
-        )}&password=${encodeURIComponent(password)}`
-      );
-    } else {
-      console.log("no admin found");
-    }
+    const formData = new FormData();
+
+    formData.append("username", username);
+    formData.append("password", password);
+
+    mutation.mutate(formData);
   };
   return (
     <div

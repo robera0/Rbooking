@@ -1,5 +1,5 @@
 import express from "express";
-import { userModel } from "./userModel";
+import { userModel } from "./userModel.js";
 
 const userRouter = express.Router();
 //SIGN IN ROUTES
@@ -24,17 +24,19 @@ userRouter.post("/register", async (req, res) => {
 userRouter.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
+    const trimmedPassword = password.trim();
 
     const user = await userModel.findOne({ username });
-    if (!user)
-      return res.status(400).json({ message: "Invalid username or password" });
+    if (!user) return res.status(400).json({ message: "Invalid username " });
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid username or password" });
+    const isMatch = await user.comparePassword(trimmedPassword);
+
+    if (!isMatch) return res.status(400).json({ message: "Invalid  password" });
 
     res.status(200).json({ message: "Login successful" });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
+
+export default userRouter;

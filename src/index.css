@@ -1,8 +1,14 @@
+@import url("https://fonts.googleapis.com/css2?family=Irish+Grover&display=swap");
 @import "tailwindcss";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .font-irish {
+    font-family: "Irish Grover", cursive;
+  }
+}
 .file-input {
   display: none;
 }
