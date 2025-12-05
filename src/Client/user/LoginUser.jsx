@@ -3,7 +3,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { Scissors, User, Lock } from "lucide-react";
+import { EyeOff, User, Lock } from "lucide-react";
 
 const LoginUser = () => {
   const navigate = useNavigate();
@@ -42,81 +42,80 @@ const LoginUser = () => {
     mutation.mutate(userData);
   };
   return (
-    <div
-      style={{ backgroundImage: 'url("/Login.jpg")' }}
-      className="bg-center  overflow-hidden  bg-cover min-h-screen lg-flex lg:items-center lg:pl-20 lg-p-6"
-    >
-      <div className="flex h-screen  flex-col justify-between">
-        <div className="lg:hidden text-white  space-y-6 p-6">
-          <div className="flex  space-x-2">
-            <Scissors className="text-[#B3B3B3] mt-4 w-14 h-14" />
-            <h1 className="font-irish text-4xl w-12 text-white font bold">
-              Kuretegn Event
-            </h1>
-          </div>
-          <p className="text-xl font-semibold ">
-            Login in to see the best of Events and Exhibitions
-          </p>
+    <>
+      {/*to login page */}
+
+      <div className="text-white  w-full h-[88px] flex flex-col items-center justify-center  pt-8">
+        <h1 className="text-2xl font-semibold">Login</h1>
+        <p className="text-[#808080] ">
+          Dont have an account yet ?{" "}
+          <span>
+            <button
+              onClick={() => navigate("/sign_up")}
+              className="text-[#FF8D28] font-semibold cursor-pointer"
+            >
+              Sign up
+            </button>
+          </span>
+        </p>
+      </div>
+      {/*inputs */}
+
+      <div className="pl-6 w-full space-y-6">
+        {/*username */}
+        <div className=" relative flex space-x-8 ">
+          <span className="absolute left-4 top-2">
+            <User className="text-white" />
+          </span>
+          <input
+            className="placeholder-[#808080] placeholder:text-sm text-white w-[90%] bg-[#323232] pl-12 h-10 rounded-xl outline-none"
+            placeholder="Enter your username"
+            type="text"
+          />
         </div>
-        {/*to login page */}
-        <div class="lg:hidden flex flex-col  w-screen h-100 bg-[#191B1D] rounded-t-[50px] space-y-12">
-          <div className="text-white  w-full h-[88px] flex flex-col items-center justify-center  pt-8">
-            <h1 className="text-2xl font-semibold">Login</h1>
-            <p className="text-[#808080] ">
-              Dont have an account yet ?{" "}
-              <span>
-                <button className="text-[#FF8D28] font-semibold cursor-pointer">
-                  Sign up
-                </button>
-              </span>
-            </p>
-          </div>
-          {/*inputs */}
 
-          <div className="pl-6 w-full space-y-8">
-            {/*username */}
-            <div className=" relative flex space-x-8 ">
-              <span className="absolute left-4 top-2">
-                <User className="text-white" />
-              </span>
-              <input
-                className="placeholder-[#808080] placeholder:text-sm w-[90%] bg-[#323232] pl-12 h-10 rounded-xl outline-none"
-                placeholder="Enter your username"
-                type="text"
-              />
-            </div>
+        {/*passwords */}
+        <div className=" relative flex space-x-8 ">
+          <span className="absolute left-4 top-2">
+            <Lock className=" w-5 h-5 text-white" />
+          </span>
+          <input
+            className="placeholder-[#808080] placeholder:text-sm text-white w-[90%] bg-[#323232] pl-12 h-10 rounded-xl outline-none"
+            placeholder="Enter your password"
+            type="text"
+          />
+          <span className="absolute right-16 top-3">
+            <EyeOff className=" w-4 h-4 text-white" />
+          </span>
+        </div>
+        {/*remember me box */}
+        <div className="w-full -mt-2 pl-4 flex justify-between items-center text-[#b3b3b3]">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              className="w-4 h-4 accent-[#FF8D28] rounded"
+            />
+            <span className="text-sm font-semibold text-[#b3b3b3]">
+              Remember me
+            </span>
+          </label>
 
-            {/*passwords */}
-            <div className=" relative flex space-x-8 ">
-              <span className="absolute left-4 top-2">
-                <Lock className=" w-5 h-5 text-white" />
-              </span>
-              <input
-                className="placeholder-[#808080] placeholder:text-sm w-[90%] bg-[#323232] pl-12 h-10 rounded-xl outline-none"
-                placeholder="Enter your password"
-                type="text"
-              />
-            </div>
-            {/*remember me box */}
-            <label class="flex items-center -mt-4 pl-4 gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                class="w-4 h-4 accent-[#FF8D28] accent-[#D9D9D9]"
-              />
-              <span class="text-sm text-white">Remember me</span>
-            </label>
-          </div>
+          <button className="mr-8 text-sm text-[#FF8D28] hover:underline">
+            Forget password?
+          </button>
         </div>
       </div>
 
-      <div className="hidden md:block w-full max-w-xl bg-black/40 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-10">
-        <div>
-          <h1 className="text-white font-bold text-xl lg:text-4xl">
-            Welcome To Kuretegn
-          </h1>
-        </div>
+      {/*Login button */}
+      <div className="w-full flex justify-center">
+        <button
+          onClick={() => navigate("/event_home")}
+          className=" flex  items-center  justify-center bg-[#FF7800] text-white w-[70%] h-10 text-md font-semibold rounded-xl cursor-pointer "
+        >
+          Login in
+        </button>
       </div>
-    </div>
+    </>
   );
 };
 

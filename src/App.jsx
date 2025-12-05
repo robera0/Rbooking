@@ -10,6 +10,8 @@ import Sport from "./Client/user/Sport";
 import Concert from "./Client/user/Concert";
 import Exhibition from "./Client/user/Exhibition";
 import Fest from "./Client/user/Fest";
+import AccountPage from "./Client/user/AccountPage";
+import SignUp from "./Client/user/SignUp";
 const queryClient = new QueryClient();
 const App = () => {
   return (
@@ -18,7 +20,29 @@ const App = () => {
         <ServiceProvider>
           <ApiProvider>
             <Routes>
-              <Route path="/" element={<LoginUser />} />
+              <Route
+                path="/"
+                element={
+                  <AccountPage
+                    pa={"Login in to see  the best of Events and Exhibitions "}
+                    h={"h-100"}
+                  >
+                    <LoginUser />
+                  </AccountPage>
+                }
+              />
+
+              <Route
+                path="/sign_up"
+                element={
+                  <AccountPage
+                    pa={"Create your account and see the best events "}
+                    h={"h-120"}
+                  >
+                    <SignUp />
+                  </AccountPage>
+                }
+              />
               <Route path="/home" element={<Home />} />
 
               <Route

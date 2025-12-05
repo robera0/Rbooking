@@ -74,7 +74,7 @@ const UserHome = () => {
   if (error) return <div>Error loading events</div>;
 
   return (
-    <div className="space-y-10 overflow-x:hidden">
+    <div className="space-y-10 overflow-hidden overflow-x:hidden">
       <StyledWrapper>
         {isLoading || !firstEvent?.picture ? (
           <div className="skeleton" />
