@@ -7,34 +7,69 @@ import {
   ChevronUp,
   Calendar as CalendarIcon,
   Search,
+  Sunset,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import React, { useState } from "react";
 import { CalendarDemo } from "../../components/ui/calendar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Menu button component
-const MenuBar = ({ name, icon, action }) => (
-  <button
-    onClick={action}
-    className="group flex w-42 items-center space-x-2 px-4 py-2 rounded-md hover:bg-white duration-300"
-  >
-    {icon}
-    <span className="text-white group-hover:text-[#FF7800] font-semibold">
-      {name}
-    </span>
-  </button>
-);
+const MenuBar = ({ name, icon, path }) => {
+  const navigate = useNavigate();
+  const isActive = location.pathname === path;
+
+  return (
+    <button
+      onClick={() => navigate(path)}
+      className={`group flex w-42 items-center space-x-2 px-4 py-2 rounded-md duration-300
+        ${
+          isActive
+            ? "bg-white text-[#FF7800]"
+            : "text-white hover:bg-white hover:text-[#FF7800]"
+        }
+      `}
+    >
+      <span
+        className={`${
+          isActive ? "text-[#FF7800]" : "text-white group-hover:text-[#FF7800]"
+        }`}
+      >
+        {icon}
+      </span>
+
+      <span
+        className={`font-semibold
+          ${
+            isActive
+              ? "text-[#FF7800]"
+              : "text-white group-hover:text-[#FF7800]"
+          }
+        `}
+      >
+        {name}
+      </span>
+    </button>
+  );
+};
 
 const Main = ({ children }) => {
   const navigate = useNavigate();
-  const [date, setDate] = useState(new Date());
-  const [dateSlide, setDateSlide] = useState(false); // collapsed by default
+  const location = useLocation();
+  const [date, setDate] = useState("");
+  const [dateSlide, setDateSlide] = useState(false);
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -30 },
+    visible: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 30 },
+  };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-5">
       <div className="relative flex space-x-4">
         {/* LEFT SIDE (MENU) */}
-        <div className="absolute flex flex-col justify-center items-center h-130 w-130 -left-52 -top-22 pl-20 bg-[#FF7800] space-y-4 rounded-full">
+        <div className="absolute flex flex-col justify-center items-center h-120 w-130 -left-52 -top-16 pl-20 pt-8 bg-[#FF7800] space-y-4 rounded-full">
           <div className="w-full h-12">
             <h1 className="ml-36 pb-26 font-irish font-semibold text-white text-3xl">
               Time Event
@@ -44,31 +79,52 @@ const Main = ({ children }) => {
           <div className="pl-4 space-y-3">
             <MenuBar
               name="Home"
-              icon={<House className="text-white group-hover:text-[#FF7800]" />}
-              action={() => navigate("/event_home")}
+              icon={<House />}
+              path="/event_home"
+              navigate={navigate}
+              location={location}
+            />
+            <MenuBar
+              name="Fest"
+              icon={<Sunset />}
+              path="/event_fest"
+              navigate={navigate}
+              location={location}
             />
             <MenuBar
               name="Concert"
-              icon={<Drum className="text-white group-hover:text-[#FF7800]" />}
-              action={() => navigate("/event_concerts")}
+              icon={<Drum />}
+              path="/event_concerts"
+              navigate={navigate}
+              location={location}
             />
             <MenuBar
               name="Exhibition"
-              icon={<Box className="text-white group-hover:text-[#FF7800]" />}
-              action={() => navigate("/event_exhibition")}
+              icon={<Box />}
+              path="/event_exhibition"
+              navigate={navigate}
+              location={location}
             />
             <MenuBar
               name="Sports"
-              icon={
-                <Trophy className="text-white group-hover:text-[#FF7800]" />
-              }
-              action={() => navigate("/event_sports")}
+              icon={<Trophy />}
+              path="/event_sports"
+              navigate={navigate}
+              location={location}
             />
           </div>
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="flex-1 h-104 flex justify-center items-center bg-[#ff8c00] space-x-4 ">
+
+        <div
+          style={{
+            backgroundImage: `url("${"datebackground.jpg"}")`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+          className="flex-1 h-104 flex justify-center items-center  space-x-4 "
+        >
           {/* Calendar + Search container */}
           <div className="relative flex items-center justify-center space-x-4">
             {/* Calendar button + dropdown */}
@@ -80,16 +136,28 @@ const Main = ({ children }) => {
                 <div className="flex items-center h-14 space-x-4">
                   <CalendarIcon strokeWidth={2} className="text-[#FF7800]" />
                   <div className="flex-col">
-                    <div>
-                      <span className="text-[#FF7800] font-semibold">
-                        Dates
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[#FF7800] font-semibold">
-                        All Dates
-                      </span>
-                    </div>
+                    {!date ? (
+                      <>
+                        <div>
+                          <span className="text-[#FF7800] font-semibold">
+                            Dates
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[#FF7800] font-semibold">
+                            All Dates
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <span className="text-[#FF7800] font-semibold">
+                            {date.toLocaleDateString()}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
                 {dateSlide ? (
@@ -101,7 +169,7 @@ const Main = ({ children }) => {
 
               {/* Calendar dropdown (absolute) */}
               <div
-                className={`absolute left-0 top-full mt-5 w-full bg-[#D9D9D9] rounded-lg overflow-hidden
+                className={`absolute left-0 top-full mt-5 w-full bg-[#D9D9D9] rounded-lg overflow-hidden  z-50 
                 transition-[max-height] duration-500 ease-in-out
                 ${dateSlide ? "max-h-[500px]" : "max-h-0"}`}
               >
@@ -132,7 +200,7 @@ const Main = ({ children }) => {
                   placeholder="Artist, Event or Venue"
                   className="flex-1 outline-none text-[#FF7800] placeholder-[#FF7800] font-semibold bg-transparent"
                 />
-                <button className="ml-4 w-26 h-10 bg-[#FF7800] text-white rounded-xl">
+                <button className="ml-4 w-26 h-10 bg-[#FF7800] text-white cursor-pointer hover:scale-98 rounded-xl">
                   Search
                 </button>
               </div>
@@ -140,8 +208,18 @@ const Main = ({ children }) => {
           </div>
         </div>
       </div>
-
-      <div className="w-full -mt-2 h-full">{children}</div>
+      <AnimatePresence>
+        <motion.div
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{ duration: 0.3 }}
+          className="w-full h-full "
+        >
+          {children}{" "}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };

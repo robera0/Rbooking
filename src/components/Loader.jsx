@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 const Loader = () => {
   return (
@@ -16,9 +16,9 @@ const Loader = () => {
       </div>
     </StyledWrapper>
   );
-}
+};
 
-const StyledWrapper = styled.div`
+export const StyledWrapper = styled.div`
   .container {
     display: flex;
     align-items: center;
@@ -103,6 +103,7 @@ const StyledWrapper = styled.div`
   .crystal:nth-child(6) {
     background: linear-gradient(45deg, #66ffff, #ccffff);
     animation-delay: 1.5s;
-  }`;
+  }
+`;
 
-export default Loader;
+export default { Loader };

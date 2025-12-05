@@ -1,7 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { Scissors, User, Lock } from "lucide-react";
+
 const LoginUser = () => {
   const navigate = useNavigate();
 
@@ -15,104 +18,103 @@ const LoginUser = () => {
     setPassword(e.target.value);
   };
 
-  const sendUsers = (userData) => {
-    const res = axios.post("http://localhost:5000/api/login", userData);
+  const sendUsers = async (userData) => {
+    const res = await axios.post("http://localhost:5000/api/login", userData);
     return res.data;
   };
-  const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: sendUsers,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["events"]);
-      setAddservice(false);
+    onSuccess: (data) => {
+      if (data.message === "Login successful") {
+        navigate("/event_home");
+      }
     },
   });
 
-  const handleSignin = () => {
-    const formData = new FormData();
+  const handleSignin = (e) => {
+    e.preventDefault();
+    const userData = {
+      username,
+      password,
+    };
 
-    formData.append("username", username);
-    formData.append("password", password);
-
-    mutation.mutate(formData);
+    mutation.mutate(userData);
   };
   return (
     <div
       style={{ backgroundImage: 'url("/Login.jpg")' }}
-      className="bg-center bg-cover min-h-screen flex items-center pl-20 p-6"
+      className="bg-center  overflow-hidden  bg-cover min-h-screen lg-flex lg:items-center lg:pl-20 lg-p-6"
     >
-      <div className="w-full max-w-xl bg-black/40 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-10">
-        <h1 className="text-4xl font-extrabold mb-10 text-[#FF7800] tracking-tight text-left">
-          Welcome Back To Kuretugn
-        </h1>
-
-        {/* Form */}
-        <form className="space-y-6">
-          {/* Username */}
-          <div className="flex items-center bg-white/20 backdrop-blur-md rounded-xl px-4 py-3 shadow-md focus-within:ring-2 focus-within:ring-[#FF7800] transition">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-300 mr-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                d="M19 21v-2a4 4 0 0 0-4-4H9a4 
-                  4 0 0 0-4 4v2"
-              ></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <input
-              type="text"
-              onChange={handleusername}
-              placeholder="Enter username"
-              className="flex-1 bg-transparent text-white focus:outline-none placeholder-gray-300"
-            />
+      <div className="flex h-screen  flex-col justify-between">
+        <div className="lg:hidden text-white  space-y-6 p-6">
+          <div className="flex  space-x-2">
+            <Scissors className="text-[#B3B3B3] mt-4 w-14 h-14" />
+            <h1 className="font-irish text-4xl w-12 text-white font bold">
+              Kuretegn Event
+            </h1>
           </div>
-
-          {/* Password */}
-          <div className="flex items-center bg-white/20 backdrop-blur-md rounded-xl px-4 py-3 shadow-md focus-within:ring-2 focus-within:ring-[#FF7800] transition">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-300 mr-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-            <input
-              type="password"
-              onChange={handlePassword}
-              placeholder="Password"
-              className="flex-1 bg-transparent text-white focus:outline-none placeholder-gray-300"
-            />
+          <p className="text-xl font-semibold ">
+            Login in to see the best of Events and Exhibitions
+          </p>
+        </div>
+        {/*to login page */}
+        <div class="lg:hidden flex flex-col  w-screen h-100 bg-[#191B1D] rounded-t-[50px] space-y-12">
+          <div className="text-white  w-full h-[88px] flex flex-col items-center justify-center  pt-8">
+            <h1 className="text-2xl font-semibold">Login</h1>
+            <p className="text-[#808080] ">
+              Dont have an account yet ?{" "}
+              <span>
+                <button className="text-[#FF8D28] font-semibold cursor-pointer">
+                  Sign up
+                </button>
+              </span>
+            </p>
           </div>
+          {/*inputs */}
 
-          {/* Sign In Button */}
-          <button
-            type="submit"
-            onClick={handleSignin}
-            className="w-full bg-[#FF7800] text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition"
-          >
-            Sign in
-          </button>
-        </form>
+          <div className="pl-6 w-full space-y-8">
+            {/*username */}
+            <div className=" relative flex space-x-8 ">
+              <span className="absolute left-4 top-2">
+                <User className="text-white" />
+              </span>
+              <input
+                className="placeholder-[#808080] placeholder:text-sm w-[90%] bg-[#323232] pl-12 h-10 rounded-xl outline-none"
+                placeholder="Enter your username"
+                type="text"
+              />
+            </div>
 
-        {/* Sign in as Student */}
-        <Link to="/" className="mt-5 w-full block">
-          <button className="w-full bg-[#FF7800] text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition">
-            Sign in as Student
-          </button>
-        </Link>
+            {/*passwords */}
+            <div className=" relative flex space-x-8 ">
+              <span className="absolute left-4 top-2">
+                <Lock className=" w-5 h-5 text-white" />
+              </span>
+              <input
+                className="placeholder-[#808080] placeholder:text-sm w-[90%] bg-[#323232] pl-12 h-10 rounded-xl outline-none"
+                placeholder="Enter your password"
+                type="text"
+              />
+            </div>
+            {/*remember me box */}
+            <label class="flex items-center -mt-4 pl-4 gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                class="w-4 h-4 accent-[#FF8D28] accent-[#D9D9D9]"
+              />
+              <span class="text-sm text-white">Remember me</span>
+            </label>
+          </div>
+        </div>
+      </div>
 
-        <p className="text-center text-sm text-gray-300 mt-6">
-          © 2025 Kuretugn Event handling. All rights reserved.
-        </p>
+      <div className="hidden md:block w-full max-w-xl bg-black/40 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-10">
+        <div>
+          <h1 className="text-white font-bold text-xl lg:text-4xl">
+            Welcome To Kuretegn
+          </h1>
+        </div>
       </div>
     </div>
   );

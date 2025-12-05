@@ -59,6 +59,8 @@ eventrouter.put("/events/:id", upload.single("picture"), async (req, res) => {
     if (req.body.description) updatedData.description = req.body.description;
     if (req.body.duration) updatedData.duration = req.body.duration;
     if (req.body.price) updatedData.price = req.body.price;
+    if (req.body.type) updatedData.type = req.body.type;
+    if (req.body.location) updatedData.location = req.body.location;
     if (req.file) updatedData.picture = `/uploads/${req.file.filename}`;
 
     const updateEvent = await EventModel.findByIdAndUpdate(
@@ -110,9 +112,10 @@ eventrouter.post("/events", upload.single("picture"), async (req, res) => {
       duration,
       price,
       age,
+      location,
       start_time,
       end_time,
-      header,
+      type,
     } = req.body;
 
     const event = new EventModel({
@@ -122,9 +125,10 @@ eventrouter.post("/events", upload.single("picture"), async (req, res) => {
       duration,
       price,
       age,
+      location,
       start_time,
       end_time,
-      header,
+      type,
     });
 
     const savedEvent = await event.save();

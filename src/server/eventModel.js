@@ -14,7 +14,8 @@ const EventSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   age: { type: String },
   hour: [HourSchema],
-  header: { type: String },
+  location: { type: String, required: true },
+  type: { type: String },
 });
 
 export const EventModel = mongoose.model("event", EventSchema);

@@ -6,6 +6,10 @@ import Home from "./Client/admin/Home";
 import Main from "./Client/user/Main";
 import UserHome from "./Client/user/UserHome";
 import LoginUser from "./Client/user/LoginUser";
+import Sport from "./Client/user/Sport";
+import Concert from "./Client/user/Concert";
+import Exhibition from "./Client/user/Exhibition";
+import Fest from "./Client/user/Fest";
 const queryClient = new QueryClient();
 const App = () => {
   return (
@@ -22,6 +26,38 @@ const App = () => {
                 element={
                   <Main>
                     <UserHome />
+                  </Main>
+                }
+              />
+              <Route
+                path="/event_sports"
+                element={
+                  <Main>
+                    <Sport />
+                  </Main>
+                }
+              />
+              <Route
+                path="/event_concerts"
+                element={
+                  <Main>
+                    <Concert />
+                  </Main>
+                }
+              />
+              <Route
+                path="/event_fest"
+                element={
+                  <Main>
+                    <Fest />
+                  </Main>
+                }
+              />
+              <Route
+                path="/event_exhibition"
+                element={
+                  <Main>
+                    <Exhibition />
                   </Main>
                 }
               />
