@@ -1,146 +1,124 @@
-import { eventService } from "@/Context/ApiEvent";
-import React from "react";
-import styled, { keyframes } from "styled-components";
-import { Eye } from "lucide-react";
-
-// Shimmer animation
-const shimmer = keyframes`
-  0% {
-    background-position: -500px 0;
-  }
-  100% {
-    background-position: 500px 0;
-  }
-`;
-
-const StyledWrapper = styled.div`
-  width: 100%;
-  height: 28rem; /* same as h-112 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  .skeleton {
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    background: linear-gradient(
-      90deg,
-      #c2c2c2 25%,
-      /* darker gray */ #d8d8d8 50%,
-      /* lighter dim gray */ #c2c2c2 75%
-    );
-    background-size: 500px 100%;
-    animation: ${shimmer} 1.5s infinite linear;
-  }
-`;
+import React, { useState } from "react";
+import { CalendarIcon, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { CalendarDemo } from "@/components/ui/calendar";
 
 const UserHome = () => {
-  const { events, isLoading, error } = eventService();
-
-  const dayOrder = {
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-    Sunday: 7,
-  };
-
-  const timeSplitter = (time) => {
-    const [t, modifier] = time.split(" ");
-    let [hour, min] = t.split(":").map(Number);
-    if (modifier === "PM" && hour !== 12) hour += 12;
-    if (modifier === "AM" && hour === 12) hour = 0;
-    return hour * 60 + min;
-  };
-
-  const sortEvents = (events) => {
-    if (!events) return [];
-    return [...events].sort((a, b) => {
-      const dayA = dayOrder[a.hour[0].day];
-      const dayB = dayOrder[b.hour[0].day];
-      if (dayA !== dayB) return dayA - dayB;
-      return (
-        timeSplitter(a.hour[0].start_time) - timeSplitter(b.hour[0].start_time)
-      );
-    });
-  };
-
-  const sortedEvents = sortEvents(events);
-  const firstEvent = sortedEvents[0];
-
-  if (error) return <div>Error loading events</div>;
+  const [dateSlide, setDateSlide] = useState(false);
+  const [date, setDate] = useState(null);
 
   return (
-    <div className="space-y-10 overflow-hidden overflow-x:hidden">
-      <StyledWrapper>
-        {isLoading || !firstEvent?.picture ? (
-          <div className="skeleton" />
-        ) : (
-          <div
-            className="relative fixed h-120"
-            style={{
-              backgroundImage: `url("${
-                firstEvent.picture || "defaultAvater.jpg"
-              }")`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              width: "100%",
-            }}
+    <div className="space-y-12">
+      <div className="flex flex-col gap-6 pl-6">
+        <span className="space-y-4 pt-4 w-[70%] h-auto">
+          <h1 className="text-4xl  leading-normal break-normal text-white font-semibold">
+            Find the Top events nearby.
+          </h1>
+        </span>
+        <span>
+          <p className="w-[85%] text-[#808080] text-xl ">
+            We bring you not only a stay option, but an experience in your
+            budget to enjoy the luxury.
+          </p>
+        </span>
+        <button className=" w-46 h-14 bg-[#FF7800] text-lg text-white font-semibold cursor-pointer lg:hover:scale-95 rounded-xl transition-transform duration-200">
+          Discover Events
+        </button>
+      </div>
+
+      {/*Image */}
+      <div className="relative mt-10 w-full flex justify-center items-center">
+        <div className="w-[95%] rounded-md overflow-hidden">
+          <img
+            src="/Login.jpg"
+            alt="Login"
+            className="w-full h-92 object-cover"
+          />
+        </div>
+      </div>
+
+      {/* Mobile View */}
+      <div className="block md:hidden absolute bottom-12 flex flex-col items-center space-y-4 w-full px-4 mt-4">
+        {/* Calendar Dropdown */}
+        <div className="relative flex justify-center w-full h-full bg-[#191B1D] rounded-xl">
+          <button
+            onClick={() => setDateSlide(!dateSlide)}
+            className="w-62 flex justify-between items-center px-4 py-3 bg-white rounded-lg shadow-md"
           >
-            <div className="absolute inset-0 bg-black/50"></div>
-
-            {/*BUTTONS */}
-
-            <div className="absolute  z-20 top-60 left-10 space-y-5">
-              <h1 className="text-5xl text-center text-white font-bold">
-                {firstEvent.name}
-              </h1>
-              <p className=" text-xl text-white font-bold">
-                See the full info{" "}
-              </p>
-
-              <button className="ml-4 w-36 h-12 bg-[#FF7800] text-white font-bold cursor-pointer hover:scale-98 rounded-md">
-                Find Tickets
-              </button>
-            </div>
-          </div>
-        )}
-      </StyledWrapper>
-      {/*Events  */}
-
-      <div className="font-onest absolute flex flex-wrap w-full h-screen pb-12 pl-4 gap-8 ">
-        {sortedEvents?.map((event) => (
-          <div
-            key={event._id}
-            className="w-[48%] bg-[#D9D9D9] rounded-xl pb-4 cursor-pointer group shadow-xl"
-          >
-            <div className="w-full h-full">
-              <div
-                style={{
-                  backgroundImage: `url("${
-                    event.picture || "defaultAvatar.jpg"
-                  }")`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-                className="h-92 rounded-t-xl bg-black relative  group overflow-hidden"
-              >
-                <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <Eye className=" text-white w-15 h-15" />
-                </span>
-                {/* hover overlay */}
-                <div className="absolute inset-0 bg-[#FF7800]/0 group-hover:bg-[#FF7800]/20 transition-all duration-300 rounded-t-md"></div>
+            <div className="flex items-center space-x-3">
+              <CalendarIcon
+                strokeWidth={2}
+                className="text-[#FF7800] w-6 h-6"
+              />
+              <div className="flex flex-col">
+                {!date ? (
+                  <>
+                    <span className="text-[#FF7800] font-semibold text-sm">
+                      Dates
+                    </span>
+                    <span className="text-[#FF7800] font-semibold text-sm">
+                      All Dates
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[#FF7800] font-semibold">
+                    {date.toLocaleDateString()}
+                  </span>
+                )}
               </div>
-              <p className="text-xl pl-4">{event.type}</p>
-              <h1 className="text-black font-semibold mt-2 pl-4">
-                {event.name}
-              </h1>
             </div>
+
+            {dateSlide ? (
+              <ChevronUp className="text-black" />
+            ) : (
+              <ChevronDown className="text-black" />
+            )}
+          </button>
+
+          {/* Calendar Panel */}
+          <div
+            className={`absolute left-0 top-full w-full bg-[#D9D9D9] rounded-lg overflow-hidden z-50 transition-[max-height] duration-500 ease-in-out ${
+              dateSlide ? "max-h-[500px] mt-3" : "max-h-0 mt-0"
+            }`}
+          >
+            <CalendarDemo
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              buttonVariant="ghost"
+              className="p-4 w-full bg-white rounded-xl shadow-lg text-black"
+              classNames={{
+                day: "h-10 w-10 flex items-center justify-center rounded-lg hover:bg-orange-200",
+                month_caption:
+                  "text-lg text-center font-semibold text-orange-500",
+                nav_button: "text-orange-500 hover:text-orange-700",
+              }}
+            />
           </div>
-        ))}
+        </div>
+
+        {/* Mobile Search Box */}
+        <div className="relative w-full h-[4rem] bg-white rounded-lg shadow-md flex items-center px-4">
+          <Search strokeWidth={2} className="text-[#FF7800] w-6 h-6 mr-3" />
+          <input
+            type="text"
+            placeholder="Artist, Event or Venue"
+            className="flex-1 outline-none text-[#FF7800] placeholder-[#FF7800] font-semibold bg-transparent"
+          />
+          <button className=" hidden ml-3 w-[5.5rem] h-10 bg-[#FF7800] text-white cursor-pointer hover:scale-95 rounded-xl transition-transform duration-200">
+            Search
+          </button>
+        </div>
+        {/*search button */}
+        <div className="absolute top-32">
+          <button className="block md:hidden p-3 bg-[#FF7800] rounded-xl text-white">
+            <Search className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Version (original) */}
+      <div className="hidden md:flex relative items-center justify-center space-x-4">
+        {/* your original desktop code here */}
       </div>
     </div>
   );
