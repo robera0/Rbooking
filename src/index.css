@@ -192,6 +192,17 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Hide native scrollbars globally (keeps scrolling) */
+html,
+body {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

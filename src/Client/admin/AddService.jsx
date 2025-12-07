@@ -1,7 +1,7 @@
 import { useService } from "../../Context/ServiceContext";
 import { useState } from "react";
 import { Duration, Price, URL, Photo } from "./AddServiceMenu";
-import Toggle from "../../components/Toggle";
+import { Toggle } from "../../components/Reusable";
 
 const AddService = () => {
   const {

@@ -1,4 +1,4 @@
-import Toggle from "../../components/Toggle";
+import { Toggle } from "../../components/Reusable";
 const Notification = () => {
   return (
     <div className=" scroll-hidden h-screen  overflow-auto ">

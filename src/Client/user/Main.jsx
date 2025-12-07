@@ -1,9 +1,9 @@
-import { Scissors, Menu, Bell, CircleUser } from "lucide-react";
-
+import { Scissors, Menu, Bell, CircleUser, House, Ticket } from "lucide-react";
+import { MenuBar } from "../../components/Reusable";
 const Main = ({ children }) => {
   return (
     <div>
-      <div className="flex h-screen bg-[#222529] flex-col ">
+      <div className="relative flex h-screen overflow-hidden bg-[#222529] flex-col ">
         <div className="flex justify-between lg:hidden text-white mt-2  p-6">
           <div className="flex  space-x-2">
             <Scissors className="text-[#B3B3B3] mt-2 w-8 h-8" />
@@ -36,7 +36,15 @@ const Main = ({ children }) => {
           </div>
         </div>
 
-        <div>{children}</div>
+        <div className="overflow-y-auto flex-1 ">{children}</div>
+        {/*Footer */}
+
+        {/*menu Bar */}
+        <div className="fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4 z-50 rounded-t-3xl">
+          <MenuBar icon={<House />} header="Home" />
+          <MenuBar icon={<Ticket />} header="Ticket" />
+          <MenuBar icon={<CircleUser />} header="Account" />
+        </div>
       </div>
     </div>
   );

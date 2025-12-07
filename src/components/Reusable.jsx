@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faToggleOff, faToggleOn } from "@fortawesome/free-solid-svg-icons";
-const Toggle = ({ name, toggle, toggleOn, action }) => {
+export const Toggle = ({ name, toggle, toggleOn, action }) => {
   return (
     <div className="flex w-full justify-between">
       <h3 className="text-md w-64 text-left  text-white flex justify-center items-center font-semibold">
@@ -22,4 +22,14 @@ const Toggle = ({ name, toggle, toggleOn, action }) => {
   );
 };
 
-export default Toggle;
+export const MenuBar = ({ icon, header }) => {
+  return (
+    <>
+      <button className="flex flex-col  w-full   items-center text-white  space-y-1">
+        {icon}
+        <span className="text-center">{header}</span>
+      </button>
+      ;
+    </>
+  );
+};

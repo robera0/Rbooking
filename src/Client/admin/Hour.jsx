@@ -2,7 +2,7 @@ import { AvailableHrs } from "./HourMenu";
 import { DateSpecific } from "./HourMenu";
 import { useState } from "react";
 import { useService } from "../../Context/ServiceContext";
-import Toggle from "../../components/Toggle";
+import { Toggle } from "../../components/Reusable";
 import { Check, ChevronRight, Trash2 } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";

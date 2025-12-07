@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useService } from "../../Context/ServiceContext";
-import Toggle from "../../components/Toggle";
+import { Toggle } from "../../components/Reusable";
 import { eventService } from "../../Context/ApiEvent";
 import { Phone, Instagram, MapPin, Mail, Globe } from "lucide-react";
 import Loader from "../../components/Loader";

@@ -1,32 +1,45 @@
-import React, { useState } from "react";
-import { CalendarIcon, ChevronDown, ChevronUp, Search } from "lucide-react";
+import React, { useRef, useState } from "react";
+import {
+  CalendarIcon,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  User,
+} from "lucide-react";
 import { CalendarDemo } from "@/components/ui/calendar";
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const [date, setDate] = useState(null);
+  const dateref = useRef(null);
 
   return (
-    <div className="space-y-12">
-      <div className="flex flex-col gap-6 pl-6">
-        <span className="space-y-4 pt-4 w-[70%] h-auto">
-          <h1 className="text-4xl  leading-normal break-normal text-white font-semibold">
+    <div
+      ref={dateref}
+      onClick={() => setDateSlide(false)}
+      className="space-y-12"
+    >
+      <div className="flex flex-col w-full h-62 gap-6 pl-6">
+        <span className="pt-4 w-[70%] h-auto">
+          <h1 className="text-4xl leading-normal text-white font-semibold">
             Find the Top events nearby.
           </h1>
         </span>
+
         <span>
-          <p className="w-[85%] text-[#808080] text-xl ">
+          <p className="w-[85%] text-[#808080] text-md">
             We bring you not only a stay option, but an experience in your
             budget to enjoy the luxury.
           </p>
         </span>
-        <button className=" w-46 h-14 bg-[#FF7800] text-lg text-white font-semibold cursor-pointer lg:hover:scale-95 rounded-xl transition-transform duration-200">
+
+        <button className="w-46 h-18 bg-[#FF7800] text-lg text-white font-semibold cursor-pointer lg:hover:scale-95 rounded-xl transition-transform duration-200">
           Discover Events
         </button>
       </div>
 
-      {/*Image */}
-      <div className="relative mt-10 w-full flex justify-center items-center">
+      {/* IMAGE */}
+      <div className=" mt-10 h-auto w-full flex justify-center items-center">
         <div className="w-[95%] rounded-md overflow-hidden">
           <img
             src="/Login.jpg"
@@ -36,28 +49,24 @@ const UserHome = () => {
         </div>
       </div>
 
-      {/* Mobile View */}
-      <div className="block md:hidden absolute bottom-12 flex flex-col items-center space-y-4 w-full px-4 mt-4">
-        {/* Calendar Dropdown */}
-        <div className="relative flex justify-center w-full h-full bg-[#191B1D] rounded-xl">
+      {/*MOBILE VIEW*/}
+      <div className="block md:hidden relative bottom-32 z-10 flex flex-col items-center space-y-4 w-full px-4 py-6 mt-4">
+        <div className="relative flex flex-col justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl space-y-6">
+          {/* Calendar Button */}
           <button
-            onClick={() => setDateSlide(!dateSlide)}
-            className="w-62 flex justify-between items-center px-4 py-3 bg-white rounded-lg shadow-md"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDateSlide(!dateSlide);
+            }}
+            className="w-[80%] flex justify-between items-center px-4 py-3 bg-[#6C6D6E] rounded-lg shadow-md"
           >
             <div className="flex items-center space-x-3">
-              <CalendarIcon
-                strokeWidth={2}
-                className="text-[#FF7800] w-6 h-6"
-              />
+              <CalendarIcon strokeWidth={1} className="text-white w-5 h-5" />
               <div className="flex flex-col">
                 {!date ? (
                   <>
-                    <span className="text-[#FF7800] font-semibold text-sm">
-                      Dates
-                    </span>
-                    <span className="text-[#FF7800] font-semibold text-sm">
-                      All Dates
-                    </span>
+                    <span>Dates</span>
+                    <span>All Dates</span>
                   </>
                 ) : (
                   <span className="text-[#FF7800] font-semibold">
@@ -74,9 +83,9 @@ const UserHome = () => {
             )}
           </button>
 
-          {/* Calendar Panel */}
+          {/* CALENDAR PANEL */}
           <div
-            className={`absolute left-0 top-full w-full bg-[#D9D9D9] rounded-lg overflow-hidden z-50 transition-[max-height] duration-500 ease-in-out ${
+            className={`absolute left-16 top-0 w-62 bg-[#D9D9D9] rounded-lg overflow-hidden z-50 transition-[max-height] duration-500 ease-in-out ${
               dateSlide ? "max-h-[500px] mt-3" : "max-h-0 mt-0"
             }`}
           >
@@ -85,40 +94,53 @@ const UserHome = () => {
               selected={date}
               onSelect={setDate}
               buttonVariant="ghost"
-              className="p-4 w-full bg-white rounded-xl shadow-lg text-black"
+              className="p-4 w-full bg-transparent rounded-xl shadow-lg text-black"
               classNames={{
-                day: "h-10 w-10 flex items-center justify-center rounded-lg hover:bg-orange-200",
+                day: "h-8 w-8 flex items-center justify-center rounded-lg hover:bg-orange-200",
                 month_caption:
                   "text-lg text-center font-semibold text-orange-500",
                 nav_button: "text-orange-500 hover:text-orange-700",
               }}
             />
           </div>
-        </div>
 
-        {/* Mobile Search Box */}
-        <div className="relative w-full h-[4rem] bg-white rounded-lg shadow-md flex items-center px-4">
-          <Search strokeWidth={2} className="text-[#FF7800] w-6 h-6 mr-3" />
-          <input
-            type="text"
-            placeholder="Artist, Event or Venue"
-            className="flex-1 outline-none text-[#FF7800] placeholder-[#FF7800] font-semibold bg-transparent"
-          />
-          <button className=" hidden ml-3 w-[5.5rem] h-10 bg-[#FF7800] text-white cursor-pointer hover:scale-95 rounded-xl transition-transform duration-200">
-            Search
-          </button>
-        </div>
-        {/*search button */}
-        <div className="absolute top-32">
-          <button className="block md:hidden p-3 bg-[#FF7800] rounded-xl text-white">
-            <Search className="w-5 h-5" />
-          </button>
+          {/* LOCATION INPUT */}
+          <div className="relative w-[80%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
+            <User strokeWidth={1} className="text-white w-6 h-6 mr-3" />
+            <input
+              type="text"
+              placeholder="Location"
+              className="flex-1 outline-none placeholder:text-white text-white font-light"
+            />
+          </div>
+
+          {/* SEARCH INPUT */}
+          <div className="relative w-[80%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
+            <User strokeWidth={1} className="text-white w-6 h-6 mr-3" />
+            <input
+              type="text"
+              placeholder="Artist, Event or Venue"
+              className="flex-1 outline-none placeholder:text-white text-white font-light"
+            />
+          </div>
+
+          {/* MAIN SEARCH BUTTON */}
+          <div className="absolute top-70">
+            <button className="block md:hidden p-4 bg-[#FF7800] rounded-full text-white">
+              <Search className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Desktop Version (original) */}
+      {/* DISCOUNT SECTION (NOW VISIBLE) */}
+      <div className="block relative w-[80%] h-40 bg-black mx-auto rounded-xl">
+        <p className="text-white p-6">🔥 Discount Events Section</p>
+      </div>
+
+      {/* DESKTOP (you can add your own) */}
       <div className="hidden md:flex relative items-center justify-center space-x-4">
-        {/* your original desktop code here */}
+        {/* desktop layout */}
       </div>
     </div>
   );
