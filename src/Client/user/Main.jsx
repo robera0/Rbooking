@@ -36,11 +36,13 @@ const Main = ({ children }) => {
           </div>
         </div>
 
-        <div className="overflow-y-auto flex-1 ">{children}</div>
+        <div className="overflow-y-auto flex-1 h-screen scroll-hidden">
+          {children}
+        </div>
         {/*Footer */}
 
         {/*menu Bar */}
-        <div className="fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4 z-50 rounded-t-3xl">
+        <div className="fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4  mt-2 z-50 rounded-t-3xl">
           <MenuBar icon={<House />} header="Home" />
           <MenuBar icon={<Ticket />} header="Ticket" />
           <MenuBar icon={<CircleUser />} header="Account" />

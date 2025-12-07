@@ -5,6 +5,7 @@ import {
   ChevronUp,
   Search,
   User,
+  Star,
 } from "lucide-react";
 import { CalendarDemo } from "@/components/ui/calendar";
 
@@ -17,9 +18,9 @@ const UserHome = () => {
     <div
       ref={dateref}
       onClick={() => setDateSlide(false)}
-      className="space-y-12"
+      className="space-y- "
     >
-      <div className="flex flex-col w-full h-62 gap-6 pl-6">
+      <div className="flex flex-col w-full h-62 gap-4 pl-6">
         <span className="pt-4 w-[70%] h-auto">
           <h1 className="text-4xl leading-normal text-white font-semibold">
             Find the Top events nearby.
@@ -33,13 +34,13 @@ const UserHome = () => {
           </p>
         </span>
 
-        <button className="w-46 h-18 bg-[#FF7800] text-lg text-white font-semibold cursor-pointer lg:hover:scale-95 rounded-xl transition-transform duration-200">
+        <button className="w-46 py-2 bg-[#FF7800] text-lg text-white font-semibold cursor-pointer lg:hover:scale-95 rounded-xl transition-transform duration-200">
           Discover Events
         </button>
       </div>
 
       {/* IMAGE */}
-      <div className=" mt-10 h-auto w-full flex justify-center items-center">
+      <div className=" mt-22 h-auto w-full flex justify-center items-center">
         <div className="w-[95%] rounded-md overflow-hidden">
           <img
             src="/Login.jpg"
@@ -50,7 +51,7 @@ const UserHome = () => {
       </div>
 
       {/*MOBILE VIEW*/}
-      <div className="block md:hidden relative bottom-32 z-10 flex flex-col items-center space-y-4 w-full px-4 py-6 mt-4">
+      <div className="block md:hidden relative bottom-30 z-10 flex flex-col items-center space-y-4 w-full px-4 py-4 mt-8">
         <div className="relative flex flex-col justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl space-y-6">
           {/* Calendar Button */}
           <button
@@ -125,8 +126,8 @@ const UserHome = () => {
           </div>
 
           {/* MAIN SEARCH BUTTON */}
-          <div className="absolute top-70">
-            <button className="block md:hidden p-4 bg-[#FF7800] rounded-full text-white">
+          <div className="absolute sticky  top-70">
+            <button className="block md:hidden flex justify-center items-center p-4 bg-[#FF7800] rounded-full text-white">
               <Search className="w-5 h-5" />
             </button>
           </div>
@@ -134,13 +135,47 @@ const UserHome = () => {
       </div>
 
       {/* DISCOUNT SECTION (NOW VISIBLE) */}
-      <div className="block relative w-[80%] h-40 bg-black mx-auto rounded-xl">
-        <p className="text-white p-6">🔥 Discount Events Section</p>
-      </div>
 
       {/* DESKTOP (you can add your own) */}
       <div className="hidden md:flex relative items-center justify-center space-x-4">
         {/* desktop layout */}
+      </div>
+      <div className="block relative bottom-16 w-[80%] h-auto   bg-[#191B1D] mx-auto rounded-xl space-y-4 ">
+        <div className="w-full">
+          <img
+            className="object-cover rounded-xl"
+            src="/Login.jpg
+        "
+            alt=""
+          />
+        </div>
+
+        <div className="w-full flex flex-col pl-4  space-y-2">
+          <h2 className="text-white font-bold">up to 60% off</h2>
+          <p className="w-[85%] text-[#808080] mb-4 text-md">
+            on buying ticket online
+          </p>
+        </div>
+      </div>
+
+      {/*info about the app */}
+
+      <div className="  flex flex-col items-center ">
+        <div className=" relative  w-[85%] h-120 bg-white rounded-lg">
+          <span className="sticky">
+            <Star className=" absolute -left-2 -top-2  w-10 h-10  text-[#FF7800]" />
+          </span>
+          <img
+            className="h-full rounded-lg object-cover"
+            src="/Login.jpg"
+            alt=""
+          />
+        </div>
+        <div>
+          <h1 className="font-bold text-2xl z-45">
+            The Best Events Start Here!
+          </h1>
+        </div>
       </div>
     </div>
   );

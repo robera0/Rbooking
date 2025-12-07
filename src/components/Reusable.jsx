@@ -29,7 +29,6 @@ export const MenuBar = ({ icon, header }) => {
         {icon}
         <span className="text-center">{header}</span>
       </button>
-      ;
     </>
   );
 };
