@@ -6,8 +6,14 @@ import {
   Search,
   User,
   Star,
+  UsersRound,
+  Timer,
+  Shield,
+  Bell,
+  Map,
 } from "lucide-react";
 import { CalendarDemo } from "@/components/ui/calendar";
+import { InfoBar } from "../../components/Reusable";
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
@@ -18,9 +24,9 @@ const UserHome = () => {
     <div
       ref={dateref}
       onClick={() => setDateSlide(false)}
-      className="space-y- "
+      className="space-y-4"
     >
-      <div className="flex flex-col w-full h-62 gap-4 pl-6">
+      <div className="flex flex-col w-full h-[250px] gap-4 pl-6">
         <span className="pt-4 w-[70%] h-auto">
           <h1 className="text-4xl leading-normal text-white font-semibold">
             Find the Top events nearby.
@@ -34,25 +40,25 @@ const UserHome = () => {
           </p>
         </span>
 
-        <button className="w-46 py-2 bg-[#FF7800] text-lg text-white font-semibold cursor-pointer lg:hover:scale-95 rounded-xl transition-transform duration-200">
+        <button className="w-[180px] py-3 bg-[#FF7800] text-lg text-white font-semibold cursor-pointer lg:hover:scale-95 rounded-md transition-transform duration-200">
           Discover Events
         </button>
       </div>
 
       {/* IMAGE */}
-      <div className=" mt-22 h-auto w-full flex justify-center items-center">
+      <div className="mt-[90px] h-auto w-full flex justify-center items-center">
         <div className="w-[95%] rounded-md overflow-hidden">
           <img
             src="/Login.jpg"
             alt="Login"
-            className="w-full h-92 object-cover"
+            className="w-full h-[400px] object-cover"
           />
         </div>
       </div>
 
       {/*MOBILE VIEW*/}
-      <div className="block md:hidden relative bottom-30 z-10 flex flex-col items-center space-y-4 w-full px-4 py-4 mt-8">
-        <div className="relative flex flex-col justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl space-y-6">
+      <div className="block md:hidden relative bottom-[120px] z-10 flex flex-col items-center space-y-4 w-full px-8 py-4 mt-8">
+        <div className="flex flex-col justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl space-y-6">
           {/* Calendar Button */}
           <button
             onClick={(e) => {
@@ -86,7 +92,7 @@ const UserHome = () => {
 
           {/* CALENDAR PANEL */}
           <div
-            className={`absolute left-16 top-0 w-62 bg-[#D9D9D9] rounded-lg overflow-hidden z-50 transition-[max-height] duration-500 ease-in-out ${
+            className={`absolute left-8 top-[75px] w-[250px] bg-[#D9D9D9] rounded-lg overflow-hidden z-50 transition-[max-height] duration-500 ease-in-out ${
               dateSlide ? "max-h-[500px] mt-3" : "max-h-0 mt-0"
             }`}
           >
@@ -126,7 +132,7 @@ const UserHome = () => {
           </div>
 
           {/* MAIN SEARCH BUTTON */}
-          <div className="absolute sticky  top-70">
+          <div className="sticky top-[70px] flex justify-center items-center">
             <button className="block md:hidden flex justify-center items-center p-4 bg-[#FF7800] rounded-full text-white">
               <Search className="w-5 h-5" />
             </button>
@@ -134,23 +140,17 @@ const UserHome = () => {
         </div>
       </div>
 
-      {/* DISCOUNT SECTION (NOW VISIBLE) */}
-
       {/* DESKTOP (you can add your own) */}
       <div className="hidden md:flex relative items-center justify-center space-x-4">
         {/* desktop layout */}
       </div>
-      <div className="block relative bottom-16 w-[80%] h-auto   bg-[#191B1D] mx-auto rounded-xl space-y-4 ">
+
+      <div className="block relative bottom-16 w-[80%] h-auto bg-[#191B1D] mx-auto rounded-xl space-y-4 ">
         <div className="w-full">
-          <img
-            className="object-cover rounded-xl"
-            src="/Login.jpg
-        "
-            alt=""
-          />
+          <img className="object-cover rounded-xl" src="/Login.jpg" alt="" />
         </div>
 
-        <div className="w-full flex flex-col pl-4  space-y-2">
+        <div className="w-full flex flex-col pl-4 space-y-2">
           <h2 className="text-white font-bold">up to 60% off</h2>
           <p className="w-[85%] text-[#808080] mb-4 text-md">
             on buying ticket online
@@ -159,11 +159,10 @@ const UserHome = () => {
       </div>
 
       {/*info about the app */}
-
-      <div className="  flex flex-col items-center ">
-        <div className=" relative  w-[85%] h-120 bg-white rounded-lg">
-          <span className="sticky">
-            <Star className=" absolute -left-2 -top-2  w-10 h-10  text-[#FF7800]" />
+      <div className="flex flex-col items-center space-y-4">
+        <div className="relative w-[85%] h-[440px] rounded-lg">
+          <span className="absolute">
+            <Star className="absolute -left-4 -top-2 w-12 h-12 text-[#FF7800]" />
           </span>
           <img
             className="h-full rounded-lg object-cover"
@@ -171,10 +170,84 @@ const UserHome = () => {
             alt=""
           />
         </div>
-        <div>
-          <h1 className="font-bold text-2xl z-45">
+
+        <div className="w-[80%] h-auto space-y-4">
+          <h1 className="text-white font-bold text-3xl z-[45]">
             The Best Events Start Here!
           </h1>
+          <p className="w-[95%] text-[#808080] text-md">
+            Book your Spot on any event with us and don't forget to grab an
+            awesome event deal to save massive on your stay.
+          </p>
+
+          <div className="block text-white h-auto z-[70] space-y-6">
+            <InfoBar
+              icon={<UsersRound />}
+              bg={"bg-[#5EC750]"}
+              header={"Quick Search"}
+              des={"Fast event lookup made simple."}
+            />
+            <InfoBar
+              icon={<Timer className="w-7 h-7" />}
+              bg={"bg-red-500"}
+              header={"Quick Services"}
+              des={"Supposing so be resolving Events  perfectly."}
+            />
+            <InfoBar
+              icon={<Shield className="text-[#FD7E14]" />}
+              bg={"bg-[#392E27]"}
+              header={"High Security"}
+              des={"Arranging rapturous did believe him all had supported.."}
+            />
+            <InfoBar
+              icon={<UsersRound className="text-[#17A2B8]" />}
+              bg={"bg-[#213238]"}
+              header={"24 hour Alert"}
+              des={"Fast Notification as soon as event s posted"}
+            />
+          </div>
+        </div>
+        {/*FEATURE EVENTS */}
+        <div className="w-full h-full flex  flex-col mt-4 items-center z-[80] space-y-6 ">
+          <h1 className="text-white  font-bold text-3xl z-[45]">
+            Feature Events
+          </h1>
+          <div className="block h-auto flex flex-col mb-12 items-center justify-center space-y-24 ">
+            {Array(3)
+              .fill()
+              .map((__, idx) => (
+                <>
+                  <div className="relative w-[80%] h-72 rounded-xl space-y-2">
+                    <img
+                      src="/Login.jpg
+               "
+                      alt=""
+                      className=" h-full object-cover rounded-xl"
+                    />
+                    <div className="absolute bottom-3 left-4 flex bg-[#FF7800] text-white px-4 py-1 rounded-xl space-x-2">
+                      <Map />
+                      <span>Addis Ababa</span>
+                    </div>
+                    <div className="flex justify-between pl-2">
+                      <div>
+                        <h1 className="text-2xl text-white font-semibold">
+                          Event name
+                        </h1>
+                        <p className="text-[#FF7800]">
+                          <span className="font-bold ">300 Birr</span> /
+                          Starting at
+                        </p>
+                      </div>
+                      {/*RATING */}
+                      <div className="flex justify-center items-center space-x-2">
+                        <h1 className="text-white text-xl font-bold">4.5</h1>
+                        <Star className="text-[#FF7800]" />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ))}
+          </div>
         </div>
       </div>
     </div>
