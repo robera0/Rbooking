@@ -49,10 +49,10 @@ const Main = ({ children }) => {
           </div>
         </div>
 
-        <div className="overflow-y-auto flex-1 scroll-hidden pt-6 pb-24">
+        <div className="overflow-y-auto flex-1 scroll-hidden pt-6 pb-18">
           {children}
           {/*Footer */}
-          <div className="  w-full h-92 pt-8 pl-4 bg-[#0B0A12]">
+          <div className="  w-full h-96 pt-8 pl-4 bg-[#0B0A12]">
             <div className=" space-y-8">
               <div className="space-y-2">
                 <div className="flex flex-cols space-x-2">
@@ -83,11 +83,31 @@ const Main = ({ children }) => {
 
               {/*SOCIAL MEDIA */}
               <div className="flex flex-col mt-8  mr-12  items-end text-white  space-y-3">
-                <h1 className="text-lg ">Follow Us on</h1>
-                <div className="flex items-center   pl-4 space-x-3">
-                  <Instagram />
-                  <Facebook />
-                  <Twitter />
+                <h1 className="text-lg font-semibold ">Follow Us on</h1>
+                <div className="flex items-center pl-4 space-x-3">
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Instagram className="w-6 h-6 cursor-pointer" />
+                  </a>
+
+                  <a
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Facebook className="w-6 h-6 cursor-pointer" />
+                  </a>
+
+                  <a
+                    href="https://twitter.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Twitter className="w-6 h-6 cursor-pointer" />
+                  </a>
                 </div>
               </div>
             </div>

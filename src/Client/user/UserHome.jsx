@@ -29,14 +29,9 @@ import { RatingStars } from "../../components/Reusable";
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const [date, setDate] = useState(null);
-  const dateref = useRef(null);
 
   return (
-    <div
-      ref={dateref}
-      onClick={() => setDateSlide(false)}
-      className="space-y-4"
-    >
+    <div onClick={() => setDateSlide(false)} className="space-y-4">
       <div className="flex flex-col w-full h-[250px] gap-4 pl-6">
         <span className="pt-4 w-[70%] h-auto">
           <h1 className="text-4xl leading-normal text-white font-semibold">
