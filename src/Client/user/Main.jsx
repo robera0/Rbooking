@@ -1,4 +1,16 @@
-import { Scissors, Menu, Bell, CircleUser, House, Ticket } from "lucide-react";
+import {
+  Scissors,
+  Menu,
+  Bell,
+  CircleUser,
+  House,
+  Ticket,
+  Mail,
+  Phone,
+  Instagram,
+  Twitter,
+  Facebook,
+} from "lucide-react";
 import { MenuBar } from "../../components/Reusable";
 const Main = ({ children }) => {
   return (
@@ -39,14 +51,54 @@ const Main = ({ children }) => {
 
         <div className="overflow-y-auto flex-1 scroll-hidden pt-6 pb-24">
           {children}
+          {/*Footer */}
+          <div className="  w-full h-92 pt-8 pl-4 bg-[#0B0A12]">
+            <div className=" space-y-8">
+              <div className="space-y-2">
+                <div className="flex flex-cols space-x-2">
+                  <Scissors className="text-[#B3B3B3] mt-2 w-8 h-8" />
+                  <h1 className="font-irish text-xl w-12 text-white font bold">
+                    Kuretegn Event
+                  </h1>
+                </div>
+
+                <p className=" pl-8 w-[95%] text-[#B3B3B3]">
+                  Flawed plans, but full support everyone believed in him!
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex flex-cols pl-4 mt-4 space-x-3">
+                  <Phone className=" text-white  mt-2 w-5 h-5" />
+                  <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
+                    +25181234567
+                  </h1>
+                </div>
+                <div className="flex flex-cols items-center   pl-4 space-x-3">
+                  <Mail className=" text-white  mt-2 w-5 h-5" />
+                  <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
+                    kuretugnevent@gmail.con
+                  </h1>
+                </div>
+              </div>
+
+              {/*SOCIAL MEDIA */}
+              <div className="flex flex-col mt-8  mr-12  items-end text-white  space-y-3">
+                <h1 className="text-lg ">Follow Us on</h1>
+                <div className="flex items-center   pl-4 space-x-3">
+                  <Instagram />
+                  <Facebook />
+                  <Twitter />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        {/*Footer */}
 
         {/*menu Bar */}
-        <div className="fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4  mt-2 z-100 rounded-t-3xl">
-          <MenuBar icon={<House />} header="Home" />
-          <MenuBar icon={<Ticket />} header="Ticket" />
-          <MenuBar icon={<CircleUser />} header="Account" />
+        <div className="fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4  z-100 rounded-t-3xl">
+          <MenuBar icon={<House />} header="Home" path={"/event_home"} />
+          <MenuBar icon={<Ticket />} header="Ticket" path={"/tickets_home"} />
+          <MenuBar icon={<CircleUser />} header="Account" path={"/account"} />
         </div>
       </div>
     </div>
