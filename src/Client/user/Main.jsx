@@ -76,7 +76,7 @@ const Main = ({ children }) => {
                 <div className="flex flex-cols items-center   pl-4 space-x-3">
                   <Mail className=" text-white  mt-2 w-5 h-5" />
                   <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
-                    kuretugnevent@gmail.con
+                    kuretegnevents@gmail.con
                   </h1>
                 </div>
               </div>
