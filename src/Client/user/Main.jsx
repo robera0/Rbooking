@@ -117,7 +117,11 @@ const Main = ({ children }) => {
         {/*menu Bar */}
         <div className="fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4  z-100 rounded-t-3xl">
           <MenuBar icon={<House />} header="Home" path={"/event_home"} />
-          <MenuBar icon={<Ticket />} header="Ticket" path={"/tickets_home"} />
+          <MenuBar
+            icon={<Ticket />}
+            header="My Ticket"
+            path={"/tickets_home"}
+          />
           <MenuBar icon={<CircleUser />} header="Account" path={"/account"} />
         </div>
       </div>

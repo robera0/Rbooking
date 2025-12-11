@@ -256,7 +256,7 @@ const UserHome = () => {
           </div>
         </div>
         {/*COMMENT REVIEW */}
-        <div className="relative w-[90%] h-[200px] mt-8  mb-72 flex flex-col items-center rounded-lg ">
+        <div className="relative w-[90%] h-[240px] mt-8  mb-72 flex flex-col items-center rounded-lg ">
           <div className="w-[85%] space-y-4">
             <div className="absolute left-4 top-12 h-9 w-9 flex justify-center items-center bg-[#FF7800] rounded-lg">
               <SmilePlus className="  w-5 h-5 text-white" />
@@ -269,7 +269,7 @@ const UserHome = () => {
               />
             </div>
 
-            <div className="flex flex-col space-y-2">
+            <div className="flex  flex-col space-y-2">
               <span>
                 <Quote
                   fill="white"
@@ -298,6 +298,8 @@ const UserHome = () => {
                   className="w-8 w-8 text-white"
                 />
               </span>
+
+              <h2 className="text-lg text-white font-semibold">Event Name</h2>
             </div>
           </div>
         </div>
