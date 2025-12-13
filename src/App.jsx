@@ -16,6 +16,7 @@ import AccountPage from "./Client/user/AccountPage";
 import SignUp from "./Client/user/SignUp";
 import Ticket from "./Client/user/Ticket";
 import Account from "./Client/user/Account";
+import ViewTicket from "./Client/user/ViewTicket";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,17 @@ const AnimatedRoutes = () => {
             <PageWrapper>
               <Main>
                 <Ticket />
+              </Main>
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/tickets_home/view_ticket"
+          element={
+            <PageWrapper>
+              <Main>
+                <ViewTicket />
               </Main>
             </PageWrapper>
           }

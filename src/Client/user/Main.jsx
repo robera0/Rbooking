@@ -50,7 +50,8 @@ const Main = ({ children }) => {
         </div>
 
         <div className="overflow-y-auto flex-1 scroll-hidden pt-6 pb-18">
-          {children}
+          <div>{children}</div>
+
           {/*Footer */}
           <div className="  w-full h-96 pt-8 pl-4 bg-[#0B0A12]">
             <div className=" space-y-8">
@@ -115,7 +116,7 @@ const Main = ({ children }) => {
         </div>
 
         {/*menu Bar */}
-        <div className="fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4  z-100 rounded-t-3xl">
+        <div className="lg:hidden fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4  z-100 rounded-t-3xl">
           <MenuBar icon={<House />} header="Home" path={"/event_home"} />
           <MenuBar
             icon={<Ticket />}

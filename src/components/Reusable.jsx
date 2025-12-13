@@ -26,7 +26,7 @@ export const Toggle = ({ name, toggle, toggleOn, action }) => {
 
 export const MenuBar = ({ icon, header, path }) => {
   const location = useLocation();
-  const isActive = location.pathname == path;
+  const isActive = location.pathname.split("/")[1] == path.replace("/", "");
   return (
     <>
       <Link

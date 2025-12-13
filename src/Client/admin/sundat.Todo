@@ -1,9 +1,2 @@
-
-[] make the available hour respect to its day
-[] edit the schema for the hours and days 
-[] make the add working hour show only when its clicked 
-[] add ticket who who sold 
-[] make the available hour input compliment to its week
-[] make the add service price section work probably div problem
-[] add custom  hours
-[] after all the admin side work finish  show a bipping animation before loading the sections
+[] finish the ticket section
+[] do the  sliding account section
