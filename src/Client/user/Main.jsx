@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Scissors,
   Menu,
@@ -10,11 +11,18 @@ import {
   Instagram,
   Twitter,
   Facebook,
+  CircleX,
 } from "lucide-react";
 import { MenuBar } from "../../components/Reusable";
+import { AccountSideMenu } from "../../components/Reusable";
+import { motion, AnimatePresence } from "framer-motion";
+import { useService } from "@/Context/ServiceContext";
+
 const Main = ({ children }) => {
+  const { isAccountActive, setIsAccountActive } = useService();
+
   return (
-    <div className="h-auto">
+    <div onClick={() => setIsAccountActive(false)} className="h-auto">
       <div className="relative flex h-screen overflow-hidden bg-[#222529] flex-col ">
         <div className="flex justify-between lg:hidden text-white mt-2  p-6">
           <div className="flex  space-x-2">
@@ -48,6 +56,37 @@ const Main = ({ children }) => {
             </button>
           </div>
         </div>
+
+        <AnimatePresence>
+          {isAccountActive && (
+            <motion.div
+              className="fixed inset-0 z-[200] bg-black/30"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAccountActive(false)}
+            >
+              <motion.div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute top-0 right-0 w-[80%] h-full pt-2 pb-8 bg-[#222529] shadow-2xl space-y-4"
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                {/* Close button */}
+                <div className="flex justify-end p-4">
+                  <CircleX
+                    onClick={() => setIsAccountActive(false)}
+                    className="w-8 h-8 text-white cursor-pointer"
+                  />
+                </div>
+
+                <AccountSideMenu />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="overflow-y-auto flex-1 scroll-hidden pt-6 pb-18">
           <div>{children}</div>
@@ -116,15 +155,25 @@ const Main = ({ children }) => {
         </div>
 
         {/*menu Bar */}
-        <div className="lg:hidden fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4  z-100 rounded-t-3xl">
-          <MenuBar icon={<House />} header="Home" path={"/event_home"} />
-          <MenuBar
-            icon={<Ticket />}
-            header="My Ticket"
-            path={"/tickets_home"}
-          />
-          <MenuBar icon={<CircleUser />} header="Account" path={"/account"} />
-        </div>
+        <AnimatePresence>
+          {!isAccountActive && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="lg:hidden fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4 z-[100] rounded-t-3xl"
+            >
+              <MenuBar icon={<House />} header="Home" path="/event_home" />
+              <MenuBar
+                icon={<Ticket />}
+                header="My Ticket"
+                path="/tickets_home"
+              />
+              <MenuBar icon={<CircleUser />} header="Account" path="/account" />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

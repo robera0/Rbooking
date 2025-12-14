@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   CalendarIcon,
   ChevronDown,
@@ -176,7 +176,6 @@ const UserHome = () => {
             alt=""
           />
         </div>
-
         <div className="w-[80%] h-auto space-y-4">
           <h1 className="text-white font-bold text-3xl z-[45]">
             The Best Events Start Here!
@@ -255,7 +254,7 @@ const UserHome = () => {
               ))}
           </div>
         </div>
-        {/*COMMENT REVIEW */}
+        {/*COMMENT REVIEW */} {/* this going to be a sliding div */}
         <div className="relative w-[90%] h-[240px] mt-8  mb-72 flex flex-col items-center rounded-lg ">
           <div className="w-[85%] space-y-4">
             <div className="absolute left-4 top-12 h-9 w-9 flex justify-center items-center bg-[#FF7800] rounded-lg">

@@ -30,6 +30,7 @@ export const ServiceProvider = ({ children }) => {
   const [refetchActive, setrefetchActive] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [profileView, setProfielView] = useState(true);
+  const [isAccountActive, setIsAccountActive] = useState(false);
 
   return (
     <ServiceContext.Provider
@@ -88,6 +89,8 @@ export const ServiceProvider = ({ children }) => {
         setSelectedEvent,
         profileView,
         setProfielView,
+        isAccountActive,
+        setIsAccountActive,
       }}
     >
       {children}

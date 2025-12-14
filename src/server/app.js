@@ -25,7 +25,6 @@ app.use("/api", (req, res, next) => {
   next();
 });
 
-// Apply API routes (now no-store works)
 app.use("/api", eventrouter);
 app.use("/api", profilerouter);
 app.use("/api", userRouter);
