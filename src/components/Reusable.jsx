@@ -9,6 +9,7 @@ import {
   Settings,
   CreditCard,
   Heart,
+  ToggleRightIcon,
 } from "lucide-react";
 export const Toggle = ({ name, toggle, toggleOn, action }) => {
   return (
@@ -154,7 +155,11 @@ export const AccountSideMenu = () => {
             header="Wishlist"
             path={"/account/favorites"}
           />{" "}
-          <AccountMenu icon={<Settings />} header="Setting" path={"/setting"} />{" "}
+          <AccountMenu
+            icon={<Settings />}
+            header="Setting"
+            path={"/account/setting"}
+          />{" "}
           <AccountMenu
             icon={<LogOut className="text-red-600" />}
             header="Sign Out"
@@ -163,5 +168,22 @@ export const AccountSideMenu = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+export const NotificationMenu = ({ info }) => {
+  return (
+    <>
+      <div className="w-full flex items-center justify-between gap-4 py-2">
+        <p className="text-md text-gray-400 leading-snug flex-1">{info}</p>
+
+        <button
+          type="button"
+          className="flex items-center justify-center shrink-0 mr-4"
+        >
+          <ToggleRightIcon className="w-8 h-8 text-orange-500" />
+        </button>
+      </div>
+    </>
   );
 };

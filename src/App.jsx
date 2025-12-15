@@ -19,6 +19,7 @@ import Account from "./Client/user/Account";
 import ViewTicket from "./Client/user/ViewTicket";
 import Wishlist from "./Client/user/Wishlist";
 import Profile from "./Client/user/Profile";
+import Setting from "./Client/user/Setting";
 
 const queryClient = new QueryClient();
 
@@ -144,6 +145,19 @@ const AnimatedRoutes = () => {
               <Main>
                 <Account>
                   <Wishlist />
+                </Account>
+              </Main>
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/account/setting"
+          element={
+            <PageWrapper>
+              <Main>
+                <Account>
+                  <Setting />
                 </Account>
               </Main>
             </PageWrapper>
