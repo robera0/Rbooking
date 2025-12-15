@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Scissors,
   Menu,
@@ -67,7 +66,6 @@ const Main = ({ children }) => {
               onClick={() => setIsAccountActive(false)}
             >
               <motion.div
-                onClick={(e) => e.stopPropagation()}
                 className="absolute top-0 right-0 w-[80%] h-full pt-2 pb-8 bg-[#222529] shadow-2xl space-y-4"
                 initial={{ x: "100%" }}
                 animate={{ x: 0 }}

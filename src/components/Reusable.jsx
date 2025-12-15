@@ -85,18 +85,24 @@ export const RatingStars = () => {
 
 export const AccountMenu = ({ icon, header, path }) => {
   const location = useLocation();
-  const isActive = location.pathname.split("/")[1] == path.replace("/", "");
+  const isActive = location.pathname == path;
   return (
     <>
       <Link
         to={path}
-        className={`flex px-4 py-4 w-[90%] text-lg  ml-4 items-center text-white space-x-3 rounded-xl
+        className={`flex px-4 py-2 w-[90%]  text-lg  ml-4 items-center  text-white space-x-3 rounded-md
           
-          ${isActive && "bg-[#FF8D28]"}`}
+          ${isActive && "bg-[#FF9D46]/20 "}`}
       >
-        <span className={`${isActive && "font-semibold"}`}>{icon}</span>
+        <span className={`${isActive && "font-semibold  text-[#FF8D28]"}`}>
+          {icon}
+        </span>
 
-        <span className={`${isActive && "font-semibold"} text-center`}>
+        <span
+          className={`${
+            isActive && "font-semibold  text-[#FF8D28]"
+          } text-center`}
+        >
           {header}
         </span>
       </Link>
@@ -127,11 +133,11 @@ export const AccountSideMenu = () => {
           </div>
         </div>
         <div className="w-full h-[0.3px] bg-gray-600"></div>
-        <div className="lg:hidden w-[85%] h-[450px] pt-3   ">
+        <div className="lg:hidden w-[85%] h-[450px] pt-8 space-y-4    ">
           <AccountMenu
             icon={<CircleUser />}
             header="My Profile"
-            path={"/profile"}
+            path={"/account"}
           />
           <AccountMenu
             icon={<Ticket />}
@@ -141,9 +147,13 @@ export const AccountSideMenu = () => {
           <AccountMenu
             icon={<CreditCard />}
             header="Payment Detail"
-            path={"/payment_detail"}
+            path={"/account/payment_detail"}
           />
-          <AccountMenu icon={<Heart />} header="Wishlist" path={"/favorites"} />{" "}
+          <AccountMenu
+            icon={<Heart />}
+            header="Wishlist"
+            path={"/account/favorites"}
+          />{" "}
           <AccountMenu icon={<Settings />} header="Setting" path={"/setting"} />{" "}
           <AccountMenu
             icon={<LogOut className="text-red-600" />}

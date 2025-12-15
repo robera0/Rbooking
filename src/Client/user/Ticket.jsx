@@ -1,10 +1,12 @@
 import React from "react";
 import { CircleDotDashed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-const Ticket = () => {
+import { Ticket } from "lucide-react";
+
+const TicketHome = () => {
   const navigate = useNavigate();
   return (
-    <div className="pl-4 pb-12 space-y-8">
+    <div className="flex  flex-col flex-wrap pb-12  items-center space-y-8">
       <div className="space-y-2">
         <h1 className="text-2xl text-white font-semibold ">My Tickets</h1>
         <p className="w-[85%] text-[#808080] text-md">
@@ -22,7 +24,11 @@ const Ticket = () => {
 
           <div className="flex flex-col justify-between">
             <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-white">Event name</h3>
+              <div className="w-full flex justify-between">
+                <h3 className="text-lg font-semibold text-white">Event name</h3>
+                <Ticket className="w-8 h-8 text-[#34C759]" />
+              </div>
+
               <p className="text-sm text-gray-400">Dec 20, 2025 · 6 PM</p>
               <p className="text-sm text-gray-400">
                 Addis Ababa · Millennium Hall
@@ -43,7 +49,7 @@ const Ticket = () => {
             </div>
 
             <div>
-              <div className="flex items-center  mt-2 space-x-2  text-green-400   rounded-full">
+              <div className="flex items-center  mt-5 space-x-2  text-green-400   rounded-full">
                 <span className=" ">
                   <CircleDotDashed className="w-5 h-5" />
                 </span>
@@ -67,7 +73,10 @@ const Ticket = () => {
 
           <div className="flex flex-col justify-between">
             <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-white">Event name</h3>
+              <div className="w-full flex justify-between">
+                <h3 className="text-lg font-semibold text-white">Event name</h3>
+                <Ticket className="w-8 h-8 text-orange-500" />
+              </div>
               <p className="text-sm text-gray-400">Dec 20, 2025 · 6 PM</p>
               <p className="text-sm text-gray-400">
                 Addis Ababa · Millennium Hall
@@ -85,7 +94,7 @@ const Ticket = () => {
             </div>
 
             <div>
-              <div className="flex items-center  mt-2 space-x-2  text-[#FF7800]   rounded-full">
+              <div className="flex items-center  mt-5 space-x-2  text-[#FF7800]   rounded-full">
                 <span className=" ">
                   <CircleDotDashed className="w-5 h-5" />
                 </span>
@@ -109,7 +118,10 @@ const Ticket = () => {
 
           <div className="flex flex-col justify-between">
             <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-white">Event name</h3>
+              <div className="w-full flex justify-between">
+                <h3 className="text-lg font-semibold text-white">Event name</h3>
+                <Ticket className="w-8 h-8 text-blue-500" />
+              </div>
               <p className="text-sm text-gray-400">Dec 20, 2025 · 6 PM</p>
               <p className="text-sm text-gray-400">
                 Addis Ababa · Millennium Hall
@@ -127,7 +139,7 @@ const Ticket = () => {
             </div>
 
             <div>
-              <div className="flex items-center  mt-2 space-x-2  text-red-500   rounded-full">
+              <div className="flex items-center  mt-5 space-x-2  text-red-500   rounded-full">
                 <span className=" ">
                   <CircleDotDashed className="w-5 h-5" />
                 </span>
@@ -142,4 +154,4 @@ const Ticket = () => {
   );
 };
 
-export default Ticket;
+export default TicketHome;
