@@ -19,6 +19,7 @@ import {
 import { Listbox } from "@headlessui/react";
 import { motion } from "framer-motion";
 import { Amenities } from "../../components/Reusable";
+import { EventPolices } from "../../components/Reusable";
 import { useState } from "react";
 const EventInfo = () => {
   const progress = [100, 100, 100, 100, 50];
@@ -460,6 +461,44 @@ const EventInfo = () => {
                 >
                   <span>Load More</span>
                 </button>
+              </div>
+
+              {/*EVENT POLICES  */}
+
+              <div className="space-y-6 mt-12">
+                <div className="space-y-4">
+                  <h1 className="text-white text-2xl font-semibold">
+                    Event Policies
+                  </h1>
+                  <div className="w-[80%] h-[0.3px] bg-gray-600 " />
+                </div>
+                <EventPolices
+                  header={"Refund & Cancellation Policy"}
+                  des={
+                    "Attendees must cancel at least 24–48 hours before the event to receive a refund. No refunds will be issued for late cancellations or no-shows."
+                  }
+                />
+
+                <EventPolices
+                  header={"Code of Conduct Policy"}
+                  des={
+                    " All participants must behave respectfully toward staff and other attendees. Harassment, discrimination, or disruptive behavior will result in removal from the event."
+                  }
+                />
+
+                <EventPolices
+                  header={"Entry & Ticket Policy"}
+                  des={
+                    "Guests must present a valid ticket or digital confirmation at the entrance. Tickets cannot be transferred or resold without authorization."
+                  }
+                />
+
+                <EventPolices
+                  header={"Safety & Security Policy"}
+                  des={
+                    "Bags may be inspected at entry. Dangerous or prohibited items will not be allowed. Follow all instructions from security personnel during emergencies."
+                  }
+                />
               </div>
             </div>
           </div>
