@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Listbox } from "@headlessui/react";
 import { faToggleOff, faToggleOn } from "@fortawesome/free-solid-svg-icons";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -10,7 +11,11 @@ import {
   CreditCard,
   Heart,
   ToggleRightIcon,
+  CheckCheck,
+  ChevronDown,
+  Search,
 } from "lucide-react";
+import { useState } from "react";
 export const Toggle = ({ name, toggle, toggleOn, action }) => {
   return (
     <div className="flex w-full justify-between">
@@ -185,5 +190,152 @@ export const NotificationMenu = ({ info }) => {
         </button>
       </div>
     </>
+  );
+};
+
+export const Amenities = ({ header, icon: Icon, lists }) => {
+  return (
+    <>
+      <div className="space-y-4">
+        <div className="flex items-center text-white space-x-2">
+          <span>
+            <Icon className="flex w-5 h-5" />
+          </span>
+          <h1 className=" text-lg font-semibold">{header}</h1>
+        </div>
+
+        {/*LISTS */}
+
+        {lists.map((list, _) => (
+          <>
+            <div className="flex items-center text-white space-x-2">
+              <span>
+                <CheckCheck className="flex text-[#14AE5C] w-5 h-5" />
+              </span>
+              <h1 className=" text-lg font-light">{list}</h1>
+            </div>
+          </>
+        ))}
+      </div>
+    </>
+  );
+};
+
+export const EventPolices = ({ header, des }) => {
+  return (
+    <div className="flex items-start gap-3 ">
+      <CheckCheck className="w-5 h-5 text-[#14AE5C] mt-1 shrink-0" />
+
+      <div className="space-y-1">
+        <h2 className="text-white text-lg font-semibold">{header}</h2>
+        <p className=" w-[90%]  text-sm text-gray-400 leading-relaxed">{des}</p>
+      </div>
+    </div>
+  );
+};
+
+export const EditMenu = ({ header, options, placeholder }) => {
+  const [selected, setSelected] = useState(null);
+  return (
+    <>
+      <div className="w-full pl-4 h-full ">
+        <Listbox value={selected} onChange={setSelected}>
+          <div className="relative w-full space-y-2">
+            {/* Button */}
+            <p className="text-[#808080] font-semibold">{header}</p>
+
+            <Listbox.Button
+              className="
+                                relative w-full h-8 cursor-pointer
+                                rounded-xl  rounded-lg
+                                bg-[#202020] text-white px-4  py-7 text-md
+                                flex items-center justify-between outline-none
+                              "
+            >
+              <span>{selected ? selected.value : `${placeholder}`}</span>
+              <ChevronDown className="mr-3 text-gray-400 text-center w-6 h-6" />
+            </Listbox.Button>
+
+            {/* Options */}
+            <Listbox.Options
+              className="
+                                absolute z-10 mt-1 w-full
+                                rounded-md bg-[#222529]
+                                border border-gray-600/40
+                                shadow-lg focus:outline-none
+                              "
+            >
+              {options.map((option) => (
+                <Listbox.Option
+                  key={option.id}
+                  value={option}
+                  className={({ active }) =>
+                    `
+                                    cursor-pointer px-3 h-10
+                                    flex items-center text-sm
+                                    ${
+                                      active
+                                        ? "bg-orange-500 text-white"
+                                        : "text-gray-200"
+                                    }
+                                    `
+                  }
+                >
+                  {({ selected }) => (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="mr-8">
+                        {" "}
+                        {selected && { option }?.value}
+                      </span>
+                    </div>
+                  )}
+                </Listbox.Option>
+              ))}
+            </Listbox.Options>
+          </div>
+        </Listbox>
+      </div>
+    </>
+  );
+};
+
+export const EditMenuBar = () => {
+  const LocationOptions = [
+    { id: 1, label: 5, value: "5/5" },
+    { id: 2, label: 5, value: "4/5" },
+    { id: 3, label: 3, value: "3/5" },
+    { id: 4, label: 2, value: "2/5" },
+    { id: 4, label: 1, value: "1/5" },
+    { id: 4, label: 0, value: "0/5" },
+  ];
+
+  return (
+    <div className=" w-full h-full  flex flex-col justify-center items-center  bg-[#2A2C31] space-y-4   p-4">
+      {/*LOCATION */}
+      <EditMenu
+        header={"Location"}
+        options={LocationOptions}
+        placeholder={"Select location"}
+      />
+      {/*DATE */}
+      <EditMenu
+        header={"Date"}
+        options={LocationOptions}
+        placeholder={"All dates"}
+      />
+      {/*CATEGORY */}
+      <EditMenu
+        header={"Category"}
+        options={LocationOptions}
+        placeholder={"Select category"}
+      />
+
+      <div className="flex  justify-center mb-4 mt-6">
+        <button className="flex text-white  font-semibold bg-[#FF7800] px-8 py-2 rounded-md space-x-2 lg:cursor-pointer">
+          <Search />
+          <span>Search here</span>
+        </button>
+      </div>
+    </div>
   );
 };

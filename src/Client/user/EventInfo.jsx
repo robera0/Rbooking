@@ -15,12 +15,15 @@ import {
   ArrowBigRight,
   ThumbsDown,
   ThumbsUp,
+  Search,
 } from "lucide-react";
 import { Listbox } from "@headlessui/react";
 import { motion } from "framer-motion";
 import { Amenities } from "../../components/Reusable";
 import { EventPolices } from "../../components/Reusable";
+
 import { useState } from "react";
+import { useService } from "@/Context/ServiceContext";
 const EventInfo = () => {
   const progress = [100, 100, 100, 100, 50];
   const options = [
@@ -35,12 +38,15 @@ const EventInfo = () => {
   const [selected, setSelected] = useState(null);
   const [likeBtn, setLikeBtn] = useState(15);
   const [dislikeBtn, setDisLikeBtn] = useState(2);
-
+  const { isEditMenuActive, setEditMenuActive } = useService();
   return (
     <div className=" space-y-8 mb-12">
       {/*EDIT BUTTON */}
       <div className="flex justify-center  ">
-        <button className="flex text-white  font-semibold bg-[#FF7800] px-10 py-3 rounded-md space-x-2 lg:cursor-pointer">
+        <button
+          onClick={() => setEditMenuActive(true)}
+          className="flex text-white  font-semibold bg-[#FF7800] px-10 py-3 rounded-md space-x-2 lg:cursor-pointer"
+        >
           <SquarePen />
           <span>Edit Search</span>
         </button>
