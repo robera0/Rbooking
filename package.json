@@ -26,6 +26,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cors": "^2.8.5",
+    "course": "^0.0.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",

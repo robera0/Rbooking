@@ -20,6 +20,7 @@ import ViewTicket from "./Client/user/ViewTicket";
 import Wishlist from "./Client/user/Wishlist";
 import Profile from "./Client/user/Profile";
 import Setting from "./Client/user/Setting";
+import EventInfo from "./Client/user/EventInfo";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +32,7 @@ const pageVariants = {
 };
 
 const pageTransition = {
-  duration: 0.3,
+  duration: 0.2,
   ease: "easeInOut",
 };
 
@@ -98,6 +99,16 @@ const AnimatedRoutes = () => {
             <PageWrapper>
               <Main>
                 <UserHome />
+              </Main>
+            </PageWrapper>
+          }
+        />
+        <Route
+          path="/event_info"
+          element={
+            <PageWrapper>
+              <Main>
+                <EventInfo />
               </Main>
             </PageWrapper>
           }

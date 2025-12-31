@@ -25,10 +25,12 @@ import {
 import { CalendarDemo } from "@/components/ui/calendar";
 import { InfoBar } from "../../components/Reusable";
 import { RatingStars } from "../../components/Reusable";
+import { eventService } from "@/Context/ApiEvent";
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const [date, setDate] = useState(null);
+  const { events, isLoading, error } = eventService();
 
   return (
     <div onClick={() => setDateSlide(false)} className="space-y-4">
@@ -213,44 +215,49 @@ const UserHome = () => {
           </div>
         </div>
         {/*FEATURE EVENTS */}
-        <div className="w-full h-full flex  flex-col mt-4 items-center z-[80] space-y-6 ">
+        <div className="w-full h-full flex  flex-col mt-4 items-center z-[80] space-y-8 ">
           <h1 className="text-white  font-bold text-3xl z-[45]">
             Feature Events
           </h1>
-          <div className="block h-auto flex flex-col mb-12 items-center justify-center space-y-24 ">
-            {Array(3)
-              .fill()
-              .map((__, idx) => (
-                <>
-                  <div className="relative w-[80%] h-72 rounded-xl space-y-2">
+          {error && message.error}
+          <div className="block h-auto flex flex-col mb-12 items-center justify-center gap-6 space-y-24">
+            {Array.isArray(events?.events) &&
+              events.events.map((e, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col items-center justify-center w-full  "
+                >
+                  <div className="relative w-[80%] h-72 rounded-xl  space-y-2">
                     <img
-                      src="/Login.jpg
-               "
-                      alt=""
-                      className=" h-full object-cover rounded-xl"
+                      src={e?.pictures?.[0] || e?.pictures?.[1] || "/Login.jpg"}
+                      alt={e?.name || "event image"}
+                      className="h-full w-full object-cover rounded-xl"
                     />
                     <div className="absolute bottom-3 left-4 flex bg-[#FF7800] text-white px-4 py-1 rounded-xl space-x-2">
                       <Map />
-                      <span>Addis Ababa</span>
+                      <span>{e?.locale}</span>
                     </div>
-                    <div className="flex justify-between pl-2">
-                      <div>
-                        <h1 className="text-2xl text-white font-semibold">
-                          Event name
+                    <div className="flex justify-between pl-2 mt-2">
+                      <div className="space-y-2">
+                        <h1 className="text-lg text-white font-semibold">
+                          {e?.name}
                         </h1>
                         <p className="text-[#FF7800]">
-                          <span className="font-bold ">300 Birr</span> /
-                          Starting at
+                          <span className="font-bold">
+                            {`${e?.priceRanges?.[0]?.min} ${e?.priceRanges?.[0]?.currency}`}
+                          </span>{" "}
+                          / Starting at
                         </p>
                       </div>
-                      {/*RATING */}
                       <div className="flex justify-center items-center space-x-2">
-                        <h1 className="text-white text-xl font-bold">4.5</h1>
+                        <h1 className="text-white text-xl font-bold">
+                          {e?.rating?.score}
+                        </h1>
                         <Star className="text-[#FF7800]" />
                       </div>
                     </div>
                   </div>
-                </>
+                </div>
               ))}
           </div>
         </div>

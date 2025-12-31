@@ -31,7 +31,7 @@ export const ServiceProvider = ({ children }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [profileView, setProfielView] = useState(true);
   const [isAccountActive, setIsAccountActive] = useState(false);
-
+  const [isEditMenuActive, setEditMenuActive] = useState(false);
   return (
     <ServiceContext.Provider
       value={{
@@ -91,6 +91,8 @@ export const ServiceProvider = ({ children }) => {
         setProfielView,
         isAccountActive,
         setIsAccountActive,
+        isEditMenuActive,
+        setEditMenuActive,
       }}
     >
       {children}

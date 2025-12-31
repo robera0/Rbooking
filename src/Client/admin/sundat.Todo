@@ -4,3 +4,34 @@
 [f] finish the wishlist 
 [f] finish the profile section
 [f] finish the settin section
+[f] finish the specific event section
+[f] do the drop down meanu for the edit search
+[] make the url of selected event the id of the event
+[] fetch all the events 
+
+
+src/
+ ├── app.js               # Express app setup
+ ├── server.js            # Server start
+ ├── config/
+ │    └── db.js            # MongoDB connection
+ ├── models/
+ │    ├── User.js
+ │    ├── Event.js
+ │    ├── Ticket.js
+ │    └── Booking.js
+ ├── controllers/
+ │    ├── authController.js
+ │    ├── eventController.js
+ │    ├── ticketController.js
+ │    └── bookingController.js
+ ├── routes/
+ │    ├── authRoutes.js
+ │    ├── eventRoutes.js
+ │    ├── ticketRoutes.js
+ │    └── bookingRoutes.js
+ ├── middlewares/
+ │    └── authMiddleware.js
+ ├── utils/
+ │    └── generateQR.js
+ └── .env

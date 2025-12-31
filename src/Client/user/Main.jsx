@@ -12,13 +12,18 @@ import {
   Facebook,
   CircleX,
 } from "lucide-react";
-import { MenuBar } from "../../components/Reusable";
+import { EditMenuBar, MenuBar } from "../../components/Reusable";
 import { AccountSideMenu } from "../../components/Reusable";
 import { motion, AnimatePresence } from "framer-motion";
-import { useService } from "@/Context/ServiceContext";
+import { useService } from "../../Context/ServiceContext";
 
 const Main = ({ children }) => {
-  const { isAccountActive, setIsAccountActive } = useService();
+  const {
+    isAccountActive,
+    setIsAccountActive,
+    isEditMenuActive,
+    setEditMenuActive,
+  } = useService();
 
   return (
     <div onClick={() => setIsAccountActive(false)} className="h-auto">
@@ -55,6 +60,49 @@ const Main = ({ children }) => {
             </button>
           </div>
         </div>
+
+        {/*EDIT MENU BAR */}
+        <AnimatePresence>
+          {isEditMenuActive && (
+            <motion.div
+              className="fixed inset-0 z-[200] w-full h-screen bg-black/40 flex justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setEditMenuActive(false)}
+            >
+              <motion.div
+                onClick={(e) => e.stopPropagation()}
+                className="w-full  bg-[#1F2227] pt-4 shadow-2xl space-y-8 "
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 40, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 25 }}
+              >
+                {/* Header */}
+                <div className="flex justify-between items-center px-6 py-5">
+                  <span className="text-white font-semibold text-lg">
+                    Edit Search
+                  </span>
+
+                  <CircleX
+                    onClick={() => setEditMenuActive(false)}
+                    className="w-6 h-6 text-white/70 cursor-pointer hover:text-white"
+                  />
+                </div>
+
+                {/* Card */}
+                <div className=" w-full px-5 pb-6">
+                  <div className="bg-[#2A2C31] w-full rounded-xl pt-6">
+                    <EditMenuBar />
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/*ACCOUNT MENU BAR */}
 
         <AnimatePresence>
           {isAccountActive && (

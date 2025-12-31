@@ -1,12 +1,12 @@
 import { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-
+import { useState } from "react";
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
   // GET EVENTS
   const fetchEvents = async () => {
-    const res = await fetch("http://localhost:5000/api/events");
+    const res = await fetch("http://localhost:5000/api");
     return res.json();
   };
   const {
@@ -18,7 +18,10 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["event"],
   });
 
+  console.log(events);
+
   // GET BUSINESS INFO
+  /*
   const getBussinesProfile = async () => {
     const res = await fetch("http://localhost:5000/api/profile");
     return res.json();
@@ -32,16 +35,13 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["business"],
     queryFn: getBussinesProfile,
   });
-
+*/
   return (
     <ApiContext.Provider
       value={{
         events,
         isLoading,
         error,
-        businesses,
-        BusinessIsLoading,
-        BusinessError,
       }}
     >
       {children}
