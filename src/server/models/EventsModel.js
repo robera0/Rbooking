@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 // SHARED SUB-SCHEMAS
 
 // Price range
-const PriceRangeSchema = new mongoose.Schema(
+export const PriceRangeSchema = new mongoose.Schema(
   {
     type: String, // standard, VIP, day-pass, etc.
     currency: String, // USD
@@ -14,7 +14,7 @@ const PriceRangeSchema = new mongoose.Schema(
 );
 
 // Dates
-const DatesSchema = new mongoose.Schema(
+export const DatesSchema = new mongoose.Schema(
   {
     start: {
       localDate: String, // "2024-08-15"
@@ -28,7 +28,7 @@ const DatesSchema = new mongoose.Schema(
     },
     timezone: String,
     status: {
-      code: String, // onsale, cancelled, postponed
+      code: String, // onsale, cancelled, postponed,upcoming
     },
     access: {
       startDateTime: Date,
@@ -38,7 +38,7 @@ const DatesSchema = new mongoose.Schema(
 );
 
 // Classification
-const ClassificationSchema = new mongoose.Schema(
+export const ClassificationSchema = new mongoose.Schema(
   {
     primary: Boolean,
     segment: {
@@ -86,7 +86,6 @@ const BaseEventSchema = new mongoose.Schema(
       required: true,
       enum: ["event", "concert", "festival"],
     },
-
     name: String,
     url: String,
     locale: String,

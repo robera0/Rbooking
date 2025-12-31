@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/databse.js";
 import eventrouter from "./routes/eventRoutes.js";
-
+import ticketrouter from "./routes/ticketRoutes.js";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,6 +14,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api/", eventrouter);
+app.use("/api", ticketrouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

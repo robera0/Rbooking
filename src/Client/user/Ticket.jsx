@@ -2,9 +2,12 @@ import React from "react";
 import { CircleDotDashed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Ticket } from "lucide-react";
+import { eventService } from "../../Context/ApiEvent";
 
 const TicketHome = () => {
   const navigate = useNavigate();
+  const { tickets, ticketisLoading, ticketError } = eventService();
+
   return (
     <div className="flex  flex-col flex-wrap pb-12  items-center space-y-8">
       <div className="space-y-2">
@@ -14,56 +17,86 @@ const TicketHome = () => {
         </p>
       </div>
       {/*Ticket Card */}
-      <div className="rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border border-green-500/50">
-        <div className="flex gap-4">
-          <img
-            src="/Login.jpg"
-            className="h-28 w-24 rounded-xl object-cover"
-            alt=""
-          />
+      {Array.isArray(tickets?.tickets) &&
+        tickets.tickets.map((t, idx) => {
+          const date = new Date(t?.dates?.start?.localDate);
+          const formatted = date.toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+          const bgColour = {
+            onsale: { border: "border-green-500/50", text: "text-green-500" },
+            cancelled: { border: "border-red-500/50", text: "text-red-500" },
+            postponed: { border: "border-blue-500/50", text: "text-blue-500" },
+            upcoming: {
+              border: "border-yellow-500/50",
+              text: "text-yellow-500",
+            },
+          };
 
-          <div className="flex flex-col justify-between">
-            <div className="space-y-1">
-              <div className="w-full flex justify-between">
-                <h3 className="text-lg font-semibold text-white">Event name</h3>
-                <Ticket className="w-8 h-8 text-[#34C759]" />
+          const bg = bgColour[t?.dates?.status?.code];
+
+          return (
+            <div
+              key={idx}
+              className={`rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border ${bg.border} `}
+            >
+              <div className="flex gap-4">
+                <img
+                  src={t?.pictures?.[0] || t?.pictures?.[1] || "/Login.jpg"}
+                  alt={t?.name || "event image"}
+                  className="h-40 w-24 rounded-xl object-cover"
+                />
+
+                <div className="flex flex-col justify-between">
+                  <div className="space-y-1">
+                    <div className="w-full flex justify-between">
+                      <h3 className="text-sm w-[70%] font-semibold text-white">
+                        {t?.name}
+                      </h3>
+                      <Ticket className={`w-10 h-10 ${bg.text}`} />
+                    </div>
+
+                    <p className="text-sm text-gray-400">{formatted}</p>
+                    <p className="text-sm text-gray-400">{t.locale}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-xs font-medium text-green-400 bg-green-500/10 px-3 py-1 rounded-full">
+                      Early Bird
+                    </span>
+
+                    <button
+                      onClick={() => navigate(`/tickets_home/${t?._id}`)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-1 rounded-md"
+                    >
+                      View Ticket
+                    </button>
+                  </div>
+
+                  <div>
+                    <div
+                      className={`flex items-center mt-5 space-x-2 ${bg.text} rounded-full`}
+                    >
+                      <span>
+                        <CircleDotDashed className="w-5 h-5" />
+                      </span>
+                      <p className="font-semibold">{t?.dates?.status?.code}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              <p className="text-sm text-gray-400">Dec 20, 2025 · 6 PM</p>
-              <p className="text-sm text-gray-400">
-                Addis Ababa · Millennium Hall
-              </p>
             </div>
+          );
+        })}
 
-            <div className="flex items-center justify-between mt-3">
-              <span className="text-xs font-medium text-green-400 bg-green-500/10 px-3 py-1 rounded-full">
-                Early Bird
-              </span>
+      {/*
+ <div>
+ </div>
+      /*REGULAR 
 
-              <button
-                onClick={() => navigate("/tickets_home/view_ticket")}
-                className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-1 rounded-md"
-              >
-                View Ticket
-              </button>
-            </div>
-
-            <div>
-              <div className="flex items-center  mt-5 space-x-2  text-green-400   rounded-full">
-                <span className=" ">
-                  <CircleDotDashed className="w-5 h-5" />
-                </span>
-
-                <p className="font-semibold">Active</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/*REGULAR */}
-
-      <div className="rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border border-yellow-500/50">
+      <div className="rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border">
         <div className="flex gap-4">
           <img
             src="/Login.jpg"
@@ -106,9 +139,9 @@ const TicketHome = () => {
         </div>
       </div>
 
-      {/*VIP */}
+      /*VIP 
 
-      <div className="rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border border-blue-500/50">
+      <div className="rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border ">
         <div className="flex gap-4">
           <img
             src="/Login.jpg"
@@ -150,6 +183,7 @@ const TicketHome = () => {
           </div>
         </div>
       </div>
+      */}
     </div>
   );
 };

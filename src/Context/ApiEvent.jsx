@@ -18,30 +18,49 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["event"],
   });
 
-  console.log(events);
+  // GET TICKETS
 
-  // GET BUSINESS INFO
-  /*
-  const getBussinesProfile = async () => {
-    const res = await fetch("http://localhost:5000/api/profile");
+  const fetchTickets = async () => {
+    const res = await fetch("http://localhost:5000/api/tickets_home");
     return res.json();
   };
 
   const {
-    data: businesses,
-    BusinessIsLoading,
-    BusinessError,
+    data: tickets,
+    ticketisLoading,
+    ticketError,
   } = useQuery({
-    queryKey: ["business"],
-    queryFn: getBussinesProfile,
+    queryKey: ["tickets"],
+    queryFn: fetchTickets,
   });
-*/
+
+  // GET TICKETS BY ID
+
+  const fetchTicketBtId = async (ticket_id) => {
+    const res = await fetch(`http://localhost:5000/api/${ticket_id}`);
+    return res.json();
+  };
+
+  const {
+    data: ticket_id,
+    ticket_idisLoading,
+    ticket_idError,
+  } = useQuery({
+    queryKey: ["tickets_id"],
+    queryFn: fetchTicketBtId,
+  });
   return (
     <ApiContext.Provider
       value={{
         events,
         isLoading,
         error,
+        tickets,
+        ticketisLoading,
+        ticketError,
+        ticket_id,
+        ticket_idisLoading,
+        ticket_idError,
       }}
     >
       {children}
