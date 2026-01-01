@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
@@ -36,19 +36,11 @@ export const ApiProvider = ({ children }) => {
 
   // GET TICKETS BY ID
 
-  const fetchTicketBtId = async (ticket_id) => {
-    const res = await fetch(`http://localhost:5000/api/${ticket_id}`);
+  const fetchEventById = async (event_id) => {
+    const res = await fetch(`http://localhost:5000/api/events/${event_id}`);
     return res.json();
   };
 
-  const {
-    data: ticket_id,
-    ticket_idisLoading,
-    ticket_idError,
-  } = useQuery({
-    queryKey: ["tickets_id"],
-    queryFn: fetchTicketBtId,
-  });
   return (
     <ApiContext.Provider
       value={{
@@ -58,9 +50,7 @@ export const ApiProvider = ({ children }) => {
         tickets,
         ticketisLoading,
         ticketError,
-        ticket_id,
-        ticket_idisLoading,
-        ticket_idError,
+        fetchEventById,
       }}
     >
       {children}

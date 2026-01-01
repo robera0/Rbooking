@@ -17,13 +17,17 @@ import {
   ThumbsUp,
   Search,
 } from "lucide-react";
+import { useParams } from "react-router-dom";
 import { Listbox } from "@headlessui/react";
 import { motion } from "framer-motion";
 import { Amenities } from "../../components/Reusable";
 import { EventPolices } from "../../components/Reusable";
-
+import { useLoaderData } from "react-router-dom";
 import { useState } from "react";
 import { useService } from "@/Context/ServiceContext";
+import { eventService } from "@/Context/ApiEvent";
+import { useQuery } from "@tanstack/react-query";
+
 const EventInfo = () => {
   const progress = [100, 100, 100, 100, 50];
   const options = [
@@ -39,6 +43,24 @@ const EventInfo = () => {
   const [likeBtn, setLikeBtn] = useState(15);
   const [dislikeBtn, setDisLikeBtn] = useState(2);
   const { isEditMenuActive, setEditMenuActive } = useService();
+  const { fetchEventById } = eventService();
+  const { id } = useParams();
+  const {
+    data: event_id,
+    event_idisLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["event", id],
+    queryFn: () => fetchEventById(id),
+  });
+
+  const date = new Date(event_id?.event_id?.dates?.start?.localDate);
+  const formatted = date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
   return (
     <div className=" space-y-8 mb-12">
       {/*EDIT BUTTON */}
@@ -53,19 +75,22 @@ const EventInfo = () => {
       </div>
       {/*HEADER */}
       <div className="flex flex-col pl-6  space-y-4  ">
-        <div className="flex flex-col space-y-2">
-          <div className="flex space-x-3">
-            <h1 className="text-white text-2xl font-semibold">Event Name</h1>
-            <div className=" flex  space-x-2  items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
-              <ClockFading className="text-white flex text-center w-5 h-5" />
-              <span>Starts at 11 PM LT</span>
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between">
+            <h1 className="text-white text-lg w-50 font-semibold">
+              {event_id?.event_id?.name}
+            </h1>
+            <div className="flex items-center space-x-2 mr-4 pl-2  w-32  h-12 bg-[#3F454B] text-sm text-white rounded-md">
+              <ClockFading className="w-5 h-5" />
+              <span>{formatted}</span>
             </div>
           </div>
+
           <div className="flex space-x-2">
             <MapPin className="text-white flex text-center w-5 h-5" />
             <span>
               <p className="w-[%] text-[#808080] text-sm">
-                5855 W Century Blvd, Los Angeles - 90045
+                {event_id?.event_id?.locale}
               </p>
             </span>
           </div>
@@ -84,7 +109,7 @@ const EventInfo = () => {
         <div className="space-y-3">
           <div className="w-[90%] rounded-2xl overflow-hidden">
             <img
-              src="/Login.jpg"
+              src={event_id?.event_id?.pictures?.[0] || "/1308183.jpeg"}
               alt="Login"
               className="w-full h-[350px] object-cover"
             />
@@ -92,7 +117,7 @@ const EventInfo = () => {
 
           <div className="w-[90%] rounded-2xl overflow-hidden">
             <img
-              src="/1763661369611.webp"
+              src={event_id?.event_id?.pictures?.[1] || "/1308183.jpeg"}
               alt="Login"
               className="w-full h-[200px] object-cover"
             />
@@ -100,7 +125,7 @@ const EventInfo = () => {
 
           <div className="w-[90%] rounded-2xl overflow-hidden">
             <img
-              src="/1308183.jpeg"
+              src={event_id?.event_id?.pictures?.[2] || "/1308183.jpeg"}
               alt="Login"
               className="w-full h-[200px] object-cover"
             />
@@ -129,7 +154,9 @@ const EventInfo = () => {
               <h2 className=" text-[#808080] font-semibold">
                 Price of Early Bird
               </h2>
-              <h1 className="text-xl text-white font-bold">300 BIRR</h1>
+              <h1 className="text-xl text-white font-bold">
+                {event_id?.priceRanges?.[0]?.min}
+              </h1>
             </div>
 
             <span className="flex  items-center mr-8">
@@ -145,7 +172,9 @@ const EventInfo = () => {
                 <MoveRight className="text-white w-4" />
               </span>
 
-              <h3 className=" text-white text-center font-bold">4.5</h3>
+              <h3 className=" text-white text-center font-bold">
+                {event?.rating}
+              </h3>
 
               <span className="flex gap-1 text-orange-400">
                 {[...Array(5)].map((_, i) => (

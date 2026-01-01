@@ -127,7 +127,7 @@ const BaseEventSchema = new mongoose.Schema(
   }
 );
 
-export const Event = mongoose.model("Event", BaseEventSchema);
+export const Event = mongoose.model("events", BaseEventSchema);
 
 // CONCERT SCHEMA
 
