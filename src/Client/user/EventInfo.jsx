@@ -61,6 +61,8 @@ const EventInfo = () => {
     year: "numeric",
   });
 
+  const [showFullName, setShowFullName] = useState(false);
+
   return (
     <div className=" space-y-8 mb-12">
       {/*EDIT BUTTON */}
@@ -75,26 +77,35 @@ const EventInfo = () => {
       </div>
       {/*HEADER */}
       <div className="flex flex-col pl-6  space-y-4  ">
-        <div className="flex flex-col space-y-4">
-          <div className="flex justify-between">
-            <h1 className="text-white text-lg w-50 font-semibold">
-              {event_id?.event_id?.name}
+        <div className="flex flex-col space-y-2">
+          {/* Event name and date */}
+          <div className="flex justify-between items-center">
+            <h1
+              className="text-white text-lg font-semibold cursor-pointer"
+              onClick={() => setShowFullName(!showFullName)}
+              title={event_id?.event_id?.name}
+            >
+              {showFullName
+                ? event_id?.event_id?.name
+                : event_id?.event_id?.name?.length > 20
+                ? `${event_id?.event_id?.name.slice(0, 20)}...`
+                : event_id?.event_id?.name}
             </h1>
-            <div className="flex items-center space-x-2 mr-4 pl-2  w-32  h-12 bg-[#3F454B] text-sm text-white rounded-md">
+            <div className="inline-flex items-center mr-3 space-x-2 px-3 py-1 bg-[#3F454B] text-sm text-white rounded-md">
               <ClockFading className="w-5 h-5" />
               <span>{formatted}</span>
             </div>
           </div>
 
-          <div className="flex space-x-2">
-            <MapPin className="text-white flex text-center w-5 h-5" />
-            <span>
-              <p className="w-[%] text-[#808080] text-sm">
-                {event_id?.event_id?.locale}
-              </p>
-            </span>
+          {/* Location */}
+          <div className="flex items-center space-x-2">
+            <MapPin className="w-5 h-5 text-white" />
+            <p className="text-[#808080] text-sm truncate max-w-full">
+              {event_id?.event_id?.locale}
+            </p>
           </div>
         </div>
+
         <div className="flex justify-end mr-12 space-x-2">
           <div className=" flex  space-x-2  items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
             <Heart className="text-white flex text-center w-5 h-5" />
@@ -155,7 +166,7 @@ const EventInfo = () => {
                 Price of Early Bird
               </h2>
               <h1 className="text-xl text-white font-bold">
-                {event_id?.priceRanges?.[0]?.min}
+                {`${event_id?.event_id?.priceRanges?.[0]?.min} ${event_id?.event_id?.priceRanges?.[0]?.currency}`}
               </h1>
             </div>
 
@@ -259,7 +270,9 @@ const EventInfo = () => {
             <div className="space-y-4">
               <div className=" flex flex-col items-center p-6 w-[90%]  h-82 bg-[#2A2C31] rounded-xl gap-6">
                 <div className=" flex flex-col items-center space-y-2">
-                  <h1 className=" text-white text-2xl font-bold">4.5</h1>
+                  <h1 className=" text-white text-2xl font-bold">
+                    {event_id?.event_id?.rating?.score}
+                  </h1>
                   <p className="w-full text-[#808080] text-sm ">
                     Based on 120 Reviews{" "}
                   </p>

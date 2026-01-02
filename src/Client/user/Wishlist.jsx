@@ -70,7 +70,7 @@ const Wishlist = () => {
         </div>
 
         <div className="mb-12">
-          <div className="w-[96%] max-w-3xl rounded-2xl bg-[#191B1D] p-4 flex items-stretch gap-4">
+          <div className="w-[98%] max-w-3xl rounded-2xl bg-[#191B1D] p-4 flex items-stretch gap-4">
             {/* IMAGE SECTION */}
             <div className="shrink-0">
               <img
@@ -108,8 +108,8 @@ const Wishlist = () => {
                   300 Birr <span className="text-gray-400 text-xs">/ day</span>
                 </p>
 
-                <button className="bg-black text-white text-xs px-4 py-2 rounded-md whitespace-nowrap">
-                  View hotel
+                <button className="bg-orange-500 text-white text-xs px-4 py-2 rounded-md whitespace-nowrap">
+                  View ticket
                 </button>
               </div>
             </div>

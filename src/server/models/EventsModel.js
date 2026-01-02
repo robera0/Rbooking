@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 
-// SHARED SUB-SCHEMAS
-
 // Price range
 export const PriceRangeSchema = new mongoose.Schema(
   {
@@ -77,6 +75,15 @@ const RatingSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// AMENITY SCHEMA
+
+const AmenitySchema = new mongoose.Schema({
+  activity: [{ type: String }],
+  payment_method: [{ type: String }],
+  safety: [{ type: String }],
+  other: [{ type: String }],
+});
+
 //  BASE EVENT SCHEMA
 
 const BaseEventSchema = new mongoose.Schema(
@@ -119,6 +126,7 @@ const BaseEventSchema = new mongoose.Schema(
       venues: [{ href: String }],
     },
     rating: RatingSchema,
+    amenities: AmenitySchema,
   },
 
   {
