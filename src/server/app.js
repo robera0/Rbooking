@@ -6,6 +6,7 @@ import eventrouter from "./routes/eventRoutes.js";
 import ticketrouter from "./routes/ticketRoutes.js";
 import commentrouter from "./routes/commentRoutes.js";
 import wishlistrouter from "./routes/wishlistRoutes.js";
+import notirouter from "./routes/notificationRouter.js";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,6 +20,7 @@ app.use("/api/", eventrouter);
 app.use("/api", ticketrouter);
 app.use("/api", commentrouter);
 app.use("api", wishlistrouter);
+app.use("/api", notirouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
