@@ -14,7 +14,8 @@
 [f] make a wishlist schema
 [] learn about how jwt work in express and use it in the middleware
 [] make a  user schema
-[] make a notification for a specific user 
+[f] make a notification for a specific user 
+[] test the notification get points
 [] make a appearing div that shows the map when the location icon is clicked
 
 src/

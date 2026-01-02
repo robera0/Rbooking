@@ -1,9 +1,8 @@
 import express from "express";
-import { get_wishlist } from "../controllers/wishlistConroller";
-import Wishlist from "@/Client/user/Wishlist";
+import { get_wishlist } from "../controllers/wishlistConroller.js";
 
-wishlistrouter = express.Router();
+const wishlistrouter = express.Router();
 
-Wishlist.get("/wishlist", get_wishlist);
+wishlistrouter.get("/wishlist", get_wishlist);
 
 export default wishlistrouter;

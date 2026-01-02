@@ -1,7 +1,7 @@
 import express from "express";
-import { get_notification } from "../controllers/notificationController";
+import { get_notification } from "../controllers/notificationController.js";
 
-notirouter = express.Router();
+const notirouter = express.Router();
 
 notirouter.get("/notifications", get_notification);
 
