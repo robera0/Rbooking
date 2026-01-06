@@ -210,7 +210,7 @@ const Main = ({ children }) => {
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="lg:hidden fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4 z-[100] rounded-t-3xl"
             >
-              <MenuBar icon={<House />} header="Home" path="/event_home" />
+              <MenuBar icon={<House />} header="Home" path="/" />
               <MenuBar
                 icon={<Ticket />}
                 header="My Ticket"

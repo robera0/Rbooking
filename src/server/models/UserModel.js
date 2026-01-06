@@ -17,20 +17,29 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true, // this will be the hashed password
+      required: true,
     },
     refreshTokens: [
       {
-        token: { type: String },
+        token: { type: String, required: true },
         createdAt: { type: Date, default: Date.now },
       },
     ],
     role: {
       type: String,
       default: "user",
+      enum: ["admin", "user"],
     },
   },
   { timestamps: true }
 );
+
+userSchema.set("toJSON", {
+  transform: function (doc, ret) {
+    delete ret.password;
+    delete ret.refreshTokens;
+    return ret;
+  },
+});
 
 export const UserModel = mongoose.model("user", userSchema);

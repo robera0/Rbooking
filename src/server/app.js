@@ -7,6 +7,8 @@ import ticketrouter from "./routes/ticketRoutes.js";
 import commentrouter from "./routes/commentRoutes.js";
 import wishlistrouter from "./routes/wishlistRoutes.js";
 import notirouter from "./routes/notificationRouter.js";
+import authrouter from "./routes/authRoutes.js";
+
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,11 +18,12 @@ connectDB();
 app.use(express.json());
 app.use(cors());
 
-app.use("/api/", eventrouter);
+app.use("/api", eventrouter);
 app.use("/api", ticketrouter);
 app.use("/api", commentrouter);
-app.use("api", wishlistrouter);
-app.use("/api", notirouter);
+app.use("/api", wishlistrouter);
+app.use("/api/auth", notirouter);
+app.use("/api/auth", authrouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

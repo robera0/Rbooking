@@ -1,28 +1,99 @@
-import { generateAccessToken, generateRefreshToken } from "../services.js";
-import { comparePassword } from "../service/password.js";
 import { UserModel } from "../models/UserModel.js";
+import { generateRefreshToken, generateAccessToken } from "../service/token.js";
+import { hashPasswords, comparePassword } from "../service/password.js";
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+dotenv.config();
 
-export const login = (res, req) => {
-  const user = { username: username, password: password };
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
-  const username = user.findOne({ user });
-  const access_token = generateAccessToken(user);
-  const refresh_token = generateRefreshToken(user);
+export const register_users = async (req, res) => {
+  const { username, email, password } = req.body;
 
-  refreshTokens.push(refresh_token);
+  const existingUser = await UserModel.findOne({ email });
 
-  res.json({ access_token: access_token, refresh_token: refreshTokens });
+  if (existingUser)
+    return res.status(400).json({ message: "Email already exists" });
+
+  const hashedPassword = await hashPasswords(password);
+  const user = await UserModel.create({
+    username,
+    email,
+    password: hashedPassword,
+  });
+
+  res.status(201).json({
+    message: "User registered successfully",
+    user: {
+      id: user._id,
+      username: user.username,
+      role: user.role,
+    },
+  });
 };
 
-export const refresh = (req, res) => {
-  const token = req.body.token;
+export const login_user = async (req, res) => {
+  const { email, password } = req.body;
+  console.log("REQUEST BODY", req.body);
 
-  if (!token) return res.sendStatus(401);
-  if (!refreshTokens.includes(token)) return res.sendStatus(403);
+  const user = await UserModel.findOne({ email });
 
-  const user = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+  if (!user) return res.status(400).json({ message: "your are not a user" });
 
-  const accessToken = generateAccessToken({ name: user.name });
+  const isMatch = await comparePassword(password, user.password);
+  if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-  res.json({ access_token: accessToken });
+  const payload = {
+    id: user._id,
+    email: user.email,
+  };
+
+  const access_token = generateAccessToken(payload);
+  const refresh_token = generateRefreshToken(payload);
+  user.refreshTokens.push({ token: refresh_token });
+  await user.save();
+  res.json({ user, access_token, refresh_token });
+};
+
+export const refresh = async (req, res) => {
+  try {
+    const { refresh_token } = req.body;
+    console.log(req.body);
+
+    if (!refresh_token)
+      return res.status(401).json({ message: "their is no refresh_token" });
+
+    jwt.verify(refresh_token, REFRESH_TOKEN_SECRET, async (error, decoded) => {
+      if (error) return res.status(401).json({ message: message.error });
+      const user = await UserModel.findById(decoded.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const tokenExists = user.refreshTokens.some(
+        (t) => t.token === refresh_token
+      );
+      if (!tokenExists) {
+        return res.status(403).json({ message: "Token mismatch" });
+      }
+      const payload = {
+        id: user._id,
+        email: user.email,
+      };
+
+      const newAccessToken = generateAccessToken(payload);
+      res.json({ accessToken: newAccessToken });
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const user = async (req, res) => {
+  const user = req.user;
+  console.log(req.user);
+  if (!user) return res.status(401).json({ message: "their is no user " });
+  const validUser = await UserModel.findOne({ email: user.email }).select(
+    "-password"
+  );
+  res.json({ user: validUser });
 };

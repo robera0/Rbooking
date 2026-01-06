@@ -12,8 +12,9 @@
 [] add amenities data to the db
 [] add a schema of  a review about the app
 [f] make a wishlist schema
-[] learn about how jwt work in express and use it in the middleware
+[f] learn about how jwt work in express and use it in the middleware
 [] make a  user schema
+[] get a notification and the wishlist with the specific user
 [f] make a notification for a specific user 
 [] test the notification get points
 [] make a appearing div that shows the map when the location icon is clicked

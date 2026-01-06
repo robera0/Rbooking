@@ -79,7 +79,7 @@ const EventInfo = () => {
       <div className="flex flex-col pl-6  space-y-4  ">
         <div className="flex flex-col space-y-2">
           {/* Event name and date */}
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap space-y-2 justify-between items-center">
             <h1
               className="text-white text-lg font-semibold cursor-pointer"
               onClick={() => setShowFullName(!showFullName)}
