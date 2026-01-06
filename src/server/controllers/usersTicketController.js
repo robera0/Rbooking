@@ -1,20 +1,21 @@
 import { UserTicketModel } from "../models/UserTicketModel.js";
+import { TicketModel } from "../models/TicketModel.js";
 
+import mongoose from "mongoose";
 export const get_tickets = async (req, res) => {
   try {
-    const user_id = req.user.id;
+    const userId = new mongoose.Types.ObjectId(req.user.id);
 
-    const ticket = await UserTicketModel.find({ user_id })
-      .select("-__v")
-      .populate({
-        path: "ticketId", // populate the ticket
-        populate: {
-          path: "eventId", // then populate the event inside ticket
-          model: "Event",
-        },
-      });
-    res.status(200).json({ tickets: ticket });
+    const tickets = await UserTicketModel.find({ userId }).populate({
+      path: "ticketId",
+      populate: {
+        path: "eventId",
+        model: "Event",
+      },
+    });
+
+    res.status(200).json({ tickets });
   } catch (error) {
-    res.status(401).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };

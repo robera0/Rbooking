@@ -1,5 +1,6 @@
-[] test the ticket schema 
+[f] test the ticket schema 
 [] test the comment schema 
+[] add select to the ticket so it gave me the wanted infos
 [] add amenities data to the db
 [] add a schema of  a review about the app
 [f] make a profile schema

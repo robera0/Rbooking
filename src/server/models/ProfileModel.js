@@ -28,4 +28,4 @@ const ProfileSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const ProfileModel = mongoose.model("user_profile", ProfileSchema);
+export const ProfileModel = mongoose.model("User_Profile", ProfileSchema);

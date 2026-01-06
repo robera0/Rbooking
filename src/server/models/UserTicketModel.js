@@ -3,12 +3,12 @@ import mongoose from "mongoose";
 const UserTicketSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "user",
+    ref: "User",
     required: true,
   },
   ticketId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "tickets",
+    ref: "Ticket",
     required: true,
   },
   quantity: {
@@ -22,4 +22,4 @@ const UserTicketSchema = new mongoose.Schema({
   },
 });
 
-export const UserTicketModel = mongoose.model("user_tickets", UserTicketSchema);
+export const UserTicketModel = mongoose.model("UserTicket", UserTicketSchema);
