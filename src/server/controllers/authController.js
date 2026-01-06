@@ -1,6 +1,6 @@
-import { UserModel } from "../models/UserModel.js";
 import { generateRefreshToken, generateAccessToken } from "../service/token.js";
 import { hashPasswords, comparePassword } from "../service/password.js";
+import { UserModel } from "../models/UserModel.js";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 dotenv.config();
@@ -34,7 +34,6 @@ export const register_users = async (req, res) => {
 
 export const login_user = async (req, res) => {
   const { email, password } = req.body;
-  console.log("REQUEST BODY", req.body);
 
   const user = await UserModel.findOne({ email });
 
@@ -58,7 +57,6 @@ export const login_user = async (req, res) => {
 export const refresh = async (req, res) => {
   try {
     const { refresh_token } = req.body;
-    console.log(req.body);
 
     if (!refresh_token)
       return res.status(401).json({ message: "their is no refresh_token" });
@@ -86,14 +84,4 @@ export const refresh = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-};
-
-export const user = async (req, res) => {
-  const user = req.user;
-  console.log(req.user);
-  if (!user) return res.status(401).json({ message: "their is no user " });
-  const validUser = await UserModel.findOne({ email: user.email }).select(
-    "-password"
-  );
-  res.json({ user: validUser });
 };

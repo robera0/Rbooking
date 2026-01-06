@@ -19,9 +19,10 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api", eventrouter);
-app.use("/api", ticketrouter);
 app.use("/api", commentrouter);
-app.use("/api", wishlistrouter);
+
+app.use("/api/auth", ticketrouter);
+app.use("/api/auth", wishlistrouter);
 app.use("/api/auth", notirouter);
 app.use("/api/auth", authrouter);
 

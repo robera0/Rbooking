@@ -13,10 +13,11 @@
 [] add a schema of  a review about the app
 [f] make a wishlist schema
 [f] learn about how jwt work in express and use it in the middleware
-[] make a  user schema
+[f] make a  user schema
 [] get a notification and the wishlist with the specific user
 [f] make a notification for a specific user 
 [] test the notification get points
+[] make the logged in users only post a comment
 [] make a appearing div that shows the map when the location icon is clicked
 
 src/

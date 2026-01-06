@@ -2,9 +2,9 @@ import express from "express";
 import {
   register_users,
   login_user,
-  user,
   refresh,
 } from "../controllers/authController.js";
+import { user } from "../controllers/userController.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 const authrouter = express.Router();
 

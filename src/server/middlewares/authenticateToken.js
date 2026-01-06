@@ -8,10 +8,12 @@ export const authenticateTokenMiddleware = (req, res, next) => {
   const authHeader = req.headers["authorization"];
 
   const token = authHeader && authHeader.split(" ")[1];
-
+  console.log("AUTH HEADER", authHeader);
+  console.log("TOKEN", token);
   if (token == null) return res.sendStatus(401);
   jwt.verify(token, ACCESS_TOKEN_SECRET, (error, user) => {
-    if (error) return res.sendStatus(403);
+    if (error) return res.status(403).json({ message: error });
+    console.log(error);
     req.user = user;
     console.log("user is ", user);
     next();

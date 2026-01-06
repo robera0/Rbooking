@@ -2,9 +2,12 @@ import { notificationModel } from "../models/NotificationModel.js";
 
 export const get_notification = async (req, res) => {
   try {
-    const { user_id } = req.params;
-    const notification = notificationModel.findById(user_id);
-    res.status(200).json({ noti: notification });
+    const { user } = req.user;
+    if (!user) return res.status(401).json({ message: "their is no user " });
+    const validUser = await notificationModel
+      .findOne({ user: user.id.toString() })
+      .select("notifications");
+    res.json({ user: validUser });
   } catch {
     res.status(401).json({ message: "the user id is not true " });
   }
