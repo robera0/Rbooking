@@ -1,21 +1,9 @@
-[F] finish the ticket section
-[F] do the  sliding account section
-[F] make the account slide on every section
-[f] finish the wishlist 
-[f] finish the profile section
-[f] finish the settin section
-[f] finish the specific event section
-[f] do the drop down meanu for the edit search
-[f] make the url of selected event the id of the event
-[f] fetch all the events 
-[f] add a commenting schema so the comment can be stored
+[] test the ticket schema 
+[] test the comment schema 
 [] add amenities data to the db
 [] add a schema of  a review about the app
-[f] make a wishlist schema
-[f] learn about how jwt work in express and use it in the middleware
-[f] make a  user schema
+[f] make a profile schema
 [] get a notification and the wishlist with the specific user
-[f] make a notification for a specific user 
 [] test the notification get points
 [] make the logged in users only post a comment
 [] make a appearing div that shows the map when the location icon is clicked

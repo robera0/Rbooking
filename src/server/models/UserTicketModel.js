@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+// the ticket of the user
 const UserTicketSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -22,4 +22,4 @@ const UserTicketSchema = new mongoose.Schema({
   },
 });
 
-export const UserTicketModel = mongoose.model("userTickets", UserTicketSchema);
+export const UserTicketModel = mongoose.model("user_tickets", UserTicketSchema);
