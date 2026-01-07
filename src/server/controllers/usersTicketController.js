@@ -1,7 +1,7 @@
 import { UserTicketModel } from "../models/UserTicketModel.js";
 import { TicketModel } from "../models/TicketModel.js";
-
 import mongoose from "mongoose";
+
 export const get_tickets = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);

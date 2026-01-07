@@ -1,13 +1,13 @@
 [f] test the ticket schema 
-[] test the comment schema 
-[] add select to the ticket so it gave me the wanted infos
+[f] test the comment schema  get with resect to the event
+[f] create a profile info model and routes
+[f] make a profile schema
+[f] the wishlist with the specific user[] add select to the ticket so it gave me the wanted infos
 [] add amenities data to the db
 [] add a schema of  a review about the app
-[f] make a profile schema
-[] get a notification and the wishlist with the specific user
-[] test the notification get points
 [] make the logged in users only post a comment
 [] make a appearing div that shows the map when the location icon is clicked
+[] learn about notification design and design the schema 
 
 src/
  ├── app.js               # Express app setup

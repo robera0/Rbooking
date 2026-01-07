@@ -8,6 +8,8 @@ import commentrouter from "./routes/commentRoutes.js";
 import wishlistrouter from "./routes/wishlistRoutes.js";
 import notirouter from "./routes/notificationRouter.js";
 import authrouter from "./routes/authRoutes.js";
+import userProfilesRouter from "./routes/profileRoutes.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
@@ -17,10 +19,12 @@ connectDB();
 
 app.use(express.json());
 app.use(cors());
+app.use(cookieParser());
 
 app.use("/api", eventrouter);
 app.use("/api", commentrouter);
 
+app.use("/api/auth", userProfilesRouter);
 app.use("/api/auth", ticketrouter);
 app.use("/api/auth", wishlistrouter);
 app.use("/api/auth", notirouter);

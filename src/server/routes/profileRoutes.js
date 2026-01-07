@@ -8,3 +8,5 @@ userProfilesRouter.get(
   authenticateTokenMiddleware,
   get_user_profile
 );
+
+export default userProfilesRouter;

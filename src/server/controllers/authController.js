@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 dotenv.config();
 
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
-
+const NODE_ENV = process.env.NODE_ENV;
 export const register_users = async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -51,7 +51,17 @@ export const login_user = async (req, res) => {
   const refresh_token = generateRefreshToken(payload);
   user.refreshTokens.push({ token: refresh_token });
   await user.save();
-  res.json({ user, access_token, refresh_token });
+  res
+    .cookie("access_token", `Bearer ${access_token}`, {
+      httpOnly: true,
+      secure: NODE_ENV === "production",
+    })
+    .cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    })
+    .status(200)
+    .json({ message: "Logged in successfully" });
 };
 
 export const refresh = async (req, res) => {
@@ -83,5 +93,37 @@ export const refresh = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    const refresh_token = req.cookies.refresh_token;
+    console.log(refresh_token);
+
+    if (!refresh_token) {
+      return res.status(400).json({ message: "Refresh token is required" });
+    }
+
+    const user = await UserModel.findOne({
+      "refreshTokens.token": refresh_token,
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found or token invalid" });
+    }
+
+    user.refreshTokens = user.refreshTokens.filter(
+      (t) => t.token !== refresh_token
+    );
+
+    await user.save();
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

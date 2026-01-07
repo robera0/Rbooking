@@ -4,13 +4,19 @@ const ProfileSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
       unique: true, // ensures one profile per user
     },
     fullName: {
       type: String,
       required: true,
+    },
+    dateOfBirth: {
+      type: Date,
+    },
+    nationality: {
+      type: String,
     },
     bio: {
       type: String,
