@@ -6,7 +6,7 @@
 [f] add amenities data to the db
 [f] show the comment section
 [] add a schema of  a review about the app
-[] make the logged in users only post a comment
+[f] make the logged in users only post a comment
 [] make a appearing div that shows the map when the location icon is clicked
 [] learn about notification design and design the schema 
 

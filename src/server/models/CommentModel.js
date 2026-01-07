@@ -1,6 +1,4 @@
-import { Double } from "bson";
 import mongoose from "mongoose";
-import { type } from "node:os";
 
 // COMMENTS SCHEMA
 
@@ -18,11 +16,15 @@ const CommentSchema = new mongoose.Schema({
         ref: "User_Profile",
         required: true,
       },
-      text: { type: String },
+      text: {
+        type: String,
+        required: true,
+        trim: true,
+      },
     },
   ],
   rating: {
-    type: Double,
+    type: Number,
     default: 0,
     min: 0,
     max: 5,
