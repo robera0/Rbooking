@@ -4,15 +4,16 @@ import mongoose from "mongoose";
 
 export const get_tickets = async (req, res) => {
   try {
-    const userId = new mongoose.Types.ObjectId(req.user.id);
-
-    const tickets = await UserTicketModel.find({ userId }).populate({
+    const userId = req.user.id;
+    console.log("userId", userId);
+    const tickets = await UserTicketModel.find({ userId: userId }).populate({
       path: "ticketId",
       populate: {
         path: "eventId",
         model: "Event",
       },
     });
+    console.log("ticket", tickets);
 
     res.status(200).json({ tickets });
   } catch (error) {

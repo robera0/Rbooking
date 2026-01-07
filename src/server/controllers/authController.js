@@ -2,6 +2,7 @@ import { generateRefreshToken, generateAccessToken } from "../service/token.js";
 import { hashPasswords, comparePassword } from "../service/password.js";
 import { UserModel } from "../models/UserModel.js";
 import dotenv from "dotenv";
+
 import jwt from "jsonwebtoken";
 dotenv.config();
 
@@ -58,7 +59,7 @@ export const login_user = async (req, res) => {
     })
     .cookie("refresh_token", refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: NODE_ENV === "production",
     })
     .status(200)
     .json({ message: "Logged in successfully" });

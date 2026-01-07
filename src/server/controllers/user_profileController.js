@@ -1,5 +1,6 @@
 import { ProfileModel } from "../models/ProfileModel.js";
 import { UserModel } from "../models/UserModel.js";
+
 export const get_user_profile = async (req, res) => {
   try {
     const user_id = req.user.id;

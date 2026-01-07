@@ -17,8 +17,8 @@ const TicketHome = () => {
         </p>
       </div>
       {/*Ticket Card */}
-      {Array.isArray(tickets?.tickets) &&
-        tickets.tickets.map((t, idx) => {
+      {Array.isArray(tickets) &&
+        tickets.map((t, idx) => {
           const date = new Date(t?.dates?.start?.localDate);
           const formatted = date.toLocaleDateString("en-GB", {
             day: "numeric",

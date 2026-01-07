@@ -1,3 +1,4 @@
+import { Double } from "bson";
 import mongoose from "mongoose";
 import { type } from "node:os";
 
@@ -14,13 +15,19 @@ const CommentSchema = new mongoose.Schema({
     {
       userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "User_Profile",
         required: true,
       },
       text: { type: String },
     },
   ],
-  rating: { type: Number },
+  rating: {
+    type: Double,
+    default: 0,
+    min: 0,
+    max: 5,
+    set: (v) => Math.round(v * 10) / 10, // rounds to 1 decimal
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

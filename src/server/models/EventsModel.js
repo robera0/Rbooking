@@ -77,12 +77,15 @@ const RatingSchema = new mongoose.Schema(
 
 // AMENITY SCHEMA
 
-const AmenitySchema = new mongoose.Schema({
-  activity: [{ type: String }],
-  payment_method: [{ type: String }],
-  safety: [{ type: String }],
-  other: [{ type: String }],
-});
+const AmenitySchema = new mongoose.Schema(
+  {
+    activity: [{ type: String }],
+    payment_method: [{ type: String }],
+    safety: [{ type: String }],
+    other: [{ type: String }],
+  },
+  { _id: false }
+);
 
 //  BASE EVENT SCHEMA
 
@@ -94,6 +97,7 @@ const BaseEventSchema = new mongoose.Schema(
       enum: ["event", "concert", "festival"],
     },
     name: String,
+    desc: String,
     url: String,
     locale: String,
     pictures: [String],
@@ -127,6 +131,12 @@ const BaseEventSchema = new mongoose.Schema(
     },
     rating: RatingSchema,
     amenities: AmenitySchema,
+    comments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
   },
 
   {

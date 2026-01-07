@@ -57,7 +57,7 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes key={location.pathname} location={location}>
         <Route
-          path="/login/:id"
+          path="/login"
           element={
             <PageWrapper>
               <AccountPage

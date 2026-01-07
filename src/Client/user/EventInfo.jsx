@@ -27,6 +27,7 @@ import { useState } from "react";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import { useQuery } from "@tanstack/react-query";
+import moment from "moment";
 
 const EventInfo = () => {
   const progress = [100, 100, 100, 100, 50];
@@ -221,13 +222,7 @@ const EventInfo = () => {
             </div>
             <div className="w-[80%] h-[0.3px] bg-gray-600 " />
             <p className="w-[90%] text-[#808080] text-sm leading-6">
-              Demesne far-hearted suppose venture excited see had has. Dependent
-              on so extremely delivered by. Yet no jokes worse her why. Bed one
-              supposing breakfast day fulfilled off depending questions.
-              Delivered dejection necessary objection do Mr prevailed. Mr
-              feeling does chiefly cordial in do. Water timed folly right aware
-              if oh truth. Large above be to means. Dashwood does provide
-              stronger is.
+              {event_id?.event_id?.desc}
             </p>
           </div>
           {/*AMENITIES */}
@@ -237,23 +232,19 @@ const EventInfo = () => {
               <div className="w-[80%] h-[0.3px] bg-gray-600 " />
             </div>
             <div className="space-y-8">
-              <Amenities
-                header="Activities"
-                icon={Puzzle}
-                lists={["Free Wi-Fi", "Swimming Pool", "Parking"]}
-              />
-
-              <Amenities
-                header="Payment Method"
-                icon={CreditCard}
-                lists={["Telebirr", " MPESA", "CBE", "Apolo", "Awash Pro"]}
-              />
-
-              <Amenities
-                header="Safety and Security"
-                icon={Shield}
-                lists={["Doctor on call", "Ambulance "]}
-              />
+              {event_id?.event_id?.amenities &&
+                Object.entries(event_id.event_id.amenities).map(
+                  ([category, list]) => (
+                    <Amenities
+                      key={category}
+                      header={
+                        category.charAt(0).toUpperCase() + category.slice(1)
+                      } // Capitalize
+                      icon={Puzzle}
+                      lists={Array.isArray(list) ? list : []}
+                    />
+                  )
+                )}
             </div>
           </div>
 
@@ -404,102 +395,66 @@ const EventInfo = () => {
 
               {/*OTHERS COMMENT SECTION */}
 
-              <div className="w-full mt-12  space-y-8">
-                <div className="pt-4 space-y-4">
-                  <div className="flex justify-between gap-4">
-                    <div className="w-12 h-12 flex items-center justify-center  overflow-hidden rounded-full">
-                      <img
-                        className="w-full h-full object-cover"
-                        src="/defaultAvater.jpg"
-                        alt=""
-                      />
+              <div className="w-full mt-12 space-y-8">
+                {event_id?.event_id?.comments[0]?.comment?.map((c) => (
+                  <div key={c?._id} className="pt-4 space-y-4">
+                    <div className="flex justify-between gap-4">
+                      {/* Avatar */}
+                      <div className="w-12 h-12 flex items-center justify-center overflow-hidden rounded-full">
+                        <img
+                          className="w-full h-full object-cover"
+                          src={c?.userId?.avatarUrl || "/defaultAvater.jpg"}
+                          alt={c?.userId?.fullName || "User Name"}
+                        />
+                      </div>
+
+                      {/* Name and Time */}
+                      <div className="flex-1">
+                        <h1 className="font-bold text-white">
+                          {c?.userId?.fullName || "User Name"}
+                        </h1>
+                        <p className="text-sm text-gray-400">
+                          {moment(
+                            event_id?.event_id?.comments[0]?.createdAt
+                          ).fromNow()}
+                        </p>
+                      </div>
+
+                      {/* Rating */}
+                      <div className="flex items-center justify-center mr-12 w-10 h-10 text-white font-bold bg-[#F7C32E] rounded-md">
+                        <h1>
+                          {c?.rating || event_id?.event_id?.comments[0]?.rating}
+                        </h1>
+                      </div>
                     </div>
 
-                    <div className="flex-1">
-                      <h1 className="font-bold text-white">Christian Brooks</h1>
-                      <p className="text-sm text-gray-400">2 days ago</p>
+                    {/* Comment text */}
+                    <div>
+                      <p className="w-[90%] text-[#808080]">{c?.text}</p>
                     </div>
 
-                    <div className="flex items-center justify-center mr-12  w-10 h-10 text-white font-bold  bg-[#F7C32E] rounded-md">
-                      <h1 className="">4.5</h1>
+                    {/* Like/Dislike */}
+                    <div className="flex gap-6">
+                      <button
+                        onClick={() => setLikeBtn((prev) => prev + 1)}
+                        className="flex space-x-2 text-gray-400 hover:text-[#FF9A41] items-center justify-center transition"
+                      >
+                        <ThumbsUp className="w-5 h-5" />
+                        <span className="font-semibold">{likeBtn}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setDisLikeBtn((prev) => prev + 1)}
+                        className="flex space-x-2 text-gray-400 hover:text-red-500 items-center justify-center transition"
+                      >
+                        <ThumbsDown className="w-5 h-5" />
+                        <span className="font-semibold">{dislikeBtn}</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div>
-                    <p className="w-[90%] text-[#808080]">
-                      The Salon is thorough.compassionate and truly cares about
-                      the patients.i highly recommend this salon!{" "}
-                    </p>
-                  </div>
-
-                  {/*like and unlike icons */}
-                  <div className="flex gap-6">
-                    <button
-                      onClick={() => setLikeBtn((c) => c + 1)}
-                      className="flex space-x-2 text-gray-400 hover:text-[#FF9A41] items-center justify-center transition"
-                    >
-                      <ThumbsUp className="w-5 h-5" />
-                      <span className="font-semibold">{likeBtn}</span>
-                    </button>
-
-                    <button
-                      onClick={() => setDisLikeBtn((c) => c + 1)}
-                      className="flex space-x-2 text-gray-400 hover:text-red-500 items-center justify-center transition"
-                    >
-                      <ThumbsDown className="w-5 h-5" />
-                      <span className="font-semibold">{dislikeBtn}</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="pt-4 space-y-4">
-                  <div className="flex justify-between gap-4">
-                    <div className="w-12 h-12 flex items-center justify-center  overflow-hidden rounded-full">
-                      <img
-                        className="w-full h-full object-cover"
-                        src="/defaultAvater.jpg"
-                        alt=""
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      <h1 className="font-bold text-white">Christian Brooks</h1>
-                      <p className="text-sm text-gray-400">2 days ago</p>
-                    </div>
-
-                    <div className="flex items-center justify-center mr-12  w-10 h-10 text-white font-bold  bg-[#F7C32E] rounded-md">
-                      <h1 className="">4.5</h1>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="w-[90%] text-[#808080]">
-                      Handsome met debating sir dwelling age material. As style
-                      lived he worse dried. Offered related so visitors we
-                      private removed. Moderate do subjects to distance.
-                    </p>
-                  </div>
-
-                  {/*like and unlike icons */}
-                  <div className="flex gap-6">
-                    <button
-                      onClick={() => setLikeBtn((c) => c + 1)}
-                      className="flex space-x-2 text-gray-400 hover:text-[#FF9A41] items-center justify-center transition"
-                    >
-                      <ThumbsUp className="w-5 h-5" />
-                      <span className="font-semibold">{likeBtn}</span>
-                    </button>
-
-                    <button
-                      onClick={() => setDisLikeBtn((c) => c + 1)}
-                      className="flex space-x-2 text-gray-400 hover:text-red-500 items-center justify-center transition"
-                    >
-                      <ThumbsDown className="w-5 h-5" />
-                      <span className="font-semibold">{dislikeBtn}</span>
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
+
               <div className="flex justify-center">
                 <button
                   className="flex items-center justify-center w-[150px] px- py-2  mt-5

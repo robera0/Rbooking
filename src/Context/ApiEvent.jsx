@@ -21,7 +21,10 @@ export const ApiProvider = ({ children }) => {
   // GET TICKETS
 
   const fetchTickets = async () => {
-    const res = await fetch("http://localhost:5000/api/tickets_home");
+    const res = await fetch("http://localhost:5000/api/auth/tickets_home", {
+      method: "GET",
+      credentials: "include",
+    });
     return res.json();
   };
 
@@ -33,11 +36,15 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["tickets"],
     queryFn: fetchTickets,
   });
+  console.log(tickets);
 
   // GET TICKETS BY ID
 
   const fetchEventById = async (event_id) => {
-    const res = await fetch(`http://localhost:5000/api/events/${event_id}`);
+    const res = await fetch(`http://localhost:5000/api/events/${event_id}`, {
+      method: "GET",
+      credentials: "include",
+    });
     return res.json();
   };
 

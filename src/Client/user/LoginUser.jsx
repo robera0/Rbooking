@@ -3,39 +3,49 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { EyeOff, User, Lock } from "lucide-react";
+import { EyeOff, Eye, User, Lock } from "lucide-react";
 
 const LoginUser = () => {
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
+  const [useremail, setUseremail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleusername = (e) => {
-    setUsername(e.target.value);
+  const handleEmail = (e) => {
+    setUseremail(e.target.value);
   };
   const handlePassword = (e) => {
     setPassword(e.target.value);
   };
 
   const sendUsers = async (userData) => {
-    const res = await axios.post("http://localhost:5000/api/login", userData);
+    const res = await axios.post(
+      "http://localhost:5000/api/auth/login",
+      userData,
+      { withCredentials: true }
+    );
     return res.data;
   };
 
   const mutation = useMutation({
     mutationFn: sendUsers,
     onSuccess: (data) => {
-      if (data.message === "Login successful") {
-        navigate("/event_home");
+      if (data.message === "Logged in successfully") {
+        navigate("/");
       }
+    },
+    onError: (error) => {
+      setError(error.response?.data?.message || "Login failed");
     },
   });
 
   const handleSignin = (e) => {
     e.preventDefault();
+    setError("");
     const userData = {
-      username,
+      email: useremail,
       password,
     };
 
@@ -62,14 +72,16 @@ const LoginUser = () => {
       {/*inputs */}
 
       <div className="pl-6 w-full space-y-6">
+        {error && <div className="text-red-500 text-sm pl-4">{error}</div>}
         {/*username */}
         <div className=" relative flex space-x-8 ">
           <span className="absolute left-4 top-2">
             <User className="text-white" />
           </span>
           <input
+            onChange={(e) => handleEmail(e)}
             className="placeholder-[#808080] placeholder:text-sm text-white w-[90%] bg-[#323232] pl-12 h-10 rounded-xl outline-none"
-            placeholder="Enter your username"
+            placeholder="Enter your email"
             type="text"
           />
         </div>
@@ -80,12 +92,20 @@ const LoginUser = () => {
             <Lock className=" w-5 h-5 text-white" />
           </span>
           <input
+            onChange={(e) => handlePassword(e)}
             className="placeholder-[#808080] placeholder:text-sm text-white w-[90%] bg-[#323232] pl-12 h-10 rounded-xl outline-none"
             placeholder="Enter your password"
-            type="text"
+            type={showPassword ? "text" : "password"}
           />
-          <span className="absolute right-16 top-3">
-            <EyeOff className=" w-4 h-4 text-white" />
+          <span
+            className="absolute right-16 top-3 cursor-pointer"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? (
+              <Eye className=" w-4 h-4 text-white" />
+            ) : (
+              <EyeOff className=" w-4 h-4 text-white" />
+            )}
           </span>
         </div>
         {/*remember me box */}
@@ -109,7 +129,9 @@ const LoginUser = () => {
       {/*Login button */}
       <div className="w-full flex justify-center">
         <button
-          onClick={() => navigate("/event_home")}
+          onClick={(e) => {
+            handleSignin(e);
+          }}
           className=" flex  items-center  justify-center bg-[#FF7800] text-white w-[70%] h-10 text-md font-semibold rounded-xl cursor-pointer "
         >
           Login in

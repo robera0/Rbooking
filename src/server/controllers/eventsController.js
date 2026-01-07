@@ -1,9 +1,11 @@
 import { Event } from "../models/EventsModel.js";
+import { CommentModel } from "../models/CommentModel.js";
 
 export const get_events = async (req, res) => {
   try {
     const events = await Event.find();
     res.status(200).json({ events: events });
+    console.log(events?.events?.comments);
   } catch {
     res.status(500).json({ message: "Server error" });
   }
@@ -22,13 +24,25 @@ export const featured_events = async (req, res) => {
 };
 
 // FETCH WITH RESPECT TO ITS INDEX
-
 export const fetchevents_id = async (req, res) => {
   try {
     const { id } = req.params;
-    const event_id = await Event.findById(id);
-    res.status(200).json({ event_id });
-  } catch {
-    res.status(401).json({ message: "No events with the same id found" });
+
+    const event = await Event.findById(id).populate({
+      path: "comments",
+      populate: {
+        path: "comment.userId",
+        model: "User_Profile",
+        select: "fullName avatarUrl createdAt",
+      },
+    });
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    res.status(200).json({ event_id: event });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 };

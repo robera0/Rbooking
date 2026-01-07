@@ -3,7 +3,8 @@
 [f] create a profile info model and routes
 [f] make a profile schema
 [f] the wishlist with the specific user[] add select to the ticket so it gave me the wanted infos
-[] add amenities data to the db
+[f] add amenities data to the db
+[f] show the comment section
 [] add a schema of  a review about the app
 [] make the logged in users only post a comment
 [] make a appearing div that shows the map when the location icon is clicked
