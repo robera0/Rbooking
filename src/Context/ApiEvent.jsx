@@ -11,8 +11,8 @@ export const ApiProvider = ({ children }) => {
   };
   const {
     data: events,
-    isLoading,
-    error,
+    isLoading: eventLoading,
+    error: eventerror,
   } = useQuery({
     queryFn: fetchEvents,
     queryKey: ["event"],
@@ -25,18 +25,22 @@ export const ApiProvider = ({ children }) => {
       method: "GET",
       credentials: "include",
     });
+    if (res.status === 401) {
+      throw new Error("Login required");
+    }
     return res.json();
   };
 
   const {
     data: tickets,
-    ticketisLoading,
-    ticketError,
+    isLoading: ticketLoading,
+    isError: ticketIsError,
+    error: ticketsError,
   } = useQuery({
     queryKey: ["tickets"],
     queryFn: fetchTickets,
+    retry: false,
   });
-  console.log(tickets);
 
   // GET TICKETS BY ID
 
@@ -52,11 +56,12 @@ export const ApiProvider = ({ children }) => {
     <ApiContext.Provider
       value={{
         events,
-        isLoading,
-        error,
+        eventLoading,
+        eventerror,
         tickets,
-        ticketisLoading,
-        ticketError,
+        ticketLoading,
+        ticketsError,
+        ticketIsError,
         fetchEventById,
       }}
     >

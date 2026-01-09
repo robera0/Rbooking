@@ -89,12 +89,13 @@ export const RatingStars = () => {
   );
 };
 
-export const AccountMenu = ({ icon, header, path }) => {
+export const AccountMenu = ({ icon, header, path, action }) => {
   const location = useLocation();
   const isActive = location.pathname == path;
   return (
     <>
       <Link
+        onClick={action}
         to={path}
         className={`flex px-4 py-2 w-[90%]  text-lg  ml-4 items-center  text-white space-x-3 rounded-md
           
@@ -117,6 +118,16 @@ export const AccountMenu = ({ icon, header, path }) => {
 };
 
 export const AccountSideMenu = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:5000/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
   return (
     <div className=" flex  justify-center  ">
       <div className="w-[85%] bg-[#2A2C31]  rounded-md">
@@ -166,6 +177,7 @@ export const AccountSideMenu = () => {
             path={"/account/setting"}
           />{" "}
           <AccountMenu
+            action={handleLogout}
             icon={<LogOut className="text-red-600" />}
             header="Sign Out"
             path={"/"}

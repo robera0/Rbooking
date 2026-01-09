@@ -1,21 +1,46 @@
 import React from "react";
-import { CircleDotDashed } from "lucide-react";
+import { CircleDotDashed, ShieldAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Ticket } from "lucide-react";
 import { eventService } from "../../Context/ApiEvent";
-
+import toast from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
+import { useState } from "react";
 const TicketHome = () => {
   const navigate = useNavigate();
-  const { tickets, ticketisLoading, ticketError } = eventService();
+  const { tickets, ticketLoading, ticketsError, ticketIsError } =
+    eventService();
+  const [hasAlerted, setHasAlerted] = useState(false);
+
+  if (ticketIsError && !hasAlerted) {
+    toast.error(ticketsError.message, {
+      duration: 3000,
+      position: "top-center",
+      className:
+        "bg-red-500 text-white font-bold py-3 px-4 rounded-none  text-center shadow-lg",
+    });
+
+    setHasAlerted(true);
+  }
+
+  if (ticketLoading) return <p className="text-white">Loading tickets...</p>;
 
   return (
     <div className="flex  flex-col flex-wrap pb-12  items-center space-y-8">
+      <Toaster position="top-center" />
       <div className="space-y-2">
         <h1 className="text-2xl text-white font-semibold ">My Tickets</h1>
+
         <p className="w-[85%] text-[#808080] text-md">
           View and manage all your purchased tickets
         </p>
       </div>
+      {!tickets && (
+        <p className="w-[85%] text-[#808080] text-xl">
+          No Ticket hsa been Purchased
+        </p>
+      )}
+
       {/*Ticket Card */}
       {Array.isArray(tickets) &&
         tickets.map((t, idx) => {
