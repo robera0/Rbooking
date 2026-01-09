@@ -45,7 +45,6 @@ export const ApiProvider = ({ children }) => {
     queryFn: fetchTickets,
     retry: false,
   });
-  console.log(tickets);
 
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
@@ -68,7 +67,6 @@ export const ApiProvider = ({ children }) => {
     queryFn: fetchTicketById,
     retry: false,
   });
-  console.log(tickets);
 
   const fetchEventById = async (event_id) => {
     const res = await fetch(`http://localhost:5000/api/events/${event_id}`, {
@@ -78,6 +76,34 @@ export const ApiProvider = ({ children }) => {
     return res.json();
   };
 
+  // GET WISHLIST
+  const fetchWishlist = async (req, res) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/wishlist", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        throw new Error("Login required");
+      }
+
+      return res.json();
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+  const {
+    data: wishlist,
+    isLoading: wishlistLoading,
+    isError: wishlistIsError,
+    error: wishlistError,
+  } = useQuery({
+    queryKey: ["wishlist"],
+    queryFn: fetchWishlist,
+    retry: false,
+  });
+
+  console.log("wishlist is ", wishlist);
   return (
     <ApiContext.Provider
       value={{
@@ -92,6 +118,10 @@ export const ApiProvider = ({ children }) => {
         ticketsinfoError,
         ticketsinfoLoading,
         ticketsinfoIsError,
+        wishlist,
+        wishlistError,
+        wishlistLoading,
+        wishlistIsError,
       }}
     >
       {children}

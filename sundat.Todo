@@ -8,7 +8,7 @@
 
 [f] make the logged in users only post a comment in back end
 [] make a appearing div that shows the map when the location icon is clicked
-[] learn about notification design and design the schema 
+[] learn about notification design and design the schema for email notification
 [] make the account section show login if its not authorized
 [] add a schema of  a review about the app
 [] make the wishlist show in the client side
