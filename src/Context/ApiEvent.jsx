@@ -48,6 +48,27 @@ export const ApiProvider = ({ children }) => {
   console.log(tickets);
 
   // GET TICKETS BY ID
+  const fetchTicketById = async (ticketId) => {
+    const res = await fetch(
+      `http://localhost:5000/api/ "/tickets_home/${ticketId}`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+    return res.json();
+  };
+  const {
+    data: ticketsinfo,
+    isLoading: ticketsinfoLoading,
+    isError: ticketsinfoIsError,
+    error: ticketsinfoError,
+  } = useQuery({
+    queryKey: ["tickets"],
+    queryFn: fetchTicketById,
+    retry: false,
+  });
+  console.log(tickets);
 
   const fetchEventById = async (event_id) => {
     const res = await fetch(`http://localhost:5000/api/events/${event_id}`, {
@@ -67,7 +88,10 @@ export const ApiProvider = ({ children }) => {
         ticketLoading,
         ticketsError,
         ticketIsError,
-        fetchEventById,
+        ticketsinfo,
+        ticketsinfoError,
+        ticketsinfoLoading,
+        ticketsinfoIsError,
       }}
     >
       {children}

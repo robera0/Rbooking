@@ -11,11 +11,16 @@ const UserTicketSchema = new mongoose.Schema({
     ref: "Ticket",
     required: true,
   },
+  orderNo: {
+    type: Number,
+    unique: true,
+  },
   quantity: {
     type: Number,
     required: true,
     default: 1,
   },
+
   purchasedAt: {
     type: Date,
     default: Date.now,

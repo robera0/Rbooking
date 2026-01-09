@@ -20,3 +20,23 @@ export const get_tickets = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const get_tickets_info = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const ticket_info = await UserTicketModel.find({
+      ticketId,
+    }).populate({
+      path: "ticketId",
+      populate: {
+        path: "eventId",
+        model: "Event",
+      },
+    });
+    console.log("ticketinfo", ticket_info);
+
+    res.status(200).json({ ticket_info });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

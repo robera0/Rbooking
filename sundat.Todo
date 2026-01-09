@@ -16,6 +16,8 @@
 [] show the user in the profile section if they logged in
 [] make them able to edit the full name even the email in the backed
 [] make the notification side work
+[] make the footer stuck in the end
+[] add import { nanoid } from 'nanoid'; when user purchase a ticket
 src/
  ├── app.js               # Express app setup
  ├── server.js            # Server start

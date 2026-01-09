@@ -1,6 +1,29 @@
 import React from "react";
-
+import { eventService } from "@/Context/ApiEvent";
 const ViewTicket = () => {
+  const {
+    ticketsinfo,
+    ticketsinfoLoading,
+    ticketsinfoIsError,
+    ticketsinfoError,
+  } = eventService();
+
+  const ticket = ticketsinfo?.tickets?.[0]?.ticketId?.eventId;
+
+  const date = new Date(ticket?.dates?.start?.localDate);
+  const formatted = date.toLocaleDateString("en-GB", {
+    time: "time",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const dateTime = new Date(ticket?.dates?.start?.dateTime);
+
+  const formattedTime = dateTime.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
     <div className="pl-4 pb-12 space-y-2">
       <div className="space-y-2">
@@ -11,9 +34,11 @@ const ViewTicket = () => {
         {/* LEFT CONTENT */}
         <div className="flex flex-col gap-4 w-[60%]">
           {/* Event Info */}
-          <div className="space-y-1">
-            <h1 className="text-2xl text-white font-semibold">Event Name</h1>
-            <p className="text-sm text-gray-400">Dec 20, 2025 · 6 PM</p>
+          <div className="space-y-4">
+            <h1 className="text-md text-white font-semibold">{ticket?.name}</h1>
+            <p className="text-sm text-gray-400">
+              {formatted} , {formattedTime}
+            </p>
             <p className="text-sm text-gray-400">
               Addis Ababa · Millennium Hall
             </p>
@@ -21,8 +46,10 @@ const ViewTicket = () => {
 
           {/* Ticket Info */}
           <div className="space-y-1">
-            <p className="text-sm text-gray-400">Ticket ID: 4828</p>
-            <p className="text-sm text-gray-400">Seat: Main field</p>
+            <p className="text-sm text-gray-400">
+              Ticket ID:{" "}
+              {parseInt(ticketsinfo?.tickets?.[0]?.ticketId?._id.slice(-6), 16)}
+            </p>
             <p className="text-sm text-gray-400">Order #: 49229292</p>
           </div>
         </div>

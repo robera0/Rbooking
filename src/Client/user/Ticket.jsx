@@ -6,10 +6,13 @@ import { eventService } from "../../Context/ApiEvent";
 import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
 import { useState } from "react";
+import axios from "axios";
+
 const TicketHome = () => {
   const navigate = useNavigate();
   const { tickets, ticketLoading, ticketsError, ticketIsError } =
     eventService();
+
   const [hasAlerted, setHasAlerted] = useState(false);
 
   if (ticketIsError && !hasAlerted) {
@@ -25,6 +28,23 @@ const TicketHome = () => {
 
   if (ticketLoading) return <p className="text-white">Loading tickets...</p>;
 
+  const fetchTicket = async (ticketId) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/auth/tickets_home/${ticketId}`,
+        {
+          withCredentials: true, // if using cookies/auth
+        }
+      );
+      console.log("Ticket info:", res.data);
+      return res.data;
+    } catch (error) {
+      console.error(
+        "Error fetching ticket:",
+        error.response?.data || error.message
+      );
+    }
+  };
   return (
     <div className="flex  flex-col flex-wrap pb-12  items-center space-y-8">
       <Toaster position="top-center" />
@@ -45,6 +65,7 @@ const TicketHome = () => {
       {Array.isArray(tickets?.tickets) &&
         tickets.tickets.map((t, idx) => {
           const ticket = t.ticketId.eventId;
+          const ticketId = t.ticketId;
           const date = new Date(ticket?.dates?.start?.localDate);
           const formatted = date.toLocaleDateString("en-GB", {
             day: "numeric",
@@ -99,7 +120,10 @@ const TicketHome = () => {
                     </span>
 
                     <button
-                      onClick={() => navigate(`/tickets_home/${t._id}`)}
+                      onClick={() => {
+                        fetchTicket(ticketId?._id);
+                        navigate(`/tickets_home/${ticketId?._id}`);
+                      }}
                       className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-1 rounded-md"
                     >
                       View Ticket
