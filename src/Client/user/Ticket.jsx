@@ -35,21 +35,23 @@ const TicketHome = () => {
           View and manage all your purchased tickets
         </p>
       </div>
-      {!tickets && (
+      {tickets?.length == 0 && (
         <p className="w-[85%] text-[#808080] text-xl">
           No Ticket hsa been Purchased
         </p>
       )}
 
       {/*Ticket Card */}
-      {Array.isArray(tickets) &&
-        tickets.map((t, idx) => {
-          const date = new Date(t?.dates?.start?.localDate);
+      {Array.isArray(tickets?.tickets) &&
+        tickets.tickets.map((t, idx) => {
+          const ticket = t.ticketId.eventId;
+          const date = new Date(ticket?.dates?.start?.localDate);
           const formatted = date.toLocaleDateString("en-GB", {
             day: "numeric",
             month: "short",
             year: "numeric",
           });
+
           const bgColour = {
             onsale: { border: "border-green-500/50", text: "text-green-500" },
             cancelled: { border: "border-red-500/50", text: "text-red-500" },
@@ -60,17 +62,21 @@ const TicketHome = () => {
             },
           };
 
-          const bg = bgColour[t?.dates?.status?.code];
+          const bg = bgColour[ticket?.dates?.status?.code];
 
           return (
             <div
               key={idx}
-              className={`rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border ${bg.border} `}
+              className={`rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border ${bg?.border}`}
             >
               <div className="flex gap-4">
                 <img
-                  src={t?.pictures?.[0] || t?.pictures?.[1] || "/Login.jpg"}
-                  alt={t?.name || "event image"}
+                  src={
+                    ticket?.pictures?.[0] ||
+                    ticket?.pictures?.[1] ||
+                    "/Login.jpg"
+                  }
+                  alt={ticket?.name || "event image"}
                   className="h-40 w-24 rounded-xl object-cover"
                 />
 
@@ -78,13 +84,13 @@ const TicketHome = () => {
                   <div className="space-y-1">
                     <div className="w-full flex justify-between">
                       <h3 className="text-sm w-[70%] font-semibold text-white">
-                        {t?.name}
+                        {ticket?.name}
                       </h3>
-                      <Ticket className={`w-10 h-10 ${bg.text}`} />
+                      <Ticket className={`w-10 h-10 ${bg?.text}`} />
                     </div>
 
                     <p className="text-sm text-gray-400">{formatted}</p>
-                    <p className="text-sm text-gray-400">{t.locale}</p>
+                    <p className="text-sm text-gray-400">{ticket?.locale}</p>
                   </div>
 
                   <div className="flex items-center justify-between mt-3">
@@ -93,22 +99,22 @@ const TicketHome = () => {
                     </span>
 
                     <button
-                      onClick={() => navigate(`/tickets_home/${t?._id}`)}
+                      onClick={() => navigate(`/tickets_home/${t._id}`)}
                       className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-1 rounded-md"
                     >
                       View Ticket
                     </button>
                   </div>
 
-                  <div>
-                    <div
-                      className={`flex items-center mt-5 space-x-2 ${bg.text} rounded-full`}
-                    >
-                      <span>
-                        <CircleDotDashed className="w-5 h-5" />
-                      </span>
-                      <p className="font-semibold">{t?.dates?.status?.code}</p>
-                    </div>
+                  <div
+                    className={`flex items-center mt-5 space-x-2 ${bg?.text} rounded-full`}
+                  >
+                    <span>
+                      <CircleDotDashed className="w-5 h-5" />
+                    </span>
+                    <p className="font-semibold">
+                      {ticket?.dates?.status?.code}
+                    </p>
                   </div>
                 </div>
               </div>

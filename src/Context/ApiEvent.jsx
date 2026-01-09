@@ -21,14 +21,18 @@ export const ApiProvider = ({ children }) => {
   // GET TICKETS
 
   const fetchTickets = async () => {
-    const res = await fetch("http://localhost:5000/api/auth/tickets_home", {
-      method: "GET",
-      credentials: "include",
-    });
-    if (res.status === 401) {
-      throw new Error("Login required");
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/tickets_home", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        throw new Error("Login required");
+      }
+      return res.json();
+    } catch (error) {
+      throw new Error(error);
     }
-    return res.json();
   };
 
   const {
@@ -41,6 +45,7 @@ export const ApiProvider = ({ children }) => {
     queryFn: fetchTickets,
     retry: false,
   });
+  console.log(tickets);
 
   // GET TICKETS BY ID
 
