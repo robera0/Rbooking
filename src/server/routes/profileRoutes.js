@@ -1,6 +1,7 @@
 import express from "express";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { get_user_profile } from "../controllers/user_profileController.js";
+import { update_user } from "../controllers/user_profileController.js";
 const userProfilesRouter = express.Router();
 
 userProfilesRouter.get(
@@ -8,5 +9,9 @@ userProfilesRouter.get(
   authenticateTokenMiddleware,
   get_user_profile
 );
-
+userProfilesRouter.post(
+  "/user_profile",
+  authenticateTokenMiddleware,
+  update_user
+);
 export default userProfilesRouter;

@@ -7,13 +7,14 @@
 [f] show the comment section
 [f] make the wishlist show in the client side
 [f] make the logged in users only post a comment in back end
+[f] make them able to edit the full name even the email in the backed
 [] make a appearing div that shows the map when the location icon is clicked
 [] learn about notification design and design the schema for email notification
 [] make the account section show login if its not authorized
 [] add a schema of  a review about the app
 [] design the buyin ticket side
 [] show the user in the profile section if they logged in
-[] make them able to edit the full name even the email in the backed
+[] make update userProfile backend
 [] make the notification side work
 [] make the footer stuck in the end
 [] add import { nanoid } from 'nanoid'; when user purchase a ticket

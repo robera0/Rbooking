@@ -1,5 +1,6 @@
 import { UserModel } from "../models/UserModel.js";
 
+// GET USER PROFILE
 export const user = async (req, res) => {
   try {
     const user = req.user;

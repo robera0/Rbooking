@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { ProfileModel } from "../models/ProfileModel.js";
 import { UserModel } from "../models/UserModel.js";
 
@@ -11,5 +12,66 @@ export const get_user_profile = async (req, res) => {
     res.status(200).json({ user: user_profile });
   } catch (error) {
     res.status(401).json({ message: error.message });
+  }
+};
+
+// EDIT USER PROFILE
+export const update_user = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+
+    if (!user_id) {
+      return res.status(401).json({ message: "There is no user" });
+    }
+
+    // Extract fields from request body
+    const {
+      fullName,
+      nationality,
+      phone,
+      dateOfBirth,
+      gender,
+      address,
+      bio,
+      avatarUrl,
+    } = req.body;
+
+    // Filter out undefined fields to avoid overwriting existing data
+    const updates = Object.fromEntries(
+      Object.entries({
+        fullName,
+        nationality,
+        phone,
+        dateOfBirth,
+        gender,
+        address,
+        bio,
+        avatarUrl,
+      }).filter(([_, v]) => v !== undefined)
+    );
+
+    // Update or create profile
+    const updatedProfile = await ProfileModel.findOneAndUpdate(
+      { userId: user_id },
+      updates,
+      {
+        new: true,
+        runValidators: true,
+
+        setDefaultsOnInsert: true,
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      profile: updatedProfile,
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res.status(500).json({
+      message: "The user profile cannot be updated",
+      error: error.message,
+    });
   }
 };
