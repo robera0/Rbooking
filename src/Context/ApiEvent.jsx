@@ -103,7 +103,34 @@ export const ApiProvider = ({ children }) => {
     retry: false,
   });
 
-  console.log("wishlist is ", wishlist);
+  // GET USERPROFILE
+  const fetchUser = async (req, res) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/user_profile", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        throw new Error("Login required");
+      }
+
+      return res.json();
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+  const {
+    data: userProfile,
+    isLoading: userIsLoading,
+    isError: userIsError,
+    error: userError,
+  } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: fetchUser,
+    retry: false,
+  });
+
+  console.log("user is ", userProfile);
   return (
     <ApiContext.Provider
       value={{
@@ -122,6 +149,10 @@ export const ApiProvider = ({ children }) => {
         wishlistError,
         wishlistLoading,
         wishlistIsError,
+        userProfile,
+        userIsLoading,
+        userIsError,
+        userError,
       }}
     >
       {children}

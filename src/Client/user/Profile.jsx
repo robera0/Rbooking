@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { CircleCheckBig } from "lucide-react";
-
+import { eventService } from "@/Context/ApiEvent";
 const Profile = () => {
   const progress = 80;
-
+  const { userProfile, userIsLoading, userIsError, userError } = eventService();
   return (
     <div className="mb-2 flex flex-col items-center space-y-8">
       {" "}
@@ -68,7 +68,7 @@ const Profile = () => {
           <div className="flex flex-wrap items-center space-x-6">
             <div>
               <img
-                src="/Login.jpg"
+                src={userProfile?.user?.avatarUrl || "/Login.jpg"}
                 alt="Profile"
                 className="w-24 h-24 object-cover rounded-full"
               />
@@ -93,6 +93,7 @@ const Profile = () => {
               type="text"
               name="full_name"
               required
+              value={userProfile?.user?.fullName}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -106,6 +107,7 @@ const Profile = () => {
               type="email"
               name="email"
               required
+              value={userProfile?.user?.userId?.email}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -119,6 +121,7 @@ const Profile = () => {
               type="tel"
               name="mobile"
               required
+              value={userProfile?.user?.phone}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -132,6 +135,7 @@ const Profile = () => {
               type="text"
               name="nationality"
               required
+              value={userProfile?.user?.nationalit}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -145,6 +149,7 @@ const Profile = () => {
               type="date"
               name="dob"
               required
+              value={userProfile?.user?.dateOfBirth}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>

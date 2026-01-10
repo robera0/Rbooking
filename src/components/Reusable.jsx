@@ -16,6 +16,7 @@ import {
   Search,
 } from "lucide-react";
 import { useState } from "react";
+import { eventService } from "@/Context/ApiEvent";
 export const Toggle = ({ name, toggle, toggleOn, action }) => {
   return (
     <div className="flex w-full justify-between">
@@ -128,6 +129,7 @@ export const AccountSideMenu = () => {
       console.error("Logout failed", error);
     }
   };
+  const { userProfile } = eventService();
   return (
     <div className=" flex  justify-center  ">
       <div className="w-[85%] bg-[#2A2C31]  rounded-md">
@@ -143,9 +145,12 @@ export const AccountSideMenu = () => {
 
             <div className="w-full flex flex-col items-center text-center">
               <h3 className="text-lg font-semibold text-white">
-                Robera Ararsa
+                {userProfile?.user?.fullName}
               </h3>
-              <p className="text-sm text-gray-400">hello@gmail.com</p>
+              <p className="text-sm text-gray-400">
+                {" "}
+                {userProfile?.user?.userId?.email}
+              </p>
             </div>
           </div>
         </div>
