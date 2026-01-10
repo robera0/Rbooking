@@ -9,7 +9,7 @@ userProfilesRouter.get(
   authenticateTokenMiddleware,
   get_user_profile
 );
-userProfilesRouter.post(
+userProfilesRouter.put(
   "/user_profile",
   authenticateTokenMiddleware,
   update_user

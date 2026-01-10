@@ -24,7 +24,6 @@ export const update_user = async (req, res) => {
       return res.status(401).json({ message: "There is no user" });
     }
 
-    // Extract fields from request body
     const {
       fullName,
       nationality,
@@ -36,7 +35,6 @@ export const update_user = async (req, res) => {
       avatarUrl,
     } = req.body;
 
-    // Filter out undefined fields to avoid overwriting existing data
     const updates = Object.fromEntries(
       Object.entries({
         fullName,
@@ -50,7 +48,6 @@ export const update_user = async (req, res) => {
       }).filter(([_, v]) => v !== undefined)
     );
 
-    // Update or create profile
     const updatedProfile = await ProfileModel.findOneAndUpdate(
       { userId: user_id },
       updates,
@@ -68,7 +65,6 @@ export const update_user = async (req, res) => {
       message: "Profile updated successfully",
     });
   } catch (error) {
-    console.error("Update profile error:", error);
     return res.status(500).json({
       message: "The user profile cannot be updated",
       error: error.message,

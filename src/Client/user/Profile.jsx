@@ -135,7 +135,7 @@ const Profile = () => {
               type="text"
               name="nationality"
               required
-              value={userProfile?.user?.nationalit}
+              value={userProfile?.user?.nationality}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -187,7 +187,8 @@ const Profile = () => {
             <label className="block text-sm text-gray-300 mb-2">Address</label>
             <textarea
               name="address"
-              rows={4}
+              rows={2}
+              value={userProfile?.user?.address}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 resize-none"
             />
           </div>
