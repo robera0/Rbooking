@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { Listbox } from "@headlessui/react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Amenities } from "../../components/Reusable";
 import { EventPolices } from "../../components/Reusable";
 import { useLoaderData } from "react-router-dom";
@@ -43,6 +43,7 @@ const EventInfo = () => {
   const [selected, setSelected] = useState(null);
   const [likeBtn, setLikeBtn] = useState(15);
   const [dislikeBtn, setDisLikeBtn] = useState(2);
+  const [MoreTicket, setMoreTicket] = useState(false);
   const { isEditMenuActive, setEditMenuActive } = useService();
   const { fetchEventById } = eventService();
   const { id } = useParams();
@@ -205,13 +206,143 @@ const EventInfo = () => {
               </h3>
             </div>
             <div className="flex  justify-center  mt-6">
-              <button className=" text-white  font-semibold bg-[#FF9A41] px-10 py-3 rounded-2xl space-x-2 lg:cursor-pointer">
-                <span>View more Tickets</span>
+              <button
+                onClick={() => setMoreTicket((prev) => !prev)}
+                className=" text-white  font-semibold bg-[#FF9A41] px-10 py-3 rounded-2xl space-x-2 lg:cursor-pointer"
+              >
+                <span>
+                  {" "}
+                  {MoreTicket ? "Get Tickets " : "View more Tickets"}
+                </span>
               </button>
             </div>
           </div>
         </div>
 
+        {/* More tickets */}
+        <AnimatePresence>
+          {MoreTicket && (
+            <motion.div
+              initial={{ opacity: 0, y: -30, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, y: -30, height: 0 }}
+              transition={{
+                duration: 0.4,
+                ease: "easeOut",
+              }}
+              className="space-y-4 overflow-hidden"
+            >
+              <div className=" space-y-4">
+                {/* vip tickets */}
+                <div className="bg-[#191B1D] w-[90%] h-62 p-5 rounded-xl space-y-2">
+                  <div className="flex justify-between ">
+                    <div className="space-y-2">
+                      <h2 className=" text-[#808080] font-semibold">
+                        Price of Vip
+                      </h2>
+                      <h1 className="text-xl text-white font-bold">
+                        {`${event_id?.event_id?.priceRanges?.[1]?.min} ${event_id?.event_id?.priceRanges?.[0]?.currency}`}
+                      </h1>
+                    </div>
+
+                    <span className="flex  items-center mr-8">
+                      {" "}
+                      <Ticket className="w-12 h-12 text-orange-500" />
+                    </span>
+                  </div>
+
+                  {/*RATING */}
+                  <div className="space-y-2">
+                    <div className="flex items-center  space-x-2">
+                      <span>
+                        <MoveRight className="text-white w-4" />
+                      </span>
+
+                      <h3 className=" text-white text-center font-bold">
+                        {event?.rating}
+                      </h3>
+
+                      <span className="flex gap-1 text-orange-400">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={14} fill="currentColor" />
+                        ))}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center  space-x-2">
+                      <span>
+                        <MoveRight className="text-white w-4" />
+                      </span>
+
+                      <h3 className="text-[#808080] text-center font-bold">
+                        No Specific Offers
+                      </h3>
+                    </div>
+                    <div className="flex  justify-center  mt-6">
+                      <button className=" text-white  font-semibold bg-[#FF9A41] px-10 py-3 rounded-2xl space-x-2 lg:cursor-pointer">
+                        <span>Get Tickets</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vvip tickets */}
+
+                <div className="bg-[#191B1D] w-[90%] h-62 p-5 rounded-xl space-y-2">
+                  <div className="flex justify-between ">
+                    <div className="space-y-2">
+                      <h2 className=" text-[#808080] font-semibold">
+                        Price of Vvip
+                      </h2>
+                      <h1 className="text-xl text-white font-bold">
+                        {`${event_id?.event_id?.priceRanges?.[1]?.max} ${event_id?.event_id?.priceRanges?.[0]?.currency}`}
+                      </h1>
+                    </div>
+
+                    <span className="flex  items-center mr-8">
+                      {" "}
+                      <Ticket className="w-12 h-12 text-blue-500" />
+                    </span>
+                  </div>
+
+                  {/*RATING */}
+                  <div className="space-y-2">
+                    <div className="flex items-center  space-x-2">
+                      <span>
+                        <MoveRight className="text-white w-4" />
+                      </span>
+
+                      <h3 className=" text-white text-center font-bold">
+                        {event?.rating}
+                      </h3>
+
+                      <span className="flex gap-1 text-orange-400">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={14} fill="currentColor" />
+                        ))}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center  space-x-2">
+                      <span>
+                        <MoveRight className="text-white w-4" />
+                      </span>
+
+                      <h3 className="text-[#808080] text-center font-bold">
+                        No Specific Offers
+                      </h3>
+                    </div>
+                    <div className="flex  justify-center  mt-6">
+                      <button className=" text-white  font-semibold bg-[#FF9A41] px-10 py-3 rounded-2xl space-x-2 lg:cursor-pointer">
+                        <span>Get Tickets</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="mt-12 space-y-12">
           {/*ABOUT THE EVENT */}
           <div className="space-y-4">
