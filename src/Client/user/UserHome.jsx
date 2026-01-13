@@ -23,11 +23,18 @@ import {
   Quote,
   Activity,
   HandCoins,
+  MapIcon,
 } from "lucide-react";
 import { CalendarDemo } from "@/components/ui/calendar";
 import { InfoBar } from "../../components/Reusable";
 import { RatingStars } from "../../components/Reusable";
 import { eventService } from "@/Context/ApiEvent";
+
+const SearchButton = () => (
+  <button className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200">
+    <Search className="w-5 h-5" />
+  </button>
+);
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
@@ -36,46 +43,65 @@ const UserHome = () => {
 
   return (
     <div onClick={() => setDateSlide(false)} className="space-y-4">
-      <div className="flex flex-col w-full h-[250px] gap-4 pl-6">
-        <span className="pt-4 w-[70%] h-auto">
-          <h1 className="text-4xl leading-normal text-white font-semibold">
+      <div className="w-full px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-0 mb-16">
+        {/* LEFT CONTENT */}
+        <div className="w-full lg:w-[45%] flex flex-col justify-center space-y-6 lg:pl-28">
+          <h1 className="text-4xl sm:text-5xl text-white font-semibold leading-snug">
             Find the Top events nearby.
           </h1>
-        </span>
 
-        <span>
-          <p className="w-[85%] text-[#808080] text-md">
+          <p className="w-[90%] sm:w-[70%] lg:w-full text-[#808080] text-md lg:text-lg">
             We bring you not only a stay option, but an experience in your
             budget to enjoy the luxury.
           </p>
-        </span>
 
-        <button className="w-[180px] py-3 bg-[#FF7800] text-lg text-white font-semibold cursor-pointer lg:hover:scale-95 rounded-md transition-transform duration-200">
-          Discover Events
-        </button>
-      </div>
+          <button className="w-[180px] py-3 bg-[#FF7800] text-lg text-white font-semibold rounded-md transition-transform duration-200 hover:scale-95">
+            Discover Events
+          </button>
+        </div>
 
-      {/* IMAGE */}
-      <div className="mt-[90px] h-auto w-full flex justify-center items-center">
-        <div className="w-[95%] rounded-md overflow-hidden">
-          <img
-            src="/Login.jpg"
-            alt="Login"
-            className="w-full h-[400px] object-cover"
-          />
+        {/* RIGHT IMAGE SECTION */}
+        <div className="w-full lg:w-[55%] relative flex justify-center items-center">
+          {/* Floating circle images (Desktop only) */}
+          <div className="hidden lg:block absolute left-34 top-10 space-y-12">
+            <div className="w-16 h-16 rounded-full overflow-hidden">
+              <img
+                src="/1763661369611.webp"
+                alt="Event"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div className="w-22 h-22 rounded-full overflow-hidden">
+              <img
+                src="/Login.jpg"
+                alt="Event"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+
+          {/* Main Image */}
+          <div className="w-[95%] sm:w-[70%] lg:w-[60%] h-[400px] lg:h-[690px] rounded-md overflow-hidden">
+            <img
+              src="/1763661369611.webp"
+              alt="Event"
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
       </div>
 
       {/*MOBILE VIEW*/}
-      <div className="block md:hidden relative bottom-[120px] z-10 flex flex-col items-center space-y-4 w-full px-8 py-4 mt-8">
-        <div className="flex flex-col justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl space-y-6">
+      <div className="block  relative  lg:bottom-52  w-full lg:w-[76%] bottom-[120px] z-10 flex sm:flex-col items-center space-y-4 lg:px-22 px-12 py-4 ">
+        <div className="flex lg:px-4 flex-col lg:flex-row justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl  lg:space-x-12 space-y-6">
           {/* Calendar Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               setDateSlide(!dateSlide);
             }}
-            className="w-[80%] flex justify-between items-center px-4 py-3 bg-[#6C6D6E] rounded-lg shadow-md"
+            className="w-[80%] lg:w-[75%] flex justify-between items-center px-4 py-3 bg-[#6C6D6E] rounded-lg shadow-md"
           >
             <div className="flex items-center space-x-3">
               <CalendarIcon strokeWidth={1} className="text-white w-5 h-5" />
@@ -122,8 +148,8 @@ const UserHome = () => {
           </div>
 
           {/* LOCATION INPUT */}
-          <div className="relative w-[80%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
-            <User strokeWidth={1} className="text-white w-6 h-6 mr-3" />
+          <div className="relative w-[80%] lg:w-[75%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
+            <MapIcon strokeWidth={1} className="text-white w-6 h-6 mr-3" />
             <input
               type="text"
               placeholder="Location"
@@ -132,7 +158,7 @@ const UserHome = () => {
           </div>
 
           {/* SEARCH INPUT */}
-          <div className="relative w-[80%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
+          <div className="relative w-[80%] lg:w-[75%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
             <User strokeWidth={1} className="text-white w-6 h-6 mr-3" />
             <input
               type="text"
@@ -142,10 +168,8 @@ const UserHome = () => {
           </div>
 
           {/* MAIN SEARCH BUTTON */}
-          <div className="sticky top-[70px] flex justify-center items-center">
-            <button className="block md:hidden flex justify-center items-center p-4 bg-[#FF7800] rounded-full text-white">
-              <Search className="w-5 h-5" />
-            </button>
+          <div className="md:hidden lg:flex items-center lg:mb-8  md:ml-12 ml-6">
+            <SearchButton />
           </div>
         </div>
       </div>
