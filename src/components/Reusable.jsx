@@ -58,17 +58,39 @@ export const MenuBar = ({ icon, header, path }) => {
   );
 };
 
+export const WindowMenuBar = ({ icon, header, path }) => {
+  const location = useLocation();
+  const isActive = location.pathname.split("/")[1] == path.replace("/", "");
+  return (
+    <>
+      <Link
+        to={path}
+        className="flex  w-full justify-center items-center text-white space-x-3"
+      >
+        <span className={`${isActive && "text-[#FF7800]"} `}>{icon}</span>
+
+        <span className={`${isActive && "text-[#FF7800]"} text-center`}>
+          {header}
+        </span>
+      </Link>
+    </>
+  );
+};
 export const InfoBar = ({ icon, header, bg, des }) => {
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full lg:space-y-6 space-y-2">
       <div
-        className={`${bg} h-14 w-14 rounded-full flex items-center justify-center shadow-md`}
+        className={`${bg} h-14 w-14 lg:w-20 lg:h-20 rounded-full flex items-center justify-center shadow-md`}
       >
         {icon}
       </div>
-      <div>
-        <h1 className="text-white font-semibold text-lg">{header}</h1>
-        <p className="text-[#A1A1A1] text-sm leading-relaxed w-[90%]">{des}</p>
+      <div className="">
+        <h1 className="text-white font-semibold text-lg lg:text-xl ">
+          {header}
+        </h1>
+        <p className="text-[#A1A1A1] text-sm lg:text-lg leading-relaxed w-[90%]">
+          {des}
+        </p>
       </div>
     </div>
   );
@@ -137,7 +159,7 @@ export const AccountSideMenu = () => {
           <div className="w-full flex flex-col items-center space-y-2">
             <div>
               <img
-                src="/Login.jpg"
+                src={userProfile?.user?.avatarUrl || "/Login.jpg"}
                 alt="Profile"
                 className="w-24 h-24 object-cover rounded-full"
               />
