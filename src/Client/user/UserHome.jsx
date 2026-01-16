@@ -24,6 +24,8 @@ import {
   Activity,
   HandCoins,
   MapIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { CalendarDemo } from "@/components/ui/calendar";
 import { InfoBar } from "../../components/Reusable";
@@ -175,115 +177,152 @@ const UserHome = () => {
       </div>
 
       {/* DESKTOP (you can add your own) */}
-      <div className="hidden md:flex relative items-center justify-center space-x-4">
-        {/* desktop layout */}
-      </div>
+      <div className="w-full  flex flex-col gap-6 lg:gap-40 lg:flex-row lg:flex-wrap lg:justify-center">
+        {Array(3)
+          .fill(null)
+          .map((_, idx) => (
+            <div
+              key={idx}
+              className="relative bottom-16 w-[80%] lg:w-[23%] lg:h-[150px] h-full lg:flex lg:justify-center items-center  bg-[#191B1D] lg:rounded-4xl rounded-xl space-y-6 mx-auto lg:mx-0 lg:gap-4 "
+            >
+              <div className="w-full h-full lg:mt-5">
+                <img
+                  className="w-full h-full object-cover  rounded-tl-xl  rounded-tr-xl lg:rounded-tl-4xl lg:rounded-bl-4xl"
+                  src="/Login.jpg"
+                  alt=""
+                />
+              </div>
 
-      <div className="block relative bottom-16 w-[80%] h-auto bg-[#191B1D] mx-auto rounded-xl space-y-4 ">
-        <div className="w-full">
-          <img className="object-cover rounded-xl" src="/Login.jpg" alt="" />
-        </div>
-
-        <div className="w-full flex flex-col pl-4 space-y-2">
-          <h2 className="text-white font-bold">up to 60% off</h2>
-          <p className="w-[85%] text-[#808080] mb-4 text-md">
-            on buying ticket online
-          </p>
-        </div>
+              <div className="w-full flex flex-col pl-4 space-y-2">
+                <h2 className="text-white font-bold">up to 60% off</h2>
+                <p className="w-[85%] text-[#808080] mb-4 text-md">
+                  on buying ticket online
+                </p>
+              </div>
+            </div>
+          ))}
       </div>
 
       {/*info about the app */}
-      <div className="flex flex-col items-center space-y-4">
-        <div className="relative w-[85%] h-[440px] rounded-lg">
-          <span className="absolute">
-            <Star className="absolute -left-4 -top-2 w-12 h-12 text-[#FF7800]" />
-          </span>
-          <img
-            className="h-full rounded-lg object-cover"
-            src="/Login.jpg"
-            alt=""
-          />
-        </div>
-        <div className="w-[80%] h-auto space-y-4">
-          <h1 className="text-white font-bold text-3xl z-[45]">
-            The Best Events Start Here!
-          </h1>
-          <p className="w-[95%] text-[#808080] text-md">
-            Book your Spot on any event with us and don't forget to grab an
-            awesome event deal to save massive on your stay.
-          </p>
+      <div className="w-full flex flex-col space-y-12">
+        {/* IMAGE + INFO SECTION */}
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:space-x-6 w-full justify-center">
+          {/* IMAGE */}
+          <div className="relative w-[85%] lg:w-[32%] h-[440px] lg:h-[660px] rounded-lg">
+            <span className="absolute z-10">
+              <Star
+                strokeWidth={1}
+                className="hidden lg:block absolute  lg:-left-8  lg:-top-6 lg:w-22 lg:h-22 w-12 h-12 text-[#FF7800]"
+              />
+            </span>
 
-          <div className="block text-white h-auto z-[70] space-y-6">
-            <InfoBar
-              icon={<UsersRound />}
-              bg={"bg-[#5EC750]"}
-              header={"Quick Search"}
-              des={"Fast event lookup made simple."}
-            />
-            <InfoBar
-              icon={<Timer className="w-7 h-7" />}
-              bg={"bg-red-500"}
-              header={"Quick Services"}
-              des={"Supposing so be resolving Events  perfectly."}
-            />
-            <InfoBar
-              icon={<Shield className="text-[#FD7E14]" />}
-              bg={"bg-[#392E27]"}
-              header={"High Security"}
-              des={"Arranging rapturous did believe him all had supported.."}
-            />
-            <InfoBar
-              icon={<UsersRound className="text-[#17A2B8]" />}
-              bg={"bg-[#213238]"}
-              header={"24 hour Alert"}
-              des={"Fast Notification as soon as event s posted"}
+            <span className="absolute z-10">
+              <Star
+                strokeWidth={2}
+                className="lg:hidden  absolute -left-4 -top-2 lg:w-22 lg:h-22 w-12 h-12 text-[#FF7800]"
+              />
+            </span>
+
+            <img
+              className="w-full h-full rounded-lg object-cover"
+              src="/Login.jpg"
+              alt="event preview"
             />
           </div>
+
+          {/* INFO */}
+          <div className="w-[85%] lg:w-[45%] space-y-4">
+            <h1 className="text-white font-bold lg:text-5xl text-3xl">
+              The Best Events Start Here!
+            </h1>
+
+            <p className="w-[95%] text-[#808080] text-md">
+              Book your Spot on any event with us and don't forget to grab an
+              awesome event deal to save massive on your stay.
+            </p>
+
+            <div className="text-white  space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
+              <InfoBar
+                icon={<UsersRound className="lg:w-10 lg:h-10" />}
+                bg="bg-[#5EC750]"
+                header="Quick Search"
+                des="Fast event lookup made simple."
+              />
+              <InfoBar
+                icon={<Timer className="w-7 h-7 lg:w-10 lg:h-10" />}
+                bg="bg-red-500"
+                header="Quick Services"
+                des="Supposing so be resolving Events perfectly."
+              />
+              <InfoBar
+                icon={<Shield className="text-[#FD7E14] lg:w-10 lg:h-10" />}
+                bg="bg-[#392E27]"
+                header="High Security"
+                des="Arranging rapturous did believe him all had supported."
+              />
+              <InfoBar
+                icon={<UsersRound className="text-[#17A2B8] lg:w-10 lg:h-10" />}
+                bg="bg-[#213238]"
+                header="24 hour Alert"
+                des="Fast Notification as soon as event is posted"
+              />
+            </div>
+          </div>
         </div>
-        {/*FEATURE EVENTS */}
-        <div className="w-full h-full flex  flex-col mt-4 items-center z-[80] space-y-8 ">
-          <h1 className="text-white  font-bold text-3xl z-[45]">
-            Feature Events
+        {/* FEATURE EVENTS */}
+        <div className="w-full flex flex-col mt-4 lg:mt-33 items-center space-y-8 lg:space-y-12">
+          <h1 className="text-white font-bold text-3xl lg:text-6xl">
+            Featured Events
           </h1>
-          {error && message.error}
-          <div className="block h-auto flex flex-col mb-12 items-center justify-center gap-6 space-y-24">
+
+          {error && message?.error}
+
+          <div className="w-full flex flex-col lg:flex-row items-center gap-y-14 lg:pl-3  sm:gap-y-12 lg:gap-y-6  lg:gap-x-2   mb-12">
             {Array.isArray(events?.events) &&
               events.events.map((e, idx) => (
-                <Link to={`/events/${e._id}`} className="event-card">
-                  <div
-                    key={idx}
-                    className="flex flex-col items-center justify-center w-full  "
-                  >
-                    <div className="relative w-[80%] h-72 rounded-xl  space-y-2">
+                <Link
+                  key={idx}
+                  to={`/events/${e._id}`}
+                  className="w-full flex justify-center"
+                >
+                  <div className="w-[80%] lg:w-[85%] space-y-3">
+                    {/* Image Section */}
+                    <div className="relative h-80 sm:h-96 lg:h-[500px] rounded-xl overflow-hidden">
                       <img
                         src={
                           e?.pictures?.[0] || e?.pictures?.[1] || "/Login.jpg"
                         }
                         alt={e?.name || "event image"}
-                        className="h-full w-full object-cover rounded-xl"
+                        className="w-full h-full object-cover rounded-xl"
                       />
-                      <div className="absolute bottom-3 left-4 flex bg-[#FF7800] text-white px-4 py-1 rounded-xl space-x-2">
-                        <Map />
-                        <span>{e?.locale}</span>
+
+                      {/* Location badge */}
+                      <div className="absolute bottom-3 left-4 flex items-center bg-[#FF7800] text-white px-4 py-1 rounded-xl space-x-2">
+                        <Map size={16} />
+                        <span className="text-sm">{e?.locale}</span>
                       </div>
-                      <div className="flex justify-between pl-2 mt-2">
-                        <div className="space-y-2">
-                          <h1 className="text-lg text-white font-semibold">
-                            {e?.name}
-                          </h1>
-                          <p className="text-[#FF7800]">
-                            <span className="font-bold">
-                              {`${e?.priceRanges?.[0]?.min} ${e?.priceRanges?.[0]?.currency}`}
-                            </span>{" "}
-                            / Starting at
-                          </p>
-                        </div>
-                        <div className="flex justify-center items-center space-x-2">
-                          <h1 className="text-white text-xl font-bold">
-                            {e?.rating?.score}
-                          </h1>
-                          <Star className="text-[#FF7800]" />
-                        </div>
+                    </div>
+
+                    {/* Details Section */}
+                    <div className="flex justify-between px-2">
+                      <div className="space-y-1">
+                        <h1 className="text-lg lg:text-xl text-white font-semibold">
+                          {e?.name}
+                        </h1>
+
+                        <p className="text-[#FF7800] text-sm lg:text-md">
+                          <span className="font-bold">
+                            {`${e?.priceRanges?.[0]?.min} ${e?.priceRanges?.[0]?.currency}`}
+                          </span>{" "}
+                          / Starting at
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <h1 className="text-white text-xl font-bold">
+                          {e?.rating?.score}
+                        </h1>
+                        <Star className="text-[#FF7800]" size={18} />
                       </div>
                     </div>
                   </div>
@@ -292,74 +331,84 @@ const UserHome = () => {
           </div>
         </div>
         {/*COMMENT REVIEW */} {/* this going to be a sliding div */}
-        <div className="relative w-[90%] h-[240px] mt-8  mb-72 flex flex-col items-center rounded-lg ">
-          <div className="w-[85%] space-y-4">
-            <div className="absolute left-4 top-12 h-9 w-9 flex justify-center items-center bg-[#FF7800] rounded-lg">
-              <SmilePlus className="  w-5 h-5 text-white" />
-            </div>
-            <div className="w-full">
-              <img
-                className="h-full rounded-lg items-center object-cover"
-                src="/review.JPG"
-                alt=""
-              />
-            </div>
-
-            <div className="flex  flex-col space-y-2">
-              <span>
-                <Quote
-                  fill="white"
-                  strokeWidth={3}
-                  className="w-8 w-8 rotate-180 text-white"
-                />
-              </span>
-              <div className="pl-8 mt-3 space-y-3">
-                <div></div>
-                <h2 className="text-white whitespace-normal  font-semibold ">
-                  The event was amazing! The performances were great and
-                  everything was well organized.
-                </h2>
-                <div className="space-y-1">
-                  <RatingStars />
-                  <h2 className="text-lg text-white font-semibold">
-                    Robera Ararsa
-                  </h2>
+        <div className=" w-full flex justify-center mt-16 sm:mt-12 lg:mt-8 mb-64 sm:mb-48 lg:mb-32">
+          <div className="relative w-[80%] h-62 lg:h-[430px] sm:w-[85%] lg:w-[70%] rounded-lg">
+            <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+              <div className="relative w-full lg:w-1/2 h-[180px] sm:h-[160px] lg:h-[460px] rounded-xl overflow-hidden">
+                <div className="absolute -left-2 -top-2 h-9 w-9 flex justify-center items-center bg-[#FF7800] rounded-lg z-10">
+                  <SmilePlus className="w-5 h-5 text-white" />
                 </div>
+
+                <img
+                  src="/review.JPG"
+                  alt="review"
+                  className="w-full h-full object-cover rounded-xl"
+                />
               </div>
 
-              <span className="flex justify-end mr-6">
+              <div className="w-full lg:w-1/2 flex flex-col space-y-4">
                 <Quote
                   fill="white"
                   strokeWidth={3}
-                  className="w-8 w-8 text-white"
+                  className="w-7 h-7 rotate-180 text-white"
                 />
-              </span>
 
-              <h2 className="text-lg text-white font-semibold">Event Name</h2>
+                <div className="pl-6 space-y-4">
+                  <h2 className="text-white text-sm sm:text-base lg:text-3xl font-semibold leading-relaxed">
+                    The event was amazing! The performances were great and
+                    everything was well organized.
+                  </h2>
+
+                  <div className="space-y-1">
+                    <RatingStars />
+                    <h2 className="text-base sm:text-lg text-white font-semibold">
+                      Robera Ararsa
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pr-6">
+                  <Quote
+                    fill="white"
+                    strokeWidth={3}
+                    className="w-7 h-7 text-white"
+                  />
+                </div>
+
+                <h2 className="text-sm sm:text-lg text-white font-semibold">
+                  Event Name
+                </h2>
+              </div>
             </div>
+
+            <button className="hidden lg:flex absolute left-[-200px] top-1/2 -translate-y-1/2 h-20 w-20 justify-center items-center bg-[#FF7800] rounded-full">
+              <ChevronLeft className="text-white w-5 h-5" />
+            </button>
+
+            <button className="hidden lg:flex absolute right-[-200px] top-1/2 -translate-y-1/2 h-20 w-20 justify-center items-center bg-[#FF7800] rounded-full">
+              <ChevronRight className="text-white w-5 h-5" />
+            </button>
           </div>
         </div>
         {/*RELIABILITY*/}
-        <div className="w-full h-82 bg-[#2A2C31] pl-4 pt-4 space-y-6 text-white">
+        <div className="w-full h-82 bg-[#2A2C31] p-4 text-white flex flex-col justify-center lg:items-center lg:flex-row lg:justify-around gap-6">
           {/* Card 1 */}
-          <div className="w-2/3 h-32 bg-[#222529] rounded-md flex items-center space-x-4 p-4">
-            <Activity className="w-12 h-12 text-white" />
-
-            <div>
-              <h1 className="font-semibold">24x7 Help</h1>
-              <p className="text-sm text-gray-300">
+          <div className="w-2/3 lg:w-[28%] lg:h-42 h-32 bg-[#222529] rounded-md flex items-center space-x-4 p-4">
+            <Activity className="w-12 h-12  lg:w-16 lg:h-16 text-white" />
+            <div className="lg:space-y-4">
+              <h1 className="font-semibold lg:text-xl">24x7 Help</h1>
+              <p className="text-sm lg:text-lg text-gray-300">
                 If we fall short of your expectation in any way, let us know
               </p>
             </div>
           </div>
 
           {/* Card 2 */}
-          <div className="w-2/3 h-32 bg-[#222529] rounded-md flex items-center space-x-4 p-4">
-            <HandCoins className="w-12 h-12 text-white" />
-
-            <div>
-              <h1 className="font-semibold">Payment Trust</h1>
-              <p className="text-sm text-gray-300">
+          <div className="w-2/3 lg:w-[28%] h-42 bg-[#222529] rounded-md flex items-center space-x-4 p-4">
+            <HandCoins className="w-12 h-12 lg:w-16 lg:h-16 text-white" />
+            <div className="lg:space-y-4">
+              <h1 className="font-semibold lg:text-xl">Payment Trust</h1>
+              <p className="text-sm lg:text-lg text-gray-300">
                 All refunds come with no questions asked guarantee
               </p>
             </div>
