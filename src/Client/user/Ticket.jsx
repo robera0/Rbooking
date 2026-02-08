@@ -7,14 +7,14 @@ import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
 import { useState } from "react";
 import axios from "axios";
-
+import { LoginPopup } from "@/components/Reusable";
 const TicketHome = () => {
   const navigate = useNavigate();
   const { tickets, ticketLoading, ticketsError, ticketIsError } =
     eventService();
 
   const [hasAlerted, setHasAlerted] = useState(false);
-
+  const [loginPopUp, setLoginPopUp] = useState(false);
   if (ticketIsError && !hasAlerted) {
     toast.error(ticketsError.message, {
       duration: 3000,
@@ -22,7 +22,7 @@ const TicketHome = () => {
       className:
         "bg-red-500 text-white font-bold py-3 px-4 rounded-none  text-center shadow-lg",
     });
-
+    setLoginPopUp(true);
     setHasAlerted(true);
   }
 
@@ -33,21 +33,22 @@ const TicketHome = () => {
       const res = await axios.get(
         `http://localhost:5000/api/auth/tickets_home/${ticketId}`,
         {
-          withCredentials: true, // if using cookies/auth
-        }
+          withCredentials: true,
+        },
       );
       console.log("Ticket info:", res.data);
       return res.data;
     } catch (error) {
       console.error(
         "Error fetching ticket:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
     }
   };
   return (
     <div className="flex  flex-col flex-wrap pb-12  items-center space-y-8">
       <Toaster position="top-center" />
+      {loginPopUp && <LoginPopup />}
       <div className="space-y-2">
         <h1 className="text-2xl text-white font-semibold ">My Tickets</h1>
 

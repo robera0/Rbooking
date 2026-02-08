@@ -9,13 +9,17 @@ import {
   MoveRight,
   Puzzle,
   Shield,
+  Search,
   CreditCard,
   ImageUp,
   ChevronDown,
   ArrowBigRight,
   ThumbsDown,
   ThumbsUp,
-  Search,
+  CalendarIcon,
+  ChevronUp,
+  User,
+  MapIcon,
 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { Listbox } from "@headlessui/react";
@@ -28,6 +32,13 @@ import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
+import { CalendarDemo } from "@/components/ui/calendar";
+
+const SearchButton = () => (
+  <button className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200">
+    <Search className="w-5 h-5" />
+  </button>
+);
 
 const EventInfo = () => {
   const progress = [100, 100, 100, 100, 50];
@@ -41,6 +52,8 @@ const EventInfo = () => {
   ];
 
   const [selected, setSelected] = useState(null);
+  const [dateSlide, setDateSlide] = useState(false);
+  const [dates, setDates] = useState(null);
   const [likeBtn, setLikeBtn] = useState(15);
   const [dislikeBtn, setDisLikeBtn] = useState(2);
   const [MoreTicket, setMoreTicket] = useState(false);
@@ -66,9 +79,9 @@ const EventInfo = () => {
   const [showFullName, setShowFullName] = useState(false);
 
   return (
-    <div className=" space-y-8 mb-12">
+    <div className=" space-y-8 mb-12 lg:p-6">
       {/*EDIT BUTTON */}
-      <div className="flex justify-center  ">
+      <div className="lg:hidden flex justify-center  ">
         <button
           onClick={() => setEditMenuActive(true)}
           className="flex text-white  font-semibold bg-[#FF7800] px-10 py-3 rounded-md space-x-2 lg:cursor-pointer"
@@ -77,22 +90,116 @@ const EventInfo = () => {
           <span>Edit Search</span>
         </button>
       </div>
+
+      <div className=" flex justify-center items-center ">
+        <div className="hidden lg:block relative  w-full lg:w-[76%] z-10 flex sm:flex-col justify-center items-center space-y-4 lg:px-22 px-12 py-4">
+          <div className="flex lg:px-4 flex-col lg:flex-row justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl  lg:space-x-12 space-y-6">
+            {/* Calendar Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDateSlide(!dateSlide);
+              }}
+              className="w-[80%] lg:w-[75%] flex justify-between items-center px-4 py-3 bg-[#6C6D6E] rounded-lg shadow-md"
+            >
+              <div className="flex items-center space-x-3">
+                <CalendarIcon strokeWidth={1} className="text-white w-5 h-5" />
+                <div className="flex flex-col">
+                  {!dates ? (
+                    <>
+                      <span>Dates</span>
+                      <span>All Dates</span>
+                    </>
+                  ) : (
+                    <span className="text-[#FF7800] font-semibold">
+                      {dates.toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {dateSlide ? (
+                <ChevronUp className="text-black" />
+              ) : (
+                <ChevronDown className="text-black" />
+              )}
+            </button>
+
+            {/* CALENDAR PANEL */}
+            <div
+              className={`absolute left-8 top-[75px] w-[250px] bg-[#D9D9D9] rounded-lg overflow-hidden z-50 transition-[max-height] duration-500 ease-in-out ${
+                dateSlide ? "max-h-[500px] mt-3" : "max-h-0 mt-0"
+              }`}
+            >
+              <CalendarDemo
+                mode="single"
+                selected={dates}
+                onSelect={setDates}
+                buttonVariant="ghost"
+                className="p-4 w-full bg-transparent rounded-xl shadow-lg text-black"
+                classNames={{
+                  day: "h-8 w-8 flex items-center justify-center rounded-lg hover:bg-orange-200",
+                  month_caption:
+                    "text-lg text-center font-semibold text-orange-500",
+                  nav_button: "text-orange-500 hover:text-orange-700",
+                }}
+              />
+            </div>
+
+            {/* LOCATION INPUT */}
+            <div className="relative w-[80%] lg:w-[75%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
+              <MapIcon strokeWidth={1} className="text-white w-6 h-6 mr-3" />
+              <input
+                type="text"
+                placeholder="Location"
+                className="flex-1 outline-none placeholder:text-white text-white font-light"
+              />
+            </div>
+
+            {/* SEARCH INPUT */}
+            <div className="relative w-[80%] lg:w-[75%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
+              <User strokeWidth={1} className="text-white w-6 h-6 mr-3" />
+              <input
+                type="text"
+                placeholder="Artist, Event or Venue"
+                className="flex-1 outline-none placeholder:text-white text-white font-light"
+              />
+            </div>
+
+            {/* MAIN SEARCH BUTTON */}
+            <div className="md:hidden lg:flex items-center lg:mb-8  md:ml-12 ml-6">
+              <SearchButton />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/*HEADER */}
-      <div className="flex flex-col pl-6  space-y-4  ">
+      <div className="flex flex-col pl-6 lg:pl-12 space-y-4  ">
         <div className="flex flex-col space-y-2">
           {/* Event name and date */}
           <div className="flex flex-wrap space-y-2 justify-between items-center">
+            {/* MOBILE ONLY */}
             <h1
-              className="text-white text-lg font-semibold cursor-pointer"
+              className="block lg:hidden text-white text-lg font-semibold cursor-pointer"
               onClick={() => setShowFullName(!showFullName)}
               title={event_id?.event_id?.name}
             >
               {showFullName
                 ? event_id?.event_id?.name
-                : event_id?.event_id?.name?.length > 20
-                ? `${event_id?.event_id?.name.slice(0, 20)}...`
+                : event_id?.event_id?.name?.length > 25
+                ? `${event_id?.event_id?.name.slice(0, 25)}...`
                 : event_id?.event_id?.name}
             </h1>
+
+            {/* DESKTOP ONLY */}
+            <h1
+              className="hidden lg:block text-white lg:text-2xl font-semibold"
+              title={event_id?.event_id?.name}
+            >
+              {event_id?.event_id?.name}
+            </h1>
+
             <div className="inline-flex items-center mr-3 space-x-2 px-3 py-1 bg-[#3F454B] text-sm text-white rounded-md">
               <ClockFading className="w-5 h-5" />
               <span>{formatted}</span>
@@ -119,42 +226,50 @@ const EventInfo = () => {
         </div>
         {/*EVENT IMAGES */}
 
-        <div className="space-y-3">
-          <div className="w-[90%] rounded-2xl overflow-hidden">
-            <img
-              src={event_id?.event_id?.pictures?.[0] || "/1308183.jpeg"}
-              alt="Login"
-              className="w-full h-[350px] object-cover"
-            />
+        <div className="space-y-4  flex lg:flex-row flex-col">
+          <div className="w-full ">
+            <div className="w-[90%] lg:w-[95%]  rounded-2xl overflow-hidden">
+              <img
+                src={event_id?.event_id?.pictures?.[0] || "/1308183.jpeg"}
+                alt="Login"
+                className="w-full h-[350px] lg:h-[450px] object-cover"
+              />
+            </div>
           </div>
+          <div className="w-full space-y-3">
+            {/*TOP IMAGE  */}
+            <div className="w-full">
+              <div className="w-[90%] rounded-2xl overflow-hidden">
+                <img
+                  src={event_id?.event_id?.pictures?.[1] || "/1308183.jpeg"}
+                  alt="Login"
+                  className="w-full h-[200px] lg:h-[150px] object-cover object-center"
+                />
+              </div>
+            </div>
 
-          <div className="w-[90%] rounded-2xl overflow-hidden">
-            <img
-              src={event_id?.event_id?.pictures?.[1] || "/1308183.jpeg"}
-              alt="Login"
-              className="w-full h-[200px] object-cover"
-            />
-          </div>
+            <div className="w-full lg:flex space-y-3 lg:space-x-4">
+              <div className="w-[90%] rounded-2xl overflow-hidden">
+                <img
+                  src={event_id?.event_id?.pictures?.[2] || "/1308183.jpeg"}
+                  alt="Login"
+                  className="w-full h-[200px] lg:h-[290px] object-cover"
+                />
+              </div>
 
-          <div className="w-[90%] rounded-2xl overflow-hidden">
-            <img
-              src={event_id?.event_id?.pictures?.[2] || "/1308183.jpeg"}
-              alt="Login"
-              className="w-full h-[200px] object-cover"
-            />
-          </div>
+              <div className="w-[90%] rounded-2xl overflow-hidden relative">
+                {/* Image */}
+                <img
+                  src="/1308183.jpeg"
+                  alt="Login"
+                  className="w-full h-[200px] object-cover"
+                />
 
-          <div className="w-[90%] rounded-2xl overflow-hidden relative">
-            {/* Image */}
-            <img
-              src="/1308183.jpeg"
-              alt="Login"
-              className="w-full h-[200px] object-cover"
-            />
-
-            {/* Overlay */}
-            <div className="absolute  flex  justify-center items-center inset-0 bg-black/60 ">
-              <button className="text-white">View More</button>
+                {/* Overlay */}
+                <div className="absolute  flex  justify-center items-center inset-0 bg-black/60 ">
+                  <button className="text-white">View More</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
