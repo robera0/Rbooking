@@ -15,7 +15,7 @@ export const get_events = async (req, res) => {
 
 export const featured_events = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 3;
+    const limit = 4;
     const events = await Event.find().limit(limit);
     res.status(200).json({ events: events });
   } catch {
@@ -43,6 +43,6 @@ export const fetchevents_id = async (req, res) => {
 
     res.status(200).json({ event_id: event });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: error.message });
   }
 };

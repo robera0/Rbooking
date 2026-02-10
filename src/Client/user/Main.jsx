@@ -11,9 +11,11 @@ import {
   Twitter,
   Facebook,
   CircleX,
+  Guitar,
+  Flag,
 } from "lucide-react";
 import { EditMenuBar, MenuBar } from "../../components/Reusable";
-import { AccountSideMenu } from "../../components/Reusable";
+import { AccountSideMenu, WindowMenuBar } from "../../components/Reusable";
 import { motion, AnimatePresence } from "framer-motion";
 import { useService } from "../../Context/ServiceContext";
 
@@ -57,6 +59,60 @@ const Main = ({ children }) => {
               <span>
                 <CircleUser className="w-4 h-4" />
               </span>
+            </button>
+          </div>
+        </div>
+
+        {/*desktop view */}
+        <div className="flex items-center justify-between hidden md:flex text-white mt-2 p-6">
+          {/* Left side: Logo + Navigation */}
+          <div className="flex items-center space-x-10">
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <Scissors className="text-[#B3B3B3] w-14 h-14" />
+              <h1 className="font-irish text-3xl text-white font-bold">
+                Kuretegn Event
+              </h1>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex space-x-12">
+              <WindowMenuBar
+                icon={<House className="w-4 h-4" />}
+                header="Home"
+                path="/"
+              />
+              <WindowMenuBar
+                icon={<Guitar className="w-4 h-4" />}
+                header="Concert"
+                path="/concert"
+              />
+              <WindowMenuBar
+                icon={<Flag className="w-4 h-4" />}
+                header="Exhibition"
+                path="/exhibition"
+              />
+            </div>
+          </div>
+
+          {/* Right side: User buttons */}
+          <div className="flex mr-22 items-center space-x-8">
+            {/* Menu */}
+            <button className="relative flex justify-center items-center w-10 h-10 bg-[#3F454B] rounded-sm">
+              <div className="w-4 h-4 rounded-full absolute ping-red-400"></div>
+              <Ticket className="w-5 h-5" />
+            </button>
+
+            {/* Notification */}
+            <button className="relative flex justify-center items-center w-10 h-10 bg-[#3F454B] rounded-sm">
+              <div className="absolute top-0 left-6 w-2 h-2 rounded-full animate-ping bg-red-400"></div>
+              <Bell className="w-4 h-4" />
+            </button>
+
+            {/* Profile */}
+            <button className="relative flex justify-center items-center w-10 h-10 bg-[#3F454B] rounded-sm">
+              <div className="w-4 h-4 rounded-full absolute ping-red-400"></div>
+              <CircleUser className="w-4 h-4" />
             </button>
           </div>
         </div>

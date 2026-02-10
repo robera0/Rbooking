@@ -1,18 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { EyeOff, Eye, User, Lock } from "lucide-react";
-
+import { useService } from "@/Context/ServiceContext";
 const LoginUser = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const from = location.state?.from?.pathname || "/";
 
   const [useremail, setUseremail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-
+  const { setIsLoggedIn } = useService();
   const handleEmail = (e) => {
     setUseremail(e.target.value);
   };
@@ -24,7 +26,7 @@ const LoginUser = () => {
     const res = await axios.post(
       "http://localhost:5000/api/auth/login",
       userData,
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return res.data;
   };
@@ -33,7 +35,10 @@ const LoginUser = () => {
     mutationFn: sendUsers,
     onSuccess: (data) => {
       if (data.message === "Logged in successfully") {
-        navigate("/");
+        setIsLoggedIn(true);
+        queryClient.invalidateQueries({ queryKey: ["tickets"] });
+
+        navigate(from, { replace: true });
       }
     },
     onError: (error) => {

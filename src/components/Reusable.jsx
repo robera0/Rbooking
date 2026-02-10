@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Listbox } from "@headlessui/react";
 import { faToggleOff, faToggleOn } from "@fortawesome/free-solid-svg-icons";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Star,
   CircleUser,
@@ -14,9 +14,27 @@ import {
   CheckCheck,
   ChevronDown,
   Search,
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  X,
 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { eventService } from "@/Context/ApiEvent";
+import { Navigate, useLocation } from "react-router-dom";
+
+export const ProtectedRoute = ({ isLoggedIn, children }) => {
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
 export const Toggle = ({ name, toggle, toggleOn, action }) => {
   return (
     <div className="flex w-full justify-between">

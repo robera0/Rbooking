@@ -1,45 +1,11 @@
-[f] test the ticket schema 
-[f] test the comment schema  get with resect to the event
-[f] create a profile info model and routes
-[f] make a profile schema
-[f] the wishlist with the specific user[] add select to the ticket so it gave me the wanted infos
-[f] add amenities data to the db
-[f] show the comment section
-[f] make the wishlist show in the client side
-[f] make the logged in users only post a comment in back end
-[f] make them able to edit the full name even the email in the backed
-[] make a appearing div that shows the map when the location icon is clicked
+
+[f] make the tickets offs card lil more fit to the container 
+[f] make a appearing div that shows the map when the location icon is clicked // after the release of this web
 [] learn about notification design and design the schema for email notification
 [] make the account section show login if its not authorized
 [] add a schema of  a review about the app
-[] design the buyin ticket side
-[] show the user in the profile section if they logged in
-[] make update userProfile backend
 [] make the notification side work
+[] make the view more in the image get bigger when its clicked
 [] make the footer stuck in the end
 [] add import { nanoid } from 'nanoid'; when user purchase a ticket
-src/
- ├── app.js               # Express app setup
- ├── server.js            # Server start
- ├── config/
- │    └── db.js            # MongoDB connection
- ├── models/
- │    ├── User.js
- │    ├── Event.js
- │    ├── Ticket.js
- │    └── Booking.js
- ├── controllers/
- │    ├── authController.js
- │    ├── eventController.js
- │    ├── ticketController.js
- │    └── bookingController.js
- ├── routes/
- │    ├── authRoutes.js
- │    ├── eventRoutes.js
- │    ├── ticketRoutes.js
- │    └── bookingRoutes.js
- ├── middlewares/
- │    └── authMiddleware.js
- ├── utils/
- │    └── generateQR.js
- └── .env
+

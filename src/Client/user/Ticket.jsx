@@ -7,22 +7,23 @@ import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
 import { useState } from "react";
 import axios from "axios";
-import { LoginPopup } from "@/components/Reusable";
+import { useService } from "@/Context/ServiceContext";
 const TicketHome = () => {
   const navigate = useNavigate();
+  const { isLoggedIn } = useService();
   const { tickets, ticketLoading, ticketsError, ticketIsError } =
     eventService();
 
   const [hasAlerted, setHasAlerted] = useState(false);
-  const [loginPopUp, setLoginPopUp] = useState(false);
-  if (ticketIsError && !hasAlerted) {
+
+  if (ticketIsError && !isLoggedIn && !hasAlerted) {
     toast.error(ticketsError.message, {
       duration: 3000,
       position: "top-center",
       className:
         "bg-red-500 text-white font-bold py-3 px-4 rounded-none  text-center shadow-lg",
     });
-    setLoginPopUp(true);
+
     setHasAlerted(true);
   }
 
@@ -45,10 +46,11 @@ const TicketHome = () => {
       );
     }
   };
+
   return (
     <div className="flex  flex-col flex-wrap pb-12  items-center space-y-8">
       <Toaster position="top-center" />
-      {loginPopUp && <LoginPopup />}
+
       <div className="space-y-2">
         <h1 className="text-2xl text-white font-semibold ">My Tickets</h1>
 
@@ -89,9 +91,9 @@ const TicketHome = () => {
           return (
             <div
               key={idx}
-              className={`rounded-2xl w-93 bg-[#24282d] p-4 shadow-lg border ${bg?.border}`}
+              className={`rounded-2xl w-[92%] sm:w-93 bg-[#24282d] p-3 sm:p-4 shadow-lg border ${bg?.border}`}
             >
-              <div className="flex gap-4">
+              <div className="flex gap-3 sm:gap-4 items-start">
                 <img
                   src={
                     ticket?.pictures?.[0] ||
@@ -99,16 +101,18 @@ const TicketHome = () => {
                     "/Login.jpg"
                   }
                   alt={ticket?.name || "event image"}
-                  className="h-40 w-24 rounded-xl object-cover"
+                  className="h-32 w-20 sm:h-40 sm:w-24 rounded-xl object-cover"
                 />
 
                 <div className="flex flex-col justify-between">
                   <div className="space-y-1">
                     <div className="w-full flex justify-between">
-                      <h3 className="text-sm w-[70%] font-semibold text-white">
+                      <h3 className="text-sm sm:text-base w-[68%] font-semibold text-white">
                         {ticket?.name}
                       </h3>
-                      <Ticket className={`w-10 h-10 ${bg?.text}`} />
+                      <Ticket
+                        className={`w-8 h-8 sm:w-10 sm:h-10 ${bg?.text}`}
+                      />
                     </div>
 
                     <p className="text-sm text-gray-400">{formatted}</p>
@@ -125,7 +129,7 @@ const TicketHome = () => {
                         fetchTicket(ticketId?._id);
                         navigate(`/tickets_home/${ticketId?._id}`);
                       }}
-                      className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-1 rounded-md"
+                      className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-3 py-1 rounded-md"
                     >
                       View Ticket
                     </button>

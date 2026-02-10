@@ -21,18 +21,74 @@ import {
   User,
   MapIcon,
 } from "lucide-react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMapEvents,
+} from "react-leaflet";
 import { useParams } from "react-router-dom";
 import { Listbox } from "@headlessui/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Amenities } from "../../components/Reusable";
 import { EventPolices } from "../../components/Reusable";
 import { useLoaderData } from "react-router-dom";
+import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { useState } from "react";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, QueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { CalendarDemo } from "@/components/ui/calendar";
+import L from "leaflet";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import axios from "axios";
+import { add } from "date-fns";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+const reverseGeocode = async (lat, lng) => {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+    {
+      headers: {
+        "User-Agent": "Rbooking-App",
+      },
+    },
+  );
+
+  if (!res.ok) return null;
+  return res.json();
+};
+
+const LocationMarker = ({ position, setPosition, setAddress }) => {
+  useMapEvents({
+    async click(e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+
+      setPosition([lat, lng]);
+
+      const data = await reverseGeocode(lat, lng);
+      if (data?.display_name) {
+        setAddress(data.display_name);
+      }
+    },
+  });
+
+  return position ? (
+    <Marker position={position}>
+      <Popup>📍 Location selected</Popup>
+    </Marker>
+  ) : null;
+};
 
 const SearchButton = () => (
   <button className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200">
@@ -41,6 +97,7 @@ const SearchButton = () => (
 );
 
 const EventInfo = () => {
+  const queryClient = new QueryClient();
   const progress = [100, 100, 100, 100, 50];
   const options = [
     { id: 1, label: 5, value: "5/5" },
@@ -53,11 +110,24 @@ const EventInfo = () => {
 
   const [selected, setSelected] = useState(null);
   const [dateSlide, setDateSlide] = useState(false);
+  const [mapSlide, setMapSlide] = useState(false);
   const [dates, setDates] = useState(null);
   const [likeBtn, setLikeBtn] = useState(15);
   const [dislikeBtn, setDisLikeBtn] = useState(2);
   const [MoreTicket, setMoreTicket] = useState(false);
-  const { isEditMenuActive, setEditMenuActive } = useService();
+  const {
+    isEditMenuActive,
+    setEditMenuActive,
+    addFav,
+    setAddFav,
+    toggleWishlist,
+  } = useService();
+  const [showFullName, setShowFullName] = useState(false);
+  const [position, setPosition] = useState(null);
+  const [address, setAddress] = useState("");
+
+  const { mutation: wishlistMutation } = useWishlistMutation();
+
   const { fetchEventById } = eventService();
   const { id } = useParams();
   const {
@@ -75,8 +145,43 @@ const EventInfo = () => {
     month: "short",
     year: "numeric",
   });
+  const checkWishlist = () => {
+    if (!event_id?.event_id?._id || !wishlist) return false;
+    return (
+      wishlist?.wishlists?.events?.some(
+        (item) => item?._id === event_id.event_id._id,
+      ) || false
+    );
+  };
+  const checkMutation = useMutation({
+    mutationFn: checkWishlist,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["wishlist"]);
+    },
+  });
+  const Maps = () => {
+    return (
+      <div className="w-full h-full">
+        <MapContainer
+          center={[9.03, 38.74]}
+          zoom={13}
+          scrollWheelZoom
+          className="h-full w-full rounded-lg shadow-md"
+        >
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
 
-  const [showFullName, setShowFullName] = useState(false);
+          <LocationMarker
+            position={position}
+            setPosition={setPosition}
+            setAddress={setAddress}
+          />
+        </MapContainer>
+      </div>
+    );
+  };
 
   return (
     <div className=" space-y-8 mb-12 lg:p-6">
@@ -188,8 +293,8 @@ const EventInfo = () => {
               {showFullName
                 ? event_id?.event_id?.name
                 : event_id?.event_id?.name?.length > 25
-                ? `${event_id?.event_id?.name.slice(0, 25)}...`
-                : event_id?.event_id?.name}
+                  ? `${event_id?.event_id?.name.slice(0, 25)}...`
+                  : event_id?.event_id?.name}
             </h1>
 
             {/* DESKTOP ONLY */}
@@ -208,16 +313,67 @@ const EventInfo = () => {
 
           {/* Location */}
           <div className="flex items-center space-x-2">
-            <MapPin className="w-5 h-5 text-white" />
-            <p className="text-[#808080] text-sm truncate max-w-full">
-              {event_id?.event_id?.locale}
+            <button
+              onClick={() => {
+                if (!mapSlide) {
+                  setMapSlide(true);
+                } else {
+                  setMapSlide(false);
+                }
+              }}
+            >
+              <MapPin className="w-5 h-5 text-white" />
+            </button>
+
+            <p className=" text-[#808080] text-sm truncate max-w-1/2">
+              {address || event_id?.event_id?.locale}
             </p>
           </div>
+          <div>
+            {!mapSlide && (
+              <p className=" text-[#808080] text-sm  max-w-full">
+                click the map icon to see the full map
+              </p>
+            )}
+          </div>
+          <AnimatePresence>
+            {mapSlide && (
+              <motion.div
+                initial={{ opacity: 0, y: -30, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -30, height: 0 }}
+                transition={{
+                  duration: 0.4,
+                  ease: "easeOut",
+                }}
+                className="space-y-4 overflow-hidden"
+              >
+                <div className="w-[90%]  h-62 p-5 rounded-xl space-y-2">
+                  <Maps />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="flex justify-end mr-12 space-x-2">
           <div className=" flex  space-x-2  items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
-            <Heart className="text-white flex text-center w-5 h-5" />
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                wishlistMutation.mutate({
+                  event_id: event_id?.event_id?._id,
+                  isAdding: !addFav,
+                });
+              }}
+            >
+              <Heart
+                className={`w-5 h-5 transition-colors duration-200 ${
+                  addFav ? "text-white fill-white" : "text-white fill-none"
+                }`}
+              />
+            </button>
           </div>
 
           <div className=" flex  space-x-2  items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
@@ -489,7 +645,7 @@ const EventInfo = () => {
                       icon={Puzzle}
                       lists={Array.isArray(list) ? list : []}
                     />
-                  )
+                  ),
                 )}
             </div>
           </div>
@@ -661,7 +817,7 @@ const EventInfo = () => {
                         </h1>
                         <p className="text-sm text-gray-400">
                           {moment(
-                            event_id?.event_id?.comments[0]?.createdAt
+                            event_id?.event_id?.comments[0]?.createdAt,
                           ).fromNow()}
                         </p>
                       </div>

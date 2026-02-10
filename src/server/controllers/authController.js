@@ -79,7 +79,7 @@ export const refresh = async (req, res) => {
         return res.status(404).json({ message: "User not found" });
       }
       const tokenExists = user.refreshTokens.some(
-        (t) => t.token === refresh_token
+        (t) => t.token === refresh_token,
       );
       if (!tokenExists) {
         return res.status(403).json({ message: "Token mismatch" });
@@ -117,7 +117,7 @@ export const logout = async (req, res) => {
     }
 
     user.refreshTokens = user.refreshTokens.filter(
-      (t) => t.token !== refresh_token
+      (t) => t.token !== refresh_token,
     );
 
     await user.save();

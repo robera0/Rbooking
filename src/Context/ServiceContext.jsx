@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from "react";
+import axios from "axios";
 
 const ServiceContext = createContext();
 
@@ -32,6 +33,16 @@ export const ServiceProvider = ({ children }) => {
   const [profileView, setProfielView] = useState(true);
   const [isAccountActive, setIsAccountActive] = useState(false);
   const [isEditMenuActive, setEditMenuActive] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [addFav, setAddFav] = useState(false);
+  const toggleWishlist = async ({ event_id, isAdding }) => {
+    const url = isAdding
+      ? "http://localhost:5000/api/auth/wishlist/add"
+      : "http://localhost:5000/api/auth/wishlist/remove";
+
+    return axios.post(url, { events: event_id }, { withCredentials: true });
+  };
+
   return (
     <ServiceContext.Provider
       value={{
@@ -93,6 +104,11 @@ export const ServiceProvider = ({ children }) => {
         setIsAccountActive,
         isEditMenuActive,
         setEditMenuActive,
+        isLoggedIn,
+        setIsLoggedIn,
+        addFav,
+        setAddFav,
+        toggleWishlist,
       }}
     >
       {children}

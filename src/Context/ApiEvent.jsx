@@ -53,7 +53,7 @@ export const ApiProvider = ({ children }) => {
       {
         method: "GET",
         credentials: "include",
-      }
+      },
     );
     return res.json();
   };
@@ -153,6 +153,7 @@ export const ApiProvider = ({ children }) => {
         userIsLoading,
         userIsError,
         userError,
+        fetchEventById,
       }}
     >
       {children}

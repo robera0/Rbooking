@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { ServiceProvider } from "./Context/ServiceContext";
+import { ServiceProvider, useService } from "./Context/ServiceContext";
 import { ApiProvider } from "./Context/ApiEvent";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
@@ -21,7 +21,7 @@ import Wishlist from "./Client/user/Wishlist";
 import Profile from "./Client/user/Profile";
 import Setting from "./Client/user/Setting";
 import EventInfo from "./Client/user/EventInfo";
-
+import { ProtectedRoute } from "./components/Reusable";
 const queryClient = new QueryClient();
 
 // Framer Motion variants
@@ -52,7 +52,7 @@ const PageWrapper = ({ children }) => (
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-
+  const { isLoggedIn } = useService();
   return (
     <AnimatePresence mode="wait">
       <Routes key={location.pathname} location={location}>
@@ -119,7 +119,9 @@ const AnimatedRoutes = () => {
           element={
             <PageWrapper>
               <Main>
-                <Ticket />
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Ticket />
+                </ProtectedRoute>
               </Main>
             </PageWrapper>
           }
@@ -130,7 +132,9 @@ const AnimatedRoutes = () => {
           element={
             <PageWrapper>
               <Main>
-                <ViewTicket />
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ViewTicket />
+                </ProtectedRoute>
               </Main>
             </PageWrapper>
           }
@@ -155,7 +159,9 @@ const AnimatedRoutes = () => {
             <PageWrapper>
               <Main>
                 <Account>
-                  <Wishlist />
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <Wishlist />
+                  </ProtectedRoute>
                 </Account>
               </Main>
             </PageWrapper>
