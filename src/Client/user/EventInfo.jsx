@@ -45,7 +45,6 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import axios from "axios";
 import { add } from "date-fns";
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -114,13 +113,12 @@ const EventInfo = () => {
   const [dates, setDates] = useState(null);
   const [likeBtn, setLikeBtn] = useState(15);
   const [dislikeBtn, setDisLikeBtn] = useState(2);
-  const [MoreTicket, setMoreTicket] = useState(false);
   const {
-    isEditMenuActive,
     setEditMenuActive,
+    setCheckoutOpen,
+    checkoutOpen,
     addFav,
     setAddFav,
-    toggleWishlist,
   } = useService();
   const [showFullName, setShowFullName] = useState(false);
   const [position, setPosition] = useState(null);
@@ -128,8 +126,12 @@ const EventInfo = () => {
 
   const { mutation: wishlistMutation } = useWishlistMutation();
 
-  const { fetchEventById } = eventService();
+  const { fetchEventById, wishlist } = eventService();
   const { id } = useParams();
+  const [showMore, setShowMore] = useState(false);
+
+  const [selectedTicket, setSelectedTicket] = useState(null);
+
   const {
     data: event_id,
     event_idisLoading,
@@ -138,6 +140,20 @@ const EventInfo = () => {
     queryKey: ["event", id],
     queryFn: () => fetchEventById(id),
   });
+  const prices = event_id?.event_id?.priceRanges || [];
+
+  const standardTicket = prices.find(
+    (p) => p.type?.toLowerCase() === "standard",
+  );
+
+  const otherTickets = prices.filter(
+    (p) => p.type?.toLowerCase() !== "standard",
+  );
+
+  const handleCheckout = (ticket) => {
+    setSelectedTicket(ticket);
+    setCheckoutOpen(true);
+  };
 
   const date = new Date(event_id?.event_id?.dates?.start?.localDate);
   const formatted = date.toLocaleDateString("en-GB", {
@@ -153,12 +169,7 @@ const EventInfo = () => {
       ) || false
     );
   };
-  const checkMutation = useMutation({
-    mutationFn: checkWishlist,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["wishlist"]);
-    },
-  });
+  setAddFav(checkWishlist);
   const Maps = () => {
     return (
       <div className="w-full h-full">
@@ -431,189 +442,140 @@ const EventInfo = () => {
         </div>
 
         {/*TICKET */}
+        <div className="space-y-6">
+          {standardTicket && (
+            <div className="bg-[#191B1D] w-[90%] p-5 rounded-xl space-y-4">
+              <div className="flex justify-between">
+                <div className="space-y-2">
+                  <h2 className="text-[#808080] font-semibold">
+                    {standardTicket?.type}
+                  </h2>
 
-        <div className="bg-[#191B1D] w-[90%] h-62 p-5 rounded-xl space-y-2">
-          <div className="flex justify-between ">
-            <div className="space-y-2">
-              <h2 className=" text-[#808080] font-semibold">
-                Price of Early Bird
-              </h2>
-              <h1 className="text-xl text-white font-bold">
-                {`${event_id?.event_id?.priceRanges?.[0]?.min} ${event_id?.event_id?.priceRanges?.[0]?.currency}`}
-              </h1>
-            </div>
-
-            <span className="flex  items-center mr-8">
-              {" "}
-              <Ticket className="w-12 h-12 text-[#34C759]" />
-            </span>
-          </div>
-
-          {/*RATING */}
-          <div className="space-y-2">
-            <div className="flex items-center  space-x-2">
-              <span>
-                <MoveRight className="text-white w-4" />
-              </span>
-
-              <h3 className=" text-white text-center font-bold">
-                {event?.rating}
-              </h3>
-
-              <span className="flex gap-1 text-orange-400">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={14} fill="currentColor" />
-                ))}
-              </span>
-            </div>
-
-            <div className="flex items-center  space-x-2">
-              <span>
-                <MoveRight className="text-white w-4" />
-              </span>
-
-              <h3 className="text-[#808080] text-center font-bold">
-                No Specific Offers
-              </h3>
-            </div>
-            <div className="flex  justify-center  mt-6">
-              <button
-                onClick={() => setMoreTicket((prev) => !prev)}
-                className=" text-white  font-semibold bg-[#FF9A41] px-10 py-3 rounded-2xl space-x-2 lg:cursor-pointer"
-              >
-                <span>
-                  {" "}
-                  {MoreTicket ? "Get Tickets " : "View more Tickets"}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* More tickets */}
-        <AnimatePresence>
-          {MoreTicket && (
-            <motion.div
-              initial={{ opacity: 0, y: -30, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: "auto" }}
-              exit={{ opacity: 0, y: -30, height: 0 }}
-              transition={{
-                duration: 0.4,
-                ease: "easeOut",
-              }}
-              className="space-y-4 overflow-hidden"
-            >
-              <div className=" space-y-4">
-                {/* vip tickets */}
-                <div className="bg-[#191B1D] w-[90%] h-62 p-5 rounded-xl space-y-2">
-                  <div className="flex justify-between ">
-                    <div className="space-y-2">
-                      <h2 className=" text-[#808080] font-semibold">
-                        Price of Vip
-                      </h2>
-                      <h1 className="text-xl text-white font-bold">
-                        {`${event_id?.event_id?.priceRanges?.[1]?.min} ${event_id?.event_id?.priceRanges?.[0]?.currency}`}
-                      </h1>
-                    </div>
-
-                    <span className="flex  items-center mr-8">
-                      {" "}
-                      <Ticket className="w-12 h-12 text-orange-500" />
-                    </span>
-                  </div>
-
-                  {/*RATING */}
-                  <div className="space-y-2">
-                    <div className="flex items-center  space-x-2">
-                      <span>
-                        <MoveRight className="text-white w-4" />
-                      </span>
-
-                      <h3 className=" text-white text-center font-bold">
-                        {event?.rating}
-                      </h3>
-
-                      <span className="flex gap-1 text-orange-400">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={14} fill="currentColor" />
-                        ))}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center  space-x-2">
-                      <span>
-                        <MoveRight className="text-white w-4" />
-                      </span>
-
-                      <h3 className="text-[#808080] text-center font-bold">
-                        No Specific Offers
-                      </h3>
-                    </div>
-                    <div className="flex  justify-center  mt-6">
-                      <button className=" text-white  font-semibold bg-[#FF9A41] px-10 py-3 rounded-2xl space-x-2 lg:cursor-pointer">
-                        <span>Get Tickets</span>
-                      </button>
-                    </div>
-                  </div>
+                  <h1 className="text-xl text-white font-bold">
+                    {standardTicket?.min} {standardTicket?.currency}
+                  </h1>
                 </div>
 
-                {/* Vvip tickets */}
+                <Ticket className="w-12 h-12 text-[#34C759]" />
+              </div>
 
-                <div className="bg-[#191B1D] w-[90%] h-62 p-5 rounded-xl space-y-2">
-                  <div className="flex justify-between ">
-                    <div className="space-y-2">
-                      <h2 className=" text-[#808080] font-semibold">
-                        Price of Vvip
-                      </h2>
-                      <h1 className="text-xl text-white font-bold">
-                        {`${event_id?.event_id?.priceRanges?.[1]?.max} ${event_id?.event_id?.priceRanges?.[0]?.currency}`}
-                      </h1>
-                    </div>
+              {/* Rating */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <MoveRight className="text-white w-4" />
 
-                    <span className="flex  items-center mr-8">
-                      {" "}
-                      <Ticket className="w-12 h-12 text-blue-500" />
-                    </span>
-                  </div>
+                  <h3 className="text-white font-bold">{event?.rating}</h3>
 
-                  {/*RATING */}
-                  <div className="space-y-2">
-                    <div className="flex items-center  space-x-2">
-                      <span>
-                        <MoveRight className="text-white w-4" />
-                      </span>
+                  <span className="flex gap-1 text-orange-400">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={14} fill="currentColor" />
+                    ))}
+                  </span>
+                </div>
 
-                      <h3 className=" text-white text-center font-bold">
-                        {event?.rating}
-                      </h3>
-
-                      <span className="flex gap-1 text-orange-400">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={14} fill="currentColor" />
-                        ))}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center  space-x-2">
-                      <span>
-                        <MoveRight className="text-white w-4" />
-                      </span>
-
-                      <h3 className="text-[#808080] text-center font-bold">
-                        No Specific Offers
-                      </h3>
-                    </div>
-                    <div className="flex  justify-center  mt-6">
-                      <button className=" text-white  font-semibold bg-[#FF9A41] px-10 py-3 rounded-2xl space-x-2 lg:cursor-pointer">
-                        <span>Get Tickets</span>
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <MoveRight className="text-white w-4" />
+                  <h3 className="text-[#808080] font-bold">
+                    No Specific Offers
+                  </h3>
                 </div>
               </div>
-            </motion.div>
+
+              <div className="flex justify-center mt-4">
+                {!showMore ? (
+                  <button
+                    onClick={() => setShowMore(true)}
+                    className="text-white font-semibold bg-[#FF9A41] px-8 py-3 rounded-2xl hover:scale-105 transition"
+                  >
+                    View More Tickets
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleCheckout(standardTicket)}
+                    className="text-white font-semibold bg-[#FF9A41] px-8 py-3 rounded-2xl hover:scale-105 transition"
+                  >
+                    Get Ticket
+                  </button>
+                )}
+              </div>
+            </div>
           )}
-        </AnimatePresence>
+
+          <AnimatePresence>
+            {showMore && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-6 overflow-hidden"
+              >
+                {otherTickets.map((ticket, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-[#191B1D] w-[90%] p-5 rounded-xl space-y-4"
+                  >
+                    <div className="flex justify-between">
+                      <div className="space-y-2">
+                        <h2 className="text-[#808080] font-semibold">
+                          {ticket?.type}
+                        </h2>
+
+                        <h1 className="text-xl text-white font-bold">
+                          {ticket?.min || ticket?.max} {ticket?.currency}
+                        </h1>
+                      </div>
+
+                      <Ticket className="w-12 h-12 text-orange-500" />
+                    </div>
+
+                    {/* Rating */}
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <MoveRight className="text-white w-4" />
+
+                        <h3 className="text-white font-bold">
+                          {event?.rating}
+                        </h3>
+
+                        <span className="flex gap-1 text-orange-400">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={14} fill="currentColor" />
+                          ))}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <MoveRight className="text-white w-4" />
+                        <h3 className="text-[#808080] font-bold">
+                          No Specific Offers
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center mt-4">
+                      <button
+                        onClick={() => handleCheckout(ticket)}
+                        className="text-white font-semibold bg-[#FF9A41] px-8 py-3 rounded-2xl hover:scale-105 transition"
+                      >
+                        Get Ticket
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {/* Debug Checkout */}
+          {checkoutOpen && (
+            <div className="text-white mt-6">
+              Selected: {selectedTicket?.type} —{" "}
+              {selectedTicket?.min || selectedTicket?.max}{" "}
+              {selectedTicket?.currency}
+            </div>
+          )}
+        </div>
+
         <div className="mt-12 space-y-12">
           {/*ABOUT THE EVENT */}
           <div className="space-y-4">

@@ -57,6 +57,101 @@ export const Toggle = ({ name, toggle, toggleOn, action }) => {
   );
 };
 
+export default function CheckoutModal({ isOpen, onClose, amount = 13000 }) {
+  const [phone, setPhone] = useState("+251");
+  const [selected, setSelected] = useState(null);
+
+  const paymentMethods = [
+    { id: "telebirr", name: "Telebirr" },
+    { id: "cbe", name: "CBE Birr" },
+    { id: "boa", name: "Bank of Abyssinia" },
+    { id: "awash", name: "Awash Bank" },
+  ];
+
+  return (
+    <>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center ">
+          <div
+            className="relative w-[90%] max-w-[420px] rounded-3xl p-8
+            bg-gradient-to-br from-[#1E1F25] to-[#2B2E36]
+            border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)] text-white"
+          >
+            {/* Close */}
+            <button
+              onClick={onClose}
+              className="absolute top-5 right-5 text-gray-400 hover:text-white transition"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-lg text-gray-300 tracking-wide">
+                Secure Checkout
+              </h2>
+              <h3 className="text-2xl font-semibold mt-1">Event Name</h3>
+            </div>
+
+            {/* Phone Input */}
+            <div className="mb-7">
+              <label className="block text-sm text-gray-400 mb-2">
+                Phone Number
+              </label>
+
+              <input
+                type="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-black/30 border border-white/10
+                focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30
+                transition rounded-xl px-4 py-3 outline-none"
+              />
+            </div>
+
+            {/* Payment Methods */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {paymentMethods.map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => setSelected(method.id)}
+                  className={`relative rounded-2xl p-4 text-sm font-medium
+                  border transition-all duration-300
+                  ${
+                    selected === method.id
+                      ? "bg-orange-500/10 border-orange-500 shadow-lg scale-[1.03]"
+                      : "bg-white/5 border-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  {method.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Pay Button */}
+            <button
+              className="w-full py-3 rounded-2xl font-semibold text-lg
+              bg-[#FF9A41]
+              hover:scale-[1.02] active:scale-[0.98]
+              transition duration-200 shadow-lg shadow-orange-500/30"
+            >
+              Pay {amount.toLocaleString()} ETB
+            </button>
+
+            {/* Cancel */}
+            <button
+              onClick={onClose}
+              className="w-full mt-4 text-gray-400 hover:text-white text-sm transition"
+            >
+              Cancel Transaction
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 export const MenuBar = ({ icon, header, path }) => {
   const location = useLocation();
   const isActive = location.pathname.split("/")[1] == path.replace("/", "");

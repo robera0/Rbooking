@@ -18,13 +18,15 @@ import { EditMenuBar, MenuBar } from "../../components/Reusable";
 import { AccountSideMenu, WindowMenuBar } from "../../components/Reusable";
 import { motion, AnimatePresence } from "framer-motion";
 import { useService } from "../../Context/ServiceContext";
-
+import CheckoutModal from "../../components/Reusable";
 const Main = ({ children }) => {
   const {
     isAccountActive,
     setIsAccountActive,
     isEditMenuActive,
     setEditMenuActive,
+    checkoutOpen,
+    setCheckoutOpen,
   } = useService();
 
   return (
@@ -151,6 +153,40 @@ const Main = ({ children }) => {
                 <div className=" w-full px-5 pb-6">
                   <div className="bg-[#2A2C31] w-full rounded-xl pt-6">
                     <EditMenuBar />
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/*CHECKOUT INFO */}
+
+        <AnimatePresence>
+          {checkoutOpen && (
+            <motion.div
+              className="fixed inset-0 z-[200] w-full h-screen  flex justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCheckoutOpen(false)}
+            >
+              <motion.div
+                onClick={(e) => e.stopPropagation()}
+                className="w-full  bg-black/60 pt-4 shadow-2xl space-y-8 "
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 40, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 25 }}
+              >
+                {/* Card */}
+                <div className=" w-full px-5 pb-6">
+                  <div className="bg-[#2A2C31] w-full rounded-xl pt-6">
+                    <CheckoutModal
+                      isOpen={checkoutOpen}
+                      onClose={() => setCheckoutOpen(false)}
+                      amount={13000}
+                    />
                   </div>
                 </div>
               </motion.div>

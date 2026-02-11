@@ -1,11 +1,12 @@
 
 [f] make the tickets offs card lil more fit to the container 
 [f] make a appearing div that shows the map when the location icon is clicked // after the release of this web
+[] add import { nanoid } from 'nanoid'; when user purchase a ticket
+
+
 [] learn about notification design and design the schema for email notification
 [] make the account section show login if its not authorized
 [] add a schema of  a review about the app
 [] make the notification side work
 [] make the view more in the image get bigger when its clicked
 [] make the footer stuck in the end
-[] add import { nanoid } from 'nanoid'; when user purchase a ticket
-
