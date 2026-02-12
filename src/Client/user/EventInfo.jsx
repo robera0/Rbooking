@@ -143,12 +143,10 @@ const EventInfo = () => {
     queryKey: ["event", eventId, ticketId],
     queryFn: () => fetchEventById(eventId, ticketId),
   });
-  console.log(event_id);
-  // The API returns { event, ticket }
+
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
 
-  // Prefer event priceRanges; if not available, fall back to ticket data
   const prices =
     event?.priceRanges?.length > 0
       ? event.priceRanges

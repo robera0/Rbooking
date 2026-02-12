@@ -3,62 +3,59 @@ import { TicketModel } from "../models/TicketModel.js";
 import mongoose from "mongoose";
 
 export const purchase_ticket = async (req, res) => {
-  const session = await mongoose.startSession();
-  console.log(session);
-  session.startTransaction();
-
   try {
     const userId = req.user.id;
-    const ticketId = req.params.ticketId;
+    const { id: eventId, ticketId } = req.params;
     const { orderNo, quantity } = req.body;
 
-    if (!ticketId)
-      return res.status(400).json({ message: "Ticket ID required" });
+    if (!ticketId || !mongoose.Types.ObjectId.isValid(ticketId)) {
+      return res.status(400).json({ message: "Valid Ticket ID required" });
+    }
 
-    if (!quantity || quantity <= 0)
+    if (!quantity || quantity <= 0) {
       return res.status(400).json({ message: "Invalid quantity" });
+    }
 
-    const ticket = await TicketModel.findById(ticketId).session(session);
-
-    if (!ticket) return res.status(404).json({ message: "Ticket not found" });
-
+    // Find the ticket and make sure it belongs to the event
+    const ticket = await TicketModel.findOne({ _id: ticketId, eventId });
+    if (!ticket)
+      return res
+        .status(404)
+        .json({ message: "Ticket not found for this event" });
     if (ticket.availableQuantity < quantity)
       return res.status(400).json({ message: "Not enough tickets available" });
 
     const totalAmount = ticket.price * quantity;
 
-    const userTicket = await UserTicketModel.create(
-      [
-        {
-          userId,
-          ticketId,
-          orderNo,
-          quantity,
-          totalAmount,
-          status: "pending",
-        },
-      ],
-      { session },
-    );
+    // Check if user already has this ticket
+    let userTicket = await UserTicketModel.findOne({ userId, ticketId });
+
+    if (userTicket) {
+      // If exists, update quantity and totalAmount
+      userTicket.quantity += quantity;
+      userTicket.totalAmount += totalAmount;
+      await userTicket.save();
+    } else {
+      userTicket = await UserTicketModel.create({
+        userId,
+        ticketId,
+        orderNo: orderNo || `ORD-${Date.now()}`,
+        quantity,
+        totalAmount,
+        status: "pending",
+      });
+    }
 
     ticket.availableQuantity -= quantity;
-    await ticket.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
+    await ticket.save();
 
     res.status(201).json({
       success: true,
-      userTicket: userTicket[0],
+      userTicket,
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    console.error("Purchase error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
