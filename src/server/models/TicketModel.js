@@ -11,6 +11,14 @@ const TicketSchema = new mongoose.Schema({
     required: true,
     default: 100,
   },
+  availableQuantity: {
+    type: Number,
+    required: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+  },
 });
 
 export const TicketModel = mongoose.model("Ticket", TicketSchema);

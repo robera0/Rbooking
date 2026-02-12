@@ -3,8 +3,7 @@ import { CommentModel } from "../models/CommentModel.js";
 import { ProfileModel } from "../models/ProfileModel.js";
 export const get_comments = async (req, res) => {
   try {
-    const id = req.params.id;
-    console.log("the user is ", id);
+    const id = req.user.id;
 
     const comment = await CommentModel.find({ eventId: id });
     res.status(200).json({ comments: comment });
@@ -44,7 +43,7 @@ export const post_comments = async (req, res) => {
         },
         $push: { comment: newComment },
       },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
 
     res.status(200).json({

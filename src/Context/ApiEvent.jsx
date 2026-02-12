@@ -6,7 +6,7 @@ const ApiContext = createContext();
 export const ApiProvider = ({ children }) => {
   // GET EVENTS
   const fetchEvents = async () => {
-    const res = await fetch("http://localhost:5000/api");
+    const res = await fetch("http://localhost:5000/api/events");
     return res.json();
   };
   const {
@@ -49,7 +49,7 @@ export const ApiProvider = ({ children }) => {
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
     const res = await fetch(
-      `http://localhost:5000/api/ "/tickets_home/${ticketId}`,
+      `http://localhost:5000/api/tickets_home/${ticketId}`,
       {
         method: "GET",
         credentials: "include",
@@ -67,15 +67,29 @@ export const ApiProvider = ({ children }) => {
     queryFn: fetchTicketById,
     retry: false,
   });
+  const fetchEventById = async (eventid, ticketId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/events/${eventid}/tickets/${ticketId}`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-  const fetchEventById = async (event_id) => {
-    const res = await fetch(`http://localhost:5000/api/events/${event_id}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    return res.json();
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      return await res.json();
+    } catch (error) {
+      console.error("Failed to fetch event ticket:", error);
+      throw error;
+    }
   };
-
   // GET WISHLIST
   const fetchWishlist = async (req, res) => {
     try {

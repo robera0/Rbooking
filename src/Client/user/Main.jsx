@@ -18,6 +18,7 @@ import { EditMenuBar, MenuBar } from "../../components/Reusable";
 import { AccountSideMenu, WindowMenuBar } from "../../components/Reusable";
 import { motion, AnimatePresence } from "framer-motion";
 import { useService } from "../../Context/ServiceContext";
+import { Link } from "react-router-dom";
 import CheckoutModal from "../../components/Reusable";
 const Main = ({ children }) => {
   const {
@@ -33,12 +34,14 @@ const Main = ({ children }) => {
     <div onClick={() => setIsAccountActive(false)} className="h-auto">
       <div className="relative flex h-screen overflow-hidden bg-[#222529] flex-col ">
         <div className="flex justify-between lg:hidden text-white mt-2  p-6">
-          <div className="flex  space-x-2">
-            <Scissors className="text-[#B3B3B3] mt-2 w-8 h-8" />
-            <h1 className="font-irish text-xl w-12 text-white font bold">
-              Kuretegn Event
-            </h1>
-          </div>
+          <Link to={"/"}>
+            <div className="flex  space-x-2">
+              <Scissors className="text-[#B3B3B3] mt-2 w-8 h-8" />
+              <h1 className="font-irish text-xl w-12 text-white font bold">
+                Kuretegn Event
+              </h1>
+            </div>
+          </Link>
 
           <div className="flex justify-center items-center space-x-3">
             {/*menu */}

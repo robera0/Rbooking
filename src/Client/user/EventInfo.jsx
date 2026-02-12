@@ -35,7 +35,7 @@ import { Amenities } from "../../components/Reusable";
 import { EventPolices } from "../../components/Reusable";
 import { useLoaderData } from "react-router-dom";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import { useMutation, useQuery, QueryClient } from "@tanstack/react-query";
@@ -111,8 +111,10 @@ const EventInfo = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const [mapSlide, setMapSlide] = useState(false);
   const [dates, setDates] = useState(null);
-  const [likeBtn, setLikeBtn] = useState(15);
-  const [dislikeBtn, setDisLikeBtn] = useState(2);
+  const [likeCount, setLikeCount] = useState(15);
+  const [dislikeCount, setDislikeCount] = useState(2);
+  const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
   const {
     setEditMenuActive,
     setCheckoutOpen,
@@ -127,7 +129,8 @@ const EventInfo = () => {
   const { mutation: wishlistMutation } = useWishlistMutation();
 
   const { fetchEventById, wishlist } = eventService();
-  const { id } = useParams();
+  const { eventId, ticketId } = useParams();
+
   const [showMore, setShowMore] = useState(false);
 
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -137,39 +140,56 @@ const EventInfo = () => {
     event_idisLoading,
     isError,
   } = useQuery({
-    queryKey: ["event", id],
-    queryFn: () => fetchEventById(id),
+    queryKey: ["event", eventId, ticketId],
+    queryFn: () => fetchEventById(eventId, ticketId),
   });
-  const prices = event_id?.event_id?.priceRanges || [];
+  console.log(event_id);
+  // The API returns { event, ticket }
+  const event = event_id?.event || null;
+  const ticket = event_id?.ticket || null;
 
-  const standardTicket = prices.find(
-    (p) => p.type?.toLowerCase() === "standard",
+  // Prefer event priceRanges; if not available, fall back to ticket data
+  const prices =
+    event?.priceRanges?.length > 0
+      ? event.priceRanges
+      : ticket
+        ? [
+            {
+              type: "General",
+              currency: "USD",
+              min: ticket.price,
+              max: ticket.price,
+            },
+          ]
+        : [];
+
+  const standardTicket = prices.find((p) =>
+    String(p.type || "")
+      .toLowerCase()
+      .includes("standard"),
   );
 
-  const otherTickets = prices.filter(
-    (p) => p.type?.toLowerCase() !== "standard",
-  );
+  const otherTickets = prices.filter((p) => p !== standardTicket);
 
   const handleCheckout = (ticket) => {
     setSelectedTicket(ticket);
     setCheckoutOpen(true);
   };
 
-  const date = new Date(event_id?.event_id?.dates?.start?.localDate);
+  const date = new Date(event?.dates?.start?.localDate || Date.now());
   const formatted = date.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
   const checkWishlist = () => {
-    if (!event_id?.event_id?._id || !wishlist) return false;
+    if (!event?._id || !wishlist) return false;
     return (
-      wishlist?.wishlists?.events?.some(
-        (item) => item?._id === event_id.event_id._id,
-      ) || false
+      wishlist?.wishlists?.events?.some((item) => item?._id === event?._id) ||
+      false
     );
   };
-  setAddFav(checkWishlist);
+  setAddFav(checkWishlist());
   const Maps = () => {
     return (
       <div className="w-full h-full">
@@ -192,6 +212,44 @@ const EventInfo = () => {
         </MapContainer>
       </div>
     );
+  };
+
+  // initialize counts from event when available
+  useEffect(() => {
+    if (!event) return;
+    if (typeof event.likesCount === "number") setLikeCount(event.likesCount);
+    if (typeof event.dislikesCount === "number")
+      setDislikeCount(event.dislikesCount);
+  }, [event]);
+
+  const handleLikeToggle = () => {
+    if (liked) {
+      setLiked(false);
+      setLikeCount((c) => Math.max(0, c - 1));
+    } else {
+      setLiked(true);
+      setLikeCount((c) => c + 1);
+      if (disliked) {
+        setDisliked(false);
+        setDislikeCount((c) => Math.max(0, c - 1));
+      }
+    }
+    // TODO: persist like/unlike to backend
+  };
+
+  const handleDislikeToggle = () => {
+    if (disliked) {
+      setDisliked(false);
+      setDislikeCount((c) => Math.max(0, c - 1));
+    } else {
+      setDisliked(true);
+      setDislikeCount((c) => c + 1);
+      if (liked) {
+        setLiked(false);
+        setLikeCount((c) => Math.max(0, c - 1));
+      }
+    }
+    // TODO: persist dislike/un-dislike to backend
   };
 
   return (
@@ -299,21 +357,21 @@ const EventInfo = () => {
             <h1
               className="block lg:hidden text-white text-lg font-semibold cursor-pointer"
               onClick={() => setShowFullName(!showFullName)}
-              title={event_id?.event_id?.name}
+              title={event?.name}
             >
               {showFullName
-                ? event_id?.event_id?.name
-                : event_id?.event_id?.name?.length > 25
-                  ? `${event_id?.event_id?.name.slice(0, 25)}...`
-                  : event_id?.event_id?.name}
+                ? event?.name
+                : event?.name?.length > 25
+                  ? `${event?.name.slice(0, 25)}...`
+                  : event?.name}
             </h1>
 
             {/* DESKTOP ONLY */}
             <h1
               className="hidden lg:block text-white lg:text-2xl font-semibold"
-              title={event_id?.event_id?.name}
+              title={event?.name}
             >
-              {event_id?.event_id?.name}
+              {event?.name}
             </h1>
 
             <div className="inline-flex items-center mr-3 space-x-2 px-3 py-1 bg-[#3F454B] text-sm text-white rounded-md">
@@ -337,7 +395,7 @@ const EventInfo = () => {
             </button>
 
             <p className=" text-[#808080] text-sm truncate max-w-1/2">
-              {address || event_id?.event_id?.locale}
+              {address || event?.locale}
             </p>
           </div>
           <div>
@@ -374,7 +432,7 @@ const EventInfo = () => {
                 e.preventDefault();
                 e.stopPropagation();
                 wishlistMutation.mutate({
-                  event_id: event_id?.event_id?._id,
+                  event_id: event?._id,
                   isAdding: !addFav,
                 });
               }}
@@ -397,8 +455,8 @@ const EventInfo = () => {
           <div className="w-full ">
             <div className="w-[90%] lg:w-[95%]  rounded-2xl overflow-hidden">
               <img
-                src={event_id?.event_id?.pictures?.[0] || "/1308183.jpeg"}
-                alt="Login"
+                src={event?.pictures?.[0] || "/1308183.jpeg"}
+                alt={event?.name || "Event image"}
                 className="w-full h-[350px] lg:h-[450px] object-cover"
               />
             </div>
@@ -408,8 +466,8 @@ const EventInfo = () => {
             <div className="w-full">
               <div className="w-[90%] rounded-2xl overflow-hidden">
                 <img
-                  src={event_id?.event_id?.pictures?.[1] || "/1308183.jpeg"}
-                  alt="Login"
+                  src={event?.pictures?.[1] || "/1308183.jpeg"}
+                  alt={event?.name || "Event image"}
                   className="w-full h-[200px] lg:h-[150px] object-cover object-center"
                 />
               </div>
@@ -418,8 +476,8 @@ const EventInfo = () => {
             <div className="w-full lg:flex space-y-3 lg:space-x-4">
               <div className="w-[90%] rounded-2xl overflow-hidden">
                 <img
-                  src={event_id?.event_id?.pictures?.[2] || "/1308183.jpeg"}
-                  alt="Login"
+                  src={event?.pictures?.[2] || "/1308183.jpeg"}
+                  alt={event?.name || "Event image"}
                   className="w-full h-[200px] lg:h-[290px] object-cover"
                 />
               </div>
@@ -464,7 +522,9 @@ const EventInfo = () => {
                 <div className="flex items-center space-x-2">
                   <MoveRight className="text-white w-4" />
 
-                  <h3 className="text-white font-bold">{event?.rating}</h3>
+                  <h3 className="text-white font-bold">
+                    {event?.rating?.score ?? "-"}
+                  </h3>
 
                   <span className="flex gap-1 text-orange-400">
                     {[...Array(5)].map((_, i) => (
@@ -535,7 +595,7 @@ const EventInfo = () => {
                         <MoveRight className="text-white w-4" />
 
                         <h3 className="text-white font-bold">
-                          {event?.rating}
+                          {event?.rating?.score ?? "-"}
                         </h3>
 
                         <span className="flex gap-1 text-orange-400">
@@ -586,7 +646,7 @@ const EventInfo = () => {
             </div>
             <div className="w-[80%] h-[0.3px] bg-gray-600 " />
             <p className="w-[90%] text-[#808080] text-sm leading-6">
-              {event_id?.event_id?.desc}
+              {event?.desc}
             </p>
           </div>
           {/*AMENITIES */}
@@ -596,19 +656,17 @@ const EventInfo = () => {
               <div className="w-[80%] h-[0.3px] bg-gray-600 " />
             </div>
             <div className="space-y-8">
-              {event_id?.event_id?.amenities &&
-                Object.entries(event_id.event_id.amenities).map(
-                  ([category, list]) => (
-                    <Amenities
-                      key={category}
-                      header={
-                        category.charAt(0).toUpperCase() + category.slice(1)
-                      } // Capitalize
-                      icon={Puzzle}
-                      lists={Array.isArray(list) ? list : []}
-                    />
-                  ),
-                )}
+              {event?.amenities &&
+                Object.entries(event.amenities).map(([category, list]) => (
+                  <Amenities
+                    key={category}
+                    header={
+                      category.charAt(0).toUpperCase() + category.slice(1)
+                    } // Capitalize
+                    icon={Puzzle}
+                    lists={Array.isArray(list) ? list : []}
+                  />
+                ))}
             </div>
           </div>
 
@@ -626,7 +684,7 @@ const EventInfo = () => {
               <div className=" flex flex-col items-center p-6 w-[90%]  h-82 bg-[#2A2C31] rounded-xl gap-6">
                 <div className=" flex flex-col items-center space-y-2">
                   <h1 className=" text-white text-2xl font-bold">
-                    {event_id?.event_id?.rating?.score}
+                    {event?.rating?.score ?? "-"}
                   </h1>
                   <p className="w-full text-[#808080] text-sm ">
                     Based on 120 Reviews{" "}
@@ -641,25 +699,26 @@ const EventInfo = () => {
 
                 {/*PROGRESS BAR */}
                 <div className="w-full space-y-4">
-                  {progress?.map((p, _) => (
-                    <>
-                      <div className="w-full flex justify-center items-center space-x-8">
-                        <div className=" w-[80%] h-2 bg-[#202020] rounded-md overflow-hidden ">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${p}%` }}
-                            transition={{
-                              duration: 0.6,
-                              ease: "easeInOut",
-                            }}
-                            className="h-full bg-[#FF9D46] rounded-md"
-                          />
-                        </div>
-                        <p className="flex-1 text-white text-md  font-semibold ">
-                          {p}%
-                        </p>
+                  {progress?.map((p, idx) => (
+                    <div
+                      className="w-full flex justify-center items-center space-x-8"
+                      key={idx}
+                    >
+                      <div className=" w-[80%] h-2 bg-[#202020] rounded-md overflow-hidden ">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${p}%` }}
+                          transition={{
+                            duration: 0.6,
+                            ease: "easeInOut",
+                          }}
+                          className="h-full bg-[#FF9D46] rounded-md"
+                        />
                       </div>
-                    </>
+                      <p className="flex-1 text-white text-md  font-semibold ">
+                        {p}%
+                      </p>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -758,65 +817,91 @@ const EventInfo = () => {
               </button>
 
               {/*OTHERS COMMENT SECTION */}
+              <div className="w-full mt-8 space-y-6 bg-[#222529] p-4 rounded-md">
+                {event?.comments?.length === 0 && (
+                  <p className="text-gray-400 text-center">No comments yet.</p>
+                )}
 
-              <div className="w-full mt-12 space-y-8">
-                {event_id?.event_id?.comments[0]?.comment?.map((c) => (
-                  <div key={c?._id} className="pt-4 space-y-4">
-                    <div className="flex justify-between gap-4">
+                {/* Flatten all comments */}
+                {event?.comments
+                  ?.flatMap((commentDoc) =>
+                    (commentDoc.comment || []).map((c) => ({
+                      ...c,
+                      rating: commentDoc.rating,
+                      createdAt: commentDoc.createdAt,
+                    })),
+                  )
+                  .map((comment, idx) => (
+                    <div
+                      key={comment._id || idx}
+                      className="flex items-start gap-3"
+                    >
                       {/* Avatar */}
-                      <div className="w-12 h-12 flex items-center justify-center overflow-hidden rounded-full">
+                      <div className="w-10 h-10 rounded-full overflow-hidden">
                         <img
+                          src={
+                            comment.userId?.avatarUrl || "/defaultAvater.jpg"
+                          }
+                          alt={comment.userId?.fullName || "User"}
                           className="w-full h-full object-cover"
-                          src={c?.userId?.avatarUrl || "/defaultAvater.jpg"}
-                          alt={c?.userId?.fullName || "User Name"}
                         />
                       </div>
 
-                      {/* Name and Time */}
+                      {/* Comment content */}
                       <div className="flex-1">
-                        <h1 className="font-bold text-white">
-                          {c?.userId?.fullName || "User Name"}
-                        </h1>
-                        <p className="text-sm text-gray-400">
-                          {moment(
-                            event_id?.event_id?.comments[0]?.createdAt,
-                          ).fromNow()}
+                        {/* Name + rating inline */}
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-white text-base">
+                            {comment.userId?.fullName || "User Name"}
+                          </h3>
+
+                          {/* Rating next to name */}
+                          {comment.rating && (
+                            <span className="inline-block px-2 py-0.5 text-sm font-bold text-white bg-yellow-500 rounded">
+                              {comment.rating}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Date under the name */}
+                        <p className="text-sm text-gray-400 mt-1">
+                          {moment(comment.createdAt).fromNow()}
                         </p>
+
+                        {/* Comment text */}
+                        <p className="text-gray-300 text-base mt-2">
+                          {comment.text || "—"}
+                        </p>
+
+                        {/* Like/Dislike */}
+                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
+                          <button
+                            onClick={() => handleLikeToggle(comment._id)}
+                            className={`flex items-center gap-1 ${
+                              liked[comment._id]
+                                ? "text-orange-400"
+                                : "hover:text-orange-400"
+                            }`}
+                          >
+                            <ThumbsUp className="w-4 h-4" />
+                            <span>{likeCount[comment._id] || 0}</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDislikeToggle(comment._id)}
+                            className={`flex items-center gap-1 ${
+                              disliked[comment._id]
+                                ? "text-red-500"
+                                : "hover:text-red-500"
+                            }`}
+                          >
+                            <ThumbsDown className="w-4 h-4" />
+                            <span>{dislikeCount[comment._id] || 0}</span>
+                          </button>
+                        </div>
                       </div>
-
-                      {/* Rating */}
-                      <div className="flex items-center justify-center mr-12 w-10 h-10 text-white font-bold bg-[#F7C32E] rounded-md">
-                        <h1>
-                          {c?.rating || event_id?.event_id?.comments[0]?.rating}
-                        </h1>
-                      </div>
                     </div>
-
-                    {/* Comment text */}
-                    <div>
-                      <p className="w-[90%] text-[#808080]">{c?.text}</p>
-                    </div>
-
-                    {/* Like/Dislike */}
-                    <div className="flex gap-6">
-                      <button
-                        onClick={() => setLikeBtn((prev) => prev + 1)}
-                        className="flex space-x-2 text-gray-400 hover:text-[#FF9A41] items-center justify-center transition"
-                      >
-                        <ThumbsUp className="w-5 h-5" />
-                        <span className="font-semibold">{likeBtn}</span>
-                      </button>
-
-                      <button
-                        onClick={() => setDisLikeBtn((prev) => prev + 1)}
-                        className="flex space-x-2 text-gray-400 hover:text-red-500 items-center justify-center transition"
-                      >
-                        <ThumbsDown className="w-5 h-5" />
-                        <span className="font-semibold">{dislikeBtn}</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
               <div className="flex justify-center">

@@ -9,6 +9,6 @@ const eventrouter = express.Router();
 
 eventrouter.get("/events", get_events);
 eventrouter.get("/", featured_events);
-eventrouter.get("/events/:id", fetchevents_id);
+eventrouter.get("/events/:eventId/tickets/:ticketId", fetchevents_id);
 
 export default eventrouter;

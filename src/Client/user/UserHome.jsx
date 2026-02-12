@@ -31,7 +31,7 @@ import { CalendarDemo } from "@/components/ui/calendar";
 import { InfoBar } from "../../components/Reusable";
 import { RatingStars } from "../../components/Reusable";
 import { eventService } from "@/Context/ApiEvent";
-
+import { useParams } from "react-router-dom";
 const SearchButton = () => (
   <button className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200">
     <Search className="w-5 h-5" />
@@ -42,6 +42,8 @@ const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const [date, setDate] = useState(null);
   const { events, isLoading, error } = eventService();
+
+  console.log(events);
 
   return (
     <div onClick={() => setDateSlide(false)} className="space-y-4">
@@ -282,7 +284,11 @@ const UserHome = () => {
               events.events.map((e, idx) => (
                 <Link
                   key={idx}
-                  to={`/events/${e._id}`}
+                  to={
+                    e?.tickets?.length > 0
+                      ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                      : `/events/${e?._id}`
+                  }
                   className="w-full flex justify-center"
                 >
                   <div className="w-[80%] lg:w-[85%] space-y-3">
@@ -299,8 +305,17 @@ const UserHome = () => {
                       {/* Location badge */}
                       <div className="absolute bottom-3 left-4 flex items-center bg-[#FF7800] text-white px-4 py-1 rounded-xl space-x-2">
                         <Map size={16} />
-                        <span className="text-sm">{e?.locale}</span>
+                        <span className="text-sm">
+                          {e?.locale || "Unknown"}
+                        </span>
                       </div>
+
+                      {/* SOLD OUT badge for events with no tickets */}
+                      {e.tickets?.length === 0 && (
+                        <div className="absolute top-3 right-4 bg-red-600 text-white text-sm px-4 py-1 rounded-lg font-semibold">
+                          SOLD OUT
+                        </div>
+                      )}
                     </div>
 
                     {/* Details Section */}
@@ -310,17 +325,24 @@ const UserHome = () => {
                           {e?.name}
                         </h1>
 
-                        <p className="text-[#FF7800] text-sm lg:text-md">
-                          <span className="font-bold">
-                            {`${e?.priceRanges?.[0]?.min} ${e?.priceRanges?.[0]?.currency}`}
-                          </span>{" "}
-                          / Starting at
-                        </p>
+                        {/* Show ticket price if available */}
+                        {e.tickets?.length > 0 ? (
+                          <p className="text-[#FF7800] text-sm lg:text-md">
+                            <span className="font-bold">
+                              ${e.tickets[0].price}
+                            </span>{" "}
+                            / per ticket
+                          </p>
+                        ) : (
+                          <p className="text-red-500 text-xs lg:text-md font-semibold">
+                            No tickets available
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex items-center space-x-2">
                         <h1 className="text-white text-xl font-bold">
-                          {e?.rating?.score}
+                          {e?.rating?.score || "0.0"}
                         </h1>
                         <Star className="text-[#FF7800]" size={18} />
                       </div>

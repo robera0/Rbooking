@@ -104,7 +104,7 @@ const AnimatedRoutes = () => {
           }
         />
         <Route
-          path="/events/:id"
+          path="/events/:eventId/tickets/:ticketId"
           element={
             <PageWrapper>
               <Main>
