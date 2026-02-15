@@ -24,6 +24,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { eventService } from "@/Context/ApiEvent";
 import { Navigate, useLocation } from "react-router-dom";
+import { useService } from "@/Context/ServiceContext";
 
 export const ProtectedRoute = ({ isLoggedIn, children }) => {
   const location = useLocation();
@@ -57,9 +58,16 @@ export const Toggle = ({ name, toggle, toggleOn, action }) => {
   );
 };
 
-export default function CheckoutModal({ isOpen, onClose, amount = 13000 }) {
-  const [phone, setPhone] = useState("+251");
+export default function CheckoutModal({
+  isOpen,
+  onClose,
+  amount = 400,
+  name,
+  action,
+}) {
+  const [phone, setPhone] = useState("");
   const [selected, setSelected] = useState(null);
+  const { quantity, setQuantity } = useService();
 
   const paymentMethods = [
     { id: "telebirr", name: "Telebirr" },
@@ -68,10 +76,12 @@ export default function CheckoutModal({ isOpen, onClose, amount = 13000 }) {
     { id: "awash", name: "Awash Bank" },
   ];
 
+  const totalAmount = amount * quantity;
+
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center ">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="relative w-[90%] max-w-[420px] rounded-3xl p-8
             bg-gradient-to-br from-[#1E1F25] to-[#2B2E36]
@@ -85,25 +95,41 @@ export default function CheckoutModal({ isOpen, onClose, amount = 13000 }) {
               <X size={20} />
             </button>
 
-            {/* Header */}
             <div className="mb-6">
               <h2 className="text-lg text-gray-300 tracking-wide">
                 Secure Checkout
               </h2>
-              <h3 className="text-2xl font-semibold mt-1">Event Name</h3>
+              <h3 className="text-2xl font-semibold mt-1">{name}</h3>
             </div>
 
             {/* Phone Input */}
-            <div className="mb-7">
+            <div className="mb-6">
               <label className="block text-sm text-gray-400 mb-2">
                 Phone Number
               </label>
 
               <input
                 type="tel"
-                autoComplete="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-black/30 border border-white/10
+                focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30
+                transition rounded-xl px-4 py-3 outline-none"
+              />
+            </div>
+
+            {/* Quantity Input */}
+            <div className="mb-6">
+              <label className="block text-sm text-gray-400 mb-2">
+                Quantity
+              </label>
+
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) =>
+                  setQuantity(Math.max(1, Number(e.target.value)))
+                }
                 className="w-full bg-black/30 border border-white/10
                 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30
                 transition rounded-xl px-4 py-3 outline-none"
@@ -131,12 +157,13 @@ export default function CheckoutModal({ isOpen, onClose, amount = 13000 }) {
 
             {/* Pay Button */}
             <button
+              onClick={action}
               className="w-full py-3 rounded-2xl font-semibold text-lg
               bg-[#FF9A41]
               hover:scale-[1.02] active:scale-[0.98]
               transition duration-200 shadow-lg shadow-orange-500/30"
             >
-              Pay {amount.toLocaleString()} ETB
+              Pay {totalAmount.toLocaleString()} ETB
             </button>
 
             {/* Cancel */}

@@ -1,12 +1,15 @@
 import { UserTicketModel } from "../models/UserTicketModel.js";
 import { TicketModel } from "../models/TicketModel.js";
+import { nanoid } from "nanoid";
+
 import mongoose from "mongoose";
 
 export const purchase_ticket = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id: eventId, ticketId } = req.params;
-    const { orderNo, quantity } = req.body;
+
+    const { quantity } = req.body;
 
     if (!ticketId || !mongoose.Types.ObjectId.isValid(ticketId)) {
       return res.status(400).json({ message: "Valid Ticket ID required" });
@@ -29,7 +32,7 @@ export const purchase_ticket = async (req, res) => {
 
     // Check if user already has this ticket
     let userTicket = await UserTicketModel.findOne({ userId, ticketId });
-
+    const orderNo = nanoid(10);
     if (userTicket) {
       // If exists, update quantity and totalAmount
       userTicket.quantity += quantity;
@@ -39,7 +42,7 @@ export const purchase_ticket = async (req, res) => {
       userTicket = await UserTicketModel.create({
         userId,
         ticketId,
-        orderNo: orderNo || `ORD-${Date.now()}`,
+        orderNo,
         quantity,
         totalAmount,
         status: "pending",

@@ -15,7 +15,7 @@ const UserTicketSchema = new mongoose.Schema(
     },
 
     orderNo: {
-      type: String, // better as string (can include prefix)
+      type: String,
       required: true,
       unique: true,
     },

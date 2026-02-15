@@ -22,6 +22,7 @@ import Profile from "./Client/user/Profile";
 import Setting from "./Client/user/Setting";
 import EventInfo from "./Client/user/EventInfo";
 import { ProtectedRoute } from "./components/Reusable";
+import { Toaster } from "react-hot-toast";
 const queryClient = new QueryClient();
 
 // Framer Motion variants
@@ -49,12 +50,33 @@ const PageWrapper = ({ children }) => (
     {children}
   </motion.div>
 );
+<Toaster
+  position="top-center"
+  toastOptions={{
+    style: {
+      background: "#2A2C31",
+      color: "#fff",
+    },
+    success: {
+      style: {
+        border: "1px solid #FF7800",
+      },
+    },
+    error: {
+      style: {
+        border: "1px solid red",
+      },
+    },
+  }}
+/>;
 
 const AnimatedRoutes = () => {
   const location = useLocation();
   const { isLoggedIn } = useService();
+
   return (
     <AnimatePresence mode="wait">
+      <Toaster position="top-right" />
       <Routes key={location.pathname} location={location}>
         <Route
           path="/login"
@@ -103,6 +125,7 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
+
         <Route
           path="/events/:eventId/tickets/:ticketId"
           element={

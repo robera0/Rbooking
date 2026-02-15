@@ -45,7 +45,10 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { add } from "date-fns";
+import CheckoutModal from "../../components/Reusable";
+import axios from "axios";
+
+import toast from "react-hot-toast";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -114,6 +117,8 @@ const EventInfo = () => {
   const [likeCount, setLikeCount] = useState(15);
   const [dislikeCount, setDislikeCount] = useState(2);
   const [liked, setLiked] = useState(false);
+  const { quantity } = useService();
+
   const [disliked, setDisliked] = useState(false);
   const {
     setEditMenuActive,
@@ -129,10 +134,11 @@ const EventInfo = () => {
   const { mutation: wishlistMutation } = useWishlistMutation();
 
   const { fetchEventById, wishlist } = eventService();
+
   const { eventId, ticketId } = useParams();
 
   const [showMore, setShowMore] = useState(false);
-
+  const [error, setError] = useState("");
   const [selectedTicket, setSelectedTicket] = useState(null);
 
   const {
@@ -143,6 +149,24 @@ const EventInfo = () => {
     queryKey: ["event", eventId, ticketId],
     queryFn: () => fetchEventById(eventId, ticketId),
   });
+
+  const sendCheckout = async ({ eventId, ticketId, quantity }) => {
+    const toastId = toast.loading("Processing payment...");
+
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/auth/purchase/${eventId}/${ticketId}`,
+        { quantity },
+        { withCredentials: true },
+      );
+
+      toast.success("Payment successful ", { id: toastId, duration: 3000 });
+      return res.data;
+    } catch (error) {
+      toast.error("Payment failed ", { id: toastId });
+      throw error;
+    }
+  };
 
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
@@ -180,6 +204,17 @@ const EventInfo = () => {
     month: "short",
     year: "numeric",
   });
+  const CheckoutMutation = useMutation({
+    mutationFn: sendCheckout,
+    onSuccess: () => {
+      setCheckoutOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["checkout"] });
+    },
+    onError: (error) => {
+      setError(error.response?.data?.message || "Login required");
+    },
+  });
+
   const checkWishlist = () => {
     if (!event?._id || !wishlist) return false;
     return (
@@ -250,8 +285,55 @@ const EventInfo = () => {
     // TODO: persist dislike/un-dislike to backend
   };
 
+  const ticketPrices = {
+    standard: standardTicket?.min,
+    VIP: otherTickets?.min,
+    VVIP: otherTickets?.min,
+  };
+
   return (
     <div className=" space-y-8 mb-12 lg:p-6">
+      {/*CHECKOUT INFO */}
+
+      <AnimatePresence>
+        {checkoutOpen && (
+          <motion.div
+            className="fixed inset-0 z-[200] w-full h-screen  flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setCheckoutOpen(false)}
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full  bg-black/60 pt-4 shadow-2xl space-y-8 "
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 25 }}
+            >
+              {/* Card */}
+              <div className=" w-full px-5 pb-6">
+                <div className="bg-[#2A2C31] w-full rounded-xl pt-6">
+                  <CheckoutModal
+                    isOpen={checkoutOpen}
+                    onClose={() => setCheckoutOpen(false)}
+                    amount={selectedTicket?.min || selectedTicket?.max}
+                    name={event?.name}
+                    action={() => {
+                      CheckoutMutation.mutate({
+                        eventId: event._id,
+                        ticketId: ticket?._id,
+                        quantity: quantity,
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/*EDIT BUTTON */}
       <div className="lg:hidden flex justify-center  ">
         <button
@@ -549,7 +631,9 @@ const EventInfo = () => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => handleCheckout(standardTicket)}
+                    onClick={() => {
+                      handleCheckout(standardTicket);
+                    }}
                     className="text-white font-semibold bg-[#FF9A41] px-8 py-3 rounded-2xl hover:scale-105 transition"
                   >
                     Get Ticket
@@ -613,7 +697,9 @@ const EventInfo = () => {
 
                     <div className="flex justify-center mt-4">
                       <button
-                        onClick={() => handleCheckout(ticket)}
+                        onClick={() => {
+                          handleCheckout(ticket);
+                        }}
                         className="text-white font-semibold bg-[#FF9A41] px-8 py-3 rounded-2xl hover:scale-105 transition"
                       >
                         Get Ticket
