@@ -59,12 +59,16 @@ const Main = ({ children }) => {
               </span>
             </button>
             {/*profile */}
-            <button className="relative flex justify-center items-center w-8 h-8 bg-[#3F454B] rounded-sm">
+            <Link
+              to={"/account"}
+              className="relative flex justify-center items-center w-8 h-8 bg-[#3F454B] rounded-sm"
+            >
               <div className=" w-4 h-4 rounded-full absolute ping-red-400"></div>
+
               <span>
                 <CircleUser className="w-4 h-4" />
               </span>
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -194,70 +198,71 @@ const Main = ({ children }) => {
             </motion.div>
           )}
         </AnimatePresence>
+        <div className="min-h-screen flex flex-col">
+          <div className="flex-1 overflow-y-auto pt-6">
+            <div>{children}</div>
 
-        <div className="overflow-y-auto flex-1 scroll-hidden pt-6 pb-18">
-          <div>{children}</div>
+            {/*Footer */}
+            <footer className="w-full h-96 pt-8 pl-4 bg-[#0B0A12]">
+              <div className=" space-y-8">
+                <div className="space-y-2">
+                  <div className="flex flex-cols space-x-2">
+                    <Scissors className="text-[#B3B3B3] mt-2 w-8 h-8" />
+                    <h1 className="font-irish text-xl w-12 text-white font bold">
+                      Vibein Pass
+                    </h1>
+                  </div>
 
-          {/*Footer */}
-          <div className="  w-full h-96 pt-8 pl-4 bg-[#0B0A12]">
-            <div className=" space-y-8">
-              <div className="space-y-2">
-                <div className="flex flex-cols space-x-2">
-                  <Scissors className="text-[#B3B3B3] mt-2 w-8 h-8" />
-                  <h1 className="font-irish text-xl w-12 text-white font bold">
-                    Vibein Pass
-                  </h1>
+                  <p className=" pl-8 w-[95%] text-[#B3B3B3]">
+                    Unlimited vibe with one pass !
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex flex-cols pl-4 mt-4 space-x-3">
+                    <Phone className=" text-white  mt-2 w-5 h-5" />
+                    <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
+                      +25181234567
+                    </h1>
+                  </div>
+                  <div className="flex flex-cols items-center   pl-4 space-x-3">
+                    <Mail className=" text-white  mt-2 w-5 h-5" />
+                    <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
+                      kuretegnevents@gmail.con
+                    </h1>
+                  </div>
                 </div>
 
-                <p className=" pl-8 w-[95%] text-[#B3B3B3]">
-                  Flawed plans, but full support everyone believed in him!
-                </p>
+                {/*SOCIAL MEDIA */}
+                <div className="flex flex-col mt-8  mr-12  items-end text-white  space-y-3">
+                  <h1 className="text-lg font-semibold ">Follow Us on</h1>
+                  <div className="flex items-center pl-4 space-x-3">
+                    <a
+                      href="https://instagram.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Instagram className="w-6 h-6 cursor-pointer" />
+                    </a>
+
+                    <a
+                      href="https://facebook.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Facebook className="w-6 h-6 cursor-pointer" />
+                    </a>
+
+                    <a
+                      href="https://twitter.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Twitter className="w-6 h-6 cursor-pointer" />
+                    </a>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <div className="flex flex-cols pl-4 mt-4 space-x-3">
-                  <Phone className=" text-white  mt-2 w-5 h-5" />
-                  <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
-                    +25181234567
-                  </h1>
-                </div>
-                <div className="flex flex-cols items-center   pl-4 space-x-3">
-                  <Mail className=" text-white  mt-2 w-5 h-5" />
-                  <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
-                    kuretegnevents@gmail.con
-                  </h1>
-                </div>
-              </div>
-
-              {/*SOCIAL MEDIA */}
-              <div className="flex flex-col mt-8  mr-12  items-end text-white  space-y-3">
-                <h1 className="text-lg font-semibold ">Follow Us on</h1>
-                <div className="flex items-center pl-4 space-x-3">
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Instagram className="w-6 h-6 cursor-pointer" />
-                  </a>
-
-                  <a
-                    href="https://facebook.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Facebook className="w-6 h-6 cursor-pointer" />
-                  </a>
-
-                  <a
-                    href="https://twitter.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Twitter className="w-6 h-6 cursor-pointer" />
-                  </a>
-                </div>
-              </div>
-            </div>
+            </footer>
           </div>
         </div>
 

@@ -241,7 +241,7 @@ const Profile = () => {
       </div>
       {/*UPDATE PASSWORD */}
       <div className="flex flex-col flex-wrap w-[95%] bg-[#191B1D] px-6 pt-5 mb-8 rounded-md gap-y-4">
-        <h1 className="text-2xl text-white font-semibold">Update Email</h1>
+        <h1 className="text-2xl text-white font-semibold">Update Password</h1>
         <p className="w-full text-[#808080] text-sm">
           your current password address is{" "}
           <span className="text-orange-500">example123</span>

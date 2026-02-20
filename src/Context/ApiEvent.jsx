@@ -1,12 +1,15 @@
 import { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-const ApiContext = createContext();
+import { useService } from "./ServiceContext";
 
+const ApiContext = createContext();
 export const ApiProvider = ({ children }) => {
+  const { type } = useService();
   // GET EVENTS
-  const fetchEvents = async () => {
-    const res = await fetch("http://localhost:5000/api/events");
+  const fetchEvents = async ({ queryKey }) => {
+    const [_key, type] = queryKey;
+    const res = await fetch(`http://localhost:5000/api/events?type=${type}`);
     return res.json();
   };
   const {
@@ -15,7 +18,7 @@ export const ApiProvider = ({ children }) => {
     error: eventerror,
   } = useQuery({
     queryFn: fetchEvents,
-    queryKey: ["event"],
+    queryKey: ["event", type],
   });
 
   // GET TICKETS
@@ -144,7 +147,6 @@ export const ApiProvider = ({ children }) => {
     retry: false,
   });
 
-  console.log("user is ", userProfile);
   return (
     <ApiContext.Provider
       value={{

@@ -37,7 +37,7 @@ export const ServiceProvider = ({ children }) => {
   const [addFav, setAddFav] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
-
+  const [type, setType] = useState("");
   const toggleWishlist = async ({ event_id, isAdding }) => {
     const url = isAdding
       ? "http://localhost:5000/api/auth/wishlist/add"
@@ -116,6 +116,8 @@ export const ServiceProvider = ({ children }) => {
         setCheckoutOpen,
         quantity,
         setQuantity,
+        type,
+        setType,
       }}
     >
       {children}

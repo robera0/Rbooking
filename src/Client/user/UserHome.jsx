@@ -31,7 +31,7 @@ import { CalendarDemo } from "@/components/ui/calendar";
 import { InfoBar } from "../../components/Reusable";
 import { RatingStars } from "../../components/Reusable";
 import { eventService } from "@/Context/ApiEvent";
-import { useParams } from "react-router-dom";
+import { useService } from "@/Context/ServiceContext";
 const SearchButton = () => (
   <button className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200">
     <Search className="w-5 h-5" />
@@ -42,9 +42,7 @@ const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const [date, setDate] = useState(null);
   const { events, isLoading, error } = eventService();
-
-  console.log(events);
-
+  const { type, setType } = useService();
   return (
     <div onClick={() => setDateSlide(false)} className="space-y-4">
       <div className="w-full px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-0 mb-16">
@@ -58,10 +56,11 @@ const UserHome = () => {
             We bring you not only a stay option, but an experience in your
             budget to enjoy the luxury.
           </p>
-
-          <button className="w-[180px] py-3 bg-[#FF7800] text-lg text-white font-semibold rounded-md transition-transform duration-200 hover:scale-95">
-            Discover Events
-          </button>
+          <Link to={`/${type != "" ? type : "event"}`}>
+            <button className="w-[180px] py-3 bg-[#FF7800] text-lg text-white font-semibold rounded-md transition-transform duration-200 hover:scale-95">
+              Discover Events
+            </button>
+          </Link>
         </div>
 
         {/* RIGHT IMAGE SECTION */}
@@ -284,11 +283,7 @@ const UserHome = () => {
               events.events.map((e, idx) => (
                 <Link
                   key={idx}
-                  to={
-                    e?.tickets?.length > 0
-                      ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
-                      : `/events/${e?._id}`
-                  }
+                  to={`/events/${e?._id}/tickets/${e.tickets[0]?._id}`}
                   className="w-full flex justify-center"
                 >
                   <div className="w-[80%] lg:w-[85%] space-y-3">

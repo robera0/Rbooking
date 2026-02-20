@@ -9,9 +9,6 @@ import Main from "./Client/user/Main";
 import UserHome from "./Client/user/UserHome";
 import LoginUser from "./Client/user/LoginUser";
 import Sport from "./Client/user/Sport";
-import Concert from "./Client/user/Concert";
-import Exhibition from "./Client/user/Exhibition";
-import Fest from "./Client/user/Fest";
 import AccountPage from "./Client/user/AccountPage";
 import SignUp from "./Client/user/SignUp";
 import Ticket from "./Client/user/Ticket";
@@ -23,6 +20,8 @@ import Setting from "./Client/user/Setting";
 import EventInfo from "./Client/user/EventInfo";
 import { ProtectedRoute } from "./components/Reusable";
 import { Toaster } from "react-hot-toast";
+import Events from "./Client/user/Events";
+
 const queryClient = new QueryClient();
 
 // Framer Motion variants
@@ -72,7 +71,7 @@ const PageWrapper = ({ children }) => (
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const { isLoggedIn } = useService();
+  const { isLoggedIn, type } = useService();
 
   return (
     <AnimatePresence mode="wait">
@@ -132,6 +131,17 @@ const AnimatedRoutes = () => {
             <PageWrapper>
               <Main>
                 <EventInfo />
+              </Main>
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path={`/${type != "" ? type : "event"}`}
+          element={
+            <PageWrapper>
+              <Main>
+                <Events />
               </Main>
             </PageWrapper>
           }
@@ -210,39 +220,6 @@ const AnimatedRoutes = () => {
             <PageWrapper>
               <Main>
                 <Sport />
-              </Main>
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/event_concerts"
-          element={
-            <PageWrapper>
-              <Main>
-                <Concert />
-              </Main>
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/event_fest"
-          element={
-            <PageWrapper>
-              <Main>
-                <Fest />
-              </Main>
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/event_exhibition"
-          element={
-            <PageWrapper>
-              <Main>
-                <Exhibition />
               </Main>
             </PageWrapper>
           }

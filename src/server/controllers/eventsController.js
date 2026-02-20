@@ -1,16 +1,19 @@
 import { Event } from "../models/EventsModel.js";
 import { TicketModel } from "../models/TicketModel.js";
 import mongoose from "mongoose";
+
 export const get_events = async (req, res) => {
   try {
-    const events = await Event.find();
+    const { type } = req.query;
 
-    // Get tickets for each event
+    const filter = {};
+    if (type) filter.type = type;
+
+    const events = await Event.find(filter);
+
     const eventsWithTickets = await Promise.all(
       events.map(async (event) => {
-        const tickets = await TicketModel.find({
-          eventId: event._id,
-        });
+        const tickets = await TicketModel.find({ eventId: event._id });
 
         return {
           ...event.toObject(),
@@ -20,9 +23,13 @@ export const get_events = async (req, res) => {
       }),
     );
 
+    const sortedEvent = eventsWithTickets.sort(
+      (a, b) => b.ticketCount - a.ticketCount,
+    );
+
     res.status(200).json({
       success: true,
-      events: eventsWithTickets,
+      events: sortedEvent,
     });
   } catch (error) {
     console.error("Error fetching events:", error);
@@ -32,6 +39,7 @@ export const get_events = async (req, res) => {
     });
   }
 };
+
 // FETCH EVENTS
 
 export const featured_events = async (req, res) => {
@@ -53,21 +61,12 @@ export const fetchevents_id = async (req, res) => {
       return res.status(400).json({ message: "Ticket ID is required" });
     }
 
-    // FIXED: Correct populate path for your nested schema
     const event = await Event.findById(eventId).populate({
-      path: "comments", // This is the array of Comment documents in Event
-      populate: [
-        {
-          path: "user", // The user who created the comment document
-          model: "User",
-          select: "fullName avatarUrl",
-        },
-        {
-          path: "comment.userId", // Nested path for individual comments
-          model: "User_Profile",
-          select: "fullName avatarUrl",
-        },
-      ],
+      path: "comments",
+      populate: {
+        path: "user",
+        select: "fullName avatarUrl",
+      },
     });
 
     if (!event) {

@@ -136,7 +136,7 @@ const EventInfo = () => {
   const { fetchEventById, wishlist } = eventService();
 
   const { eventId, ticketId } = useParams();
-
+  const [comment, setComment] = useState("");
   const [showMore, setShowMore] = useState(false);
   const [error, setError] = useState("");
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -164,6 +164,22 @@ const EventInfo = () => {
       return res.data;
     } catch (error) {
       toast.error("Payment failed ", { id: toastId });
+      throw error;
+    }
+  };
+
+  const postComment = async ({ eventId }) => {
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/auth/comments/${eventId}`,
+        { text: comment, eventId: eventId },
+        { withCredentials: true },
+      );
+      toast.success("comment posted  successfully ");
+      console.log(res.data);
+      return res.data;
+    } catch (error) {
+      toast.error("posting comment  failed ", { id: toastId });
       throw error;
     }
   };
@@ -209,6 +225,18 @@ const EventInfo = () => {
     onSuccess: () => {
       setCheckoutOpen(false);
       queryClient.invalidateQueries({ queryKey: ["checkout"] });
+    },
+    onError: (error) => {
+      setError(error.response?.data?.message || "Login required");
+    },
+  });
+
+  //post comment mutation
+
+  const commentMutation = useMutation({
+    mutationFn: postComment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["event"] });
     },
     onError: (error) => {
       setError(error.response?.data?.message || "Login required");
@@ -267,7 +295,6 @@ const EventInfo = () => {
         setDislikeCount((c) => Math.max(0, c - 1));
       }
     }
-    // TODO: persist like/unlike to backend
   };
 
   const handleDislikeToggle = () => {
@@ -282,7 +309,6 @@ const EventInfo = () => {
         setLikeCount((c) => Math.max(0, c - 1));
       }
     }
-    // TODO: persist dislike/un-dislike to backend
   };
 
   const ticketPrices = {
@@ -569,11 +595,11 @@ const EventInfo = () => {
                   alt="Login"
                   className="w-full h-[200px] object-cover"
                 />
-
                 {/* Overlay */}
                 <div className="absolute  flex  justify-center items-center inset-0 bg-black/60 ">
                   <button className="text-white">View More</button>
                 </div>
+                C{" "}
               </div>
             </div>
           </div>
@@ -879,6 +905,8 @@ const EventInfo = () => {
               <div className="w-[90%] h-42 bg-[#2A2C31] flex  rounded-xl p-3  ">
                 <div>
                   <textarea
+                    onChange={(e) => setComment(e.target.value)}
+                    value={comment}
                     className="w-full h-full bg-transparent text-white placeholder:text-[#808080] resize-none outline-none"
                     placeholder="Your review"
                   />
@@ -891,6 +919,12 @@ const EventInfo = () => {
                 </div>
               </div>
               <button
+                onClick={() => {
+                  commentMutation.mutate({
+                    eventId: eventId,
+                    text: comment,
+                  });
+                }}
                 className="flex mt-8 items-center justify-between w-[150px] px-4 py-3  mt-5
              bg-[#FF7800] text-md text-white font-semibold rounded-xl 
              transition-transform duration-200 cursor-pointer 
@@ -907,85 +941,41 @@ const EventInfo = () => {
                 )}
 
                 {/* Flatten all comments */}
-                {event?.comments
-                  ?.flatMap((commentDoc) =>
-                    (commentDoc.comment || []).map((c) => ({
-                      ...c,
-                      rating: commentDoc.rating,
-                      createdAt: commentDoc.createdAt,
-                    })),
-                  )
-                  .map((comment, idx) => (
-                    <div
-                      key={comment._id || idx}
-                      className="flex items-start gap-3"
-                    >
-                      {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full overflow-hidden">
-                        <img
-                          src={
-                            comment.userId?.avatarUrl || "/defaultAvater.jpg"
-                          }
-                          alt={comment.userId?.fullName || "User"}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      {/* Comment content */}
-                      <div className="flex-1">
-                        {/* Name + rating inline */}
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-white text-base">
-                            {comment.userId?.fullName || "User Name"}
-                          </h3>
-
-                          {/* Rating next to name */}
-                          {comment.rating && (
-                            <span className="inline-block px-2 py-0.5 text-sm font-bold text-white bg-yellow-500 rounded">
-                              {comment.rating}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Date under the name */}
-                        <p className="text-sm text-gray-400 mt-1">
-                          {moment(comment.createdAt).fromNow()}
-                        </p>
-
-                        {/* Comment text */}
-                        <p className="text-gray-300 text-base mt-2">
-                          {comment.text || "—"}
-                        </p>
-
-                        {/* Like/Dislike */}
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
-                          <button
-                            onClick={() => handleLikeToggle(comment._id)}
-                            className={`flex items-center gap-1 ${
-                              liked[comment._id]
-                                ? "text-orange-400"
-                                : "hover:text-orange-400"
-                            }`}
-                          >
-                            <ThumbsUp className="w-4 h-4" />
-                            <span>{likeCount[comment._id] || 0}</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleDislikeToggle(comment._id)}
-                            className={`flex items-center gap-1 ${
-                              disliked[comment._id]
-                                ? "text-red-500"
-                                : "hover:text-red-500"
-                            }`}
-                          >
-                            <ThumbsDown className="w-4 h-4" />
-                            <span>{dislikeCount[comment._id] || 0}</span>
-                          </button>
-                        </div>
-                      </div>
+                {event?.comments.map((comment) => (
+                  <div key={comment._id} className="flex items-start gap-3">
+                    {/* Avatar */}
+                    <div className="w-10 h-10 rounded-full overflow-hidden">
+                      <img
+                        src={"/defaultAvater.jpg"} // you only have userId string
+                        alt="User"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  ))}
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-white text-base">
+                          {comment.userId}
+                        </h3>
+
+                        {/* rating comes from review, not comment */}
+                        {comment.rating && (
+                          <span className="px-2 py-0.5 text-sm font-bold text-white bg-yellow-500 rounded">
+                            {comment.rating}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-gray-400 mt-1">
+                        {moment(comment.createdAt).fromNow()}
+                      </p>
+
+                      <p className="text-gray-300 text-base mt-2">
+                        {comment.text}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-center">
@@ -1008,33 +998,14 @@ const EventInfo = () => {
                   </h1>
                   <div className="w-[80%] h-[0.3px] bg-gray-600 " />
                 </div>
-                <EventPolices
-                  header={"Refund & Cancellation Policy"}
-                  des={
-                    "Attendees must cancel at least 24–48 hours before the event to receive a refund. No refunds will be issued for late cancellations or no-shows."
-                  }
-                />
 
-                <EventPolices
-                  header={"Code of Conduct Policy"}
-                  des={
-                    " All participants must behave respectfully toward staff and other attendees. Harassment, discrimination, or disruptive behavior will result in removal from the event."
-                  }
-                />
-
-                <EventPolices
-                  header={"Entry & Ticket Policy"}
-                  des={
-                    "Guests must present a valid ticket or digital confirmation at the entrance. Tickets cannot be transferred or resold without authorization."
-                  }
-                />
-
-                <EventPolices
-                  header={"Safety & Security Policy"}
-                  des={
-                    "Bags may be inspected at entry. Dangerous or prohibited items will not be allowed. Follow all instructions from security personnel during emergencies."
-                  }
-                />
+                {event?.policies?.map((policy, idx) => (
+                  <EventPolices
+                    key={idx}
+                    header={policy.header}
+                    des={policy.descriptions}
+                  />
+                ))}
               </div>
             </div>
           </div>

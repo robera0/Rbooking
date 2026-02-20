@@ -1,14 +1,28 @@
-import mongoose from "mongoose";
+import mongoose, { model } from "mongoose";
 import { CommentModel } from "../models/CommentModel.js";
 import { ProfileModel } from "../models/ProfileModel.js";
+
 export const get_comments = async (req, res) => {
   try {
-    const id = req.user.id;
+    const eventId = new mongoose.Types.ObjectId(req.params);
+    console.log("event is  ", eventId);
 
-    const comment = await CommentModel.find({ eventId: id });
-    res.status(200).json({ comments: comment });
-  } catch {
-    res.status(401).json({ message: "No comments with the this id " });
+    if (!eventId) {
+      res.status(401).json({ message: "not invalid id " });
+    }
+    const comments = await CommentModel.find({ eventId })
+
+      .populate({
+        path: "comments.userId",
+        select: "userId avatarUrl",
+      });
+
+    if (!comments) {
+      res.status(401).json({ message: "No comments with the this id " });
+    }
+    res.status(200).json({ comments: comments });
+  } catch (error) {
+    res.status(401).json({ message: message.error });
   }
 };
 
