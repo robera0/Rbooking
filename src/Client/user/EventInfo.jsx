@@ -220,10 +220,18 @@ const EventInfo = () => {
     month: "short",
     year: "numeric",
   });
+  const checkWishlist = () => {
+    if (!event?._id || !wishlist) return false;
+    return (
+      wishlist?.wishlists?.events?.some((item) => item?._id === event?._id) ||
+      false
+    );
+  };
   const CheckoutMutation = useMutation({
     mutationFn: sendCheckout,
     onSuccess: () => {
       setCheckoutOpen(false);
+      checkWishlist();
       queryClient.invalidateQueries({ queryKey: ["checkout"] });
     },
     onError: (error) => {
@@ -243,14 +251,7 @@ const EventInfo = () => {
     },
   });
 
-  const checkWishlist = () => {
-    if (!event?._id || !wishlist) return false;
-    return (
-      wishlist?.wishlists?.events?.some((item) => item?._id === event?._id) ||
-      false
-    );
-  };
-  setAddFav(checkWishlist());
+  // deleted setaddFav(checklist()) so i dont have infinite renders
   const Maps = () => {
     return (
       <div className="w-full h-full">
