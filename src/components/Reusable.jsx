@@ -14,18 +14,16 @@ import {
   CheckCheck,
   ChevronDown,
   Search,
-  User,
-  Lock,
-  Eye,
-  EyeOff,
+  Bell,
   X,
+  MessageCircleMore,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { eventService } from "@/Context/ApiEvent";
 import { Navigate, useLocation } from "react-router-dom";
 import { useService } from "@/Context/ServiceContext";
-
+import { motion, AnimatePresence } from "framer-motion";
 export const ProtectedRoute = ({ isLoggedIn, children }) => {
   const location = useLocation();
 
@@ -514,6 +512,59 @@ export const EditMenuBar = () => {
           <Search />
           <span>Search here</span>
         </button>
+      </div>
+    </div>
+  );
+};
+
+export const NotificationSidebar = ({ setIsOpen }) => {
+  const notifications = [
+    {
+      id: 1,
+      title: "New Message",
+      description: "You have received a new message.",
+    },
+    {
+      id: 2,
+      title: "Order Update",
+      description: "Your order #1234 has shipped.",
+    },
+    {
+      id: 3,
+      title: "Friend Request",
+      description: "John Doe sent you a friend request.",
+    },
+  ];
+
+  return (
+    <div className="w-full h-full flex flex-col text-white">
+      <div className="flex justify-between items-center p-4 border-b">
+        <h2 className="text-lg font-semibold">Notifications</h2>
+
+        <button
+          onClick={() => setIsOpen(false)}
+          className="text-gray-400 hover:text-white"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="overflow-y-auto space-y-4 p-4 flex-1">
+        {notifications.map((note) => (
+          <div
+            key={note.id}
+            className="flex gap-3 p-4 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/15 transition"
+          >
+            <div className="w-11 h-11 flex items-center justify-center rounded-full bg-orange-500/20 text-orange-400 text-xl">
+              <MessageCircleMore />
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-sm">{note.title}</h4>
+              <p className="text-gray-400 text-xs">{note.description}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

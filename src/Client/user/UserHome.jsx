@@ -48,7 +48,7 @@ const UserHome = () => {
       <div className="w-full px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-0 mb-16">
         {/* LEFT CONTENT */}
         <div className="w-full lg:w-[45%] flex flex-col justify-center space-y-6 lg:pl-28">
-          <h1 className="text-4xl sm:text-5xl text-white font-semibold leading-snug">
+          <h1 className="text-3xl sm:text-5xl text-white font-semibold leading-snug">
             Find the Top events nearby.
           </h1>
 

@@ -3,7 +3,7 @@
 [f] make a appearing div that shows the map when the location icon is clicked // after the release of this web
 [f] add import { nanoid } from 'nanoid'; when user purchase a ticket
 
-
+[] make the wihslist on the all events per event not for all when clicked 
 [] learn about notification design and design the schema for email notification
 [f] make the account section show login if its not authorized
 [] add a schema of  a review about the app

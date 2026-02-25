@@ -1,13 +1,15 @@
 import { Event } from "../models/EventsModel.js";
 import { TicketModel } from "../models/TicketModel.js";
-import mongoose from "mongoose";
 
 export const get_events = async (req, res) => {
   try {
-    const { type } = req.query;
+    const { date, locale, type, name } = req.query;
 
     const filter = {};
     if (type) filter.type = type;
+    if (locale) filter.locale = locale;
+    if (date) filter["dates.start.localDate"] = date;
+    if (name) filter.name = name;
 
     const events = await Event.find(filter);
 

@@ -3,32 +3,59 @@ import { eventService } from "@/Context/ApiEvent";
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Star, Map } from "lucide-react";
+import { Star, Map, Heart, Share2 } from "lucide-react";
+import { useWishlistMutation } from "./api/addwishlist.api.jsx";
+import { useService } from "@/Context/ServiceContext.jsx";
+
 const Events = () => {
   const { events, isLoading, error } = eventService();
+  const { addFav, setAddFav } = useService();
   const [dateSlide, setDateSlide] = useState(false);
+  const [showFullName, setShowFullName] = useState(false);
   const [date, setDate] = useState(null);
+  const { mutation: wishlistMutation } = useWishlistMutation();
 
-  console.log("events type", events);
   return (
     <div>
       <div className="w-full flex flex-col mt-4 lg:mt-33 items-center space-y-8 lg:space-y-12">
-        <h1 className="text-white font-bold text-3xl lg:text-6xl">
-          {events?.events?.type}
-        </h1>
+        <p className="text-gray-400 text-sm mb-4">
+          {events?.events?.length} events near you
+        </p>
+
+        {/* Search */}
+        <div className="relative mb-4">
+          <input
+            type="text"
+            placeholder="Search events..."
+            className="w-full px-4 py-2 bg-[#2A2F34] text-white outline-none rounded-lg"
+          />
+        </div>
+
+        {/* Filter chips */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <button className="px-3 py-1 bg-[#3F454B] text-white rounded-full">
+            Music
+          </button>
+          <button className="px-3 py-1 bg-[#3F454B] text-white rounded-full">
+            Sports
+          </button>
+          <button className="px-3 py-1 bg-[#3F454B] text-white rounded-full">
+            Free
+          </button>
+        </div>
 
         {error && message?.error}
 
-        <div className="w-full flex flex-col lg:flex-row items-center gap-y-14 lg:pl-3  sm:gap-y-12 lg:gap-y-6  lg:gap-x-2   mb-12">
+        <div className="w-full flex flex-col lg:flex-row items-center gap-y-14 lg:pl-3 sm:gap-y-12 lg:gap-y-6 lg:gap-x-2 mb-12">
           {Array.isArray(events?.events) &&
             events?.events?.map((e, idx) => (
-              <Link
-                key={idx}
-                to={`/events/${e?._id}/tickets/${e.tickets[0]?._id}`}
-                className="w-full flex justify-center"
-              >
-                <div className="w-[80%] lg:w-[85%] space-y-3">
-                  {/* Image Section */}
+              <div className="w-[80%] lg:w-[85%] space-y-3">
+                {/* Image Section */}
+                <Link
+                  key={idx}
+                  to={`/events/${e?._id}/tickets/${e.tickets[0]?._id}`}
+                  className="w-full flex justify-center"
+                >
                   <div className="relative h-80 sm:h-96 lg:h-[500px] rounded-xl overflow-hidden">
                     <img
                       src={e?.pictures?.[0] || e?.pictures?.[1] || "/Login.jpg"}
@@ -49,38 +76,73 @@ const Events = () => {
                       </div>
                     )}
                   </div>
+                </Link>
 
-                  {/* Details Section */}
-                  <div className="flex justify-between px-2">
-                    <div className="space-y-1">
-                      <h1 className="text-lg lg:text-xl text-white font-semibold">
-                        {e?.name}
-                      </h1>
+                {/* Details Section - FIXED LAYOUT */}
+                <div className="flex justify-between items-start px-2 mt-2">
+                  {/* Left: Event name and price */}
+                  <div className="flex-1 min-w-0 pr-4">
+                    <h1
+                      onClick={() => setShowFullName(!showFullName)}
+                      title={e?.name}
+                      className="text-lg lg:text-xl text-white font-semibold truncate"
+                    >
+                      {showFullName
+                        ? e?.name
+                        : e?.name?.length > 25
+                          ? `${e?.name.slice(0, 25)}...`
+                          : e?.name}
+                    </h1>
+                    {e.tickets?.length > 0 ? (
+                      <p className="text-[#FF7800] text-sm lg:text-md">
+                        <span className="font-bold">${e.tickets[0].price}</span>{" "}
+                        / per ticket
+                      </p>
+                    ) : (
+                      <p className="text-red-500 text-xs lg:text-md font-semibold">
+                        No tickets available
+                      </p>
+                    )}
+                  </div>
 
-                      {/* Show ticket price if available */}
-                      {e.tickets?.length > 0 ? (
-                        <p className="text-[#FF7800] text-sm lg:text-md">
-                          <span className="font-bold">
-                            ${e.tickets[0].price}
-                          </span>{" "}
-                          / per ticket
-                        </p>
-                      ) : (
-                        <p className="text-red-500 text-xs lg:text-md font-semibold">
-                          No tickets available
-                        </p>
-                      )}
+                  {/* Right: Rating + Action buttons */}
+                  <div className="flex items-center space-x-3 flex-shrink-0">
+                    {/* Rating */}
+                    <div className="flex items-center space-x-1">
+                      <span className="text-white text-xl font-bold">
+                        {e?.rating?.score || "0.0"}
+                      </span>
+                      <Star className="text-[#FF7800]" size={18} />
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <h1 className="text-white text-xl font-bold">
-                        {e?.rating?.score || "0.0"}
-                      </h1>
-                      <Star className="text-[#FF7800]" size={18} />
+                    {/* Action buttons */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={(ev) => {
+                          ev.preventDefault();
+                          ev.stopPropagation();
+                          wishlistMutation.mutate({
+                            event_id: e?._id, // FIXED: was event?._id (undefined)
+                            isAdding: !addFav,
+                          });
+                        }}
+                        className="flex items-center px-2 py-1 bg-[#3F454B] text-white rounded-md"
+                      >
+                        <Heart
+                          className={`w-5 h-5 transition-colors duration-200 ${
+                            addFav
+                              ? "text-white fill-white"
+                              : "text-white fill-none"
+                          }`}
+                        />
+                      </button>
+                      <button className="flex items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
+                        <Share2 className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
         </div>
       </div>
