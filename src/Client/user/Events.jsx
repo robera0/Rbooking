@@ -23,7 +23,6 @@ const Events = () => {
     { name: "Free", type: "free" },
   ];
 
-  console.log(filterButtons);
   const checkWishlist = (eventId) => {
     return (
       wishlist?.wishlists?.events?.some((item) => item?._id === eventId) ||
@@ -53,14 +52,21 @@ const Events = () => {
 
   return (
     <div className="w-full flex flex-col mt-4 lg:mt-33 items-center space-y-8 lg:space-y-12">
+      <h1 className="text-xl sm:text-3xl text-white font-semibold leading-snug">
+        Find All the Events
+      </h1>
       <p className="text-gray-400 text-sm mb-4">
-        {" "}
-        {events?.events?.length} events near you{" "}
-      </p>{" "}
+        {events?.events?.length === 1 ? "There is" : "There are"}{" "}
+        {events?.events?.length || 0} {type || "events"}
+      </p>
       {/* Search */}{" "}
       <div className="relative mb-4">
         {" "}
         <input
+          onChange={(e) => {
+            setType(e.target.value);
+          }}
+          value={type}
           type="text"
           placeholder="Search events..."
           className="w-full px-4 py-2 bg-[#2A2F34] text-white outline-none rounded-lg"

@@ -3,13 +3,20 @@ import { TicketModel } from "../models/TicketModel.js";
 
 export const get_events = async (req, res) => {
   try {
-    const { date, locale, type, name } = req.query;
+    const { q, date } = req.query;
 
     const filter = {};
-    if (type) filter.type = type;
-    if (locale) filter.locale = locale;
-    if (date) filter["dates.start.localDate"] = date;
-    if (name) filter.name = name;
+
+    if (q) {
+      filter.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { locale: { $regex: q, $options: "i" } },
+        { type: { $regex: q, $options: "i" } },
+      ];
+    }
+    if (date) {
+      filter["dates.start.dateTime"] = date;
+    }
 
     const events = await Event.find(filter);
 
@@ -19,7 +26,7 @@ export const get_events = async (req, res) => {
 
         return {
           ...event.toObject(),
-          tickets: tickets,
+          tickets,
           ticketCount: tickets.length,
         };
       }),
@@ -28,6 +35,13 @@ export const get_events = async (req, res) => {
     const sortedEvent = eventsWithTickets.sort(
       (a, b) => b.ticketCount - a.ticketCount,
     );
+
+    if (sortedEvent.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No event found",
+      });
+    }
 
     res.status(200).json({
       success: true,
