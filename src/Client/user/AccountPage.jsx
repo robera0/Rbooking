@@ -11,7 +11,7 @@ const AccountPage = ({ children, pa, h }) => {
           <div className="flex  space-x-2">
             <Scissors className="text-[#B3B3B3] mt-2 w-12 h-12" />
             <h1 className="font-irish text-3xl w-12 text-white font bold">
-              Kuretegn Event
+              Vibein Pass
             </h1>
           </div>
           <p className="text-xl font-semibold ">{pa}</p>
@@ -27,7 +27,7 @@ const AccountPage = ({ children, pa, h }) => {
       <div className="hidden md:block w-full max-w-xl bg-black/40 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-10">
         <div>
           <h1 className="text-white font-bold text-xl lg:text-4xl">
-            Welcome To Kuretegn
+            Welcome To Vibein Pass
           </h1>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { TicketModel } from "../models/TicketModel.js";
 
 export const get_events = async (req, res) => {
   try {
-    const { q, date } = req.query;
+    const { q, date, location } = req.query;
 
     const filter = {};
 
@@ -14,8 +14,13 @@ export const get_events = async (req, res) => {
         { type: { $regex: q, $options: "i" } },
       ];
     }
+
     if (date) {
       filter["dates.start.dateTime"] = date;
+    }
+
+    if (location) {
+      filter.location = date;
     }
 
     const events = await Event.find(filter);
@@ -26,6 +31,7 @@ export const get_events = async (req, res) => {
 
         return {
           ...event.toObject(),
+
           tickets,
           ticketCount: tickets.length,
         };

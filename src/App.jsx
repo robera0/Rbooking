@@ -137,7 +137,7 @@ const AnimatedRoutes = () => {
         />
 
         <Route
-          path={`/${type != "" ? type : "event"}`}
+          path="/event"
           element={
             <PageWrapper>
               <Main>

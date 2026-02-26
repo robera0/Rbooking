@@ -9,13 +9,14 @@ export const ApiProvider = ({ children }) => {
   // GET EVENTS
   const fetchEvents = async ({ queryKey }) => {
     const [_key, type] = queryKey;
-    const res = await fetch(`http://localhost:5000/api/events?type=${type}`);
+    const res = await fetch(`http://localhost:5000/api/events?q=${type}`);
     return res.json();
   };
   const {
     data: events,
     isLoading: eventLoading,
     error: eventerror,
+    isFetching: isFetching,
   } = useQuery({
     queryFn: fetchEvents,
     queryKey: ["event", type],
@@ -46,7 +47,6 @@ export const ApiProvider = ({ children }) => {
   } = useQuery({
     queryKey: ["tickets"],
     queryFn: fetchTickets,
-    retry: false,
   });
 
   // GET TICKETS BY ID
@@ -153,6 +153,7 @@ export const ApiProvider = ({ children }) => {
         events,
         eventLoading,
         eventerror,
+        isFetching,
         tickets,
         ticketLoading,
         ticketsError,

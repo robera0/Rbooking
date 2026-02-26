@@ -1,24 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 
-const Loader = () => {
-  return (
-    <StyledWrapper>
-      <div className="container">
-        <div className="loader">
-          <div className="crystal" />
-          <div className="crystal" />
-          <div className="crystal" />
-          <div className="crystal" />
-          <div className="crystal" />
-          <div className="crystal" />
-        </div>
-      </div>
-    </StyledWrapper>
-  );
-};
-
-export const StyledWrapper = styled.div`
+// --- First Loader (Crystal) ---
+const CrystalWrapper = styled.div`
   .container {
     display: flex;
     align-items: center;
@@ -41,7 +25,9 @@ export const StyledWrapper = styled.div`
     opacity: 0;
     transform-origin: bottom center;
     transform: translate(-50%, -50%) rotateX(45deg) rotateZ(0deg);
-    animation: spin 4s linear infinite, emerge 2s ease-in-out infinite alternate,
+    animation:
+      spin 4s linear infinite,
+      emerge 2s ease-in-out infinite alternate,
       fadeIn 0.3s ease-out forwards;
     border-radius: 10px;
     visibility: hidden;
@@ -106,4 +92,217 @@ export const StyledWrapper = styled.div`
   }
 `;
 
-export default { Loader };
+const Loader = () => {
+  return (
+    <CrystalWrapper>
+      <div className="container">
+        <div className="loader">
+          <div className="crystal" />
+          <div className="crystal" />
+          <div className="crystal" />
+          <div className="crystal" />
+          <div className="crystal" />
+          <div className="crystal" />
+        </div>
+      </div>
+    </CrystalWrapper>
+  );
+};
+
+// --- Second Loader (EventLoader / Sphere) ---
+const SphereWrapper = styled.div`
+  .container {
+    position: absolute;
+    inset: 0;
+    zoom: 0.5;
+
+    .loader {
+      top: calc(50% - 200px);
+      left: calc(50% - 200px);
+      animation: girar 8s linear infinite;
+
+      &,
+      .sphere,
+      .item {
+        width: 400px;
+        height: 400px;
+        position: absolute;
+        transform-style: preserve-3d;
+        perspective: 10000px;
+      }
+
+      .sphere,
+      .item {
+        top: 0;
+        left: 0;
+      }
+
+      .sphere {
+        transform: rotate(calc(var(--rot) * 20deg));
+
+        &.sphere1 {
+          --bg: #f008;
+        }
+
+        &.sphere2 {
+          --bg: #f0f8;
+        }
+
+        &.sphere3 {
+          --bg: #ff08;
+        }
+
+        &.sphere4 {
+          --bg: #0f08;
+        }
+
+        &.sphere5 {
+          --bg: #0ff8;
+        }
+
+        &.sphere6 {
+          --bg: #00f8;
+        }
+
+        &.sphere7 {
+          --bg: #dc1ddf88;
+        }
+
+        &.sphere8 {
+          --bg: #ffa50088;
+        }
+
+        &.sphere9 {
+          --bg: #e5b2ca88;
+        }
+      }
+
+      .item {
+        border-radius: 50%;
+        background: var(--bg);
+        transform: rotateY(calc(var(--rot-y) * 40deg));
+      }
+    }
+  }
+
+  @keyframes girar {
+    0% {
+      transform: rotateX(0deg) rotateY(0deg);
+    }
+    100% {
+      transform: rotateX(360deg) rotateY(360deg);
+    }
+  }
+`;
+
+export const EventLoader = () => {
+  return (
+    <SphereWrapper>
+      <section className="container">
+        <section className="loader">
+          <article style={{ "--rot": 0 }} className="sphere sphere1">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+          <article style={{ "--rot": 1 }} className="sphere sphere2">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+          <article style={{ "--rot": 2 }} className="sphere sphere3">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+          <article style={{ "--rot": 3 }} className="sphere sphere4">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+          <article style={{ "--rot": 4 }} className="sphere sphere5">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+          <article style={{ "--rot": 5 }} className="sphere sphere6">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+          <article style={{ "--rot": 6 }} className="sphere sphere7">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+          <article style={{ "--rot": 7 }} className="sphere sphere8">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+          <article style={{ "--rot": 8 }} className="sphere sphere9">
+            <div className="item" style={{ "--rotY": 1 }} />
+            <div className="item" style={{ "--rotY": 2 }} />
+            <div className="item" style={{ "--rotY": 3 }} />
+            <div className="item" style={{ "--rotY": 4 }} />
+            <div className="item" style={{ "--rotY": 5 }} />
+            <div className="item" style={{ "--rotY": 6 }} />
+            <div className="item" style={{ "--rotY": 7 }} />
+            <div className="item" style={{ "--rotY": 8 }} />
+            <div className="item" style={{ "--rotY": 9 }} />
+          </article>
+        </section>
+      </section>
+    </SphereWrapper>
+  );
+};
+
+export default Loader;

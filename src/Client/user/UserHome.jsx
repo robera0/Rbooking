@@ -43,6 +43,7 @@ const UserHome = () => {
   const [date, setDate] = useState(null);
   const { events, isLoading, error } = eventService();
   const { type, setType } = useService();
+
   return (
     <div onClick={() => setDateSlide(false)} className="space-y-4">
       <div className="w-full px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-0 mb-16">
@@ -56,8 +57,13 @@ const UserHome = () => {
             We bring you not only a stay option, but an experience in your
             budget to enjoy the luxury.
           </p>
-          <Link to={`/${type != "" ? type : "event"}`}>
-            <button className="w-[180px] py-3 bg-[#FF7800] text-lg text-white font-semibold rounded-md transition-transform duration-200 hover:scale-95">
+          <Link to={`/event`}>
+            <button
+              onClick={() => {
+                setType("");
+              }}
+              className="w-[180px] py-3 bg-[#FF7800] text-lg text-white font-semibold rounded-md transition-transform duration-200 hover:scale-95"
+            >
               Discover Events
             </button>
           </Link>
@@ -278,17 +284,17 @@ const UserHome = () => {
 
           {error && message?.error}
 
-          <div className="w-full flex flex-col lg:flex-row items-center gap-y-14 lg:pl-3  sm:gap-y-12 lg:gap-y-6  lg:gap-x-2   mb-12">
+          <div className="w-full flex flex-col lg:flex-row items-center gap-y-14 lg:pl-3  sm:gap-y-12 lg:gap-y-6  lg:gap-x-2    mb-12">
             {Array.isArray(events?.events) &&
               events.events.map((e, idx) => (
                 <Link
                   key={idx}
                   to={`/events/${e?._id}/tickets/${e.tickets[0]?._id}`}
-                  className="w-full flex justify-center"
+                  className="w-full p-2 flex justify-center  rounded-md"
                 >
                   <div className="w-[80%] lg:w-[85%] space-y-3">
                     {/* Image Section */}
-                    <div className="relative h-80 sm:h-96 lg:h-[500px] rounded-xl overflow-hidden">
+                    <div className="relative shadow-xs shadow-[#FF7800] h-80 w-full sm:h-96 lg:h-[500px] rounded-xl overflow-hidden">
                       <img
                         src={
                           e?.pictures?.[0] || e?.pictures?.[1] || "/Login.jpg"

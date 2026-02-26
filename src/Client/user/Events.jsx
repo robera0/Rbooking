@@ -1,21 +1,39 @@
 import React, { useState } from "react";
 import { eventService } from "@/Context/ApiEvent";
 import { Link } from "react-router-dom";
-import { Star, Map, Heart, Share2 } from "lucide-react";
+import { Star, Map, Heart, Share2, SearchX } from "lucide-react";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { useService } from "@/Context/ServiceContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import { EventLoader } from "@/components/Loader.jsx";
+
 const Events = () => {
+  const { type, setType } = useService();
+
   const { events, isLoading, error, isFetching, wishlist, wishlistIsError } =
     eventService();
 
-  const { type, setType } = useService();
   const { mutation: wishlistMutation } = useWishlistMutation();
 
-  const [showFullName, setShowFullName] = useState(false);
+  const [showFullNames, setShowFullNames] = useState({});
+
   const [hasAlerted, setHasAlerted] = useState(false);
+  const toggleFullName = (id) => {
+    setShowFullNames((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+  const filteredEvents =
+    events?.events?.filter((e) => {
+      if (!type) return true;
+      const lowerType = type.toLowerCase();
+
+      return (
+        e.type?.toLowerCase().includes(lowerType) ||
+        e.name?.toLowerCase().includes(lowerType)
+      );
+    }) || [];
   const filterButtons = [
     { name: "All", type: "" },
     { name: "Concert", type: "concert" },
@@ -55,40 +73,39 @@ const Events = () => {
       <h1 className="text-xl sm:text-3xl text-white font-semibold leading-snug">
         Find All the Events
       </h1>
+
       <p className="text-gray-400 text-sm mb-4">
         {events?.events?.length === 1 ? "There is" : "There are"}{" "}
         {events?.events?.length || 0} {type || "events"}
       </p>
-      {/* Search */}{" "}
+
       <div className="relative mb-4">
-        {" "}
         <input
-          onChange={(e) => {
-            setType(e.target.value);
-          }}
+          onChange={(e) => setType(e.target.value)}
           value={type}
           type="text"
           placeholder="Search events..."
           className="w-full px-4 py-2 bg-[#2A2F34] text-white outline-none rounded-lg"
-        />{" "}
-      </div>{" "}
-      {/* Filter chips */}{" "}
+        />
+      </div>
+
+      {/* Filter chips – still use type */}
       <div className="flex flex-wrap gap-2 mb-6">
         {Array.isArray(filterButtons) &&
-          filterButtons?.map((b, idx) => (
+          filterButtons.map((b, idx) => (
             <button
               key={idx}
-              onClick={() => {
-                setType(b.type);
-              }}
-              className={`px-3 py-1 ${b.type === type && "bg-[#FF7800] font-semibold"} bg-[#3F454B]  text-white rounded-full transition-ease-in duration-300`}
+              onClick={() => setType(b.type)}
+              className={`px-3 py-1 ${
+                b.type === type && "bg-[#FF7800] font-semibold"
+              } bg-[#3F454B] text-white rounded-full transition duration-300`}
             >
-              {" "}
               {b.name}
             </button>
           ))}
       </div>
-      {/* LOADING ANIMATION */}
+
+      {/* Loading */}
       <AnimatePresence>
         {isLoading && (
           <motion.div
@@ -111,19 +128,20 @@ const Events = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* Error */}
       {error && (
         <p className="text-red-500 font-semibold">
           {error?.message || "Something went wrong"}
         </p>
       )}
+
       {/* Events */}
-      {!isLoading && (
+      {!isLoading && filteredEvents.length > 0 ? (
         <div className="w-full flex flex-col lg:flex-row items-center gap-y-14 lg:pl-3 lg:gap-y-6 lg:gap-x-2 mb-12">
           {Array.isArray(events?.events) &&
             events.events.map((e) => {
               const isAdded = checkWishlist(e._id);
-
               return (
                 <motion.div
                   key={e._id}
@@ -137,15 +155,14 @@ const Events = () => {
                     to={`/events/${e?._id}/tickets/${e.tickets?.[0]?._id}`}
                     className="w-full flex justify-center"
                   >
-                    <div className="relative h-80 sm:h-96 lg:h-[500px] rounded-xl overflow-hidden">
+                    <div className="relative h-80 sm:h-96 lg:h-[500px] rounded-xl shadow-xs shadow-[#FF7800] overflow-hidden">
                       <img
                         src={
                           e?.pictures?.[0] || e?.pictures?.[1] || "/Login.jpg"
                         }
                         alt={e?.name || "event image"}
-                        className="w-full h-full object-cover rounded-xl"
+                        className="w-full h-full object-cover rounded-xl "
                       />
-
                       {/* Location */}
                       <div className="absolute bottom-3 left-4 flex items-center bg-[#FF7800] text-white px-4 py-1 rounded-xl space-x-2">
                         <Map size={16} />
@@ -153,7 +170,6 @@ const Events = () => {
                           {e?.locale || "Unknown"}
                         </span>
                       </div>
-
                       {/* SOLD OUT */}
                       {e.tickets?.length === 0 && (
                         <div className="absolute top-3 right-4 bg-red-600 text-white text-sm px-4 py-1 rounded-lg font-semibold">
@@ -162,21 +178,20 @@ const Events = () => {
                       )}
                     </div>
                   </Link>
-
                   {/* Details */}
                   <div className="flex justify-between items-start px-2 mt-2">
                     <div className="flex-1 min-w-0 pr-4">
                       <h1
-                        onClick={() => setShowFullName((prev) => !prev)}
+                        onClick={() => toggleFullName(e?._id)}
                         className="text-lg lg:text-xl text-white font-semibold truncate"
+                        title={e?.name}
                       >
-                        {showFullName
+                        {showFullNames[e?._id]
                           ? e?.name
                           : e?.name?.length > 25
                             ? `${e?.name.slice(0, 25)}...`
                             : e?.name}
                       </h1>
-
                       {e.tickets?.length > 0 ? (
                         <p className="text-[#FF7800] text-sm">
                           <span className="font-bold">
@@ -190,7 +205,6 @@ const Events = () => {
                         </p>
                       )}
                     </div>
-
                     {/* Right side */}
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-1">
@@ -199,7 +213,6 @@ const Events = () => {
                         </span>
                         <Star className="text-[#FF7800]" size={18} />
                       </div>
-
                       <div className="flex space-x-2">
                         <button
                           onClick={(ev) => handleWishlistToggle(e._id, ev)}
@@ -223,7 +236,6 @@ const Events = () => {
                             />
                           )}
                         </button>
-
                         <button className="flex items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
                           <Share2 className="w-5 h-5" />
                         </button>
@@ -234,6 +246,49 @@ const Events = () => {
               );
             })}
         </div>
+      ) : (
+        !isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col items-center justify-center 
+            bg-[#1E2227] border border-neutral-700 mb-22
+            rounded-2xl p-12 w-[90%] max-w-xl text-center shadow-lg"
+          >
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{
+                repeat: Infinity,
+                duration: 2,
+                ease: "easeInOut",
+              }}
+              className="mb-6 bg-[#FF7800]/20 p-5 rounded-full"
+            >
+              <SearchX className="w-10 h-10 text-[#FF7800]" />
+            </motion.div>
+
+            <h2 className="text-2xl font-bold text-white mb-3">
+              No Event Found
+            </h2>
+
+            <p className="text-gray-400 mb-6">
+              {type
+                ? `No events matching your criteria.`
+                : "There are currently no events available."}
+            </p>
+
+            <button
+              onClick={() => {
+                setType("");
+              }}
+              className="px-6 py-2 bg-[#FF7800] hover:bg-orange-600 
+              text-white rounded-lg font-semibold transition duration-300"
+            >
+              Reset Filters
+            </button>
+          </motion.div>
+        )
       )}
     </div>
   );

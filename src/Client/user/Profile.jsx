@@ -1,9 +1,71 @@
 import { motion } from "framer-motion";
 import { CircleCheckBig } from "lucide-react";
 import { eventService } from "@/Context/ApiEvent";
+import axios, { formToJSON } from "axios";
+import { useMutation } from "@tanstack/react-query";
+import L from "leaflet";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import toast from "react-hot-toast";
+import { useState } from "react";
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 const Profile = () => {
   const progress = 80;
   const { userProfile, userIsLoading, userIsError, userError } = eventService();
+  const formattedForInput = userProfile?.user?.dateOfBirth
+    ? userProfile.user.dateOfBirth.split("T")[0]
+    : "";
+  const [formData, setFormData] = useState({
+    fullName: userProfile.user.fullName || "",
+    nationality: userProfile.user.nationality || "",
+    phone: userProfile.user.phone || "",
+    dateOfBirth: formattedForInput || "",
+    Gender: userProfile.user.Gender || "",
+    address: userProfile.user.address || "",
+    bio: userProfile.user.bio || "",
+    avatarUrl: userProfile.user.avatarUrl || "",
+  });
+  console.log(formData?.Gender);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const updateUser = async () => {
+    const toastId = toast.loading("updating profile...");
+
+    try {
+      const res = await axios.put(
+        "http://localhost:5000/api/auth/user_profile",
+        formData,
+        {
+          withCredentials: true,
+        },
+      );
+      toast.success("user profile updated successful ", {
+        id: toastId,
+        duration: 3000,
+      });
+      return res.data;
+    } catch (error) {
+      console.log({ message: message.error });
+    }
+  };
+
+  const profileMutation = useMutation({
+    mutationFn: updateUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    },
+  });
   return (
     <div className="mb-2 flex flex-col items-center space-y-8">
       {" "}
@@ -81,6 +143,10 @@ const Profile = () => {
 
         {/* PERSONAL INFO FORM (placed under profile view) */}
         <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            profileMutation.mutate(formData);
+          }}
           id="personalInfoForm"
           className="w-full  rounded-xl mb-12 space-y-5 "
         >
@@ -91,9 +157,10 @@ const Profile = () => {
             </label>
             <input
               type="text"
-              name="full_name"
+              name="fullName"
               required
-              value={userProfile?.user?.fullName}
+              value={formData.fullName}
+              onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -119,9 +186,10 @@ const Profile = () => {
             </label>
             <input
               type="tel"
-              name="mobile"
+              name="phone"
               required
-              value={userProfile?.user?.phone}
+              value={formData.phone}
+              onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -135,7 +203,8 @@ const Profile = () => {
               type="text"
               name="nationality"
               required
-              value={userProfile?.user?.nationality}
+              value={formData.nationality}
+              onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -147,9 +216,10 @@ const Profile = () => {
             </label>
             <input
               type="date"
-              name="dob"
+              name="dateOfBirth"
               required
-              value={userProfile?.user?.dateOfBirth}
+              value={formData.formattedForInput}
+              onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
@@ -163,9 +233,10 @@ const Profile = () => {
               <label className="flex items-center gap-2">
                 <input
                   type="radio"
-                  name="gender"
+                  name="Gender"
                   value="male"
-                  defaultChecked
+                  checked={formData.Gender === "male"}
+                  onChange={handleChange}
                   className="accent-orange-500"
                 />
                 Male
@@ -173,8 +244,10 @@ const Profile = () => {
               <label className="flex items-center gap-2">
                 <input
                   type="radio"
-                  name="gender"
+                  name="Gender"
                   value="female"
+                  checked={formData.Gender === "female"}
+                  onChange={handleChange}
                   className="accent-orange-500"
                 />
                 Female
@@ -188,13 +261,18 @@ const Profile = () => {
             <textarea
               name="address"
               rows={2}
-              value={userProfile?.user?.address}
+              value={formData.address}
+              onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 resize-none"
             />
           </div>
 
           <div className="flex justify-end pt-4">
             <button
+              onSubmit={(e) => {
+                e.preventDefault();
+                profileMutation.mutate(formData);
+              }}
               type="submit"
               className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-md font-medium"
             >
@@ -207,8 +285,10 @@ const Profile = () => {
       <div className="flex flex-col flex-wrap w-[95%] bg-[#191B1D] px-6 pt-5 mb-8 rounded-md gap-y-4">
         <h1 className="text-2xl text-white font-semibold">Update Email</h1>
         <p className="w-full text-[#808080] text-sm">
-          your current email address in{" "}
-          <span className="text-orange-500">example@gmail.com</span>
+          your current email address is{" "}
+          <span className="text-orange-500">
+            {userProfile?.user?.userId?.email}
+          </span>
         </p>
         <div className="w-full h-[0.3px] bg-gray-600" />
 
@@ -234,7 +314,7 @@ const Profile = () => {
               type="submit"
               className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-md font-medium"
             >
-              Save Email
+              Save Changes
             </button>
           </div>
         </form>

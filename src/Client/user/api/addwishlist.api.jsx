@@ -1,7 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useService } from "@/Context/ServiceContext";
-import axios from "axios";
-
 export const useWishlistMutation = () => {
   const { toggleWishlist, setAddFav } = useService();
   const queryClient = useQueryClient();

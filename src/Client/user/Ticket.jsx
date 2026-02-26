@@ -101,7 +101,7 @@ const TicketHome = () => {
                     "/Login.jpg"
                   }
                   alt={ticket?.name || "event image"}
-                  className="h-32 w-20 sm:h-40 sm:w-24 rounded-xl object-cover"
+                  className="h-42 w-25 sm:h-40 sm:w-24 rounded-xl object-cover"
                 />
 
                 <div className="flex flex-col justify-between">
@@ -119,8 +119,8 @@ const TicketHome = () => {
                     <p className="text-sm text-gray-400">{ticket?.locale}</p>
                   </div>
 
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs font-medium text-green-400 bg-green-500/10 px-3 py-1 rounded-full">
+                  <div className="flex items-center justify-around mt-3">
+                    <span className="text-sm font-medium text-green-400 bg-green-500/10 px-3 py-1 rounded-full">
                       Early Bird
                     </span>
 

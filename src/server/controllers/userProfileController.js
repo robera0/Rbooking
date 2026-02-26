@@ -29,7 +29,7 @@ export const update_user = async (req, res) => {
       nationality,
       phone,
       dateOfBirth,
-      gender,
+      Gender,
       address,
       bio,
       avatarUrl,
@@ -41,11 +41,11 @@ export const update_user = async (req, res) => {
         nationality,
         phone,
         dateOfBirth,
-        gender,
+        Gender,
         address,
         bio,
         avatarUrl,
-      }).filter(([_, v]) => v !== undefined)
+      }).filter(([_, v]) => v !== undefined),
     );
 
     const updatedProfile = await ProfileModel.findOneAndUpdate(
@@ -56,7 +56,7 @@ export const update_user = async (req, res) => {
         runValidators: true,
 
         setDefaultsOnInsert: true,
-      }
+      },
     );
 
     return res.status(200).json({

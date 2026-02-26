@@ -139,7 +139,7 @@ const LoginUser = () => {
           }}
           className=" flex  items-center  justify-center bg-[#FF7800] text-white w-[70%] h-10 text-md font-semibold rounded-xl cursor-pointer "
         >
-          Login in
+          Login
         </button>
       </div>
     </>
