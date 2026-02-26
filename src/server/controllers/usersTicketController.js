@@ -45,7 +45,7 @@ export const purchase_ticket = async (req, res) => {
         orderNo,
         quantity,
         totalAmount,
-        status: "pending",
+        status: "paid",
       });
     }
 

@@ -34,7 +34,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Amenities } from "../../components/Reusable";
 import { EventPolices } from "../../components/Reusable";
 import { useLoaderData } from "react-router-dom";
-import { useWishlistMutation } from "./api/addwishlist.api.jsx";
+import { useWishlistMutation } from "@/Client/user/api/addwishlist.api";
 import { useState, useEffect } from "react";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
@@ -47,6 +47,11 @@ import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import CheckoutModal from "../../components/Reusable";
 import axios from "axios";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { Navigation, Pagination } from "swiper/modules";
 
 import toast from "react-hot-toast";
 
@@ -140,7 +145,7 @@ const EventInfo = () => {
   const [showMore, setShowMore] = useState(false);
   const [error, setError] = useState("");
   const [selectedTicket, setSelectedTicket] = useState(null);
-
+  const [openGallery, setOpenGallery] = useState(false);
   const {
     data: event_id,
     event_idisLoading,
@@ -569,40 +574,80 @@ const EventInfo = () => {
             </div>
           </div>
           <div className="w-full space-y-3">
-            {/*TOP IMAGE  */}
-            <div className="w-full">
-              <div className="w-[90%] rounded-2xl overflow-hidden">
-                <img
-                  src={event?.pictures?.[1] || "/1308183.jpeg"}
-                  alt={event?.name || "Event image"}
-                  className="w-full h-[200px] lg:h-[150px] object-cover object-center"
-                />
-              </div>
+            {/* TOP IMAGE */}
+            <div
+              className="w-[90%] rounded-2xl overflow-hidden cursor-pointer"
+              onClick={() => setOpenGallery(true)}
+            >
+              <img
+                src={event?.pictures?.[1] || "/1308183.jpeg"}
+                alt={event?.name || "Event image"}
+                className="w-full h-[200px] lg:h-[150px] object-cover hover:scale-105 transition duration-500"
+              />
             </div>
 
-            <div className="w-full lg:flex space-y-3 lg:space-x-4">
-              <div className="w-[90%] rounded-2xl overflow-hidden">
+            <div className="lg:flex space-y-3 lg:space-y-0 lg:space-x-4">
+              {/* SECOND IMAGE */}
+              <div
+                className="w-[90%] rounded-2xl overflow-hidden cursor-pointer"
+                onClick={() => setOpenGallery(true)}
+              >
                 <img
                   src={event?.pictures?.[2] || "/1308183.jpeg"}
                   alt={event?.name || "Event image"}
-                  className="w-full h-[200px] lg:h-[290px] object-cover"
+                  className="w-full h-[200px] lg:h-[290px] object-cover hover:scale-105 transition duration-500"
                 />
               </div>
 
-              <div className="w-[90%] rounded-2xl overflow-hidden relative">
-                {/* Image */}
+              {/* VIEW MORE */}
+              <div
+                className="w-[90%] rounded-2xl overflow-hidden relative cursor-pointer"
+                onClick={() => setOpenGallery(true)}
+              >
                 <img
-                  src="/1308183.jpeg"
-                  alt="Login"
+                  src={event?.pictures?.[0] || "/1308183.jpeg"}
+                  alt="Preview"
                   className="w-full h-[200px] object-cover"
                 />
-                {/* Overlay */}
-                <div className="absolute  flex  justify-center items-center inset-0 bg-black/60 ">
-                  <button className="text-white">View More</button>
+
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <button className="text-white text-lg font-semibold">
+                    View More
+                  </button>
                 </div>
-                C{" "}
               </div>
             </div>
+
+            {/* FULLSCREEN MODAL GALLERY */}
+            {openGallery && (
+              <div
+                onClick={() => setOpenGallery(false)}
+                className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-[95%] max-w-4xl relative"
+                >
+                  <Swiper
+                    modules={[Navigation, Pagination]}
+                    navigation
+                    pagination={{ clickable: true }}
+                    spaceBetween={20}
+                    slidesPerView={1}
+                  >
+                    {event?.pictures?.map((img, index) => (
+                      <SwiperSlide key={index}>
+                        <img
+                          src={img}
+                          alt=""
+                          className="w-full max-h-[80vh] object-contain rounded-2xl"
+                        />
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
