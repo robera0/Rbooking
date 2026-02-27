@@ -22,16 +22,15 @@ const Profile = () => {
     ? userProfile.user.dateOfBirth.split("T")[0]
     : "";
   const [formData, setFormData] = useState({
-    fullName: userProfile.user.fullName || "",
-    nationality: userProfile.user.nationality || "",
-    phone: userProfile.user.phone || "",
+    fullName: userProfile?.user?.fullName || "",
+    nationality: userProfile?.user?.nationality || "",
+    phone: userProfile?.user?.phone || "",
     dateOfBirth: formattedForInput || "",
-    Gender: userProfile.user.Gender || "",
-    address: userProfile.user.address || "",
-    bio: userProfile.user.bio || "",
-    avatarUrl: userProfile.user.avatarUrl || "",
+    Gender: userProfile?.user?.Gender || "",
+    address: userProfile?.user?.address || "",
+    bio: userProfile?.user?.bio || "",
+    avatarUrl: userProfile?.user?.avatarUrl || "",
   });
-  console.log(formData?.Gender);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -218,7 +217,7 @@ const Profile = () => {
               type="date"
               name="dateOfBirth"
               required
-              value={formData.formattedForInput}
+              value={formData.dateOfBirth}
               onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />

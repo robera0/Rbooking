@@ -178,9 +178,11 @@ const AnimatedRoutes = () => {
           element={
             <PageWrapper>
               <Main>
-                <Account>
-                  <Profile />
-                </Account>
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Account>
+                    <Profile />
+                  </Account>
+                </ProtectedRoute>
               </Main>
             </PageWrapper>
           }
