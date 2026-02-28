@@ -1,7 +1,6 @@
 import { UserTicketModel } from "../models/UserTicketModel.js";
 import { TicketModel } from "../models/TicketModel.js";
 import { nanoid } from "nanoid";
-
 import mongoose from "mongoose";
 
 export const purchase_ticket = async (req, res) => {
@@ -71,8 +70,10 @@ export const get_tickets = async (req, res) => {
       status: "paid",
     }).populate({
       path: "ticketId",
+
       populate: {
         path: "eventId",
+        select: "name dates locale ",
         model: "Event",
       },
     });
@@ -85,12 +86,16 @@ export const get_tickets = async (req, res) => {
 
 export const get_tickets_info = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const ticket = await UserTicketModel.findById(id).populate({
+    const { ticketId } = req.params;
+    console.log(ticketId);
+    const ticket = await UserTicketModel.findOne({
+      ticketId: ticketId,
+    }).populate({
       path: "ticketId",
+
       populate: {
         path: "eventId",
+        select: "name dates.start.localDate dates.start.localTime locale",
         model: "Event",
       },
     });

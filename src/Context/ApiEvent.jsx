@@ -49,27 +49,20 @@ export const ApiProvider = ({ children }) => {
     queryFn: fetchTickets,
   });
 
+  console.log(tickets);
+
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
     const res = await fetch(
-      `http://localhost:5000/api/tickets_home/${ticketId}`,
+      `http://localhost:5000/api/auth/tickets_home/${ticketId}`,
       {
         method: "GET",
         credentials: "include",
       },
     );
-    return res.json();
+    const data = await res.json();
+    return data;
   };
-  const {
-    data: ticketsinfo,
-    isLoading: ticketsinfoLoading,
-    isError: ticketsinfoIsError,
-    error: ticketsinfoError,
-  } = useQuery({
-    queryKey: ["tickets"],
-    queryFn: fetchTicketById,
-    retry: false,
-  });
   const fetchEventById = async (eventid, ticketId) => {
     try {
       const res = await fetch(
@@ -158,10 +151,7 @@ export const ApiProvider = ({ children }) => {
         ticketLoading,
         ticketsError,
         ticketIsError,
-        ticketsinfo,
-        ticketsinfoError,
-        ticketsinfoLoading,
-        ticketsinfoIsError,
+
         wishlist,
         wishlistError,
         wishlistLoading,
@@ -171,6 +161,7 @@ export const ApiProvider = ({ children }) => {
         userIsError,
         userError,
         fetchEventById,
+        fetchTicketById,
       }}
     >
       {children}

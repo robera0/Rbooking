@@ -31,6 +31,21 @@ const Profile = () => {
     bio: userProfile?.user?.bio || "",
     avatarUrl: userProfile?.user?.avatarUrl || "",
   });
+
+  const [userCredentials, setUserCredentials] = useState({
+    email: "",
+    currentPass: "",
+    password: "",
+  });
+
+  const handleCredentials = (e) => {
+    const { name, value } = e.target;
+    setUserCredentials((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -38,6 +53,34 @@ const Profile = () => {
       [name]: value,
     }));
   };
+
+  const updateCredentials = async () => {
+    const toastId = toast.loading("updating password...");
+    try {
+      const res = await axios.put(
+        "http://localhost:5000/api/auth/user",
+        userCredentials,
+        {
+          withCredentials: true,
+        },
+      );
+      toast.success("user password updated successful ", {
+        id: toastId,
+        duration: 3000,
+      });
+      return res.data;
+    } catch (error) {
+      console.log({ message: message.error });
+    }
+  };
+
+  const credentilasMutation = useMutation({
+    mutationFn: updateCredentials,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    },
+  });
+
   const updateUser = async () => {
     const toastId = toast.loading("updating profile...");
 
@@ -302,7 +345,9 @@ const Profile = () => {
             </label>
             <input
               type="text"
-              name="Enter new email"
+              name="email"
+              onChange={handleCredentials}
+              value={userCredentials?.email}
               required
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
@@ -328,6 +373,13 @@ const Profile = () => {
         <div className="w-full h-[0.3px] bg-gray-600" />
 
         <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            credentilasMutation.mutate(
+              userCredentials?.currentPass,
+              userCredentials?.password,
+            );
+          }}
           id="personalInfoForm"
           className="w-full  rounded-xl mb-12 space-y-5 "
         >
@@ -338,7 +390,9 @@ const Profile = () => {
             </label>
             <input
               type="text"
-              name="Enter current password"
+              name="currentPass"
+              onChange={handleCredentials}
+              value={userCredentials?.currentPass}
               required
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
@@ -351,7 +405,9 @@ const Profile = () => {
             </label>
             <input
               type="text"
-              name="Enter new password"
+              name="password"
+              onChange={handleCredentials}
+              value={userCredentials?.password}
               required
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
@@ -372,6 +428,12 @@ const Profile = () => {
           </div>
           <div className="flex justify-end pt-4">
             <button
+              onClick={() => {
+                credentilasMutation.mutate(
+                  userCredentials?.currentPass,
+                  userCredentials?.password,
+                );
+              }}
               type="submit"
               className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-md font-medium"
             >

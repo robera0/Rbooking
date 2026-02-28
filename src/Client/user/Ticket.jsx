@@ -11,8 +11,13 @@ import { useService } from "@/Context/ServiceContext";
 const TicketHome = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useService();
-  const { tickets, ticketLoading, ticketsError, ticketIsError } =
-    eventService();
+  const {
+    tickets,
+    ticketLoading,
+    ticketsError,
+    ticketIsError,
+    fetchTicketById,
+  } = eventService();
 
   const [hasAlerted, setHasAlerted] = useState(false);
 
@@ -28,24 +33,6 @@ const TicketHome = () => {
   }
 
   if (ticketLoading) return <p className="text-white">Loading tickets...</p>;
-
-  const fetchTicket = async (ticketId) => {
-    try {
-      const res = await axios.get(
-        `http://localhost:5000/api/auth/tickets_home/${ticketId}`,
-        {
-          withCredentials: true,
-        },
-      );
-      console.log("Ticket info:", res.data);
-      return res.data;
-    } catch (error) {
-      console.error(
-        "Error fetching ticket:",
-        error.response?.data || error.message,
-      );
-    }
-  };
 
   return (
     <div className="flex  flex-col flex-wrap pb-12  items-center space-y-8">
@@ -126,7 +113,6 @@ const TicketHome = () => {
 
                     <button
                       onClick={() => {
-                        fetchTicket(ticketId?._id);
                         navigate(`/tickets_home/${ticketId?._id}`);
                       }}
                       className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-3 py-1 rounded-md"

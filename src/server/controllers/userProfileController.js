@@ -33,8 +33,6 @@ export const update_user = async (req, res) => {
       address,
       bio,
       avatarUrl,
-      currentpass,
-      newpass,
     } = req.body;
 
     const updates = Object.fromEntries(
@@ -49,23 +47,6 @@ export const update_user = async (req, res) => {
         avatarUrl,
       }).filter(([_, v]) => v !== undefined),
     );
-    const user = await UserModel.findById(user_id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (currentpass && newpass) {
-      const isMatch = await comparePassword(currentpass, user.password);
-
-      if (!isMatch) {
-        return res.status(400).json({
-          message: "Current password is incorrect",
-        });
-      }
-      user.password = await hashPasswords(newpass);
-      await user.save();
-    }
 
     const updatedProfile = await ProfileModel.findOneAndUpdate(
       { userId: user_id },
