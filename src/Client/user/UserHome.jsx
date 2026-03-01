@@ -40,9 +40,9 @@ const SearchButton = () => (
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
-  const [date, setDate] = useState(null);
+
   const { events, isLoading, error } = eventService();
-  const { type, setType } = useService();
+  const { type, setType, date, setDate } = useService();
 
   return (
     <div onClick={() => setDateSlide(false)} className="space-y-4">

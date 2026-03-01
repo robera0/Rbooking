@@ -3,24 +3,34 @@ import { TicketModel } from "../models/TicketModel.js";
 
 export const get_events = async (req, res) => {
   try {
-    const { q, date, location } = req.query;
+    const { q, date, artist } = req.query;
 
     const filter = {};
 
+    const orConditions = [];
+
     if (q) {
-      filter.$or = [
-        { name: { $regex: q, $options: "i" } },
-        { locale: { $regex: q, $options: "i" } },
-        { type: { $regex: q, $options: "i" } },
-      ];
+      orConditions.push({ name: { $regex: q, $options: "i" } });
+      orConditions.push({ locale: { $regex: q, $options: "i" } });
+      orConditions.push({ type: { $regex: q, $options: "i" } });
+    }
+
+    if (artist) {
+      orConditions.push({ "artist.name": { $regex: artist, $options: "i" } });
     }
 
     if (date) {
-      filter["dates.start.dateTime"] = date;
+      const start = new Date(date);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(date);
+      end.setUTCHours(23, 59, 59, 999);
+
+      orConditions.push({ "dates.start.dateTime": { $gte: start, $lte: end } });
     }
 
-    if (location) {
-      filter.location = date;
+    if (orConditions.length > 0) {
+      filter.$or = orConditions;
     }
 
     const events = await Event.find(filter);

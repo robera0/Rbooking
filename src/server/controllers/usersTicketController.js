@@ -92,7 +92,6 @@ export const get_tickets_info = async (req, res) => {
       ticketId: ticketId,
     }).populate({
       path: "ticketId",
-
       populate: {
         path: "eventId",
         select: "name dates.start.localDate dates.start.localTime locale",

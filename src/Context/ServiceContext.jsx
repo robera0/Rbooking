@@ -38,6 +38,8 @@ export const ServiceProvider = ({ children }) => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [type, setType] = useState("");
+  const [artist, setArtist] = useState("");
+  const [date, setDate] = useState("");
   const toggleWishlist = async ({ event_id, isAdding }) => {
     const url = isAdding
       ? "http://localhost:5000/api/auth/wishlist/add"
@@ -118,6 +120,10 @@ export const ServiceProvider = ({ children }) => {
         setQuantity,
         type,
         setType,
+        artist,
+        setArtist,
+        setDate,
+        date,
       }}
     >
       {children}

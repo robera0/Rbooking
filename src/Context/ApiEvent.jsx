@@ -5,11 +5,15 @@ import { useService } from "./ServiceContext";
 
 const ApiContext = createContext();
 export const ApiProvider = ({ children }) => {
-  const { type } = useService();
+  const { type, artist, date } = useService();
   // GET EVENTS
   const fetchEvents = async ({ queryKey }) => {
-    const [_key, type] = queryKey;
-    const res = await fetch(`http://localhost:5000/api/events?q=${type}`);
+    const [_key, type, artist, date] = queryKey;
+
+    const res = await fetch(
+      `http://localhost:5000/api/events?type=${type || ""}&artist=${artist || ""}&date=${date || ""}`,
+    );
+
     return res.json();
   };
   const {
@@ -19,7 +23,7 @@ export const ApiProvider = ({ children }) => {
     isFetching: isFetching,
   } = useQuery({
     queryFn: fetchEvents,
-    queryKey: ["event", type],
+    queryKey: ["event", type, artist, date],
   });
 
   // GET TICKETS
@@ -48,8 +52,6 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["tickets"],
     queryFn: fetchTickets,
   });
-
-  console.log(tickets);
 
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {

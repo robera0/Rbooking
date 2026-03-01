@@ -2,4 +2,5 @@
 [] add a schema of  a review about the app
 [] make the notification side work
 [] make the footer stuck in the end
-// currently working on showing the correct info of the ticket on viewDetail.jsx
+[] make  the view work on the wishlist section
+// making the home search bar work by creating another req.query to the backend  
