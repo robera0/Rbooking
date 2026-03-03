@@ -86,7 +86,9 @@ const Profile = () => {
   };
 
   const updateCredentials = async () => {
-    const toastId = toast.loading("updating password...");
+    const toastId = toast.loading("updating password...", {
+      duration: 3000,
+    });
     try {
       const res = await axios.put(
         "http://localhost:5000/api/auth/user",

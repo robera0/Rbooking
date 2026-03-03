@@ -34,7 +34,7 @@ export const get_user_profile = async (req, res) => {
 export const update_user = async (req, res) => {
   try {
     const user_id = req.user.id;
-
+    console.log(user_id);
     if (!user_id) {
       return res.status(401).json({ message: "There is no user" });
     }
@@ -48,9 +48,9 @@ export const update_user = async (req, res) => {
       address,
       bio,
       avatarUrl,
+      currentpass,
+      newpass,
     } = req.body;
-
-    avatarUrl = req.file ? req.file.path : "";
 
     const updates = Object.fromEntries(
       Object.entries({
@@ -61,9 +61,10 @@ export const update_user = async (req, res) => {
         Gender,
         address,
         bio,
-        avatarUrl,
+        avatarUrl: req.file ? req.file.path : undefined,
       }).filter(([_, v]) => v !== undefined),
     );
+
     const user = await UserModel.findById(user_id);
 
     if (!user) {
