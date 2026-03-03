@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { CircleCheckBig } from "lucide-react";
 import { eventService } from "@/Context/ApiEvent";
-import axios, { formToJSON } from "axios";
+import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useState, useRef } from "react";
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -18,9 +18,26 @@ L.Icon.Default.mergeOptions({
 const Profile = () => {
   const progress = 80;
   const { userProfile, userIsLoading, userIsError, userError } = eventService();
+  const fileInputRef = useRef(null);
+  const [preview, setPreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+
   const formattedForInput = userProfile?.user?.dateOfBirth
     ? userProfile.user.dateOfBirth.split("T")[0]
     : "";
+
+  const handleButtonClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
   const [formData, setFormData] = useState({
     fullName: userProfile?.user?.fullName || "",
     nationality: userProfile?.user?.nationality || "",
@@ -29,7 +46,6 @@ const Profile = () => {
     Gender: userProfile?.user?.Gender || "",
     address: userProfile?.user?.address || "",
     bio: userProfile?.user?.bio || "",
-    avatarUrl: userProfile?.user?.avatarUrl || "",
   });
 
   const [userCredentials, setUserCredentials] = useState({
@@ -54,12 +70,28 @@ const Profile = () => {
     }));
   };
 
+  const handleSubmit = () => {
+    try {
+      const data = new formData();
+      Object.entries(formData).forEach(([key, value]) => {
+        data.append(key, value);
+      });
+      if (setPreview) {
+        data.append("avatarUrl", selectedFile);
+      }
+      console.log("data is ", data);
+    } catch (error) {
+      console.error(message.error);
+    }
+  };
+
   const updateCredentials = async () => {
     const toastId = toast.loading("updating password...");
     try {
       const res = await axios.put(
         "http://localhost:5000/api/auth/user",
         userCredentials,
+
         {
           withCredentials: true,
         },
@@ -89,6 +121,9 @@ const Profile = () => {
         "http://localhost:5000/api/auth/user_profile",
         formData,
         {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
           withCredentials: true,
         },
       );
@@ -172,14 +207,26 @@ const Profile = () => {
           <div className="flex flex-wrap items-center space-x-6">
             <div>
               <img
-                src={userProfile?.user?.avatarUrl || "/Login.jpg"}
+                src={preview || userProfile?.user?.avatarUrl || "/Login.jpg"}
                 alt="Profile"
                 className="w-24 h-24 object-cover rounded-full"
               />
             </div>
-            <button className="w-[96px] h-7 text-white text-sm font-semibold bg-[#FF7800] rounded-sm">
+            <button
+              onClick={handleButtonClick}
+              className="w-[96px] h-7 text-white text-sm font-semibold bg-[#FF7800] rounded-sm"
+            >
               Change
             </button>
+
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
           </div>
         </div>
 
@@ -313,6 +360,7 @@ const Profile = () => {
             <button
               onSubmit={(e) => {
                 e.preventDefault();
+                handleSubmit;
                 profileMutation.mutate(formData);
               }}
               type="submit"

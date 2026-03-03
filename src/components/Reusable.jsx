@@ -18,16 +18,16 @@ import {
   X,
   MessageCircleMore,
 } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { eventService } from "@/Context/ApiEvent";
 import { Navigate, useLocation } from "react-router-dom";
 import { useService } from "@/Context/ServiceContext";
-import { motion, AnimatePresence } from "framer-motion";
-export const ProtectedRoute = ({ isLoggedIn, children }) => {
+export const ProtectedRoute = ({ children }) => {
+  const { userProfile, userIsLoading } = eventService();
   const location = useLocation();
+  if (userIsLoading) return null; // add animation
 
-  if (!isLoggedIn) {
+  if (!userProfile) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

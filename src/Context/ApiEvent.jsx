@@ -112,7 +112,8 @@ export const ApiProvider = ({ children }) => {
   } = useQuery({
     queryKey: ["wishlist"],
     queryFn: fetchWishlist,
-    retry: false,
+
+    retry: 1,
   });
 
   // GET USERPROFILE
@@ -139,7 +140,7 @@ export const ApiProvider = ({ children }) => {
   } = useQuery({
     queryKey: ["userProfile"],
     queryFn: fetchUser,
-    retry: false,
+    retry: 1,
   });
 
   return (

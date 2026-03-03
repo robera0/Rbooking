@@ -2,6 +2,21 @@ import mongoose from "mongoose";
 import { ProfileModel } from "../models/ProfileModel.js";
 import { UserModel } from "../models/UserModel.js";
 import { hashPasswords, comparePassword } from "../service/password.js";
+import multer from "multer";
+import path from "path";
+
+//multer for uploading image
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = Date.now() + path.extname(file.originalname);
+    cb(null, uniqueName);
+  },
+});
+export const upload = multer({ storage });
+
 export const get_user_profile = async (req, res) => {
   try {
     const user_id = req.user.id;
@@ -34,6 +49,8 @@ export const update_user = async (req, res) => {
       bio,
       avatarUrl,
     } = req.body;
+
+    avatarUrl = req.file ? req.file.path : "";
 
     const updates = Object.fromEntries(
       Object.entries({

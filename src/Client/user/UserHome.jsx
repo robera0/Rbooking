@@ -32,17 +32,26 @@ import { InfoBar } from "../../components/Reusable";
 import { RatingStars } from "../../components/Reusable";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
-const SearchButton = () => (
-  <button className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200">
-    <Search className="w-5 h-5" />
-  </button>
-);
+import { useNavigate } from "react-router-dom";
+
+const SearchButton = () => {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button
+        onClick={() => navigate("/event")}
+        className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200"
+      >
+        <Search className="w-5 h-5" />
+      </button>
+    </>
+  );
+};
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
-
   const { events, isLoading, error } = eventService();
-  const { type, setType, date, setDate } = useService();
+  const { type, setType, date, setDate, artist, setArtist } = useService();
 
   return (
     <div onClick={() => setDateSlide(false)} className="space-y-4">
@@ -162,6 +171,8 @@ const UserHome = () => {
             <input
               type="text"
               placeholder="Location"
+              onChange={(e) => setType(e.target.value)}
+              value={type}
               className="flex-1 outline-none placeholder:text-white text-white font-light"
             />
           </div>
@@ -172,6 +183,7 @@ const UserHome = () => {
             <input
               type="text"
               placeholder="Artist, Event or Venue"
+              onChange={(e) => setArtist(e.target.value)}
               className="flex-1 outline-none placeholder:text-white text-white font-light"
             />
           </div>

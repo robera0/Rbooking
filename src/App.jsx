@@ -71,7 +71,6 @@ const PageWrapper = ({ children }) => (
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const { isLoggedIn, type } = useService();
 
   return (
     <AnimatePresence mode="wait">
@@ -152,7 +151,7 @@ const AnimatedRoutes = () => {
           element={
             <PageWrapper>
               <Main>
-                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <ProtectedRoute>
                   <Ticket />
                 </ProtectedRoute>
               </Main>
@@ -165,7 +164,7 @@ const AnimatedRoutes = () => {
           element={
             <PageWrapper>
               <Main>
-                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <ProtectedRoute>
                   <ViewTicket />
                 </ProtectedRoute>
               </Main>
@@ -178,7 +177,7 @@ const AnimatedRoutes = () => {
           element={
             <PageWrapper>
               <Main>
-                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <ProtectedRoute>
                   <Account>
                     <Profile />
                   </Account>
@@ -194,7 +193,7 @@ const AnimatedRoutes = () => {
             <PageWrapper>
               <Main>
                 <Account>
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute>
                     <Wishlist />
                   </ProtectedRoute>
                 </Account>
