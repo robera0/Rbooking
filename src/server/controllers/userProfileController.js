@@ -4,18 +4,26 @@ import { UserModel } from "../models/UserModel.js";
 import { hashPasswords, comparePassword } from "../service/password.js";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
-//multer for uploading image
+const uploadPath = "uploads/";
+
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath);
+}
+
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
+  destination: (req, file, cb) => {
+    cb(null, uploadPath);
   },
-  filename: function (req, file, cb) {
+
+  filename: (req, file, cb) => {
     const uniqueName = Date.now() + path.extname(file.originalname);
     cb(null, uniqueName);
   },
 });
-export const upload = multer({ storage });
+
+export const upload = multer({ storage }).single("avatarUrl");
 
 export const get_user_profile = async (req, res) => {
   try {
@@ -47,23 +55,28 @@ export const update_user = async (req, res) => {
       Gender,
       address,
       bio,
-      avatarUrl,
       currentpass,
       newpass,
     } = req.body;
 
-    const updates = Object.fromEntries(
-      Object.entries({
-        fullName,
-        nationality,
-        phone,
-        dateOfBirth,
-        Gender,
-        address,
-        bio,
-        avatarUrl: req.file ? req.file.path : undefined,
-      }).filter(([_, v]) => v !== undefined),
-    );
+    const updates = {};
+
+    if (fullName) updates.fullName = fullName;
+    if (nationality) updates.nationality = nationality;
+    if (phone) updates.phone = phone;
+    if (dateOfBirth) updates.dateOfBirth = dateOfBirth;
+    if (Gender) updates.Gender = Gender;
+    if (address) updates.address = address;
+    if (bio) updates.bio = bio;
+
+    // Handle avatar update
+    if (req.file) {
+      const profile = await ProfileModel.findOne({ userId: user_id });
+      if (profile?.avatarUrl && fs.existsSync(profile.avatarUrl)) {
+        fs.unlinkSync(profile.avatarUrl); // delete old image
+      }
+      updates.avatarUrl = req.file.path; // save new image path
+    }
 
     const user = await UserModel.findById(user_id);
 
@@ -89,11 +102,10 @@ export const update_user = async (req, res) => {
       {
         new: true,
         runValidators: true,
-
+        upsert: true,
         setDefaultsOnInsert: true,
       },
     );
-
     return res.status(200).json({
       success: true,
       profile: updatedProfile,

@@ -7,6 +7,7 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useState, useRef } from "react";
 delete L.Icon.Default.prototype._getIconUrl;
@@ -17,14 +18,11 @@ L.Icon.Default.mergeOptions({
 });
 const Profile = () => {
   const progress = 80;
+  const queryClient = useQueryClient();
   const { userProfile, userIsLoading, userIsError, userError } = eventService();
   const fileInputRef = useRef(null);
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-
-  const formattedForInput = userProfile?.user?.dateOfBirth
-    ? userProfile.user.dateOfBirth.split("T")[0]
-    : "";
 
   const handleButtonClick = () => {
     fileInputRef.current.click();
@@ -39,15 +37,14 @@ const Profile = () => {
   };
 
   const [formData, setFormData] = useState({
-    fullName: userProfile?.user?.fullName || "",
-    nationality: userProfile?.user?.nationality || "",
-    phone: userProfile?.user?.phone || "",
-    dateOfBirth: formattedForInput || "",
-    Gender: userProfile?.user?.Gender || "",
-    address: userProfile?.user?.address || "",
-    bio: userProfile?.user?.bio || "",
+    fullName: "",
+    nationality: "",
+    phone: "",
+    dateOfBirth: "",
+    Gender: "",
+    address: "",
+    bio: "",
   });
-
   const [userCredentials, setUserCredentials] = useState({
     email: "",
     currentPass: "",
@@ -70,18 +67,32 @@ const Profile = () => {
     }));
   };
 
-  const handleSubmit = () => {
+  const updateUser = async () => {
+    const toastId = toast.loading("updating profile...", { duration: 3000 });
+
     try {
-      const data = new formData();
+      const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         data.append(key, value);
       });
-      if (setPreview) {
+      if (selectedFile) {
         data.append("avatarUrl", selectedFile);
       }
-      console.log("data is ", data);
+      const res = await axios.put(
+        "http://localhost:5000/api/auth/user_profile",
+        data,
+        {
+          withCredentials: true,
+        },
+      );
+
+      toast.success("user profile updated successful ", {
+        id: toastId,
+        duration: 3000,
+      });
+      return res.data;
     } catch (error) {
-      console.error(message.error);
+      console.log(error.response?.data || error.message);
     }
   };
 
@@ -108,41 +119,18 @@ const Profile = () => {
     }
   };
 
-  const credentilasMutation = useMutation({
+  const credintialsMutation = useMutation({
     mutationFn: updateCredentials,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
   });
 
-  const updateUser = async () => {
-    const toastId = toast.loading("updating profile...");
-
-    try {
-      const res = await axios.put(
-        "http://localhost:5000/api/auth/user_profile",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        },
-      );
-      toast.success("user profile updated successful ", {
-        id: toastId,
-        duration: 3000,
-      });
-      return res.data;
-    } catch (error) {
-      console.log({ message: message.error });
-    }
-  };
-
   const profileMutation = useMutation({
     mutationFn: updateUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      setPreview(null);
     },
   });
   return (
@@ -177,7 +165,7 @@ const Profile = () => {
           </p>
         </div>
 
-        {/*VARIFICATION  */}
+        {/*VERIFICATION  */}
         <div className="flex flex-wrap  w-[95%] h-20 bg-[#191B1D] px-3 mb-8 rounded-md gap-x-6 gap-y-2">
           {/* EMAIL */}
           <div className="flex items-center space-x-2">
@@ -209,7 +197,13 @@ const Profile = () => {
           <div className="flex flex-wrap items-center space-x-6">
             <div>
               <img
-                src={preview || userProfile?.user?.avatarUrl || "/Login.jpg"}
+                src={
+                  preview
+                    ? preview
+                    : userProfile?.user?.avatarUrl
+                      ? `http://localhost:5000/${userProfile?.user?.avatarUrl}`
+                      : "/Login.jpg"
+                }
                 alt="Profile"
                 className="w-24 h-24 object-cover rounded-full"
               />
@@ -236,7 +230,7 @@ const Profile = () => {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            profileMutation.mutate(formData);
+            profileMutation.mutate();
           }}
           id="personalInfoForm"
           className="w-full  rounded-xl mb-12 space-y-5 "
@@ -249,8 +243,7 @@ const Profile = () => {
             <input
               type="text"
               name="fullName"
-              required
-              value={formData.fullName}
+              value={formData.fullName || userProfile?.user?.fullName || ""}
               onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
@@ -279,7 +272,7 @@ const Profile = () => {
               type="tel"
               name="phone"
               required
-              value={formData.phone}
+              value={formData.phone || userProfile?.user?.phone || ""}
               onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
@@ -294,7 +287,9 @@ const Profile = () => {
               type="text"
               name="nationality"
               required
-              value={formData.nationality}
+              value={
+                formData.nationality || userProfile?.user?.nationality || ""
+              }
               onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
@@ -309,7 +304,12 @@ const Profile = () => {
               type="date"
               name="dateOfBirth"
               required
-              value={formData.dateOfBirth}
+              value={
+                formData.dateOfBirth ||
+                (userProfile?.user?.dateOfBirth
+                  ? userProfile.user.dateOfBirth.split("T")[0]
+                  : "")
+              }
               onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500"
             />
@@ -326,7 +326,10 @@ const Profile = () => {
                   type="radio"
                   name="Gender"
                   value="male"
-                  checked={formData.Gender === "male"}
+                  checked={
+                    formData.Gender === "male" ||
+                    (!formData.Gender && userProfile?.user?.Gender === "male")
+                  }
                   onChange={handleChange}
                   className="accent-orange-500"
                 />
@@ -337,7 +340,10 @@ const Profile = () => {
                   type="radio"
                   name="Gender"
                   value="female"
-                  checked={formData.Gender === "female"}
+                  checked={
+                    formData.Gender === "female" ||
+                    (!formData.Gender && userProfile?.user?.Gender === "female")
+                  }
                   onChange={handleChange}
                   className="accent-orange-500"
                 />
@@ -352,7 +358,7 @@ const Profile = () => {
             <textarea
               name="address"
               rows={2}
-              value={formData.address}
+              value={formData.address || userProfile?.user?.address || ""}
               onChange={handleChange}
               className="w-full bg-[#2a2d33] text-white rounded-md px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 resize-none"
             />
@@ -360,11 +366,6 @@ const Profile = () => {
 
           <div className="flex justify-end pt-4">
             <button
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSubmit;
-                profileMutation.mutate(formData);
-              }}
               type="submit"
               className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-md font-medium"
             >
@@ -425,7 +426,7 @@ const Profile = () => {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            credentilasMutation.mutate(
+            credintialsMutation.mutate(
               userCredentials?.currentPass,
               userCredentials?.password,
             );
@@ -479,7 +480,7 @@ const Profile = () => {
           <div className="flex justify-end pt-4">
             <button
               onClick={() => {
-                credentilasMutation.mutate(
+                credintialsMutation.mutate(
                   userCredentials?.currentPass,
                   userCredentials?.password,
                 );
