@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { eventService } from "@/Context/ApiEvent";
 import { Link } from "react-router-dom";
 import { Star, Map, Heart, Share2, SearchX } from "lucide-react";
@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 
 const Events = () => {
-  const { type, setType } = useService();
+  const { type, setType, setDate, setArtist } = useService();
 
   const { events, isLoading, error, isFetching, wishlist, wishlistIsError } =
     eventService();
@@ -17,23 +17,25 @@ const Events = () => {
 
   const [showFullNames, setShowFullNames] = useState({});
 
-  const [hasAlerted, setHasAlerted] = useState(false);
+  const hasAlertedRef = useRef(false);
   const toggleFullName = (id) => {
     setShowFullNames((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
   };
-  const filteredEvents =
-    events?.events?.filter((e) => {
-      if (!type) return true;
-      const lowerType = type.toLowerCase();
-
-      return (
-        e.type?.toLowerCase().includes(lowerType) ||
-        e.name?.toLowerCase().includes(lowerType)
-      );
-    }) || [];
+  const filteredEvents = React.useMemo(() => {
+    return (
+      events?.events?.filter((e) => {
+        if (!type) return true;
+        const lowerType = type.toLowerCase();
+        return (
+          e.type?.toLowerCase().includes(lowerType) ||
+          e.name?.toLowerCase().includes(lowerType)
+        );
+      }) || []
+    );
+  }, [events, type]);
   const filterButtons = [
     { name: "All", type: "" },
     { name: "Concert", type: "concert" },
@@ -60,12 +62,12 @@ const Events = () => {
     });
   };
 
-  if (wishlistIsError && !hasAlerted) {
+  if (wishlistIsError && !hasAlertedRef.current) {
     toast.error("Login Required", {
       duration: 3000,
       position: "top-center",
     });
-    setHasAlerted(true);
+    hasAlertedRef.current = true;
   }
 
   return (
@@ -95,7 +97,10 @@ const Events = () => {
           filterButtons.map((b, idx) => (
             <button
               key={idx}
-              onClick={() => setType(b.type)}
+              onClick={() => {
+                setType(b.type);
+                (setDate(""), setArtist(""));
+              }}
               className={`px-3 py-1 ${
                 b.type === type && "bg-[#FF7800] font-semibold"
               } bg-[#3F454B] text-white rounded-full transition duration-300`}
@@ -140,7 +145,7 @@ const Events = () => {
       {!isLoading && filteredEvents.length > 0 ? (
         <div className="w-full flex flex-col lg:flex-row items-center gap-y-14 lg:pl-3 lg:gap-y-6 lg:gap-x-2 mb-12">
           {Array.isArray(events?.events) &&
-            events.events.map((e) => {
+            filteredEvents.map((e) => {
               const isAdded = checkWishlist(e._id);
               return (
                 <motion.div
