@@ -23,11 +23,11 @@ import { eventService } from "@/Context/ApiEvent";
 import { Navigate, useLocation } from "react-router-dom";
 import { useService } from "@/Context/ServiceContext";
 export const ProtectedRoute = ({ children }) => {
-  const { userProfile, userIsLoading } = eventService();
+  const { usererror, userIsLoading, user } = eventService();
   const location = useLocation();
   if (userIsLoading) return null; // add animation
 
-  if (!userProfile) {
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

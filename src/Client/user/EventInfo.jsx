@@ -225,10 +225,9 @@ const EventInfo = () => {
     month: "short",
     year: "numeric",
   });
-  const checkWishlist = () => {
-    if (!event?._id || !wishlist) return false;
+  const checkWishlist = (eventId) => {
     return (
-      wishlist?.wishlists?.events?.some((item) => item?._id === event?._id) ||
+      wishlist?.wishlists?.events?.some((item) => item?._id === eventId) ||
       false
     );
   };
@@ -315,6 +314,18 @@ const EventInfo = () => {
         setLikeCount((c) => Math.max(0, c - 1));
       }
     }
+  };
+
+  const handleWishlistToggle = (eventId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const isCurrentlyAdded = checkWishlist(eventId);
+
+    wishlistMutation.mutate({
+      event_id: eventId,
+      isAdding: !isCurrentlyAdded,
+    });
   };
 
   const ticketPrices = {
@@ -541,12 +552,7 @@ const EventInfo = () => {
           <div className=" flex  space-x-2  items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
             <button
               onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                wishlistMutation.mutate({
-                  event_id: event?._id,
-                  isAdding: !addFav,
-                });
+                handleWishlistToggle(event._id, e);
               }}
             >
               <Heart

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 
 const Events = () => {
-  const { type, setType, setDate, setArtist } = useService();
+  const { type, setType, setDate, setArtist, addFav, setAddFav } = useService();
 
   const { events, isLoading, error, isFetching, wishlist, wishlistIsError } =
     eventService();
@@ -223,7 +223,7 @@ const Events = () => {
                           onClick={(ev) => handleWishlistToggle(e._id, ev)}
                           disabled={wishlistMutation.isLoading}
                           className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                            isAdded ? "bg-red-500" : "bg-neutral-700"
+                            addFav ? "bg-red-500" : "bg-neutral-700"
                           } ${
                             wishlistMutation.isLoading
                               ? "opacity-50 cursor-not-allowed"
@@ -236,7 +236,7 @@ const Events = () => {
                             <Heart
                               size={16}
                               className={`text-white ${
-                                isAdded ? "fill-white" : "fill-none"
+                                addFav ? "fill-white" : "fill-none"
                               }`}
                             />
                           )}

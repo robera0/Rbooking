@@ -1,6 +1,5 @@
 import { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-
 import { useService } from "./ServiceContext";
 
 const ApiContext = createContext();
@@ -11,7 +10,7 @@ export const ApiProvider = ({ children }) => {
     const [_key, type, artist, date] = queryKey;
 
     const res = await fetch(
-      `http://localhost:5000/api/events?type=${type || ""}&artist=${artist || ""}&date=${date || ""}`,
+      `http://localhost:5000/api/events?type=${type?.trim() || ""}&artist=${artist?.trim() || ""}&date=${date ? new Date(date).toISOString() : ""}`,
     );
 
     return res.json();
@@ -26,6 +25,29 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["event", type, artist, date],
   });
 
+  // GET LOGGED USERS
+
+  const fetchLoggedInUser = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/user", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        return null;
+      }
+
+      return res.json();
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  const { data: user, isError: usererror } = useQuery({
+    queryFn: fetchLoggedInUser,
+    queryKey: ["user"],
+    select: (data) => data?.user || null,
+  });
   // GET TICKETS
 
   const fetchTickets = async () => {
@@ -51,6 +73,7 @@ export const ApiProvider = ({ children }) => {
   } = useQuery({
     queryKey: ["tickets"],
     queryFn: fetchTickets,
+    enabled: !!user,
   });
 
   // GET TICKETS BY ID
@@ -112,7 +135,7 @@ export const ApiProvider = ({ children }) => {
   } = useQuery({
     queryKey: ["wishlist"],
     queryFn: fetchWishlist,
-
+    enabled: !!user,
     retry: 1,
   });
 
@@ -141,11 +164,14 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["userProfile"],
     queryFn: fetchUser,
     retry: 1,
+    enabled: !!user,
   });
 
   return (
     <ApiContext.Provider
       value={{
+        user,
+        usererror,
         events,
         eventLoading,
         eventerror,

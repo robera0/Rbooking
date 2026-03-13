@@ -15,9 +15,8 @@ userProfilesRouter.get(
 );
 userProfilesRouter.put(
   "/user_profile",
-
   authenticateTokenMiddleware,
-  upload.single("avatarUrl"),
+  upload,
   update_user,
 );
 export default userProfilesRouter;

@@ -21,7 +21,34 @@ import EventInfo from "./Client/user/EventInfo";
 import { ProtectedRoute } from "./components/Reusable";
 import { Toaster } from "react-hot-toast";
 import Events from "./Client/user/Events";
-
+import AddSalon from "./Client/admin/AddSalon";
+import Book_Setting from "./Client/admin/Book_Setting";
+import Booking from "./Client/admin/Booking";
+import BookingDetail from "./Client/admin/BookingDetail";
+import Configuration_Setting from "./Client/admin/Configuration_Setting";
+import CreateBooking from "./Client/admin/CreateBooking";
+import CreateNotification from "./Client/admin/CreateNotification";
+import Dashboard from "./Client/admin/Dashboard";
+import General from "./Client/admin/General";
+import Graphs from "./Client/admin/Graphs";
+import Guage from "./Client/admin/Guage";
+import LoginPage from "./Client/admin/LoginPage";
+import Marketing from "./Client/admin/Marketing";
+import Notification_Setting from "./Client/admin/Notification_Setting";
+import Payment from "./Client/admin/Payment";
+import Performance from "./Client/admin/Performance";
+import Portfolio from "./Client/admin/Portfolio";
+import Privacy_Setting from "./Client/admin/Privacy_Setting";
+import Report from "./Client/admin/Report";
+import RevenueGraph from "./Client/admin/RevenueGraph";
+import Review from "./Client/admin/Review";
+import Salon_Setting from "./Client/admin/Salon_Setting";
+import SalonDetail from "./Client/admin/SalonDetail";
+import SalonMang from "./Client/admin/SalonMang";
+import Service from "./Client/admin/Service";
+import User_Setting from "./Client/admin/User_Setting";
+import User from "./Client/admin/User";
+import Verification from "./Client/admin/Verification";
 const queryClient = new QueryClient();
 
 // Framer Motion variants
@@ -73,7 +100,7 @@ const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       <Toaster position="top-right" />
       <Routes key={location.pathname} location={location}>
         <Route
@@ -107,9 +134,164 @@ const AnimatedRoutes = () => {
         <Route
           path="/admin/home"
           element={
+            <Home>
+              <PageWrapper>
+                <Home />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        {/* Admin routes */}
+        <Route
+          path="/admin/login"
+          element={
             <PageWrapper>
-              <Home />
+              <LoginPage />
             </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            <Home>
+              <PageWrapper>
+                <Dashboard />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/user"
+          element={
+            <Home>
+              <PageWrapper>
+                <User />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/salon"
+          element={
+            <Home>
+              <PageWrapper>
+                <SalonMang />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/salon/salonMang"
+          element={
+            <Home>
+              <PageWrapper>
+                <SalonDetail />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/salon/addSalon"
+          element={
+            <Home>
+              <PageWrapper>
+                <AddSalon />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/booking"
+          element={
+            <Home>
+              <PageWrapper>
+                <Booking />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/booking/bookingdetail"
+          element={
+            <Home>
+              <PageWrapper>
+                <BookingDetail />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/booking/createbooking"
+          element={
+            <Home>
+              <PageWrapper>
+                <CreateBooking />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/payment"
+          element={
+            <Home>
+              <PageWrapper>
+                <Payment />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/marketing"
+          element={
+            <Home>
+              <PageWrapper>
+                <Marketing />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/marketing/create_notification"
+          element={
+            <Home>
+              <PageWrapper>
+                <CreateNotification />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/reports"
+          element={
+            <Home>
+              <PageWrapper>
+                <Report />
+              </PageWrapper>
+            </Home>
+          }
+        />
+
+        <Route
+          path="/setting"
+          element={
+            <Home>
+              <PageWrapper>
+                <Setting />
+              </PageWrapper>
+            </Home>
           }
         />
 
