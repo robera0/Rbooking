@@ -1,16 +1,20 @@
 import { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useService } from "./ServiceContext";
+import dotenv from "dotenv";
 
 const ApiContext = createContext();
 export const ApiProvider = ({ children }) => {
+  dotenv.config();
+  const API_URL = process.env.VITE_API_URL;
+
   const { type, artist, date } = useService();
   // GET EVENTS
   const fetchEvents = async ({ queryKey }) => {
     const [_key, type, artist, date] = queryKey;
 
     const res = await fetch(
-      `http://localhost:5000/api/events?type=${type?.trim() || ""}&artist=${artist?.trim() || ""}&date=${date ? new Date(date).toISOString() : ""}`,
+      `${API_URL}/api/events?type=${type?.trim() || ""}&artist=${artist?.trim() || ""}&date=${date ? new Date(date).toISOString() : ""}`,
     );
 
     return res.json();
@@ -29,7 +33,7 @@ export const ApiProvider = ({ children }) => {
 
   const fetchLoggedInUser = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/user", {
+      const res = await fetch("${API_URL}/api/auth/user", {
         method: "GET",
         credentials: "include",
       });
@@ -52,7 +56,7 @@ export const ApiProvider = ({ children }) => {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/tickets_home", {
+      const res = await fetch(`${API_URL}/api/auth/tickets_home`, {
         method: "GET",
         credentials: "include",
       });
@@ -78,20 +82,17 @@ export const ApiProvider = ({ children }) => {
 
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
-    const res = await fetch(
-      `http://localhost:5000/api/auth/tickets_home/${ticketId}`,
-      {
-        method: "GET",
-        credentials: "include",
-      },
-    );
+    const res = await fetch(`${API_URL}/api/auth/tickets_home/${ticketId}`, {
+      method: "GET",
+      credentials: "include",
+    });
     const data = await res.json();
     return data;
   };
   const fetchEventById = async (eventid, ticketId) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/events/${eventid}/tickets/${ticketId}`,
+        `${API_URL}/api/events/${eventid}/tickets/${ticketId}`,
         {
           method: "GET",
           credentials: "include",
@@ -114,7 +115,7 @@ export const ApiProvider = ({ children }) => {
   // GET WISHLIST
   const fetchWishlist = async (req, res) => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/wishlist", {
+      const res = await fetch(`${API_URL}/api/auth/wishlist`, {
         method: "GET",
         credentials: "include",
       });
@@ -142,7 +143,7 @@ export const ApiProvider = ({ children }) => {
   // GET USERPROFILE
   const fetchUser = async (req, res) => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/user_profile", {
+      const res = await fetch(`${API_URL}/api/auth/user_profile`, {
         method: "GET",
         credentials: "include",
       });
