@@ -1,13 +1,11 @@
 import { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useService } from "./ServiceContext";
-import dotenv from "dotenv";
 
 const ApiContext = createContext();
 export const ApiProvider = ({ children }) => {
   dotenv.config();
-  const API_URL = process.env.VITE_API_URL;
-
+  const API_URL = import.meta.env.VITE_API_URL;
   const { type, artist, date } = useService();
   // GET EVENTS
   const fetchEvents = async ({ queryKey }) => {
