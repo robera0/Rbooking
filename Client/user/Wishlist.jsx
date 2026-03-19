@@ -22,7 +22,6 @@ const Wishlist = () => {
 
   const { wishlist, wishlistLoading, wishlistIsError } = eventService();
 
-  // ✅ Proper toast handling
   useEffect(() => {
     if (wishlistIsError && !hasAlerted) {
       toast.error("Login Required", {

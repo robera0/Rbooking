@@ -78,13 +78,9 @@ const Profile = () => {
       if (selectedFile) {
         data.append("avatarUrl", selectedFile);
       }
-      const res = await axios.put(
-        "http://localhost:5000/api/auth/user_profile",
-        data,
-        {
-          withCredentials: true,
-        },
-      );
+      const res = await axios.put(`${API_URL}/api/auth/user_profile`, data, {
+        withCredentials: true,
+      });
 
       toast.success("user profile updated successful ", {
         id: toastId,
@@ -102,7 +98,7 @@ const Profile = () => {
     });
     try {
       const res = await axios.put(
-        "http://localhost:5000/api/auth/user",
+        `${API_URL}/api/auth/user`,
         userCredentials,
 
         {

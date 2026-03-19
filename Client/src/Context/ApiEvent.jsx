@@ -3,14 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useService } from "./ServiceContext";
 
 const ApiContext = createContext();
+
 export const ApiProvider = ({ children }) => {
-  dotenv.config();
-  const API_URL = import.meta.env.VITE_API_URL;
-  const { type, artist, date } = useService();
+  const { type, artist, date, API_URL } = useService();
   // GET EVENTS
   const fetchEvents = async ({ queryKey }) => {
     const [_key, type, artist, date] = queryKey;
-
     const res = await fetch(
       `${API_URL}/api/events?type=${type?.trim() || ""}&artist=${artist?.trim() || ""}&date=${date ? new Date(date).toISOString() : ""}`,
     );
@@ -31,7 +29,7 @@ export const ApiProvider = ({ children }) => {
 
   const fetchLoggedInUser = async () => {
     try {
-      const res = await fetch("${API_URL}/api/auth/user", {
+      const res = await fetch(`${API_URL}/api/auth/user`, {
         method: "GET",
         credentials: "include",
       });

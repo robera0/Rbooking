@@ -5,16 +5,15 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { EyeOff, Eye, User, Lock } from "lucide-react";
 import { useService } from "@/Context/ServiceContext";
 const LoginUser = () => {
+  const from = location.state?.from?.pathname || "/";
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const from = location.state?.from?.pathname || "/";
-
   const [useremail, setUseremail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { setIsLoggedIn } = useService();
+  const { setIsLoggedIn, API_URL } = useService();
   const handleEmail = (e) => {
     setUseremail(e.target.value);
   };
@@ -23,11 +22,9 @@ const LoginUser = () => {
   };
 
   const sendUsers = async (userData) => {
-    const res = await axios.post(
-      "http://localhost:5000/api/auth/login",
-      userData,
-      { withCredentials: true },
-    );
+    const res = await axios.post(`${API_URL}/api/auth/login`, userData, {
+      withCredentials: true,
+    });
     return res.data;
   };
 
