@@ -131,6 +131,7 @@ const EventInfo = () => {
     checkoutOpen,
     addFav,
     setAddFav,
+    API_URL,
   } = useService();
   const [showFullName, setShowFullName] = useState(false);
   const [position, setPosition] = useState(null);
@@ -160,7 +161,7 @@ const EventInfo = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/auth/purchase/${eventId}/${ticketId}`,
+        `${API_URL}/api/auth/purchase/${eventId}/${ticketId}`,
         { quantity },
         { withCredentials: true },
       );
@@ -176,7 +177,7 @@ const EventInfo = () => {
   const postComment = async ({ eventId }) => {
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/auth/comments/${eventId}`,
+        `${API_URL}/api/auth/comments/${eventId}`,
         { text: comment, eventId: eventId },
         { withCredentials: true },
       );

@@ -40,10 +40,11 @@ export const ServiceProvider = ({ children }) => {
   const [type, setType] = useState("");
   const [artist, setArtist] = useState("");
   const [date, setDate] = useState("");
+  const API_URL = import.meta.env.VITE_API_URL;
   const toggleWishlist = async ({ event_id, isAdding }) => {
     const url = isAdding
-      ? "http://localhost:5000/api/auth/wishlist/add"
-      : "http://localhost:5000/api/auth/wishlist/remove";
+      ? `${API_URL}/api/auth/wishlist/add`
+      : `${API_URL}/api/auth/wishlist/remove`;
 
     return axios.post(url, { events: event_id }, { withCredentials: true });
   };
@@ -51,6 +52,7 @@ export const ServiceProvider = ({ children }) => {
   return (
     <ServiceContext.Provider
       value={{
+        API_URL,
         service,
         setService,
         hour,
