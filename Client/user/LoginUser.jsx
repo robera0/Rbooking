@@ -5,8 +5,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { EyeOff, Eye, User, Lock } from "lucide-react";
 import { useService } from "@/Context/ServiceContext";
 const LoginUser = () => {
-  const from = location.state?.from?.pathname || "/";
   const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [useremail, setUseremail] = useState("");
