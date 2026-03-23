@@ -1,8 +1,9 @@
 import axios from "axios";
 const API_URL =
-  import.meta.env.MODE === "development"
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.MODE === "development"
     ? "/api/v1"
-    : "https://velvet-1kum.onrender.com/api/v1";
+    : "https://paysso.onrender.com");
 
 export const buildFormData = () => {
   const fd = new FormData();
