@@ -20,7 +20,7 @@ connectDB();
 app.use(express.json());
 app.use(
   cors({
-    origin: "https://paysso.netlify.app/",
+    origin: ["http://localhost:5173", "https://paysso.netlify.app"],
     credentials: true,
   }),
 );
