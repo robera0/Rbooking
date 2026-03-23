@@ -76,7 +76,7 @@ const LoginUser = () => {
       <div className="pl-6 w-full space-y-6">
         {error && <div className="text-red-500 text-sm pl-4">{error}</div>}
         {/*username */}
-        <form onSubmit={handleSignin}>
+        <form className="space-y-4" onSubmit={handleSignin}>
           <div className=" relative flex space-x-8 ">
             <span className="absolute left-4 top-2">
               <User className="text-white" />
