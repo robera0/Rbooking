@@ -21,7 +21,7 @@ import {
 import { useState } from "react";
 import { eventService } from "@/Context/ApiEvent";
 import { Navigate, useLocation } from "react-router-dom";
-
+import { useService } from "@/Context/ServiceContext";
 export const ProtectedRoute = ({ children }) => {
   const { usererror, userIsLoading, user } = eventService();
   const location = useLocation();
