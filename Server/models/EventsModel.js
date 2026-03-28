@@ -8,7 +8,7 @@ export const PriceRangeSchema = new mongoose.Schema(
     min: Number,
     max: Number,
   },
-  { _id: false }
+  { _id: false },
 );
 
 // Dates
@@ -32,7 +32,7 @@ export const DatesSchema = new mongoose.Schema(
       startDateTime: Date,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 // Classification
@@ -50,7 +50,7 @@ export const ClassificationSchema = new mongoose.Schema(
     },
     family: Boolean,
   },
-  { _id: false }
+  { _id: false },
 );
 // RATING SCHEMA
 
@@ -72,7 +72,7 @@ const RatingSchema = new mongoose.Schema(
       min: 0,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 // AMENITY SCHEMA
@@ -84,7 +84,7 @@ const AmenitySchema = new mongoose.Schema(
     safety: [{ type: String }],
     other: [{ type: String }],
   },
-  { _id: false }
+  { _id: false },
 );
 
 //  BASE EVENT SCHEMA
@@ -102,10 +102,12 @@ const BaseEventSchema = new mongoose.Schema(
     locale: String,
     pictures: [String],
     info: String,
-    policies: {
-      header: String,
-      descriptions: String,
-    },
+    policies: [
+      {
+        header: String,
+        descriptions: String,
+      },
+    ],
     priceRanges: [PriceRangeSchema],
     dates: DatesSchema,
     classifications: [ClassificationSchema],
@@ -142,7 +144,7 @@ const BaseEventSchema = new mongoose.Schema(
   {
     discriminatorKey: "type",
     timestamps: true,
-  }
+  },
 );
 
 export const Event = mongoose.model("Event", BaseEventSchema);
