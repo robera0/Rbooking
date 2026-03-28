@@ -1,6 +1,19 @@
 import mongoose from "mongoose";
 import { ProfileModel } from "../models/ProfileModel.js";
 import { UserModel } from "../models/UserModel.js";
+import multer from "multer";
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const ext = file.originalname.split(".").pop();
+    cb(null, Date.now() + "." + ext);
+  },
+});
+
+export const upload = multer({ storage });
 
 export const get_user_profile = async (req, res) => {
   try {
@@ -35,6 +48,10 @@ export const update_user = async (req, res) => {
       avatarUrl,
     } = req.body;
 
+    if (req.file) {
+      avatarUrl = `/uploads/${req.file.filename}`;
+    }
+
     const updates = Object.fromEntries(
       Object.entries({
         fullName,
@@ -45,7 +62,7 @@ export const update_user = async (req, res) => {
         address,
         bio,
         avatarUrl,
-      }).filter(([_, v]) => v !== undefined)
+      }).filter(([_, v]) => v !== undefined),
     );
 
     const updatedProfile = await ProfileModel.findOneAndUpdate(
@@ -56,7 +73,7 @@ export const update_user = async (req, res) => {
         runValidators: true,
 
         setDefaultsOnInsert: true,
-      }
+      },
     );
 
     return res.status(200).json({

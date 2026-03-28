@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "user"],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.set("toJSON", {
