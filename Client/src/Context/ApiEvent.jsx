@@ -33,9 +33,6 @@ export const ApiProvider = ({ children }) => {
         method: "GET",
         credentials: "include",
       });
-      if (res.status === 401) {
-        return null;
-      }
 
       return res.json();
     } catch (error) {
@@ -46,6 +43,10 @@ export const ApiProvider = ({ children }) => {
   const { data: user, isError: usererror } = useQuery({
     queryFn: fetchLoggedInUser,
     queryKey: ["user"],
+
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false, // optional
     select: (data) => data?.user || null,
   });
   // GET TICKETS
@@ -188,6 +189,8 @@ export const ApiProvider = ({ children }) => {
         userError,
         fetchEventById,
         fetchTicketById,
+        fetchLoggedInUser,
+        fetchUser,
       }}
     >
       {children}

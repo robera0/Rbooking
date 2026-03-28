@@ -53,13 +53,15 @@ export const login_user = async (req, res) => {
   user.refreshTokens.push({ token: refresh_token });
   await user.save();
   res
-    .cookie("access_token", `Bearer ${access_token}`, {
+    .cookie("access_token", access_token, {
       httpOnly: true,
       secure: NODE_ENV === "production",
+      sameSite: "None",
     })
     .cookie("refresh_token", refresh_token, {
       httpOnly: true,
       secure: NODE_ENV === "production",
+      sameSite: "None",
     })
     .status(200)
     .json({ message: "Logged in successfully" });
@@ -73,7 +75,7 @@ export const refresh = async (req, res) => {
       return res.status(401).json({ message: "their is no refresh_token" });
 
     jwt.verify(refresh_token, REFRESH_TOKEN_SECRET, async (error, decoded) => {
-      if (error) return res.status(401).json({ message: message.error });
+      if (error) return res.status(401).json({ message: error.message });
       const user = await UserModel.findById(decoded.id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });

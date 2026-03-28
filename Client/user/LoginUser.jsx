@@ -1,19 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { EyeOff, Eye, User, Lock } from "lucide-react";
 import { useService } from "@/Context/ServiceContext";
+import { eventService } from "@/Context/ApiEvent";
 const LoginUser = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [useremail, setUseremail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { setIsLoggedIn, API_URL } = useService();
+  const { setIsLoggedIn, isLoggedIn, API_URL } = useService();
   const handleEmail = (e) => {
     setUseremail(e.target.value);
   };
@@ -30,16 +31,14 @@ const LoginUser = () => {
 
   const mutation = useMutation({
     mutationFn: sendUsers,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.message === "Logged in successfully") {
-        setIsLoggedIn(true);
-        queryClient.invalidateQueries({ queryKey: ["tickets"] });
-
         navigate(from, { replace: true });
+        queryClient.invalidateQueries({ queryKey: ["user"] });
       }
     },
     onError: (error) => {
-      setError(error.response?.data?.message || "Login failed");
+      setError(error.message);
     },
   });
 
@@ -75,6 +74,11 @@ const LoginUser = () => {
 
       <div className="pl-6 w-full space-y-6">
         {error && <div className="text-red-500 text-sm pl-4">{error}</div>}
+        {mutation.isPending && (
+          <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50">
+            <div className="w-14 h-14 border-4 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+          </div>
+        )}
         {/*username */}
         <form className="space-y-4" onSubmit={handleSignin}>
           <div className=" relative flex space-x-8 ">
@@ -130,9 +134,7 @@ const LoginUser = () => {
           {/*Login button */}
           <div className="w-full flex justify-center">
             <button
-              onClick={(e) => {
-                handleSignin(e);
-              }}
+              type="submit"
               className=" flex  items-center  justify-center bg-[#FF7800] text-white w-[70%] h-10 text-md font-semibold rounded-xl cursor-pointer "
             >
               Login
