@@ -34,7 +34,7 @@ const ProfileSchema = new mongoose.Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const ProfileModel = mongoose.model("User_Profile", ProfileSchema);
+export const ProfileModel = mongoose.model("userprofiles", ProfileSchema);
