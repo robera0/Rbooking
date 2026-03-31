@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 dotenv.config();
 
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
-const NODE_ENV = process.env.NODE_ENV;
+
 export const register_users = async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -55,12 +55,12 @@ export const login_user = async (req, res) => {
   res
     .cookie("access_token", access_token, {
       httpOnly: true,
-      secure: NODE_ENV === "production",
+      secure: true,
       sameSite: "None",
     })
     .cookie("refresh_token", refresh_token, {
       httpOnly: true,
-      secure: NODE_ENV === "production",
+      secure: true,
       sameSite: "None",
     })
     .status(200)
@@ -127,12 +127,12 @@ export const logout = async (req, res) => {
     res
       .clearCookie("access_token", {
         httpOnly: true,
-        secure: NODE_ENV === "production",
+        secure: true,
         path: "/",
       })
       .clearCookie("refresh_token", {
         httpOnly: true,
-        secure: NODE_ENV === "production",
+        secure: true,
         path: "/",
       })
       .status(200)
