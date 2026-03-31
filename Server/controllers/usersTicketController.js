@@ -8,9 +8,14 @@ export const purchase_ticket = async (req, res) => {
   session.startTransaction();
 
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
     const userId = req.user.id;
+
     const ticketId = req.params.ticketId;
-    const { orderNo, quantity } = req.body;
+    const { quantity } = req.body;
+    const orderNo = `ORD-${new Date().toISOString()}-${Math.floor(Math.random() * 1000)}`;
 
     if (!ticketId)
       return res.status(400).json({ message: "Ticket ID required" });
