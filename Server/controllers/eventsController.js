@@ -1,6 +1,6 @@
 import { Event } from "../models/EventsModel.js";
 import { TicketModel } from "../models/TicketModel.js";
-import mongoose from "mongoose";
+
 export const get_events = async (req, res) => {
   try {
     const events = await Event.find();
@@ -64,7 +64,7 @@ export const fetchevents_id = async (req, res) => {
         },
         {
           path: "comment.userId", // Nested path for individual comments
-          model: "User_Profile",
+          model: "userprofiles",
           select: "fullName avatarUrl",
         },
       ],
