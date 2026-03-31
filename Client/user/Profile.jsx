@@ -10,6 +10,7 @@ import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useState, useRef } from "react";
+import { useService } from "@/Context/ServiceContext";
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -21,6 +22,7 @@ const Profile = () => {
   const queryClient = useQueryClient();
   const { userProfile, userIsLoading, userIsError, userError } = eventService();
   const fileInputRef = useRef(null);
+  const { API_URL } = useService();
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 

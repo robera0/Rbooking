@@ -1055,8 +1055,8 @@ const EventInfo = () => {
                 {event?.policies?.map((policy, idx) => (
                   <EventPolices
                     key={idx}
-                    header={policy.header}
-                    des={policy.descriptions}
+                    header={policy?.header}
+                    des={policy?.descriptions}
                   />
                 ))}
               </div>
