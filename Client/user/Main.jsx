@@ -1,340 +1,202 @@
 import {
-  Scissors,
   Menu,
   Bell,
   CircleUser,
   House,
   Ticket,
-  Mail,
-  Phone,
-  Instagram,
-  Twitter,
-  Facebook,
-  CircleX,
-  Guitar,
-  Flag,
+  Share2,
+  Mic2,
+  MonitorPlay,
+  Search,
 } from "lucide-react";
-import { EditMenuBar, MenuBar } from "../src/components/Reusable";
-import {
-  AccountSideMenu,
-  WindowMenuBar,
-  NotificationSidebar,
-} from "../src/components/Reusable";
-import { motion, AnimatePresence } from "framer-motion";
+import { NotificationSidebar, MenuBar } from "../src/components/Reusable";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useService } from "../src/Context/ServiceContext";
-import { Link } from "react-router-dom";
-import { useState } from "react";
-import { LayoutGroup } from "framer-motion";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
 
 const Main = ({ children }) => {
-  const {
-    isAccountActive,
-    setIsAccountActive,
-    isEditMenuActive,
-    setEditMenuActive,
-    checkoutOpen,
-    setCheckoutOpen,
-  } = useService();
-  const [isNotification, setIsNotification] = useState();
+  const { isAccountActive } = useService();
+  const [isNotification, setIsNotification] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentYear = new Date().getFullYear();
+
+  const footerSections = useMemo(
+    () => [
+      {
+        title: "Discover",
+        links: ["Events", "Venues", "Artists", "Festivals"],
+      },
+      { title: "Company", links: ["Our Story", "Careers", "Press"] },
+      {
+        title: "Support",
+        links: [
+          { label: "Help Center" },
+          { label: "Contact Us" },
+          { label: "Terms" },
+        ],
+      },
+    ],
+    [],
+  );
+
   return (
     <LayoutGroup>
-      <div onClick={() => setIsAccountActive(false)} className="h-auto">
-        <div className="relative flex h-screen overflow-hidden bg-[#222529] flex-col ">
-          <div className="flex justify-between lg:hidden text-white mt-2  p-6">
-            <Link to={"/"}>
-              <div className="flex justify-center  items-center  space-x-2">
-                <Scissors className="text-[#B3B3B3] mt-2 w-8 h-8" />
-                <h1 className="font-irish text-xl w-full text-white  font bold">
-                  Vibein Pass
-                </h1>
-              </div>
+      <div className="relative min-h-screen w-full bg-[#121417] text-white flex flex-col selection:bg-[#FF7A00]/20 overflow-x-hidden">
+        {/* Grain Texture */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04] brightness-125" />
+        </div>
+
+        {/* ================= HEADER: COMPACT 90% ZOOM STYLE ================= */}
+        {/* Reduced py-4 to py-2.5 | Reduced max-w to 1380px | Reduced text sizes */}
+        <header className="sticky top-0 z-[80] w-full border-b border-white/[0.04] bg-[#121417]/80 backdrop-blur-md">
+          <div className="max-w-[1380px] mx-auto flex items-center justify-between px-6 py-2.5 lg:px-10">
+            {/* Brand - Scaled Down */}
+            <Link to="/" className="group flex items-center gap-2">
+              <h1 className="text-2xl font-black italic tracking-tighter text-white uppercase transition-colors group-hover:text-[#FF7A00]">
+                Paysso
+              </h1>
             </Link>
 
-            <div className="flex justify-center items-center space-x-3">
-              {/*menu */}
-              <button>
-                <span>
-                  <Menu />
-                </span>
+            {/* Nav - Reduced Gap & Font Size */}
+            <nav className="hidden md:flex items-center gap-8">
+              {[
+                { label: "Explore", path: "/" },
+                { label: "Venues", path: "/venues" },
+                { label: "Artists", path: "/artists" },
+              ].map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.path}
+                  className={`text-[9px] font-black uppercase tracking-[0.25em] transition-all ${
+                    location.pathname === item.path
+                      ? "text-[#FF7A00]"
+                      : "text-gray-500 hover:text-gray-200"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/* Actions - Smaller Icons & Padding */}
+            <div className="flex items-center gap-4 lg:gap-6">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevents triggers from parent containers
+                  setIsNotification(true);
+                }}
+                className="text-gray-500 hover:text-white transition-colors p-1.5"
+              >
+                <Bell size={18} strokeWidth={2.5} />
               </button>
 
-              {/* Notification */}
-              <motion.button
-                layoutId="notif-bell"
-                onClick={() => setIsNotification(true)}
-                className="relative flex justify-center items-center w-8 h-8 bg-[#3F454B] rounded-sm"
-              >
-                <div className="absolute top-0 left-6 w-2 h-2 rounded-full animate-ping bg-red-400"></div>
-                <Bell className="w-4 h-4" />
-              </motion.button>
-              {/*profile */}
               <Link
-                to={"/account"}
-                className="relative flex justify-center items-center w-8 h-8 bg-[#3F454B] rounded-sm"
+                to="/tickets"
+                className="group flex items-center gap-2 px-5 py-2 bg-[#FF7A00] text-black text-[9px] font-black uppercase tracking-widest rounded-md transition-all hover:bg-white active:scale-95 shadow-lg"
               >
-                <div className=" w-4 h-4 rounded-full absolute ping-red-400"></div>
-
-                <span>
-                  <CircleUser className="w-4 h-4" />
-                </span>
+                Tickets
+                <Ticket size={12} strokeWidth={3} />
               </Link>
-            </div>
-          </div>
 
-          {/*desktop view */}
-          <div className="flex items-center justify-between hidden md:flex text-white mt-2 p-6">
-            {/* Left side: Logo + Navigation */}
-            <div className="flex items-center space-x-10">
-              {/* Logo */}
-              <div className="flex items-center space-x-2">
-                <Scissors className="text-[#B3B3B3] w-14 h-14" />
-                <h1 className="font-irish text-3xl text-white font-bold">
-                  Kuretegn Event
-                </h1>
-              </div>
-
-              {/* Navigation */}
-              <div className="flex space-x-12">
-                <WindowMenuBar
-                  icon={<House className="w-4 h-4" />}
-                  header="Home"
-                  path="/"
+              <Link
+                to="/account"
+                className="w-8 h-8 rounded-full overflow-hidden border border-white/10 hover:border-[#FF7A00] transition-all"
+              >
+                <img
+                  src="/userdefault.webp"
+                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                  alt="Me"
                 />
-                <WindowMenuBar
-                  icon={<Guitar className="w-4 h-4" />}
-                  header="Concert"
-                  path="/concert"
-                />
-                <WindowMenuBar
-                  icon={<Flag className="w-4 h-4" />}
-                  header="Exhibition"
-                  path="/exhibition"
-                />
-              </div>
-            </div>
+              </Link>
 
-            {/* Right side: User buttons */}
-            <div className="flex mr-22 items-center space-x-8">
-              {/* Menu */}
-              <button className="relative flex justify-center items-center w-10 h-10 bg-[#3F454B] rounded-sm">
-                <div className="w-4 h-4 rounded-full absolute ping-red-400"></div>
-                <Ticket className="w-5 h-5" />
-              </button>
-
-              {/* Notification */}
-              <button className="relative flex justify-center items-center w-10 h-10 bg-[#3F454B] rounded-sm">
-                <div className="absolute top-0 left-6 w-2 h-2 rounded-full animate-ping bg-red-400"></div>
-                <Bell className="w-4 h-4" />
-              </button>
-
-              {/* Profile */}
-              <button className="relative flex justify-center items-center w-10 h-10 bg-[#3F454B] rounded-sm">
-                <div className="w-4 h-4 rounded-full absolute ping-red-400"></div>
-                <CircleUser className="w-4 h-4" />
+              <button className="md:hidden text-white p-1">
+                <Menu size={20} />
               </button>
             </div>
           </div>
+        </header>
 
-          {/*EDIT MENU BAR */}
-          <AnimatePresence>
-            {isEditMenuActive && (
-              <motion.div
-                className="fixed inset-0 z-[200] w-full h-screen bg-black/40 flex justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setEditMenuActive(false)}
-              >
-                <motion.div
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full  bg-[#1F2227] pt-4 shadow-2xl space-y-8 "
-                  initial={{ y: 40, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: 40, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                >
-                  {/* Header */}
-                  <div className="flex justify-between items-center px-6 py-5">
-                    <span className="text-white font-semibold text-lg">
-                      Edit Search
-                    </span>
+        {/* ================= CONTENT ================= */}
+        <main className="relative z-10 flex-1 flex flex-col">
+          <div className="flex-1 pb-20 md:pb-0">{children}</div>
 
-                    <CircleX
-                      onClick={() => setEditMenuActive(false)}
-                      className="w-6 h-6 text-white/70 cursor-pointer hover:text-white"
-                    />
-                  </div>
-
-                  {/* Card */}
-                  <div className=" w-full px-5 pb-6">
-                    <div className="bg-[#2A2C31] w-full rounded-xl pt-6">
-                      <EditMenuBar />
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {/*NOTIFICATION SIDE BAR   */}
-
-          <AnimatePresence mode="wait">
-            {isNotification && (
-              <>
-                <motion.div
-                  className="fixed inset-0 bg-black/40 z-30"
-                  onClick={() => setIsNotification(false)}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                />
-
-                <motion.button
-                  layoutId="notif-bell"
-                  className="fixed top-4 right-4 bg-[#FF7800] text-white p-2 rounded-full shadow-lg z-50"
-                  onClick={() => setIsNotification(false)}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                >
-                  <Bell size={24} />
-                </motion.button>
-
-                <motion.div
-                  className="fixed top-1/2 right-3 w-[400px] h-[70vh] bg-[#222529] rounded-2xl shadow-xl z-40 -translate-y-1/2"
-                  initial={{ x: 100, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: 100, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <NotificationSidebar setIsOpen={setIsNotification} />
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-          {/*ACCOUNT MENU BAR */}
-
-          <AnimatePresence>
-            {isAccountActive && (
-              <motion.div
-                className="fixed inset-0 z-[200] bg-black/30"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsAccountActive(false)}
-              >
-                <motion.div
-                  className="absolute top-0 right-0 w-[80%] h-full pt-2 pb-8 bg-[#222529] shadow-2xl space-y-4"
-                  initial={{ x: "100%" }}
-                  animate={{ x: 0 }}
-                  exit={{ x: "100%" }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                >
-                  {/* Close button */}
-                  <div className="flex justify-end p-4">
-                    <CircleX
-                      onClick={() => setIsAccountActive(false)}
-                      className="w-8 h-8 text-white cursor-pointer"
-                    />
-                  </div>
-
-                  <AccountSideMenu />
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="min-h-screen flex flex-col">
-            <div className="flex-1 overflow-y-auto pt-6">
-              <div>{children}</div>
-
-              {/*Footer */}
-              <footer className="w-full h-96 pt-8 pl-4 bg-[#0B0A12]">
-                <div className=" space-y-8">
-                  <div className="space-y-2">
-                    <div className="flex flex-cols space-x-2">
-                      <Scissors className="text-[#B3B3B3] mt-2 w-8 h-8" />
-                      <h1 className="font-irish text-xl w-12 text-white font bold">
-                        Vibein Pass
-                      </h1>
-                    </div>
-
-                    <p className=" pl-8 w-[95%] text-[#B3B3B3]">
-                      Unlimited vibe with one pass !
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex flex-cols pl-4 mt-4 space-x-3">
-                      <Phone className=" text-white  mt-2 w-5 h-5" />
-                      <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
-                        +25181234567
-                      </h1>
-                    </div>
-                    <div className="flex flex-cols items-center   pl-4 space-x-3">
-                      <Mail className=" text-white  mt-2 w-5 h-5" />
-                      <h1 className="text-lg w-12 text-[#B3B3B3] font bold">
-                        kuretegnevents@gmail.con
-                      </h1>
-                    </div>
-                  </div>
-
-                  {/*SOCIAL MEDIA */}
-                  <div className="flex flex-col mt-8  mr-12  items-end text-white  space-y-3">
-                    <h1 className="text-lg font-semibold ">Follow Us on</h1>
-                    <div className="flex items-center pl-4 space-x-3">
-                      <a
-                        href="https://instagram.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
+          <footer className="w-full border-t border-white/[0.04] bg-[#0D0F11] py-16">
+            <div className="max-w-[1380px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12">
+              <div className="col-span-2 lg:col-span-2 space-y-6">
+                <div className="text-2xl font-black italic text-white uppercase">
+                  Paysso
+                </div>
+                <p className="text-gray-600 text-xs font-medium leading-relaxed max-w-xs">
+                  A high-performance ticketing engine built for the next
+                  generation of live entertainment.
+                </p>
+              </div>
+              {footerSections.map((s) => (
+                <div key={s.title} className="space-y-4">
+                  <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500">
+                    {s.title}
+                  </h4>
+                  <div className="flex flex-col gap-2.5">
+                    {s.links.map((l) => (
+                      <Link
+                        key={typeof l === "string" ? l : l.label}
+                        to="#"
+                        className="text-[11px] font-bold text-gray-700 hover:text-[#FF7A00] transition-colors"
                       >
-                        <Instagram className="w-6 h-6 cursor-pointer" />
-                      </a>
-
-                      <a
-                        href="https://facebook.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Facebook className="w-6 h-6 cursor-pointer" />
-                      </a>
-
-                      <a
-                        href="https://twitter.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Twitter className="w-6 h-6 cursor-pointer" />
-                      </a>
-                    </div>
+                        {typeof l === "string" ? l : l.label}
+                      </Link>
+                    ))}
                   </div>
                 </div>
-              </footer>
+              ))}
             </div>
-          </div>
+          </footer>
+        </main>
 
-          {/*menu Bar */}
-          <AnimatePresence>
-            {!isAccountActive && (
+        {/* ================= OVERLAYS (Notification Fix) ================= */}
+        <AnimatePresence>
+          {isNotification && (
+            <div className="fixed inset-0 z-[100]">
+              {" "}
+              {/* Wrapper with highest Z */}
               <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 100, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className="lg:hidden fixed bottom-0 left-0 flex w-full justify-around bg-[#191B1D] py-4 z-[100] rounded-t-3xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsNotification(false)}
+                className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="absolute top-0 right-0 w-full sm:w-[380px] h-full bg-[#121417] border-l border-white/5 shadow-2xl"
               >
-                <MenuBar icon={<House />} header="Home" path="/" />
-                <MenuBar
-                  icon={<Ticket />}
-                  header="My Ticket"
-                  path="/tickets_home"
-                />
-                <MenuBar
-                  icon={<CircleUser />}
-                  header="Account"
-                  path="/account"
-                />
+                <NotificationSidebar setIsOpen={setIsNotification} />
               </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Nav */}
+        <AnimatePresence>
+          {!isAccountActive && (
+            <motion.div
+              initial={{ y: 100 }}
+              animate={{ y: 0 }}
+              className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] bg-[#1A1C1E]/95 backdrop-blur-xl py-3 px-8 z-[55] border border-white/10 rounded-2xl shadow-2xl flex justify-between items-center"
+            >
+              <MenuBar icon={<House size={18} />} path="/" />
+
+              <MenuBar icon={<Ticket size={18} />} path="/tickets" />
+              <MenuBar icon={<CircleUser size={18} />} path="/account" />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </LayoutGroup>
   );

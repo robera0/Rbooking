@@ -25,8 +25,16 @@ export const Cards = ({
   daily_diff,
   border,
 }) => {
+  const loading = !header || !num;
+  if (loading) {
+    return (
+      <div className="pl-4 w-78 h-42 bg-white rounded-2xl shadow-lg shadow-pink-200 hover:scale-102 hover:shadow-xl hover:shadow-pink-300 transition duration-300">
+        <Skeleton name="blog-card" loading={true} />
+      </div>
+    );
+  }
   return (
-    <div className="  pl-4 w-78 h-42 bg-white rounded-2xl shadow-lg shadow-pink-200 hover:scale-102 hover:shadow-xl hover:shadow-pink-300 transition duration-300">
+    <div className="pl-4 w-78 h-42 bg-white rounded-2xl shadow-lg shadow-pink-200 hover:scale-102 hover:shadow-xl hover:shadow-pink-300 transition duration-300">
       <div className="flex pt-4">
         <div className="w-45 h-28 text-[#6F6F6F] font-semibold space-y-6 ">
           <h3>{header}</h3>
@@ -807,6 +815,17 @@ export const BookedServiceTable = () => {
 };
 
 export const BusinessCards = () => {
+  // Simulate loading or missing data for demo; replace with real logic as needed
+  const loading = false; // Set to true or use props to control
+  const license = "Business License";
+  const uploadDate = "2025: 07 : 11";
+  if (loading || !license || !uploadDate) {
+    return (
+      <div className="flex flex-col gap-6 items-center pt-4 w-[248px] h-[248px] border border-gray-300 outline outline-1 outline-gray-400 rounded-xl shadow-md">
+        <Skeleton name="blog-card" loading={true} />
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-6 items-center pt-4 w-[248px] h-[248px] border border-gray-300 outline outline-1 outline-gray-400 rounded-xl shadow-md">
       <div className="w-14 h-14 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
@@ -814,8 +833,8 @@ export const BusinessCards = () => {
       </div>
 
       <div className="space-y-6">
-        <h1 className="text-lg font-semibold"> Business License </h1>
-        <p className="text-sm text-gray-400">Upload: 2025: 07 : 11</p>
+        <h1 className="text-lg font-semibold">{license}</h1>
+        <p className="text-sm text-gray-400">Upload: {uploadDate}</p>
       </div>
       {/*Buttons */}
       <div className="flex gap-2 text-xs">
@@ -879,8 +898,8 @@ export const TimeSlots = () => {
        availableSlots.includes(index)
          ? "bg-[#A61866]"
          : limitedSlots.includes(index)
-           ? "bg-[#E4BAD1]"
-           : "bg-[#B3B3B3]"
+         ? "bg-[#E4BAD1]"
+         : "bg-[#B3B3B3]"
      }
      `}
           ></div>

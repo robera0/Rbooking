@@ -1,455 +1,390 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-
+import React, { useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CalendarIcon,
-  ChevronDown,
-  ChevronUp,
   Search,
-  User,
-  Star,
-  UsersRound,
-  Timer,
-  Shield,
-  Bell,
-  Map,
-  Angry,
-  Annoyed,
-  Frown,
-  Laugh,
-  Meh,
-  Smile,
-  SmilePlus,
-  Quote,
-  Activity,
-  HandCoins,
+  Ticket,
+  Mic2,
   MapIcon,
-  ChevronLeft,
+  Activity,
   ChevronRight,
+  User,
+  ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { CalendarDemo } from "@/components/ui/calendar";
-import { InfoBar } from "../src/components/Reusable";
-import { RatingStars } from "../src/components/Reusable";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
-import { useNavigate } from "react-router-dom";
-
-const SearchButton = () => {
-  const navigate = useNavigate();
-  return (
-    <>
-      <button
-        onClick={() => navigate("/event")}
-        className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200"
-      >
-        <Search className="w-5 h-5" />
-      </button>
-    </>
-  );
-};
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
-  const { events, isLoading, error } = eventService();
+  const { events, isLoading } = eventService();
   const { type, setType, date, setDate, artist, setArtist } = useService();
+  const navigate = useNavigate();
+
+  // Scroll logic for Hero section
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
+
+  // Animation Variants
+  const sectionFade = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+    },
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 25, scale: 0.98 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.6, ease: [0.25, 1, 0.5, 1] },
+    },
+  };
+
+  const dummyEvents = [
+    {
+      _id: "1",
+      name: "Warehouse Project",
+      price: "45",
+      location: "Manchester",
+      img: "/Login.jpg",
+    },
+    {
+      _id: "2",
+      name: "Afterlife Ibiza",
+      price: "80",
+      location: "Hï Ibiza",
+      img: "/1308183.jpeg",
+    },
+    {
+      _id: "3",
+      name: "Fabric London",
+      price: "30",
+      location: "London",
+      img: "/1763661369611.webp",
+    },
+    {
+      _id: "4",
+      name: "Techno Bunker",
+      price: "25",
+      location: "Berlin",
+      img: "/Login.jpg",
+    },
+  ];
 
   return (
-    <div onClick={() => setDateSlide(false)} className="space-y-4">
-      <div className="w-full px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-10 lg:gap-0 mb-16">
-        {/* LEFT CONTENT */}
-        <div className="w-full lg:w-[45%] flex flex-col justify-center space-y-6 lg:pl-28">
-          <h1 className="text-3xl sm:text-5xl text-white font-semibold leading-snug">
-            Find the Top events nearby.
+    <div
+      ref={containerRef}
+      onClick={() => dateSlide && setDateSlide(false)}
+      className="relative min-h-screen bg-[#121417] text-white selection:bg-[#FF7A00]/20 pb-32 overflow-x-hidden"
+    >
+      {/* ================= 1. HERO SECTION ================= */}
+      <motion.section
+        style={{ opacity: heroOpacity, scale: heroScale }}
+        initial="hidden"
+        animate="visible"
+        variants={sectionFade}
+        className="relative w-full px-6 lg:px-10 pt-10 lg:pt-20 pb-24 flex flex-col lg:flex-row items-center gap-12 max-w-[1380px] mx-auto z-10"
+      >
+        <div className="w-full lg:w-1/2 space-y-6">
+          <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-[#FF7A00] text-[8px] font-black uppercase tracking-[0.3em]">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF7A00] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#FF7A00]"></span>
+            </span>
+            Live in your city
+          </div>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl  tracking-tighter leading-[0.85] uppercase ">
+            DON'T JUST <br /> WATCH. <br />{" "}
+            <span className="text-[#FF7A00]">BE THERE.</span>
           </h1>
-
-          <p className="w-[90%] sm:w-[70%] lg:w-full text-[#808080] text-md lg:text-lg">
-            We bring you not only a stay option, but an experience in your
-            budget to enjoy the luxury.
+          <p className="max-w-sm text-gray-500 text-[13px] md:text-sm font-medium leading-relaxed">
+            Access the exclusive pulse of the night. From warehouse raves to
+            stadium anthems, Paysso is your verified bridge to the stage.
           </p>
-          <Link to={`/event`}>
-            <button
-              onClick={() => {
-                setType("");
-              }}
-              className="w-[180px] py-3 bg-[#FF7800] text-lg text-white font-semibold rounded-md transition-transform duration-200 hover:scale-95"
+          <button
+            onClick={() => navigate("/event")}
+            className="group flex items-center gap-3 px-8 py-4 bg-white text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-full transition-all hover:bg-[#FF7A00] active:scale-95 shadow-xl"
+          >
+            Discover Events Now{" "}
+            <ArrowRight
+              size={14}
+              className="group-hover:translate-x-1 transition-transform"
+            />
+          </button>
+        </div>
+
+        <div className="w-full lg:w-1/2 relative flex justify-center lg:justify-end">
+          <div className="relative w-full max-w-[320px] md:max-w-[440px] aspect-[4/5] z-10">
+            <div className="w-full h-full rounded-[2.5rem] overflow-hidden border border-white/[0.06] shadow-2xl bg-[#1C1F22]">
+              <img
+                src="/1763661369611.webp"
+                className="w-full h-full object-cover grayscale brightness-90 hover:grayscale-0 transition-all duration-1000"
+                alt="Concert"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121417] via-transparent to-transparent" />
+            </div>
+            <motion.div
+              initial={{ scale: 0, x: 20 }}
+              animate={{ scale: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+              className="absolute -top-4 -right-4 md:-top-6 md:-right-6 w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-[#121417] overflow-hidden shadow-2xl z-30"
             >
-              Discover Events
+              <img
+                src="/Login.jpg"
+                className="w-full h-full object-cover"
+                alt="Artist 1"
+              />
+            </motion.div>
+            <motion.div
+              initial={{ scale: 0, x: -20 }}
+              animate={{ scale: 1, x: 0 }}
+              transition={{ delay: 1 }}
+              className="absolute top-1/2 -left-6 md:-left-8 w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-[#121417] overflow-hidden shadow-2xl z-30 hidden sm:block"
+            >
+              <img
+                src="/1308183.jpeg"
+                className="w-full h-full object-cover"
+                alt="Artist 2"
+              />
+            </motion.div>
+          </div>
+          <div className="absolute -bottom-6 -left-2 sm:left-6 bg-white p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl flex items-center gap-4 md:gap-5 -rotate-2 hover:rotate-0 transition-all z-20">
+            <div className="bg-[#FF7A00] p-3 md:p-3.5 rounded-xl text-white">
+              <Mic2 size={18} />
+            </div>
+            <div>
+              <p className="font-black text-lg md:text-xl uppercase italic text-black leading-none">
+                Live Now
+              </p>
+              <p className="text-gray-400 font-bold text-[7px] md:text-[8px] uppercase tracking-[0.2em] mt-1">
+                Tour 2026
+              </p>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* ================= 2. SEARCH ENGINE (Sticky) ================= */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={sectionFade}
+        className="sticky top-4 z-40 px-6 lg:px-10 -mt-8 max-w-[1380px] mx-auto transition-all duration-300"
+      >
+        <div className="bg-[#1C1F22]/95 backdrop-blur-md border border-white/[0.08] p-2 rounded-[2rem] md:rounded-[2.2rem] shadow-2xl flex flex-col lg:flex-row gap-2 md:gap-3">
+          <div className="flex-[0.9] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
+            <User className="text-gray-600" size={16} />
+            <div className="flex-1">
+              <label className="block text-[7px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
+                Artist
+              </label>
+              <input
+                type="text"
+                placeholder="Search talent..."
+                className="bg-transparent border-none outline-none text-white font-bold w-full p-0 text-[11px] placeholder:text-gray-700"
+                value={artist}
+                onChange={(e) => setArtist(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex-[0.9] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
+            <MapIcon className="text-gray-600" size={16} />
+            <div className="flex-1">
+              <label className="block text-[7px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
+                Location
+              </label>
+              <input
+                type="text"
+                placeholder="Nearby venues..."
+                className="bg-transparent border-none outline-none text-white font-bold w-full p-0 text-[11px] placeholder:text-gray-700"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex-[0.9] relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDateSlide(!dateSlide);
+              }}
+              className="w-full h-full flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all"
+            >
+              <CalendarIcon className="text-gray-600" size={16} />
+              <div className="text-left">
+                <span className="block text-[7px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
+                  Schedule
+                </span>
+                <span className="font-bold text-[11px] block truncate text-white">
+                  {date ? date.toLocaleDateString() : "All Dates"}
+                </span>
+              </div>
             </button>
+            <AnimatePresence>
+              {dateSlide && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="absolute top-[115%] left-0 bg-[#1C1F22] border border-white/[0.1] p-3 rounded-2xl shadow-2xl z-50 origin-top-left"
+                >
+                  <CalendarDemo
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <button className="h-[56px] md:h-[64px] lg:w-[70px] bg-[#FF7A00] rounded-[1.5rem] md:rounded-[1.8rem] flex items-center justify-center hover:bg-white group transition-all shrink-0 active:scale-95 shadow-lg shadow-[#FF7A00]/10">
+            <Search
+              className="text-black group-hover:scale-110 transition-transform"
+              size={20}
+              strokeWidth={3}
+            />
+          </button>
+        </div>
+      </motion.section>
+
+      {/* ================= 3. FEATURED GIGS (Scroll Stagger) ================= */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={containerVariants}
+        className="px-6 lg:px-10 py-16 md:py-24 max-w-[1380px] mx-auto z-10 relative"
+      >
+        <div className="flex justify-between items-end mb-8 md:mb-12 px-2">
+          <motion.div variants={itemVariants} className="space-y-2">
+            <h2 className="text-2xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">
+              FEATURED <span className="text-[#FF7A00]">GIGS</span>
+            </h2>
+            <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
+          </motion.div>
+          <Link
+            to="/event"
+            className="text-gray-600 font-black uppercase text-[8px] md:text-[9px] tracking-[0.3em] hover:text-white transition-all flex items-center gap-2"
+          >
+            View All <ChevronRight size={12} />
           </Link>
         </div>
 
-        {/* RIGHT IMAGE SECTION */}
-        <div className="w-full lg:w-[55%] relative flex justify-center items-center">
-          {/* Floating circle images (Desktop only) */}
-          <div className="hidden lg:block absolute left-34 top-10 space-y-12">
-            <div className="w-16 h-16 rounded-full overflow-hidden">
-              <img
-                src="/1763661369611.webp"
-                alt="Event"
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            <div className="w-22 h-22 rounded-full overflow-hidden">
-              <img
-                src="/Login.jpg"
-                alt="Event"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-
-          {/* Main Image */}
-          <div className="w-[95%] sm:w-[70%] lg:w-[60%] h-[400px] lg:h-[690px] rounded-md overflow-hidden">
-            <img
-              src="/1763661369611.webp"
-              alt="Event"
-              className="w-full h-full object-cover"
-            />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+          {dummyEvents.map((e) => (
+            <motion.div key={e._id} variants={itemVariants}>
+              <Link to={`/events/${e._id}`} className="group block">
+                <div className="relative aspect-[4/5] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden mb-4 md:mb-5 border border-white/[0.04] bg-[#1C1F22]">
+                  <img
+                    src={e.img}
+                    className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
+                    alt={e.name}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+                  <div className="absolute bottom-4 md:bottom-5 left-4 md:left-5">
+                    <p className="text-[#FF7A00] text-[6px] md:text-[7px] font-black uppercase tracking-widest mb-1">
+                      {e.location}
+                    </p>
+                    <h3 className="text-white font-black uppercase italic text-base md:text-lg">
+                      {e.name}
+                    </h3>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center px-2 md:px-3">
+                  <div className="flex flex-col">
+                    <span className="text-gray-600 text-[6px] md:text-[7px] font-black uppercase tracking-widest">
+                      Starting at
+                    </span>
+                    <span className="text-white font-black text-lg md:text-xl tracking-tighter">
+                      ${e.price}
+                    </span>
+                  </div>
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center group-hover:bg-[#FF7A00] group-hover:text-black transition-all">
+                    <Ticket size={16} />
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      </motion.section>
 
-      {/*MOBILE VIEW*/}
-      <div className="block  relative  lg:bottom-52  w-full lg:w-[76%] bottom-[120px] z-10 flex sm:flex-col items-center space-y-4 lg:px-22 px-12 py-4 ">
-        <div className="flex lg:px-4 flex-col lg:flex-row justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl  lg:space-x-12 space-y-6">
-          {/* Calendar Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setDateSlide(!dateSlide);
-            }}
-            className="w-[80%] lg:w-[75%] flex justify-between items-center px-4 py-3 bg-[#6C6D6E] rounded-lg shadow-md"
-          >
-            <div className="flex items-center space-x-3">
-              <CalendarIcon strokeWidth={1} className="text-white w-5 h-5" />
-              <div className="flex flex-col">
-                {!date ? (
-                  <>
-                    <span>Dates</span>
-                    <span>All Dates</span>
-                  </>
-                ) : (
-                  <span className="text-[#FF7800] font-semibold">
-                    {date.toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {dateSlide ? (
-              <ChevronUp className="text-black" />
-            ) : (
-              <ChevronDown className="text-black" />
-            )}
-          </button>
-
-          {/* CALENDAR PANEL */}
-          <div
-            className={`absolute left-8 top-[75px] w-[250px] bg-[#D9D9D9] rounded-lg overflow-hidden z-50 transition-[max-height] duration-500 ease-in-out ${
-              dateSlide ? "max-h-[500px] mt-3" : "max-h-0 mt-0"
-            }`}
-          >
-            <CalendarDemo
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              buttonVariant="ghost"
-              className="p-4 w-full bg-transparent rounded-xl shadow-lg text-black"
-              classNames={{
-                day: "h-8 w-8 flex items-center justify-center rounded-lg hover:bg-orange-200",
-                month_caption:
-                  "text-lg text-center font-semibold text-orange-500",
-                nav_button: "text-orange-500 hover:text-orange-700",
-              }}
-            />
-          </div>
-
-          {/* LOCATION INPUT */}
-          <div className="relative w-[80%] lg:w-[75%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
-            <MapIcon strokeWidth={1} className="text-white w-6 h-6 mr-3" />
-            <input
-              type="text"
-              placeholder="Location"
-              onChange={(e) => setType(e.target.value)}
-              value={type}
-              className="flex-1 outline-none placeholder:text-white text-white font-light"
-            />
-          </div>
-
-          {/* SEARCH INPUT */}
-          <div className="relative w-[80%] lg:w-[75%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
-            <User strokeWidth={1} className="text-white w-6 h-6 mr-3" />
-            <input
-              type="text"
-              placeholder="Artist, Event or Venue"
-              onChange={(e) => setArtist(e.target.value)}
-              className="flex-1 outline-none placeholder:text-white text-white font-light"
-            />
-          </div>
-
-          {/* MAIN SEARCH BUTTON */}
-          <div className="md:hidden lg:flex items-center lg:mb-8  md:ml-12 ml-6">
-            <SearchButton />
-          </div>
-        </div>
-      </div>
-
-      {/* DESKTOP (you can add your own) */}
-      <div className="w-full  flex flex-col gap-6 lg:gap-40 lg:flex-row lg:flex-wrap lg:justify-center">
-        {Array(3)
-          .fill(null)
-          .map((_, idx) => (
+      {/* ================= 4. RELIABILITY CARDS ================= */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionFade}
+        className="px-6 lg:px-10 pb-20 max-w-[1380px] mx-auto z-10 relative"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {[
+            {
+              icon: <Activity size={24} />,
+              title: "Support",
+              desc: "Real humans. At every venue.",
+              color: "text-[#FF7A00]",
+              bg: "bg-[#FF7A00]/5",
+            },
+            {
+              icon: <ShieldCheck size={24} />,
+              title: "Verified",
+              desc: "100% Secure ticket exchange.",
+              color: "text-[#5EC750]",
+              bg: "bg-[#5EC750]/5",
+            },
+          ].map((card, i) => (
             <div
-              key={idx}
-              className="relative bottom-16 w-[80%] lg:w-[23%] lg:h-[150px] h-full lg:flex lg:justify-center items-center  bg-[#191B1D] lg:rounded-4xl rounded-xl space-y-6 mx-auto lg:mx-0 lg:gap-4 "
+              key={i}
+              className="group flex items-center gap-5 p-6 md:p-8 bg-white/[0.02] border border-white/[0.04] rounded-[1.5rem] md:rounded-[2.5rem]"
             >
-              <div className="w-full h-full lg:mt-5">
-                <img
-                  className="w-full h-full object-cover  rounded-tl-xl  rounded-tr-xl lg:rounded-tl-4xl lg:rounded-bl-4xl"
-                  src="/Login.jpg"
-                  alt=""
-                />
+              <div
+                className={`w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center ${card.bg} ${card.color}`}
+              >
+                {card.icon}
               </div>
-
-              <div className="w-full flex flex-col pl-4 space-y-2">
-                <h2 className="text-white font-bold">up to 60% off</h2>
-                <p className="w-[85%] text-[#808080] mb-4 text-md">
-                  on buying ticket online
+              <div>
+                <h3 className="text-sm md:text-lg font-black uppercase italic tracking-tighter text-white">
+                  {card.title}
+                </h3>
+                <p className="text-gray-600 text-[10px] md:text-[11px] font-medium leading-tight">
+                  {card.desc}
                 </p>
               </div>
             </div>
           ))}
-      </div>
-
-      {/*info about the app */}
-      <div className="w-full flex flex-col space-y-12">
-        {/* IMAGE + INFO SECTION */}
-        <div className="flex flex-col lg:flex-row items-center gap-8 lg:space-x-6 w-full justify-center">
-          {/* IMAGE */}
-          <div className="relative w-[85%] lg:w-[32%] h-[440px] lg:h-[660px] rounded-lg">
-            <span className="absolute z-10">
-              <Star
-                strokeWidth={1}
-                className="hidden lg:block absolute  lg:-left-8  lg:-top-6 lg:w-22 lg:h-22 w-12 h-12 text-[#FF7800]"
-              />
-            </span>
-
-            <span className="absolute z-10">
-              <Star
-                strokeWidth={2}
-                className="lg:hidden  absolute -left-4 -top-2 lg:w-22 lg:h-22 w-12 h-12 text-[#FF7800]"
-              />
-            </span>
-
-            <img
-              className="w-full h-full rounded-lg object-cover"
-              src="/Login.jpg"
-              alt="event preview"
-            />
-          </div>
-
-          {/* INFO */}
-          <div className="w-[85%] lg:w-[45%] space-y-4">
-            <h1 className="text-white font-bold lg:text-5xl text-3xl">
-              The Best Events Start Here!
-            </h1>
-
-            <p className="w-[95%] text-[#808080] text-md">
-              Book your Spot on any event with us and don't forget to grab an
-              awesome event deal to save massive on your stay.
-            </p>
-
-            <div className="text-white  space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
-              <InfoBar
-                icon={<UsersRound className="lg:w-10 lg:h-10" />}
-                bg="bg-[#5EC750]"
-                header="Quick Search"
-                des="Fast event lookup made simple."
-              />
-              <InfoBar
-                icon={<Timer className="w-7 h-7 lg:w-10 lg:h-10" />}
-                bg="bg-red-500"
-                header="Quick Services"
-                des="Supposing so be resolving Events perfectly."
-              />
-              <InfoBar
-                icon={<Shield className="text-[#FD7E14] lg:w-10 lg:h-10" />}
-                bg="bg-[#392E27]"
-                header="High Security"
-                des="Arranging rapturous did believe him all had supported."
-              />
-              <InfoBar
-                icon={<UsersRound className="text-[#17A2B8] lg:w-10 lg:h-10" />}
-                bg="bg-[#213238]"
-                header="24 hour Alert"
-                des="Fast Notification as soon as event is posted"
-              />
-            </div>
-          </div>
         </div>
-        {/* FEATURE EVENTS */}
-        <div className="w-full flex flex-col mt-4 lg:mt-33 items-center space-y-8 lg:space-y-12">
-          <h1 className="text-white font-bold text-3xl lg:text-6xl">
-            Featured Events
-          </h1>
-
-          {error && message?.error}
-
-          <div className="w-full flex flex-col lg:flex-row items-center gap-y-14 lg:pl-3  sm:gap-y-12 lg:gap-y-6  lg:gap-x-2    mb-12">
-            {Array.isArray(events?.events) &&
-              events.events.map((e, idx) => (
-                <Link
-                  key={idx}
-                  to={`/events/${e?._id}/tickets/${e.tickets[0]?._id}`}
-                  className="w-full p-2 flex justify-center  rounded-md"
-                >
-                  <div className="w-[80%] lg:w-[85%] space-y-3">
-                    {/* Image Section */}
-                    <div className="relative shadow-xs shadow-[#FF7800] h-80 w-full sm:h-96 lg:h-[500px] rounded-xl overflow-hidden">
-                      <img
-                        src={
-                          e?.pictures?.[0] || e?.pictures?.[1] || "/Login.jpg"
-                        }
-                        alt={e?.name || "event image"}
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-
-                      {/* Location badge */}
-                      <div className="absolute bottom-3 left-4 flex items-center bg-[#FF7800] text-white px-4 py-1 rounded-xl space-x-2">
-                        <Map size={16} />
-                        <span className="text-sm">
-                          {e?.locale || "Unknown"}
-                        </span>
-                      </div>
-
-                      {/* SOLD OUT badge for events with no tickets */}
-                      {e.tickets?.length === 0 && (
-                        <div className="absolute top-3 right-4 bg-red-600 text-white text-sm px-4 py-1 rounded-lg font-semibold">
-                          SOLD OUT
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Details Section */}
-                    <div className="flex justify-between px-2">
-                      <div className="space-y-1">
-                        <h1 className="text-lg lg:text-xl text-white font-semibold">
-                          {e?.name}
-                        </h1>
-
-                        {/* Show ticket price if available */}
-                        {e.tickets?.length > 0 ? (
-                          <p className="text-[#FF7800] text-sm lg:text-md">
-                            <span className="font-bold">
-                              ${e.tickets[0].price}
-                            </span>{" "}
-                            / per ticket
-                          </p>
-                        ) : (
-                          <p className="text-red-500 text-xs lg:text-md font-semibold">
-                            No tickets available
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <h1 className="text-white text-xl font-bold">
-                          {e?.rating?.score || "0.0"}
-                        </h1>
-                        <Star className="text-[#FF7800]" size={18} />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-          </div>
-        </div>
-        {/*COMMENT REVIEW */} {/* this going to be a sliding div */}
-        <div className=" w-full flex justify-center mt-16 sm:mt-12 lg:mt-8 mb-64 sm:mb-48 lg:mb-32">
-          <div className="relative w-[80%] h-62 lg:h-[430px] sm:w-[85%] lg:w-[70%] rounded-lg">
-            <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
-              <div className="relative w-full lg:w-1/2 h-[180px] sm:h-[160px] lg:h-[460px] rounded-xl overflow-hidden">
-                <div className="absolute -left-2 -top-2 h-9 w-9 flex justify-center items-center bg-[#FF7800] rounded-lg z-10">
-                  <SmilePlus className="w-5 h-5 text-white" />
-                </div>
-
-                <img
-                  src="/review.JPG"
-                  alt="review"
-                  className="w-full h-full object-cover rounded-xl"
-                />
-              </div>
-
-              <div className="w-full lg:w-1/2 flex flex-col space-y-4">
-                <Quote
-                  fill="white"
-                  strokeWidth={3}
-                  className="w-7 h-7 rotate-180 text-white"
-                />
-
-                <div className="pl-6 space-y-4">
-                  <h2 className="text-white text-sm sm:text-base lg:text-3xl font-semibold leading-relaxed">
-                    The event was amazing! The performances were great and
-                    everything was well organized.
-                  </h2>
-
-                  <div className="space-y-1">
-                    <RatingStars />
-                    <h2 className="text-base sm:text-lg text-white font-semibold">
-                      Robera Ararsa
-                    </h2>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pr-6">
-                  <Quote
-                    fill="white"
-                    strokeWidth={3}
-                    className="w-7 h-7 text-white"
-                  />
-                </div>
-
-                <h2 className="text-sm sm:text-lg text-white font-semibold">
-                  Event Name
-                </h2>
-              </div>
-            </div>
-
-            <button className="hidden lg:flex absolute left-[-200px] top-1/2 -translate-y-1/2 h-20 w-20 justify-center items-center bg-[#FF7800] rounded-full">
-              <ChevronLeft className="text-white w-5 h-5" />
-            </button>
-
-            <button className="hidden lg:flex absolute right-[-200px] top-1/2 -translate-y-1/2 h-20 w-20 justify-center items-center bg-[#FF7800] rounded-full">
-              <ChevronRight className="text-white w-5 h-5" />
-            </button>
-          </div>
-        </div>
-        {/*RELIABILITY*/}
-        <div className="w-full h-82 bg-[#2A2C31] p-4 text-white flex flex-col justify-center lg:items-center lg:flex-row lg:justify-around gap-6">
-          {/* Card 1 */}
-          <div className="w-2/3 lg:w-[28%] lg:h-42 h-32 bg-[#222529] rounded-md flex items-center space-x-4 p-4">
-            <Activity className="w-12 h-12  lg:w-16 lg:h-16 text-white" />
-            <div className="lg:space-y-4">
-              <h1 className="font-semibold lg:text-xl">24x7 Help</h1>
-              <p className="text-sm lg:text-lg text-gray-300">
-                If we fall short of your expectation in any way, let us know
-              </p>
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div className="w-2/3 lg:w-[28%] h-42 bg-[#222529] rounded-md flex items-center space-x-4 p-4">
-            <HandCoins className="w-12 h-12 lg:w-16 lg:h-16 text-white" />
-            <div className="lg:space-y-4">
-              <h1 className="font-semibold lg:text-xl">Payment Trust</h1>
-              <p className="text-sm lg:text-lg text-gray-300">
-                All refunds come with no questions asked guarantee
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      </motion.section>
     </div>
   );
 };

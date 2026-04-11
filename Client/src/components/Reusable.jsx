@@ -1,3 +1,4 @@
+import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Listbox } from "@headlessui/react";
 import { faToggleOff, faToggleOn } from "@fortawesome/free-solid-svg-icons";
@@ -19,23 +20,51 @@ import {
   MessageCircleMore,
 } from "lucide-react";
 import { useState } from "react";
+import { Skeleton } from "boneyard-js/react";
 import { eventService } from "@/Context/ApiEvent";
 import { Navigate, useLocation } from "react-router-dom";
 import { useService } from "@/Context/ServiceContext";
+
+import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+
 export const ProtectedRoute = ({ children }) => {
   const { usererror, userIsLoading, user } = eventService();
   const location = useLocation();
+
+  // 1. Loading State (Modern Backdrop)
   if (userIsLoading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="w-14 h-14 border-4 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 bg-[#121417] z-[100] flex flex-col items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <div className="relative flex items-center justify-center">
+            {/* Outer Rotating Ring */}
+            <div className="w-16 h-16 border-2 border-white/[0.05] border-t-[#FF7A00] rounded-full animate-spin" />
+            {/* Inner Static Icon */}
+            <Loader2
+              className="absolute text-[#FF7A00] animate-pulse"
+              size={20}
+            />
+          </div>
+
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 animate-pulse">
+            Verifying Session
+          </span>
+        </motion.div>
       </div>
     );
   }
-  if (!user) {
+
+  // 2. Redirect to Login if no user or error occurs
+  if (!user || usererror) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // 3. Authorized Access
   return children;
 };
 
@@ -184,23 +213,41 @@ export default function CheckoutModal({
 }
 export const MenuBar = ({ icon, header, path }) => {
   const location = useLocation();
-  const isActive = location.pathname.split("/")[1] == path.replace("/", "");
-  return (
-    <>
-      <Link
-        to={path}
-        className="flex flex-col w-full justify-center items-center text-white space-y-1"
-      >
-        <span className={`${isActive && "text-[#FF7800]"}`}>{icon}</span>
+  // Improved matching logic to handle root and nested paths correctly
+  const isActive = location.pathname.split("/")[1] === path.replace("/", "");
 
-        <span className={`${isActive && "text-[#FF7800]"} text-center`}>
-          {header}
-        </span>
-      </Link>
-    </>
+  return (
+    <Link
+      to={path}
+      className="flex flex-col items-center justify-center gap-1 group transition-all duration-300"
+    >
+      {/* Icon Container */}
+      <div
+        className={`transition-colors duration-300 ${
+          isActive ? "text-[#FF7800]" : "text-gray-400 group-hover:text-white"
+        }`}
+      >
+        {/* Clone the icon to apply sizing if it's a Lucide component */}
+        {React.cloneElement(icon, {
+          size: 20,
+          strokeWidth: isActive ? 2.5 : 2,
+          fill: isActive ? "currentColor" : "none", // Only if you want filled icons like the screenshot
+        })}
+      </div>
+
+      {/* Label */}
+      <span
+        className={`text-[9px] font-black uppercase tracking-[0.15em] transition-colors duration-300 ${
+          isActive
+            ? "text-[#FF7800]"
+            : "text-gray-500 group-hover:text-gray-300"
+        }`}
+      >
+        {header}
+      </span>
+    </Link>
   );
 };
-
 export const WindowMenuBar = ({ icon, header, path }) => {
   const location = useLocation();
   const isActive = location.pathname.split("/")[1] == path.replace("/", "");
@@ -220,6 +267,14 @@ export const WindowMenuBar = ({ icon, header, path }) => {
   );
 };
 export const InfoBar = ({ icon, header, bg, des }) => {
+  const loading = !header || !des;
+  if (loading) {
+    return (
+      <div className="w-full lg:space-y-6 space-y-2">
+        <Skeleton name="blog-card" loading={true} />
+      </div>
+    );
+  }
   return (
     <div className="w-full lg:space-y-6 space-y-2">
       <div
@@ -240,12 +295,21 @@ export const InfoBar = ({ icon, header, bg, des }) => {
 };
 
 export const RatingStars = () => {
+  // Simulate a loading prop or data presence check as needed
+  const loading = false; // Replace with actual loading logic if available
+  if (loading) {
+    return (
+      <div className="flex space-x-1 ">
+        <Skeleton name="blog-card" loading={true} />
+      </div>
+    );
+  }
   return (
     <div className="flex space-x-1 ">
       {Array(5)
         .fill()
         .map((_, idx) => (
-          <div className="">
+          <div className="" key={idx}>
             <span>
               <Star fill="#FF7800" className="text-[#FF7800]" />
             </span>

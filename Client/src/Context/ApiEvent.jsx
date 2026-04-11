@@ -6,13 +6,16 @@ const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
   const { type, artist, date, API_URL } = useService();
+
   // GET EVENTS
+
   const fetchEvents = async ({ queryKey }) => {
     const [_key, type, artist, date] = queryKey;
     const res = await fetch(
-      `${API_URL}/api/events?type=${type?.trim() || ""}&artist=${artist?.trim() || ""}&date=${date ? new Date(date).toISOString() : ""}`,
+      `${API_URL}/api/events?type=${type?.trim() || ""}&artist=${
+        artist?.trim() || ""
+      }&date=${date ? new Date(date).toISOString() : ""}`,
     );
-
     return res.json();
   };
   const {
@@ -178,7 +181,6 @@ export const ApiProvider = ({ children }) => {
         ticketLoading,
         ticketsError,
         ticketIsError,
-
         wishlist,
         wishlistError,
         wishlistLoading,
