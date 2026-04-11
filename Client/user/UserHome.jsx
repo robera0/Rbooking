@@ -11,6 +11,9 @@ import {
   User,
   ArrowRight,
   ShieldCheck,
+  Heart,
+  Star,
+  MapPin,
 } from "lucide-react";
 import { CalendarDemo } from "@/components/ui/calendar";
 import {
@@ -25,7 +28,8 @@ import { useService } from "@/Context/ServiceContext";
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const { events, isLoading } = eventService();
-  const { type, setType, date, setDate, artist, setArtist } = useService();
+  const { type, setType, date, setDate, artist, setArtist, addFav, setAddFav } =
+    useService();
   const navigate = useNavigate();
 
   // Scroll logic for Hero section
@@ -132,7 +136,7 @@ const UserHome = () => {
           </p>
           <button
             onClick={() => navigate("/event")}
-            className="group flex items-center gap-3 px-8 py-4 bg-white text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-full transition-all hover:bg-[#FF7A00] active:scale-95 shadow-xl"
+            className="group flex items-center gap-3 px-8 py-4 bg-white text-black text-[9px] lg:text-[14px] font-black uppercase tracking-[0.2em] rounded-full transition-all hover:bg-[#FF7A00] active:scale-95 shadow-xl"
           >
             Discover Events Now{" "}
             <ArrowRight
@@ -199,13 +203,13 @@ const UserHome = () => {
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
         variants={sectionFade}
-        className="sticky top-4 z-40 px-6 lg:px-10 -mt-8 max-w-[1380px] mx-auto transition-all duration-300"
+        className="sticky top-4 z-40 px-6 lg:px-10 -mt-8 max-w-[1380px]  mx-auto transition-all duration-300"
       >
-        <div className="bg-[#1C1F22]/95 backdrop-blur-md border border-white/[0.08] p-2 rounded-[2rem] md:rounded-[2.2rem] shadow-2xl flex flex-col lg:flex-row gap-2 md:gap-3">
+        <div className="bg-[#1C1F22]/95 backdrop-blur-md border border-white/[0.08]  p-2 rounded-[2rem] md:rounded-[2.2rem] shadow-2xl flex flex-col lg:flex-row gap-2 md:gap-3">
           <div className="flex-[0.9] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
             <User className="text-gray-600" size={16} />
             <div className="flex-1">
-              <label className="block text-[7px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
+              <label className="block text-[7px]  lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
                 Artist
               </label>
               <input
@@ -220,7 +224,7 @@ const UserHome = () => {
           <div className="flex-[0.9] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
             <MapIcon className="text-gray-600" size={16} />
             <div className="flex-1">
-              <label className="block text-[7px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
+              <label className="block text-[7px] lg:text-[12px]  text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
                 Location
               </label>
               <input
@@ -241,11 +245,11 @@ const UserHome = () => {
               className="w-full h-full flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all"
             >
               <CalendarIcon className="text-gray-600" size={16} />
-              <div className="text-left">
-                <span className="block text-[7px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
+              <div className="text-left space-y-6">
+                <span className="block text-[7px] lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
                   Schedule
                 </span>
-                <span className="font-bold text-[11px] block truncate text-white">
+                <span className="font-bold text-[11px] lg:text-[12px] block truncate text-white">
                   {date ? date.toLocaleDateString() : "All Dates"}
                 </span>
               </div>
@@ -287,53 +291,118 @@ const UserHome = () => {
       >
         <div className="flex justify-between items-end mb-8 md:mb-12 px-2">
           <motion.div variants={itemVariants} className="space-y-2">
-            <h2 className="text-2xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">
-              FEATURED <span className="text-[#FF7A00]">GIGS</span>
+            <h2 className="text-2xl md:text-5xl font-black uppercase  tracking-tighter leading-none">
+              FEATURED <span className="text-[#FF7A00]">Events</span>
             </h2>
             <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
           </motion.div>
           <Link
             to="/event"
-            className="text-gray-600 font-black uppercase text-[8px] md:text-[9px] tracking-[0.3em] hover:text-white transition-all flex items-center gap-2"
+            className="text-gray-600 font-black uppercase text-[8px]  lg:text-[12px] md:text-[9px] tracking-[0.3em] hover:text-white transition-all flex items-center gap-2"
           >
             View All <ChevronRight size={12} />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8">
           {dummyEvents.map((e) => (
-            <motion.div key={e._id} variants={itemVariants}>
-              <Link to={`/events/${e._id}`} className="group block">
-                <div className="relative aspect-[4/5] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden mb-4 md:mb-5 border border-white/[0.04] bg-[#1C1F22]">
-                  <img
-                    src={e.img}
-                    className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
-                    alt={e.name}
+            <motion.div variants={itemVariants} className="group">
+              <div className="relative">
+                <Link to={`/events/${e._id}`} className="block">
+                  {/* Image Container */}
+                  <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
+                    <img
+                      src={e.img}
+                      className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
+                      alt={e.name}
+                    />
+                    {/* Hover Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Link>
+
+                {/* Wishlist Button */}
+                <button
+                  onClick={(ev) => {
+                    ev.preventDefault();
+                    setAddFav(!addFav);
+                  }}
+                  className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
+                    addFav
+                      ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
+                      : "bg-black/20 border-white/10 text-white hover:bg-black/40"
+                  }`}
+                >
+                  <Heart
+                    size={18}
+                    fill={addFav ? "currentColor" : "none"}
+                    strokeWidth={2.5}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
-                  <div className="absolute bottom-4 md:bottom-5 left-4 md:left-5">
-                    <p className="text-[#FF7A00] text-[6px] md:text-[7px] font-black uppercase tracking-widest mb-1">
-                      {e.location}
-                    </p>
-                    <h3 className="text-white font-black uppercase italic text-base md:text-lg">
-                      {e.name}
-                    </h3>
+                </button>
+              </div>
+
+              {/* Metadata Section */}
+              <div className="mt-5 px-1 space-y-4">
+                {/* Row 1: Location & Rating (Desktop Scaled) */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1.5 text-[#FF7A00]">
+                    <MapPin
+                      size={12}
+                      className="md:w-3.5 md:h-3.5"
+                      strokeWidth={3}
+                    />
+                    <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
+                      {e.location || "London, UK"}
+                    </span>
+                  </div>
+
+                  {/* Scaled Rating Badge for Desktop */}
+                  <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
+                    <Star
+                      size={12}
+                      className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
+                    />
+                    <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
+                      {e.rating || "4.9"}
+                    </span>
                   </div>
                 </div>
-                <div className="flex justify-between items-center px-2 md:px-3">
+
+                {/* Row 2: Event Name */}
+                <Link to={`/events/${e._id}`}>
+                  <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
+                    {e.name}
+                  </h3>
+                </Link>
+
+                {/* Row 3: Pricing & Action */}
+                <div className="flex justify-between items-end pt-1">
                   <div className="flex flex-col">
-                    <span className="text-gray-600 text-[6px] md:text-[7px] font-black uppercase tracking-widest">
-                      Starting at
+                    <span className="text-gray-600 text-[9px] lg:text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] mb-1">
+                      Entry From
                     </span>
-                    <span className="text-white font-black text-lg md:text-xl tracking-tighter">
-                      ${e.price}
-                    </span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
+                        ${e.price}
+                      </span>
+                      <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
+                        /pp
+                      </span>
+                    </div>
                   </div>
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center group-hover:bg-[#FF7A00] group-hover:text-black transition-all">
-                    <Ticket size={16} />
-                  </div>
+
+                  <Link
+                    to={`/events/${e._id}`}
+                    className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
+                  >
+                    <Ticket
+                      size={20}
+                      className="md:w-6 md:h-6"
+                      strokeWidth={2.5}
+                    />
+                  </Link>
                 </div>
-              </Link>
+              </div>
             </motion.div>
           ))}
         </div>

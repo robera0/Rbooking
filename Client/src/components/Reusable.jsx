@@ -605,35 +605,96 @@ export const NotificationSidebar = ({ setIsOpen }) => {
     },
   ];
 
+  const getIcon = (type) => {
+    switch (type) {
+      case "ticket":
+        return <Ticket size={20} />;
+      case "event":
+        return <Calendar size={20} />;
+      case "promo":
+        return <Zap size={20} />;
+      default:
+        return <MessageCircleMore size={20} />;
+    }
+  };
+
   return (
-    <div className="w-full h-full flex flex-col text-white">
-      <div className="flex justify-between items-center p-4 border-b">
-        <h2 className="text-lg font-semibold">Notifications</h2>
+    <div className="w-full h-full flex flex-col bg-[#121417] text-white">
+      {/* Header: High Contrast & Branded */}
+      <div className="flex justify-between items-center px-6 py-8 border-b border-white/[0.04]">
+        <div className="flex items-center gap-3">
+          <Bell className="text-[#FF7A00]" size={20} strokeWidth={3} />
+          <h2 className="text-xl font-black uppercase italic tracking-tighter">
+            Updates
+          </h2>
+          <span className="bg-[#FF7A00] text-black text-[10px] font-black px-2 py-0.5 rounded-full">
+            {notifications.length}
+          </span>
+        </div>
 
         <button
           onClick={() => setIsOpen(false)}
-          className="text-gray-400 hover:text-white"
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.03] border border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/10 transition-all active:scale-90"
         >
-          ✕
+          <X size={20} strokeWidth={3} />
         </button>
       </div>
 
-      <div className="overflow-y-auto space-y-4 p-4 flex-1">
-        {notifications.map((note) => (
-          <div
-            key={note.id}
-            className="flex gap-3 p-4 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/15 transition"
-          >
-            <div className="w-11 h-11 flex items-center justify-center rounded-full bg-orange-500/20 text-orange-400 text-xl">
-              <MessageCircleMore />
-            </div>
+      {/* Notifications List */}
+      <div className="overflow-y-auto custom-scrollbar flex-1">
+        {notifications.length > 0 ? (
+          <div className="divide-y divide-white/[0.03]">
+            {notifications.map((note, index) => (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                key={note.id}
+                className="group relative flex gap-4 p-6 hover:bg-white/[0.02] transition-colors cursor-pointer"
+              >
+                {/* Status Indicator Bar */}
+                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity" />
 
-            <div>
-              <h4 className="font-semibold text-sm">{note.title}</h4>
-              <p className="text-gray-400 text-xs">{note.description}</p>
-            </div>
+                {/* Icon Container */}
+                <div className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-[#1C1F22] border border-white/[0.08] text-[#FF7A00] group-hover:bg-[#FF7A00] group-hover:text-black transition-all">
+                  {getIcon(note.type)}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 space-y-1">
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-black uppercase italic text-sm tracking-tight leading-none">
+                      {note.title}
+                    </h4>
+                    <span className="text-[9px] font-black uppercase text-gray-600 tracking-widest">
+                      {note.time || "Just Now"}
+                    </span>
+                  </div>
+                  <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                    {note.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        ))}
+        ) : (
+          /* Empty State */
+          <div className="h-full flex flex-col items-center justify-center p-12 text-center space-y-4">
+            <div className="w-16 h-16 rounded-3xl bg-[#1C1F22] flex items-center justify-center border border-white/[0.05]">
+              <Bell className="text-gray-800" size={32} />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-700">
+              No new alerts
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Action */}
+      <div className="p-6 border-t border-white/[0.04] bg-[#0D0F11]">
+        <button className="w-full py-4 bg-white/[0.03] border border-white/[0.08] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+          Mark all as read
+        </button>
       </div>
     </div>
   );
