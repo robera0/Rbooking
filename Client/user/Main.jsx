@@ -80,7 +80,7 @@ const Main = ({ children }) => {
                 className="text-gray-500 hover:text-[#FF7A00] transition-colors p-1.5 relative"
               >
                 <Bell size={20} strokeWidth={2} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#FF7A00] rounded-full" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-[#FF7A00]  animate-ping rounded-full" />
               </button>
 
               <Link

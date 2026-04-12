@@ -17,6 +17,7 @@ import {
   Search,
   Bell,
   X,
+  ChevronRight,
   MessageCircleMore,
 } from "lucide-react";
 import { useState } from "react";
@@ -104,111 +105,130 @@ export default function CheckoutModal({
   const paymentMethods = [
     { id: "telebirr", name: "Telebirr" },
     { id: "cbe", name: "CBE Birr" },
-    { id: "boa", name: "Bank of Abyssinia" },
-    { id: "awash", name: "Awash Bank" },
+    { id: "boa", name: "Abyssinia" },
+    { id: "awash", name: "Awash" },
   ];
 
   const totalAmount = amount * quantity;
 
+  if (!isOpen) return null;
+
   return (
-    <>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="relative w-[90%] max-w-[420px] rounded-3xl p-8
-            bg-gradient-to-br from-[#1E1F25] to-[#2B2E36]
-            border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)] text-white"
+    <div className="fixed lg:pt-22 inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+      <div
+        className="relative w-full max-w-[440px] rounded-[2.5rem] p-10
+        bg-[#0A0A0B] border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.8)] 
+        text-[#F4F4F5] overflow-hidden"
+      >
+        {/* Subtle Background Glow */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#FF7A00]/10 blur-[100px] pointer-events-none" />
+
+        {/* Header */}
+        <div className="flex justify-between items-start mb-10">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
+              Secure Terminal
+            </p>
+            <h2 className="text-3xl font-black italic uppercase tracking-tighter leading-none">
+              Checkout
+            </h2>
+            <p className="text-xs font-bold text-gray-500 uppercase italic">
+              {name}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition"
           >
-            {/* Close */}
-            <button
-              onClick={onClose}
-              className="absolute top-5 right-5 text-gray-400 hover:text-white transition"
-            >
-              <X size={20} />
-            </button>
+            <X size={18} />
+          </button>
+        </div>
 
-            <div className="mb-6">
-              <h2 className="text-lg text-gray-300 tracking-wide">
-                Secure Checkout
-              </h2>
-              <h3 className="text-2xl font-semibold mt-1">{name}</h3>
-            </div>
+        {/* Input Fields Container */}
+        <div className="space-y-6 mb-10">
+          {/* Phone Input */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+              Terminal Phone (Primary)
+            </label>
+            <input
+              type="tel"
+              placeholder="+251 ..."
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
+              transition-all rounded-2xl px-5 py-4 outline-none font-bold text-lg tracking-tight"
+            />
+          </div>
 
-            {/* Phone Input */}
-            <div className="mb-6">
-              <label className="block text-sm text-gray-400 mb-2">
-                Phone Number
+          {/* Quantity and Price Display */}
+          <div className="flex gap-4">
+            <div className="flex-1 space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+                Units
               </label>
-
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-black/30 border border-white/10
-                focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30
-                transition rounded-xl px-4 py-3 outline-none"
-              />
-            </div>
-
-            {/* Quantity Input */}
-            <div className="mb-6">
-              <label className="block text-sm text-gray-400 mb-2">
-                Quantity
-              </label>
-
               <input
                 type="number"
+                min="1"
                 value={quantity}
                 onChange={(e) =>
                   setQuantity(Math.max(1, Number(e.target.value)))
                 }
-                className="w-full bg-black/30 border border-white/10
-                focus:border-orange-500 focus:ring-2 focus:ring-orange-500/30
-                transition rounded-xl px-4 py-3 outline-none"
+                className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
+                rounded-2xl px-5 py-4 outline-none font-bold text-center no-spinner"
               />
             </div>
-
-            {/* Payment Methods */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              {paymentMethods.map((method) => (
-                <button
-                  key={method.id}
-                  onClick={() => setSelected(method.id)}
-                  className={`relative rounded-2xl p-4 text-sm font-medium
-                  border transition-all duration-300
-                  ${
-                    selected === method.id
-                      ? "bg-orange-500/10 border-orange-500 shadow-lg scale-[1.03]"
-                      : "bg-white/5 border-white/10 hover:bg-white/10"
-                  }`}
-                >
-                  {method.name}
-                </button>
-              ))}
+            <div className="flex-[2] space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+                Unit Price
+              </label>
+              <div className="w-full bg-white/[0.01] border border-white/5 rounded-2xl px-5 py-4 font-black italic text-gray-400">
+                ${amount} ETB
+              </div>
             </div>
-
-            {/* Pay Button */}
-            <button
-              onClick={action}
-              className="w-full py-3 rounded-2xl font-semibold text-lg
-              bg-[#FF9A41]
-              hover:scale-[1.02] active:scale-[0.98]
-              transition duration-200 shadow-lg shadow-orange-500/30"
-            >
-              Pay {totalAmount.toLocaleString()} ETB
-            </button>
-
-            {/* Cancel */}
-            <button
-              onClick={onClose}
-              className="w-full mt-4 text-gray-400 hover:text-white text-sm transition"
-            >
-              Cancel Transaction
-            </button>
           </div>
         </div>
-      )}
-    </>
+
+        {/* Payment Methods Grid */}
+        <div className="space-y-3 mb-10">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+            Select Gateway
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {paymentMethods.map((method) => (
+              <button
+                key={method.id}
+                onClick={() => setSelected(method.id)}
+                className={`group relative rounded-2xl py-4 px-2 text-[11px] font-black uppercase tracking-tighter italic border transition-all
+                ${
+                  selected === method.id
+                    ? "bg-[#FF7A00] border-[#FF7A00] text-black scale-[1.02]"
+                    : "bg-white/[0.02] border-white/5 hover:border-white/20 text-gray-400 hover:text-white"
+                }`}
+              >
+                {method.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Final Execution Button */}
+        <div className="space-y-4">
+          <button
+            onClick={action}
+            className="group w-full py-5 bg-[#FF7A00] text-black font-black uppercase italic text-sm 
+            rounded-[1.2rem] flex items-center justify-center gap-3 hover:bg-white transition-all 
+            shadow-[0_10px_30px_rgba(255,122,0,0.15)] active:scale-95"
+          >
+            CONFIRM & PAY {totalAmount.toLocaleString()} ETB
+            <ChevronRight
+              size={18}
+              className="group-hover:translate-x-1 transition-transform"
+            />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 export const MenuBar = ({ icon, header, path }) => {

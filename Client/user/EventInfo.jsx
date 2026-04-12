@@ -1,5 +1,5 @@
+import React, { useState, useEffect, useRef } from "react";
 import {
-  SquarePen,
   MapPin,
   ClockFading,
   Heart,
@@ -7,19 +7,16 @@ import {
   Ticket,
   Star,
   MoveRight,
-  Puzzle,
-  Shield,
   Search,
-  CreditCard,
-  ImageUp,
   ChevronDown,
-  ArrowBigRight,
-  ThumbsDown,
-  ThumbsUp,
-  CalendarIcon,
-  ChevronUp,
+  X,
+  ShieldCheck,
+  RotateCcw,
   User,
-  MapIcon,
+  MessageSquare,
+  ThumbsUp,
+  MoreHorizontal,
+  SquarePen,
 } from "lucide-react";
 import {
   MapContainer,
@@ -29,1041 +26,376 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import { useParams } from "react-router-dom";
-import { Listbox } from "@headlessui/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Amenities } from "../src/components/Reusable";
-import { EventPolices } from "../src/components/Reusable";
-import { useLoaderData } from "react-router-dom";
-import { useWishlistMutation } from "./api/addwishlist.api";
-import { useState, useEffect } from "react";
-import { useService } from "@/Context/ServiceContext";
-import { eventService } from "@/Context/ApiEvent";
-import { useMutation, useQuery, QueryClient } from "@tanstack/react-query";
-import moment from "moment";
-import { CalendarDemo } from "@/components/ui/calendar";
-import L from "leaflet";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import CheckoutModal from "../src/components/Reusable";
+import { useQuery, useMutation, QueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import { Navigation, Pagination } from "swiper/modules";
-
+import moment from "moment";
+import L from "leaflet";
 import toast from "react-hot-toast";
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-const reverseGeocode = async (lat, lng) => {
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-    {
-      headers: {
-        "User-Agent": "Rbooking-App",
-      },
-    },
-  );
+// Project Context & API
+import { useService } from "@/Context/ServiceContext";
+import { eventService } from "@/Context/ApiEvent";
+import { useWishlistMutation } from "./api/addwishlist.api";
+import CheckoutModal from "../src/components/Reusable";
 
-  if (!res.ok) return null;
-  return res.json();
-};
-
-const LocationMarker = ({ position, setPosition, setAddress }) => {
-  useMapEvents({
-    async click(e) {
-      const lat = e.latlng.lat;
-      const lng = e.latlng.lng;
-
-      setPosition([lat, lng]);
-
-      const data = await reverseGeocode(lat, lng);
-      if (data?.display_name) {
-        setAddress(data.display_name);
-      }
-    },
-  });
-
-  return position ? (
-    <Marker position={position}>
-      <Popup>📍 Location selected</Popup>
-    </Marker>
-  ) : null;
-};
-
-const SearchButton = () => (
-  <button className="w-12 h-12 lg:h-[55px] sm:w-[55px]  py-3 bg-[#FF7800] flex items-center justify-center text-lg text-white font-semibold rounded-full lg:hover:scale-95 transition-transform duration-200">
-    <Search className="w-5 h-5" />
-  </button>
+// Skeleton Component for clean loading states
+const Skeleton = ({ className }) => (
+  <div className={`animate-pulse bg-white/5 rounded-xl ${className}`} />
 );
 
 const EventInfo = () => {
   const queryClient = new QueryClient();
-  const progress = [100, 100, 100, 100, 50];
-  const options = [
-    { id: 1, label: 5, value: "5/5" },
-    { id: 2, label: 5, value: "4/5" },
-    { id: 3, label: 3, value: "3/5" },
-    { id: 4, label: 2, value: "2/5" },
-    { id: 4, label: 1, value: "1/5" },
-    { id: 4, label: 0, value: "0/5" },
-  ];
-
-  const [selected, setSelected] = useState(null);
-  const [dateSlide, setDateSlide] = useState(false);
-  const [mapSlide, setMapSlide] = useState(false);
-  const [dates, setDates] = useState(null);
-  const [likeCount, setLikeCount] = useState(15);
-  const [dislikeCount, setDislikeCount] = useState(2);
-  const [liked, setLiked] = useState(false);
-  const { quantity } = useService();
-
-  const [disliked, setDisliked] = useState(false);
+  const { eventId, ticketId } = useParams();
   const {
     setEditMenuActive,
     setCheckoutOpen,
     checkoutOpen,
-    addFav,
-    setAddFav,
+    quantity,
     API_URL,
   } = useService();
-  const [showFullName, setShowFullName] = useState(false);
-  const [position, setPosition] = useState(null);
-  const [address, setAddress] = useState("");
-
+  const { fetchEventById, wishlist } = eventService();
   const { mutation: wishlistMutation } = useWishlistMutation();
 
-  const { fetchEventById, wishlist } = eventService();
-
-  const { eventId, ticketId } = useParams();
-  const [comment, setComment] = useState("");
+  const [activeTab, setActiveTab] = useState("intel");
   const [showMore, setShowMore] = useState(false);
-  const [error, setError] = useState("");
-  const [selectedTicket, setSelectedTicket] = useState(null);
-  const [openGallery, setOpenGallery] = useState(false);
-  const {
-    data: event_id,
-    event_idisLoading,
-    isError,
-  } = useQuery({
+  const [position, setPosition] = useState(null);
+
+  // Data Fetching
+  const { data: event_id, isLoading } = useQuery({
     queryKey: ["event", eventId, ticketId],
     queryFn: () => fetchEventById(eventId, ticketId),
   });
 
-  const sendCheckout = async ({ eventId, ticketId, quantity }) => {
-    const toastId = toast.loading("Processing payment...");
-
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/auth/purchase/${eventId}/${ticketId}`,
-        { quantity },
-        { withCredentials: true },
-      );
-
-      toast.success("Payment successful ", { id: toastId, duration: 3000 });
-      return res.data;
-    } catch (error) {
-      toast.error("Payment failed ", { id: toastId });
-      throw error;
-    }
-  };
-
-  const postComment = async ({ eventId }) => {
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/auth/comments/${eventId}`,
-        { text: comment, eventId: eventId },
-        { withCredentials: true },
-      );
-      toast.success("comment posted  successfully ");
-      console.log(res.data);
-      return res.data;
-    } catch (error) {
-      toast.error("posting comment  failed ", { id: toastId });
-      throw error;
-    }
-  };
-
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
+  const addFav =
+    wishlist?.wishlists?.events?.some((item) => item?._id === event?._id) ||
+    false;
 
-  const prices =
-    event?.priceRanges?.length > 0
-      ? event.priceRanges
-      : ticket
-        ? [
-            {
-              type: "General",
-              currency: "USD",
-              min: ticket.price,
-              max: ticket.price,
-            },
-          ]
-        : [];
-
-  const standardTicket = prices.find((p) =>
-    String(p.type || "")
-      .toLowerCase()
-      .includes("standard"),
-  );
-
-  const otherTickets = prices.filter((p) => p !== standardTicket);
-
-  const handleCheckout = (ticket) => {
-    setSelectedTicket(ticket);
-    setCheckoutOpen(true);
+  const handleWishlistToggle = (e) => {
+    e.preventDefault();
+    wishlistMutation.mutate({ event_id: event?._id, addFaving: !addFav });
   };
 
-  const date = new Date(event?.dates?.start?.localDate || Date.now());
-  const formatted = date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  const checkWishlist = (eventId) => {
+  // 1. SKELETON RENDERER
+  if (isLoading) {
     return (
-      wishlist?.wishlists?.events?.some((item) => item?._id === eventId) ||
-      false
-    );
-  };
-  const CheckoutMutation = useMutation({
-    mutationFn: sendCheckout,
-    onSuccess: () => {
-      setCheckoutOpen(false);
-      checkWishlist();
-      queryClient.invalidateQueries({ queryKey: ["checkout"] });
-    },
-    onError: (error) => {
-      setError(error.response?.data?.message || "Login required");
-    },
-  });
-
-  //post comment mutation
-
-  const commentMutation = useMutation({
-    mutationFn: postComment,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event"] });
-    },
-    onError: (error) => {
-      setError(error.response?.data?.message || "Login required");
-    },
-  });
-
-  // deleted setaddFav(checklist()) so i dont have infinite renders
-  const Maps = () => {
-    return (
-      <div className="w-full h-full">
-        <MapContainer
-          center={[9.03, 38.74]}
-          zoom={13}
-          scrollWheelZoom
-          className="h-full w-full rounded-lg shadow-md"
-        >
-          <TileLayer
-            attribution="&copy; OpenStreetMap contributors"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-
-          <LocationMarker
-            position={position}
-            setPosition={setPosition}
-            setAddress={setAddress}
-          />
-        </MapContainer>
+      <div className="min-h-screen bg-[#0A0A0B] text-[#F4F4F5] p-6 lg:p-12 space-y-12">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-8 space-y-8">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-24 w-full md:w-3/4" />
+            <Skeleton className="h-[400px] md:h-[500px] w-full rounded-[2rem]" />
+          </div>
+          <aside className="lg:col-span-4">
+            <Skeleton className="h-[500px] w-full rounded-[2.5rem]" />
+          </aside>
+        </div>
       </div>
     );
-  };
-
-  // initialize counts from event when available
-  useEffect(() => {
-    if (!event) return;
-    if (typeof event.likesCount === "number") setLikeCount(event.likesCount);
-    if (typeof event.dislikesCount === "number")
-      setDislikeCount(event.dislikesCount);
-  }, [event]);
-
-  const handleLikeToggle = () => {
-    if (liked) {
-      setLiked(false);
-      setLikeCount((c) => Math.max(0, c - 1));
-    } else {
-      setLiked(true);
-      setLikeCount((c) => c + 1);
-      if (disliked) {
-        setDisliked(false);
-        setDislikeCount((c) => Math.max(0, c - 1));
-      }
-    }
-  };
-
-  const handleDislikeToggle = () => {
-    if (disliked) {
-      setDisliked(false);
-      setDislikeCount((c) => Math.max(0, c - 1));
-    } else {
-      setDisliked(true);
-      setDislikeCount((c) => c + 1);
-      if (liked) {
-        setLiked(false);
-        setLikeCount((c) => Math.max(0, c - 1));
-      }
-    }
-  };
-
-  const handleWishlistToggle = (eventId, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const isCurrentlyAdded = checkWishlist(eventId);
-
-    wishlistMutation.mutate({
-      event_id: eventId,
-      isAdding: !isCurrentlyAdded,
-    });
-  };
-
-  const ticketPrices = {
-    standard: standardTicket?.min,
-    VIP: otherTickets?.min,
-    VVIP: otherTickets?.min,
-  };
+  }
 
   return (
-    <div className=" space-y-8 mb-12 lg:p-6">
-      {/*CHECKOUT INFO */}
+    <div className="min-h-screen bg-[#0A0A0B] text-[#F4F4F5] antialiased">
+      {/* 2. REFINED NAV (Design 1) */}
+      <nav className="sticky top-0 z-50 bg-[#0A0A0B]/90 backdrop-blur-xl border-b border-white/5 h-16 flex items-center justify-between px-6 lg:px-12">
+        <div className="flex items-center gap-8">
+          {/* Responsive Search Bar (Design 1) */}
+          <div
+            onClick={() => setEditMenuActive(true)}
+            className="hidden md:flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-1.5 gap-3 cursor-pointer hover:bg-white/10 transition-all"
+          >
+            <Search size={14} className="text-gray-500" />
+            <input
+              placeholder=" Search events..."
+              className="text-[10px] font-bold text-gray-500  tracking-widest w-48 outline-none"
+            />
+          </div>
+        </div>
+      </nav>
 
+      <main className="max-w-7xl mx-auto px-6 lg:px-12 pt-10 pb-24">
+        {/* Mobile Search Trigger */}
+        <div className="md:hidden mb-8">
+          <button
+            onClick={() => setEditMenuActive(true)}
+            className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest"
+          >
+            <Search size={16} /> Edit Search
+          </button>
+        </div>
+
+        <div className="grid lg:grid-cols-12 gap-10 items-start">
+          <div className="lg:col-span-8 space-y-12">
+            {/* TITLE BLOCK */}
+            <header className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="bg-[#FF7A00]/10 text-[#FF7A00] text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded border border-[#FF7A00]/20">
+                  Confirmed Transmission
+                </span>
+                <span className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2 italic">
+                  <ClockFading size={14} />{" "}
+                  {moment(event?.dates?.start?.localDate).format("DD.MM.YYYY")}{" "}
+                  @ {event?.dates?.start?.localTime || "22:00"}
+                </span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-[0.9] text-white">
+                {event?.name} <br />
+                <span className="text-gray-800">
+                  {event?.tagline || "Underground Feed"}
+                </span>
+              </h1>
+              <div className="flex items-center gap-2 text-gray-400 group cursor-pointer hover:text-white transition-colors w-fit">
+                <MapPin size={16} />
+                <span className="text-sm font-bold uppercase tracking-tight">
+                  {event?._embedded?.venues?.[0]?.name || "Sector 7 Hangar"}
+                </span>
+              </div>
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={handleWishlistToggle}
+                  className="hover:scale-110 transition-transform"
+                >
+                  <Heart
+                    size={20}
+                    fill={addFav ? "#FF7A00" : "none"}
+                    stroke={addFav ? "#FF7A00" : "currentColor"}
+                  />
+                </button>
+                <Share2
+                  size={20}
+                  className="cursor-pointer hover:text-[#FF7A00]"
+                />
+              </div>
+            </header>
+
+            {/* ASYMMETRIC GRID */}
+            <div className="grid grid-cols-12 gap-4 h-[400px] md:h-[500px]">
+              <div className="col-span-8 rounded-[2rem] overflow-hidden border border-white/5 group relative bg-neutral-900">
+                <img
+                  src={event?.images?.[0]?.url || event?.pictures?.[0]}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+              </div>
+              <div className="col-span-4 flex flex-col gap-4">
+                <div className="h-1/2 rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl bg-neutral-900">
+                  <img
+                    src={event?.images?.[1]?.url || event?.pictures?.[1]}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="h-1/2 rounded-[2rem] overflow-hidden bg-[#161618] border border-white/5 flex flex-col items-center justify-center cursor-pointer group hover:bg-white/5 transition-all">
+                  <span className="text-3xl font-black italic tracking-tighter text-white">
+                    +{event?.images?.length || 0}
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00]">
+                    Archive
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* TABS */}
+            <div className="space-y-8">
+              <div className="flex gap-8 border-b border-white/5">
+                {["intel", "logistics"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`pb-4 text-[11px] font-black uppercase tracking-[0.3em] transition-all relative ${
+                      activeTab === tab
+                        ? "text-[#FF7A00]"
+                        : "text-gray-600 hover:text-white"
+                    }`}
+                  >
+                    {tab}
+                    {activeTab === tab && (
+                      <motion.div
+                        layoutId="tab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF7A00]"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === "intel" ? (
+                <div className="space-y-6">
+                  <p className="text-lg md:text-xl text-gray-300 font-medium leading-relaxed max-w-3xl italic">
+                    "
+                    {event?.description ||
+                      event?.desc ||
+                      "No encrypted description available for this transmission."}
+                    "
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                    {["VIP LOUNGE", "VALET", "DOLBY", "4K PROJECTION"].map(
+                      (item) => (
+                        <div
+                          key={item}
+                          className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center"
+                        >
+                          <p className="text-[10px] font-black uppercase text-gray-400">
+                            {item}
+                          </p>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[400px] rounded-3xl overflow-hidden border border-white/5 grayscale">
+                  <MapContainer
+                    center={[9.03, 38.74]}
+                    zoom={13}
+                    className="h-full w-full"
+                  >
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    {position && <Marker position={position} />}
+                  </MapContainer>
+                </div>
+              )}
+            </div>
+
+            {/* COMMENTS */}
+            <section className="pt-12 space-y-10">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl uppercase  tracking-tighter">
+                  Reviews
+                </h3>
+                <div className="flex items-center gap-1 text-[#FF7A00]">
+                  <Star size={14} fill="currentColor" />
+                  <span className="text-sm font-black italic">
+                    {event?.rating || "4.9"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {(event?.comments || []).length > 0 ? (
+                  event.comments.map((rev, i) => (
+                    <div
+                      key={i}
+                      className="group relative bg-white/[0.01] hover:bg-white/[0.02] p-6 rounded-3xl border border-white/5 transition-all"
+                    >
+                      <div className="flex gap-4">
+                        <div className="h-10 w-10 rounded-full bg-[#FF7A00]/20 flex items-center justify-center text-[#FF7A00] font-black text-sm italic">
+                          {rev.user?.charAt(0) || "U"}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-black uppercase italic text-white">
+                              {rev.user || "Verified User"}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-600 uppercase">
+                              {moment(rev.createdAt).fromNow()}
+                            </span>
+                          </div>
+                          <p className="text-gray-400 text-sm md:text-base italic leading-relaxed font-medium">
+                            "{rev.text}"
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-10 border-2 border-dashed border-white/5 rounded-3xl">
+                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">
+                      No transmissions recorded yet
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* SIDEBAR */}
+          <aside className="lg:col-span-4 lg:sticky lg:top-24">
+            <div className="bg-[#111112] border border-white/10 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+                <Ticket size={120} />
+              </div>
+
+              <div className="relative z-10 space-y-8">
+                <div>
+                  <p className="text-[10px] font-black text-gray-600 tracking-[0.4em] uppercase mb-2">
+                    Access Protocol
+                  </p>
+                  <h2 className="text-3xl font-black italic uppercase tracking-tighter">
+                    {ticket?.type || "Standard Access"}
+                  </h2>
+                </div>
+
+                <div className="flex items-baseline gap-2">
+                  <span className="text-6xl font-black tracking-tighter italic text-white">
+                    ${ticket?.price || "45"}
+                  </span>
+                  <span className="text-xs font-bold text-gray-600 uppercase tracking-widest italic">
+                    USD / Unit
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  <button
+                    onClick={() => setCheckoutOpen(true)}
+                    className="w-full py-5 bg-[#FF7A00] text-black font-black uppercase italic text-xs rounded-2xl flex items-center justify-center gap-3 hover:bg-white hover:scale-[1.02] active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,122,0,0.15)]"
+                  >
+                    SECURE ENTRY <MoveRight size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => setShowMore(!showMore)}
+                    className="w-full py-4 border border-white/5 rounded-2xl text-[10px] font-black tracking-[0.2em] uppercase hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    {showMore ? "Collapse Tiers" : "Explore All Tiers"}{" "}
+                    <ChevronDown
+                      size={14}
+                      className={showMore ? "rotate-180" : ""}
+                    />
+                  </button>
+                </div>
+
+                <div className="pt-8 border-t border-white/5 flex items-center gap-4">
+                  <ShieldCheck size={20} className="text-[#FF7A00]" />
+                  <p className="text-[9px] font-black text-gray-500 uppercase leading-tight tracking-widest">
+                    Encrypted <br /> Checkout Terminal
+                  </p>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      {/* MODAL INTEGRATION */}
       <AnimatePresence>
         {checkoutOpen && (
-          <motion.div
-            className="fixed inset-0 z-[200] w-full h-screen  flex justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
+            className="fixed inset-0 z-[200] lg:pt-2 flex items-center justify-center p-6 bg-black/2 backdrop-blur-sm"
             onClick={() => setCheckoutOpen(false)}
           >
             <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full  bg-black/60 pt-4 shadow-2xl space-y-8 "
-              initial={{ y: 40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 40, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 25 }}
+              className="w-full max-w-md bg-[#191B1D] p-8 rounded-[2rem] border border-white/10"
             >
-              {/* Card */}
-              <div className=" w-full px-5 pb-6">
-                <div className="bg-[#2A2C31] w-full rounded-xl pt-6">
-                  <CheckoutModal
-                    isOpen={checkoutOpen}
-                    onClose={() => setCheckoutOpen(false)}
-                    amount={selectedTicket?.min || selectedTicket?.max}
-                    name={event?.name}
-                    action={() => {
-                      CheckoutMutation.mutate({
-                        eventId: event._id,
-                        ticketId: ticket?._id,
-                        quantity: quantity,
-                      });
-                    }}
-                  />
-                </div>
-              </div>
+              <CheckoutModal
+                isOpen={checkoutOpen}
+                onClose={() => setCheckoutOpen(false)}
+                amount={ticket?.price}
+                name={event?.name}
+                action={() => {
+                  /* Mutation Logic */
+                }}
+              />
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
-      {/*EDIT BUTTON */}
-      <div className="lg:hidden flex justify-center  ">
-        <button
-          onClick={() => setEditMenuActive(true)}
-          className="flex text-white  font-semibold bg-[#FF7800] px-10 py-3 rounded-md space-x-2 lg:cursor-pointer"
-        >
-          <SquarePen />
-          <span>Edit Search</span>
-        </button>
-      </div>
-
-      <div className=" flex justify-center items-center ">
-        <div className="hidden lg:block relative  w-full lg:w-[76%] z-10 flex sm:flex-col justify-center items-center space-y-4 lg:px-22 px-12 py-4">
-          <div className="flex lg:px-4 flex-col lg:flex-row justify-center items-center w-full pt-6 text-white text-md font-light bg-[#191B1D] rounded-xl  lg:space-x-12 space-y-6">
-            {/* Calendar Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setDateSlide(!dateSlide);
-              }}
-              className="w-[80%] lg:w-[75%] flex justify-between items-center px-4 py-3 bg-[#6C6D6E] rounded-lg shadow-md"
-            >
-              <div className="flex items-center space-x-3">
-                <CalendarIcon strokeWidth={1} className="text-white w-5 h-5" />
-                <div className="flex flex-col">
-                  {!dates ? (
-                    <>
-                      <span>Dates</span>
-                      <span>All Dates</span>
-                    </>
-                  ) : (
-                    <span className="text-[#FF7800] font-semibold">
-                      {dates.toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {dateSlide ? (
-                <ChevronUp className="text-black" />
-              ) : (
-                <ChevronDown className="text-black" />
-              )}
-            </button>
-
-            {/* CALENDAR PANEL */}
-            <div
-              className={`absolute left-8 top-[75px] w-[250px] bg-[#D9D9D9] rounded-lg overflow-hidden z-50 transition-[max-height] duration-500 ease-in-out ${
-                dateSlide ? "max-h-[500px] mt-3" : "max-h-0 mt-0"
-              }`}
-            >
-              <CalendarDemo
-                mode="single"
-                selected={dates}
-                onSelect={setDates}
-                buttonVariant="ghost"
-                className="p-4 w-full bg-transparent rounded-xl shadow-lg text-black"
-                classNames={{
-                  day: "h-8 w-8 flex items-center justify-center rounded-lg hover:bg-orange-200",
-                  month_caption:
-                    "text-lg text-center font-semibold text-orange-500",
-                  nav_button: "text-orange-500 hover:text-orange-700",
-                }}
-              />
-            </div>
-
-            {/* LOCATION INPUT */}
-            <div className="relative w-[80%] lg:w-[75%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
-              <MapIcon strokeWidth={1} className="text-white w-6 h-6 mr-3" />
-              <input
-                type="text"
-                placeholder="Location"
-                className="flex-1 outline-none placeholder:text-white text-white font-light"
-              />
-            </div>
-
-            {/* SEARCH INPUT */}
-            <div className="relative w-[80%] lg:w-[75%] h-[4rem] bg-[#6C6D6E] rounded-lg shadow-md flex items-center px-4">
-              <User strokeWidth={1} className="text-white w-6 h-6 mr-3" />
-              <input
-                type="text"
-                placeholder="Artist, Event or Venue"
-                className="flex-1 outline-none placeholder:text-white text-white font-light"
-              />
-            </div>
-
-            {/* MAIN SEARCH BUTTON */}
-            <div className="md:hidden lg:flex items-center lg:mb-8  md:ml-12 ml-6">
-              <SearchButton />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/*HEADER */}
-      <div className="flex flex-col pl-6 lg:pl-12 space-y-4  ">
-        <div className="flex flex-col space-y-2">
-          {/* Event name and date */}
-          <div className="flex flex-wrap space-y-2 justify-between items-center">
-            {/* MOBILE ONLY */}
-            <h1
-              className="block lg:hidden text-white text-lg font-semibold cursor-pointer"
-              onClick={() => setShowFullName(!showFullName)}
-              title={event?.name}
-            >
-              {showFullName
-                ? event?.name
-                : event?.name?.length > 25
-                  ? `${event?.name.slice(0, 25)}...`
-                  : event?.name}
-            </h1>
-
-            {/* DESKTOP ONLY */}
-            <h1
-              className="hidden lg:block text-white lg:text-2xl font-semibold"
-              title={event?.name}
-            >
-              {event?.name}
-            </h1>
-
-            <div className="inline-flex items-center mr-3 space-x-2 px-3 py-1 bg-[#3F454B] text-sm text-white rounded-md">
-              <ClockFading className="w-5 h-5" />
-              <span>{formatted}</span>
-            </div>
-          </div>
-
-          {/* Location */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => {
-                if (!mapSlide) {
-                  setMapSlide(true);
-                } else {
-                  setMapSlide(false);
-                }
-              }}
-            >
-              <MapPin className="w-5 h-5 text-white" />
-            </button>
-
-            <p className=" text-[#808080] text-sm truncate max-w-1/2">
-              {address || event?.locale}
-            </p>
-          </div>
-          <div>
-            {!mapSlide && (
-              <p className=" text-[#808080] text-sm  max-w-full">
-                click the map icon to see the full map
-              </p>
-            )}
-          </div>
-          <AnimatePresence>
-            {mapSlide && (
-              <motion.div
-                initial={{ opacity: 0, y: -30, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: "auto" }}
-                exit={{ opacity: 0, y: -30, height: 0 }}
-                transition={{
-                  duration: 0.4,
-                  ease: "easeOut",
-                }}
-                className="space-y-4 overflow-hidden"
-              >
-                <div className="w-[90%]  h-62 p-5 rounded-xl space-y-2">
-                  <Maps />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="flex justify-end mr-12 space-x-2">
-          <div className=" flex  space-x-2  items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
-            <button
-              onClick={(e) => {
-                handleWishlistToggle(event._id, e);
-              }}
-            >
-              <Heart
-                className={`w-5 h-5 transition-colors duration-200 ${
-                  addFav ? "text-white fill-white" : "text-white fill-none"
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className=" flex  space-x-2  items-center px-2 py-1 bg-[#3F454B] text-white rounded-md">
-            <Share2 className="text-white flex text-center w-5 h-5" />
-          </div>
-        </div>
-        {/*EVENT IMAGES */}
-
-        <div className="space-y-4  flex lg:flex-row flex-col">
-          <div className="w-full ">
-            <div className="w-[90%] lg:w-[95%]  rounded-2xl overflow-hidden">
-              <img
-                src={event?.pictures?.[0] || "/1308183.jpeg"}
-                alt={event?.name || "Event image"}
-                className="w-full h-[350px] lg:h-[450px] object-cover"
-              />
-            </div>
-          </div>
-          <div className="w-full space-y-3">
-            {/* TOP IMAGE */}
-            <div
-              className="w-[90%] rounded-2xl overflow-hidden cursor-pointer"
-              onClick={() => setOpenGallery(true)}
-            >
-              <img
-                src={event?.pictures?.[1] || "/1308183.jpeg"}
-                alt={event?.name || "Event image"}
-                className="w-full h-[200px] lg:h-[150px] object-cover hover:scale-105 transition duration-500"
-              />
-            </div>
-
-            <div className="lg:flex space-y-3 lg:space-y-0 lg:space-x-4">
-              {/* SECOND IMAGE */}
-              <div
-                className="w-[90%] rounded-2xl overflow-hidden cursor-pointer"
-                onClick={() => setOpenGallery(true)}
-              >
-                <img
-                  src={event?.pictures?.[2] || "/1308183.jpeg"}
-                  alt={event?.name || "Event image"}
-                  className="w-full h-[200px] lg:h-[290px] object-cover hover:scale-105 transition duration-500"
-                />
-              </div>
-
-              {/* VIEW MORE */}
-              <div
-                className="w-[90%] rounded-2xl overflow-hidden relative cursor-pointer"
-                onClick={() => setOpenGallery(true)}
-              >
-                <img
-                  src={event?.pictures?.[0] || "/1308183.jpeg"}
-                  alt="Preview"
-                  className="w-full h-[200px] object-cover"
-                />
-
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <button className="text-white text-lg font-semibold">
-                    View More
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* FULLSCREEN MODAL GALLERY */}
-            {openGallery && (
-              <div
-                onClick={() => setOpenGallery(false)}
-                className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
-              >
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-[95%] max-w-4xl relative"
-                >
-                  <Swiper
-                    modules={[Navigation, Pagination]}
-                    navigation
-                    pagination={{ clickable: true }}
-                    spaceBetween={20}
-                    slidesPerView={1}
-                  >
-                    {event?.pictures?.map((img, index) => (
-                      <SwiperSlide key={index}>
-                        <img
-                          src={img}
-                          alt=""
-                          className="w-full max-h-[80vh] object-contain rounded-2xl"
-                        />
-                      </SwiperSlide>
-                    ))}
-                  </Swiper>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/*TICKET */}
-        <div className="space-y-6">
-          {standardTicket && (
-            <div className="bg-[#191B1D] w-[90%] p-5 rounded-xl space-y-4">
-              <div className="flex justify-between">
-                <div className="space-y-2">
-                  <h2 className="text-[#808080] font-semibold">
-                    {standardTicket?.type}
-                  </h2>
-
-                  <h1 className="text-xl text-white font-bold">
-                    {standardTicket?.min} {standardTicket?.currency}
-                  </h1>
-                </div>
-
-                <Ticket className="w-12 h-12 text-[#34C759]" />
-              </div>
-
-              {/* Rating */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <MoveRight className="text-white w-4" />
-
-                  <h3 className="text-white font-bold">
-                    {event?.rating?.score ?? "-"}
-                  </h3>
-
-                  <span className="flex gap-1 text-orange-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} fill="currentColor" />
-                    ))}
-                  </span>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <MoveRight className="text-white w-4" />
-                  <h3 className="text-[#808080] font-bold">
-                    No Specific Offers
-                  </h3>
-                </div>
-              </div>
-
-              <div className="flex justify-center mt-4">
-                {!showMore ? (
-                  <button
-                    onClick={() => setShowMore(true)}
-                    className="text-white font-semibold bg-[#FF9A41] px-8 py-3 rounded-2xl hover:scale-105 transition"
-                  >
-                    View More Tickets
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      handleCheckout(standardTicket);
-                    }}
-                    className="text-white font-semibold bg-[#FF9A41] px-8 py-3 rounded-2xl hover:scale-105 transition"
-                  >
-                    Get Ticket
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          <AnimatePresence>
-            {showMore && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.4 }}
-                className="space-y-6 overflow-hidden"
-              >
-                {otherTickets.map((ticket, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-[#191B1D] w-[90%] p-5 rounded-xl space-y-4"
-                  >
-                    <div className="flex justify-between">
-                      <div className="space-y-2">
-                        <h2 className="text-[#808080] font-semibold">
-                          {ticket?.type}
-                        </h2>
-
-                        <h1 className="text-xl text-white font-bold">
-                          {ticket?.min || ticket?.max} {ticket?.currency}
-                        </h1>
-                      </div>
-
-                      <Ticket className="w-12 h-12 text-orange-500" />
-                    </div>
-
-                    {/* Rating */}
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <MoveRight className="text-white w-4" />
-
-                        <h3 className="text-white font-bold">
-                          {event?.rating?.score ?? "-"}
-                        </h3>
-
-                        <span className="flex gap-1 text-orange-400">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} size={14} fill="currentColor" />
-                          ))}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <MoveRight className="text-white w-4" />
-                        <h3 className="text-[#808080] font-bold">
-                          No Specific Offers
-                        </h3>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-center mt-4">
-                      <button
-                        onClick={() => {
-                          handleCheckout(ticket);
-                        }}
-                        className="text-white font-semibold bg-[#FF9A41] px-8 py-3 rounded-2xl hover:scale-105 transition"
-                      >
-                        Get Ticket
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {/* Debug Checkout */}
-          {checkoutOpen && (
-            <div className="text-white mt-6">
-              Selected: {selectedTicket?.type} —{" "}
-              {selectedTicket?.min || selectedTicket?.max}{" "}
-              {selectedTicket?.currency}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-12 space-y-12">
-          {/*ABOUT THE EVENT */}
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-white text-2xl font-semibold">
-                About This Event
-              </h1>
-            </div>
-            <div className="w-[80%] h-[0.3px] bg-gray-600 " />
-            <p className="w-[90%] text-[#808080] text-sm leading-6">
-              {event?.desc}
-            </p>
-          </div>
-          {/*AMENITIES */}
-          <div className="space-y-4">
-            <div className="space-y-4">
-              <h1 className="text-white text-2xl font-semibold">Amenities</h1>
-              <div className="w-[80%] h-[0.3px] bg-gray-600 " />
-            </div>
-            <div className="space-y-8">
-              {event?.amenities &&
-                Object.entries(event.amenities).map(([category, list]) => (
-                  <Amenities
-                    key={category}
-                    header={
-                      category.charAt(0).toUpperCase() + category.slice(1)
-                    } // Capitalize
-                    icon={Puzzle}
-                    lists={Array.isArray(list) ? list : []}
-                  />
-                ))}
-            </div>
-          </div>
-
-          {/*CUSTOMER REVIEW */}
-          <div className="space-y-12">
-            <div className="space-y-6">
-              <h1 className="text-white text-2xl font-semibold">
-                Customer Reviews
-              </h1>
-              <div className="w-[80%] h-[0.3px] bg-gray-600 " />
-            </div>
-
-            {/*REVIEW CARD */}
-            <div className="space-y-4">
-              <div className=" flex flex-col items-center p-6 w-[90%]  h-82 bg-[#2A2C31] rounded-xl gap-6">
-                <div className=" flex flex-col items-center space-y-2">
-                  <h1 className=" text-white text-2xl font-bold">
-                    {event?.rating?.score ?? "-"}
-                  </h1>
-                  <p className="w-full text-[#808080] text-sm ">
-                    Based on 120 Reviews{" "}
-                  </p>
-
-                  <span className="flex gap-1 text-orange-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} fill="currentColor" />
-                    ))}
-                  </span>
-                </div>
-
-                {/*PROGRESS BAR */}
-                <div className="w-full space-y-4">
-                  {progress?.map((p, idx) => (
-                    <div
-                      className="w-full flex justify-center items-center space-x-8"
-                      key={idx}
-                    >
-                      <div className=" w-[80%] h-2 bg-[#202020] rounded-md overflow-hidden ">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${p}%` }}
-                          transition={{
-                            duration: 0.6,
-                            ease: "easeInOut",
-                          }}
-                          className="h-full bg-[#FF9D46] rounded-md"
-                        />
-                      </div>
-                      <p className="flex-1 text-white text-md  font-semibold ">
-                        {p}%
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/*RATING OPTIONS */}
-
-              <div className="  space-x-8 w-[90%] h-12 pl-4 bg-[#2A2C31] rounded-md gap-6">
-                <div className="w-full h-full flex">
-                  <Listbox value={selected} onChange={setSelected}>
-                    <div className="relative w-full">
-                      {/* Button */}
-                      <Listbox.Button
-                        className="
-                            relative w-full h-full cursor-pointer
-                            rounded-md 
-                            bg-transparent text-white px-3 text-md
-                            flex items-center justify-between outline-none
-                          "
-                      >
-                        <span>
-                          {selected ? selected.value : options[0]?.value}
-                        </span>
-                        <ChevronDown className="mr-6 text-center w-6 h-6" />
-                      </Listbox.Button>
-
-                      {/* Options */}
-                      <Listbox.Options
-                        className="
-                            absolute z-10 mt-1 w-full
-                            rounded-md bg-[#222529]
-                            border border-gray-600/40
-                            shadow-lg focus:outline-none
-                          "
-                      >
-                        {options.map((option) => (
-                          <Listbox.Option
-                            key={option.id}
-                            value={option}
-                            className={({ active }) =>
-                              `
-                                cursor-pointer px-3 h-10
-                                flex items-center text-sm
-                                ${
-                                  active
-                                    ? "bg-orange-500 text-white"
-                                    : "text-gray-200"
-                                }
-                                `
-                            }
-                          >
-                            {({ selected }) => (
-                              <div className="flex items-center justify-between w-full">
-                                <span className="flex">
-                                  {" "}
-                                  {[...Array(option.id)].map((_, i) => (
-                                    <Star key={i} size={14} />
-                                  ))}
-                                </span>
-                                <span className="mr-8">
-                                  {" "}
-                                  {selected && option?.value}
-                                </span>
-                              </div>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </div>
-                  </Listbox>
-                </div>
-              </div>
-
-              {/*REVIEW INPUT */}
-              <div className="w-[90%] h-42 bg-[#2A2C31] flex  rounded-xl p-3  ">
-                <div>
-                  <textarea
-                    onChange={(e) => setComment(e.target.value)}
-                    value={comment}
-                    className="w-full h-full bg-transparent text-white placeholder:text-[#808080] resize-none outline-none"
-                    placeholder="Your review"
-                  />
-                </div>
-
-                <div className="flex justify-end items-end space-x-5">
-                  <ImageUp className="text-white w-6 h-6" />
-                  <ImageUp className="text-white w-6 h-6" />
-                  <ImageUp className="text-white w-6 h-6" />
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  commentMutation.mutate({
-                    eventId: eventId,
-                    text: comment,
-                  });
-                }}
-                className="flex mt-8 items-center justify-between w-[150px] px-4 py-3  mt-5
-             bg-[#FF7800] text-md text-white font-semibold rounded-xl 
-             transition-transform duration-200 cursor-pointer 
-             lg:hover:scale-95 active:scale-90"
-              >
-                <span>Post review</span>
-                <ArrowBigRight className="w-4 h-4" />
-              </button>
-
-              {/*OTHERS COMMENT SECTION */}
-              <div className="w-full mt-8 space-y-6 bg-[#222529] p-4 rounded-md">
-                {event?.comments?.length === 0 && (
-                  <p className="text-gray-400 text-center">No comments yet.</p>
-                )}
-
-                {/* Flatten all comments */}
-                {event?.comments.map((comment) => (
-                  <div key={comment._id} className="flex items-start gap-3">
-                    {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full overflow-hidden">
-                      <img
-                        src={"/defaultAvater.jpg"} // you only have userId string
-                        alt="User"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-white text-base">
-                          {comment.userId}
-                        </h3>
-
-                        {/* rating comes from review, not comment */}
-                        {comment.rating && (
-                          <span className="px-2 py-0.5 text-sm font-bold text-white bg-yellow-500 rounded">
-                            {comment.rating}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-sm text-gray-400 mt-1">
-                        {moment(comment.createdAt).fromNow()}
-                      </p>
-
-                      <p className="text-gray-300 text-base mt-2">
-                        {comment.text}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-center">
-                <button
-                  className="flex items-center justify-center w-[150px] px- py-2  mt-5
-             bg-[#FF9A41] text-md text-white font-semibold rounded-md 
-             transition-transform duration-200 lg:cursor-pointer 
-             lg:hover:scale-95 active:scale-90"
-                >
-                  <span>Load More</span>
-                </button>
-              </div>
-
-              {/*EVENT POLICES  */}
-
-              <div className="space-y-6 mt-12">
-                <div className="space-y-4">
-                  <h1 className="text-white text-2xl font-semibold">
-                    Event Policies
-                  </h1>
-                  <div className="w-[80%] h-[0.3px] bg-gray-600 " />
-                </div>
-
-                {event?.policies?.map((policy, idx) => (
-                  <EventPolices
-                    key={idx}
-                    header={policy?.header}
-                    des={policy?.descriptions}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

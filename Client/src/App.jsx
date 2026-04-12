@@ -306,8 +306,21 @@ const AnimatedRoutes = () => {
           }
         />
 
+        {/* 
+<Route
+  path="/events/:eventId/tickets/:ticketId"
+  element={
+    <PageWrapper>
+      <Main>
+        <EventInfo />
+      </Main>
+    </PageWrapper>
+  }
+/> 
+*/}
+
         <Route
-          path="/events/:eventId/tickets/:ticketId"
+          path="/events/1"
           element={
             <PageWrapper>
               <Main>

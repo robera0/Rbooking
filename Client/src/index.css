@@ -30,7 +30,17 @@
   font-weight: 500;
   transition: background 0.3s;
 }
+/* Disable arrows for Chrome, Safari, Edge, and Opera */
+input.no-spinner::-webkit-outer-spin-button,
+input.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
+/* Disable arrows for Firefox */
+input.no-spinner[type="number"] {
+  -moz-appearance: textfield;
+}
 .logo-input {
   display: none;
 }
