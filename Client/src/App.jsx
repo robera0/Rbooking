@@ -21,12 +21,11 @@ import EventInfo from "../user/EventInfo";
 import { ProtectedRoute } from "./components/Reusable";
 import { Toaster } from "react-hot-toast";
 import Events from "../user/Events";
-import AddSalon from "../admin/AddSalon";
-import Book_Setting from "../admin/Book_Setting";
-import Booking from "../admin/Booking";
-import BookingDetail from "../admin/BookingDetail";
+
+import EventMang from "../admin/EventMang";
+import AddEvent from "../admin/AddEvent";
+import TicketOrders from "../admin/TicketOrders";
 import Configuration_Setting from "../admin/Configuration_Setting";
-import CreateBooking from "../admin/CreateBooking";
 import CreateNotification from "../admin/CreateNotification";
 import Dashboard from "../admin/Dashboard";
 import General from "../admin/General";
@@ -42,10 +41,6 @@ import Privacy_Setting from "../admin/Privacy_Setting";
 import Report from "../admin/Report";
 import RevenueGraph from "../admin/RevenueGraph";
 import Review from "../admin/Review";
-import Salon_Setting from "../admin/Salon_Setting";
-import SalonDetail from "../admin/SalonDetail";
-import SalonMang from "../admin/SalonMang";
-import Service from "../admin/Service";
 import User_Setting from "../admin/User_Setting";
 import User from "../admin/User";
 import Verification from "../admin/Verification";
@@ -164,7 +159,7 @@ const AnimatedRoutes = () => {
         />
 
         <Route
-          path="/user"
+          path="/admin/users"
           element={
             <Home>
               <PageWrapper>
@@ -175,66 +170,33 @@ const AnimatedRoutes = () => {
         />
 
         <Route
-          path="/salon"
+          path="/admin/events"
           element={
             <Home>
               <PageWrapper>
-                <SalonMang />
+                <EventMang />
               </PageWrapper>
             </Home>
           }
         />
 
         <Route
-          path="/salon/salonMang"
+          path="/admin/events/add"
           element={
             <Home>
               <PageWrapper>
-                <SalonDetail />
+                <AddEvent />
               </PageWrapper>
             </Home>
           }
         />
 
         <Route
-          path="/salon/addSalon"
+          path="/admin/orders"
           element={
             <Home>
               <PageWrapper>
-                <AddSalon />
-              </PageWrapper>
-            </Home>
-          }
-        />
-
-        <Route
-          path="/booking"
-          element={
-            <Home>
-              <PageWrapper>
-                <Booking />
-              </PageWrapper>
-            </Home>
-          }
-        />
-
-        <Route
-          path="/booking/bookingdetail"
-          element={
-            <Home>
-              <PageWrapper>
-                <BookingDetail />
-              </PageWrapper>
-            </Home>
-          }
-        />
-
-        <Route
-          path="/booking/createbooking"
-          element={
-            <Home>
-              <PageWrapper>
-                <CreateBooking />
+                <TicketOrders />
               </PageWrapper>
             </Home>
           }

@@ -1,6 +1,8 @@
 import { Event } from "../models/EventsModel.js";
 import { TicketModel } from "../models/TicketModel.js";
 
+//ADD EVENTS
+
 export const get_events = async (req, res) => {
   try {
     const events = await Event.find();

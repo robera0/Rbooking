@@ -1,4 +1,4 @@
-import { Cards, SearchInput, Table } from "./Cards";
+import { Cards, SearchInput, UserTable } from "./Cards";
 import {
   UserRoundPlus,
   UserRoundCheck,
@@ -10,178 +10,212 @@ import {
   CalendarDays,
   ChevronsRight,
   ChevronsLeft,
+  X,
 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useService } from "../src/Context/ServiceContext";
 
 const User = () => {
   const startRef = useRef(null);
   const endRef = useRef(null);
 
+  const { API_URL } = useService();
+  const queryClient = useQueryClient();
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserRole, setNewUserRole] = useState("user");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const addMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await fetch(`${API_URL}/api/admin/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("Failed to create user");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
+      setIsAddModalOpen(false);
+      setNewUserEmail("");
+      setErrorMsg("");
+    }
+  });
+
+  const handleAddUser = () => {
+    if (!newUserEmail) {
+      setErrorMsg("Email address is required to register a user.");
+      return;
+    }
+
+    addMutation.mutate({
+      email: newUserEmail,
+      role: newUserRole
+    });
+  };
+
   return (
-    <div>
-      <div className="w-[97%] space-y-8">
-        <div>
-          <h1 className="text-3xl font-semibold"> User Management </h1>
-        </div>
-        <div className="mt-10 flex  flex-wrap gap-10">
-          {/*users */}
-          <Cards
-            header="Total User"
-            num="40,689"
-            topicons={
-              <UserRoundPlus
-                strokeWidth={3}
-                className=" w-9 h-9  text-[#CA74A3]"
-              />
-            }
-            daily_diff="Register User on Platform"
-          />
-
-          {/*Verified Users */}
-          <Cards
-            header="Verified Users "
-            num="10,000"
-            topicons={
-              <UserRoundCheck
-                strokeWidth={3}
-                className=" w-9 h-9 text-[#57CA01]"
-              />
-            }
-            daily_diff="User Verified their account"
-          />
-          {/*Active Users */}
-          <Cards
-            header="Active Users "
-            num="3000"
-            topicons={
-              <UserStar strokeWidth={3} className=" w-9 h-9  text-[#A17DF5]" />
-            }
-            daily_diff="Active User Past Week"
-          />
-          {/*Deleted Users */}
-          <Cards
-            header="Deleted Users "
-            num="3000"
-            topicons={
-              <UserRoundX
-                strokeWidth={3}
-                className=" w-9 h-9  text-[#F5887D]"
-              />
-            }
-            daily_diff="User deleted their account"
-          />
-        </div>
-        <div className="flex justify-end mr-4">
-          <button className="w-42 h-12 px-2  py-3 flex justify-center text-white font-semibold bg-[#A61866] rounded-full cursor-pointer  hover:bg-white hover:text-[#A61866] transition-all duration-300 space-x-4">
-            <span className="flex-shrink-0 transform transition-transform duration-200 group-hover:scale-110">
-              <CirclePlus />
-            </span>
-
-            <h1 className="text-lg ">Add User</h1>
-          </button>
-        </div>
-        {/*Table of customers */}
-        <div className="w-full flex flex-wrap  gap-8">
-          <SearchInput
-            w="w-140"
-            h="h-14"
-            top="top-4"
-            left="left-3"
-            placeholder="Search user name, email..."
-          />
-          {/*filter */}
-          <button className=" w-42 h-12 flex justify-center items-center  bg-[#F5F6FA] rounded-full gap-2 ">
-            <Funnel className="text-gray-500" />
-            <select
-              className="text-gray-500 w-24 rounded-xl  outline-none"
-              name=""
-              id=""
+    <div className="w-full max-w-full space-y-8 relative">
+      {/* Add User Modal Overlay */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-[#1C1F22] border border-white/[0.08] rounded-2xl p-8 shadow-2xl relative">
+            <button 
+              onClick={() => setIsAddModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
             >
-              <option value="">Filter By</option>
+              <X size={20} />
+            </button>
+            <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-6">Create <span className="text-[#FF7A00]">User</span></h2>
+            
+            {errorMsg && <p className="text-red-500 text-xs font-bold mb-4">{errorMsg}</p>}
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">User Email</label>
+                <input 
+                  type="email" 
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors" 
+                  placeholder="admin@rbooking.com" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Assign Role</label>
+                <select 
+                  value={newUserRole}
+                  onChange={(e) => setNewUserRole(e.target.value)}
+                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors cursor-pointer"
+                >
+                  <option value="user">General User</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
+              
+              <button 
+                onClick={handleAddUser}
+                disabled={addMutation.isLoading}
+                className="w-full mt-4 py-3 bg-[#FF7A00] text-black hover:bg-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
+              >
+                {addMutation.isLoading ? "Creating..." : "Confirm & Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-wrap justify-between items-end mb-8 border-b border-white/[0.04] pb-6">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
+            User <span className="text-[#FF7A00]">Management</span>
+          </h1>
+          <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
+        </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="mt-4 md:mt-0 px-6 py-3 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2"
+        >
+          <CirclePlus size={16} strokeWidth={3} />
+          Add User
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-6">
+        {/*Total User */}
+        <Cards
+          header="Total User"
+          num="40,689"
+          topicons={<UserRoundPlus strokeWidth={2.5} className="w-6 h-6 text-white" />}
+          bg="bg-[#FF7A00]"
+          daily_diff="Registered on platform"
+        />
+
+        {/*Verified Users */}
+        <Cards
+          header="Verified Users"
+          num="10,000"
+          topicons={<UserRoundCheck strokeWidth={2.5} className="w-6 h-6 text-white" />}
+          bg="bg-[#5EC750]"
+          daily_diff="Accounts verified"
+        />
+        
+        {/*Active Users */}
+        <Cards
+          header="Active Users"
+          num="3000"
+          topicons={<UserStar strokeWidth={2.5} className="w-6 h-6 text-white" />}
+          bg="bg-[#A17DF5]"
+          daily_diff="Active past week"
+        />
+        
+        {/*Deleted Users */}
+        <Cards
+          header="Deleted Users"
+          num="3000"
+          topicons={<UserRoundX strokeWidth={2.5} className="w-6 h-6 text-white" />}
+          bg="bg-red-500"
+          daily_diff="Deleted accounts"
+        />
+      </div>
+
+      {/*Table Section */}
+      <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl flex flex-col min-h-[400px]">
+        {/* Filters Wrapper */}
+        <div className="w-full flex flex-wrap items-center gap-4 mb-6">
+          <div className="flex-1 min-w-[200px]">
+            <SearchInput
+              w="w-full"
+              h="h-12"
+              top="top-1/2 -translate-y-1/2"
+              left="left-4"
+              placeholder="Search user name or email..."
+            />
+          </div>
+          
+          <button className="h-12 px-6 flex justify-center items-center bg-[#1A1D20] text-white rounded-full gap-2 border border-white/[0.06] hover:border-[#FF7A00]/50 transition-colors">
+            <Funnel size={16} className="text-gray-500" />
+            <select className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer">
+               <option value="" className="bg-[#1C1F22]">Filter By</option>
+               <option value="active" className="bg-[#1C1F22]">Active</option>
+               <option value="suspended" className="bg-[#1C1F22]">Suspended</option>
             </select>
           </button>
 
-          {/*date */}
-          <div className="w-92 h-12 px-3 flex items-center bg-[#F5F6FA] rounded-full gap-3">
-            {/* Start date */}
-            <div className="w-40 h-8 px-2 bg-white rounded-lg flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => startRef.current?.showPicker()}
-                className="text-gray-500 cursor-pointer"
-              >
-                <CalendarDays size={18} />
-              </button>
-              <input
-                ref={startRef}
-                type="date"
-                className="no-calendar outline-none w-24 bg-transparent"
-              />
-            </div>
-
-            <span className="text-gray-600">to</span>
-
-            {/* End date */}
-            <div className="w-40 h-8 px-2 bg-white rounded-lg flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => endRef.current?.showPicker()}
-                className="text-gray-500 cursor-pointer"
-              >
-                <CalendarDays size={18} />
-              </button>
-              <input
-                ref={endRef}
-                type="date"
-                className="no-calendar outline-none w-24 bg-transparent"
-              />
-            </div>
-          </div>
-          {/*Export */}
-          <button className=" w-42 h-12 flex justify-center items-center  bg-[#F5F6FA] rounded-full gap-2 cursor-pointer ">
-            <h1 className="text-gray-500">Export</h1>
-            <CloudUpload className="text-gray-500 " />
+          <button className="h-12 px-6 flex justify-center items-center bg-[#1A1D20] text-gray-500 hover:text-white rounded-full gap-2 border border-white/[0.06] hover:border-[#FF7A00]/50 transition-colors font-black uppercase text-[10px] tracking-widest">
+             <CloudUpload size={16} /> Export
           </button>
-          <div className="overflow-hidden rounded-t-xl border border-gray-200 shadow-md">
-            <Table c1="" c2="" c3="" c4="" c5="" c6="" c7="" c8="" cbutton="" />
-          </div>
-          <div className="w-full mb-4 flex flex-wrap justify-between">
-            <p className="text-gray-500 text-lg font-semibold  pl-4 ">
-              showing 10 to 5 fo 160 entries
-            </p>
-            <div className="  flex flex-wrap gap-6">
-              <button className=" w-38 h-10 flex justify-center items-center  text-lg text-[#BD5990]  bg-[#E7D6DF] hover:bg-[#A61866]  cursor-pointer hover:text-white transition duration-300 rounded-xl gap-2 ">
-                <ChevronsLeft strokeWidth={2} />
-                Previous
-              </button>
+        </div>
 
-              <div className=" w-62 h-11 flex bg-white rounded-2xl">
-                <div
-                  className={`w-15 h-full flex justify-center items-center text-white font-bold bg-[#A61866] font-bold rounded-2xl`}
-                >
-                  <h1 className="text-center">1</h1>
-                </div>
-                <div
-                  className={`w-15 h-full flex justify-center items-center text-[#A61866] font-bold  font-bold rounded-2xl`}
-                >
-                  <h1 className="text-center">2</h1>
-                </div>
-                <div
-                  className={`w-15 h-full flex justify-center items-center text-[#A61866] font-bold  font-bold rounded-2xl`}
-                >
-                  <h1 className="text-center">3</h1>
-                </div>
-                <div
-                  className={`w-15 h-full flex justify-center items-center text-[#A61866] font-bold font-bold rounded-2xl`}
-                >
-                  <h1 className="text-center">1</h1>
-                </div>
-              </div>
-              <button className=" w-24 h-10  flex justify-center items-center  text-lg text-[#BD5990]  bg-[#E7D6DF] rounded-2xl hover:bg-[#A61866] cursor-pointer hover:text-white transition duration-300 gap-2 ">
-                Next
-                <ChevronsRight strokeWidth={2} />
-              </button>
+        {/* Table itself */}
+        <div className="w-full overflow-x-auto flex-1">
+          <UserTable />
+        </div>
+
+        {/* Pagination */}
+        <div className="w-full mt-6 pt-6 border-t border-white/[0.04] flex flex-col md:flex-row flex-wrap items-center justify-between gap-4">
+          <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">
+             Showing 1 to 7 of 40,689 entries
+          </p>
+          <div className="flex items-center gap-2 bg-[#1A1D20] border border-white/[0.06] p-1 rounded-full">
+            <button className="w-10 h-10 flex justify-center items-center text-gray-500 hover:text-white rounded-full transition-colors active:scale-95">
+              <ChevronsLeft size={16} strokeWidth={2.5} />
+            </button>
+            <div className="flex items-center gap-1">
+               <button className="w-8 h-8 rounded-full bg-[#FF7A00] text-black font-black text-xs flex items-center justify-center shadow-[0_0_10px_rgba(255,122,0,0.5)]">1</button>
+               <button className="w-8 h-8 rounded-full text-white hover:bg-white/[0.04] font-black text-xs flex items-center justify-center transition-colors">2</button>
+               <button className="w-8 h-8 rounded-full text-white hover:bg-white/[0.04] font-black text-xs flex items-center justify-center transition-colors">3</button>
+               <button className="w-8 h-8 rounded-full text-white hover:bg-white/[0.04] font-black text-xs flex items-center justify-center transition-colors">4</button>
             </div>
+            <button className="w-10 h-10 flex justify-center items-center text-gray-500 hover:text-white rounded-full transition-colors active:scale-95">
+               <ChevronsRight size={16} strokeWidth={2.5} />
+            </button>
           </div>
         </div>
       </div>

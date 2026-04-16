@@ -95,6 +95,19 @@ input.no-spinner[type="number"] {
   background: #168ff4;
   border-radius: 6px;
 }
+@layer utilities {
+  /* Hides arrows in Chrome, Safari, Edge */
+  .no-spinner::-webkit-outer-spin-button,
+  .no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Hides arrows in Firefox */
+  .no-spinner {
+    -moz-appearance: textfield;
+  }
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

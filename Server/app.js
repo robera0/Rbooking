@@ -9,13 +9,24 @@ import wishlistrouter from "./routes/wishlistRoutes.js";
 import notirouter from "./routes/notificationRouter.js";
 import authrouter from "./routes/authRoutes.js";
 import userProfilesRouter from "./routes/profileRoutes.js";
+import adminRouter from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 //connect the db
-connectDB();
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Server failed to start:", error);
+  }
+};
 
 app.use(express.json());
 app.use(
@@ -35,6 +46,5 @@ app.use("/api/auth", wishlistrouter);
 app.use("/api/auth", notirouter);
 app.use("/api/auth", authrouter);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.use("/api/admin", adminRouter);
+startServer();
