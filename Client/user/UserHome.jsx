@@ -305,7 +305,7 @@ const UserHome = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8">
-          {events?.map((e) => (
+          {events?.events?.map((e) => (
             <motion.div variants={itemVariants} className="group">
               <div className="relative">
                 <Link to={`/events/${e._id}`} className="block">
