@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Plus,
   Save,
@@ -23,15 +23,24 @@ const AddEvent = () => {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    type: "concert",
-    name: "",
-    artist: "",
-    locale: "",
-    desc: "",
-    date: "",
-    priceRanges: [{ type: "General Admission", price: "45", capacity: "1000" }],
-    amenities: ["VIP Lounge", "Safety Escort"],
+    eventType: "concert",
+    eventName: "",
+    artistName: "",
+    venue: "",
+    description: "",
+    eventDate: "",
+    ticketTiers: [],
+    amenities: [],
+    images: [],
   });
+  const [newAmenity, setNewAmenity] = useState("");
+  const [newTier, setNewTier] = useState({
+    tierName: "",
+    price: "",
+    capacity: "",
+  });
+  const dateInputRef = useRef(null);
+  const posterInputRef = useRef(null);
 
   const [error, setError] = useState("");
 
@@ -47,21 +56,22 @@ const AddEvent = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminEvents"] });
-      toast.success("TRANSMISSION PUBLISHED");
+      toast.success(`${type} PUBLISHED"`);
       navigate("/admin/events");
     },
   });
 
   const handleSubmit = () => {
-    if (!formData.name) return setError("Event Title is required to publish");
+    if (!formData.eventName)
+      return setError("Event Name is required to publish");
     setError("");
     createMutation.mutate({
-      type: formData.type,
-      name: formData.name,
-      artist: { name: formData.artist },
-      locale: formData.locale,
-      desc: formData.desc,
-      date: formData.date,
+      type: formData.eventType,
+      name: formData.eventName,
+      artist: { name: formData.artistName },
+      locale: formData.venue,
+      desc: formData.description,
+      date: formData.eventDate,
     });
   };
 
@@ -80,7 +90,8 @@ const AddEvent = () => {
               <ArrowLeft size={24} />
             </button>
             <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
-              Create <span className="text-[#FF7A00]">{formData.type}</span>
+              Create{" "}
+              <span className="text-[#FF7A00]">{formData.eventType}</span>
             </h1>
           </div>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00] ml-14" />
@@ -111,7 +122,7 @@ const AddEvent = () => {
                     key={t}
                     type="button"
                     onClick={() => setFormData({ ...formData, type: t })}
-                    className={`py-4 rounded-xl font-black uppercase italic text-[11px] border transition-all
+                    className={`py-4 rounded-xl font-black uppercase  text-[11px] border transition-all
                     ${
                       formData.type === t
                         ? "bg-[#FF7A00] border-[#FF7A00] text-black"
@@ -137,9 +148,9 @@ const AddEvent = () => {
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
+                  value={formData.eventName}
                   onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
+                    setFormData({ ...formData, eventName: e.target.value })
                   }
                   className={`w-full bg-[#121417] border ${
                     error ? "border-red-500/50" : "border-white/[0.06]"
@@ -159,6 +170,10 @@ const AddEvent = () => {
                   </label>
                   <input
                     type="text"
+                    value={formData.artistName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, artistName: e.target.value })
+                    }
                     className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none"
                     placeholder="Main artist"
                   />
@@ -169,6 +184,10 @@ const AddEvent = () => {
                   </label>
                   <input
                     type="text"
+                    value={formData.venue}
+                    onChange={(e) =>
+                      setFormData({ ...formData, venue: e.target.value })
+                    }
                     className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none"
                     placeholder="Location"
                   />
@@ -180,6 +199,10 @@ const AddEvent = () => {
                 </label>
                 <textarea
                   rows="4"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none italic"
                   placeholder="Event details..."
                 />
@@ -193,7 +216,7 @@ const AddEvent = () => {
               Ticketing Tiers
             </h3>
             <div className="space-y-4">
-              {formData.priceRanges.map((tier, idx) => (
+              {formData.ticketTiers.map((tier, idx) => (
                 <div
                   key={idx}
                   className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
@@ -203,7 +226,12 @@ const AddEvent = () => {
                       Tier Name
                     </label>
                     <input
-                      defaultValue={tier.type}
+                      value={tier.tierName}
+                      onChange={(e) => {
+                        const updated = [...formData.ticketTiers];
+                        updated[idx].tierName = e.target.value;
+                        setFormData({ ...formData, ticketTiers: updated });
+                      }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
                     />
                   </div>
@@ -212,7 +240,12 @@ const AddEvent = () => {
                       Price (ETB)
                     </label>
                     <input
-                      defaultValue={tier.price}
+                      value={tier.price}
+                      onChange={(e) => {
+                        const updated = [...formData.ticketTiers];
+                        updated[idx].price = e.target.value;
+                        setFormData({ ...formData, ticketTiers: updated });
+                      }}
                       className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
                     />
                   </div>
@@ -222,15 +255,93 @@ const AddEvent = () => {
                     </label>
                     <input
                       type="number"
-                      defaultValue={tier.capacity}
+                      value={tier.capacity}
+                      onChange={(e) => {
+                        const updated = [...formData.ticketTiers];
+                        updated[idx].capacity = e.target.value;
+                        setFormData({ ...formData, ticketTiers: updated });
+                      }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = formData.ticketTiers.filter(
+                        (_, i) => i !== idx,
+                      );
+                      setFormData({ ...formData, ticketTiers: updated });
+                    }}
+                    className="ml-2 text-red-500 hover:text-red-700"
+                    title="Remove tier"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               ))}
-              <button className="w-full py-4 border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-400 hover:text-[#FF7A00] rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
-                <Plus size={16} /> Add Ticket Tier
-              </button>
+              {/* New Tier Adder */}
+              <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00] mt-4">
+                <div className="flex-1">
+                  <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                    Tier Name
+                  </label>
+                  <input
+                    value={newTier?.tierName || ""}
+                    onChange={(e) =>
+                      setNewTier({ ...newTier, tierName: e.target.value })
+                    }
+                    className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
+                    placeholder="Tier Name"
+                  />
+                </div>
+                <div className="w-24">
+                  <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                    Price (ETB)
+                  </label>
+                  <input
+                    value={newTier?.price || ""}
+                    onChange={(e) =>
+                      setNewTier({ ...newTier, price: e.target.value })
+                    }
+                    className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
+                    placeholder="Add Price"
+                  />
+                </div>
+                <div className="w-24">
+                  <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                    Capacity
+                  </label>
+                  <input
+                    type="number"
+                    value={newTier?.capacity || ""}
+                    onChange={(e) =>
+                      setNewTier({ ...newTier, capacity: e.target.value })
+                    }
+                    className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
+                    placeholder="0"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      newTier?.tierName &&
+                      newTier?.price &&
+                      newTier?.capacity
+                    ) {
+                      setFormData({
+                        ...formData,
+                        ticketTiers: [...formData.ticketTiers, { ...newTier }],
+                      });
+                      setNewTier({ tierName: "", price: "", capacity: "" });
+                    }
+                  }}
+                  className="ml-2 text-[#22c55e] hover:text-green-700 border border-[#22c55e] rounded-full p-2 flex items-center justify-center"
+                  title="Add tier"
+                >
+                  <Check size={18} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -242,10 +353,57 @@ const AddEvent = () => {
             <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
               Schedule
             </h3>
-            <input
-              type="datetime-local"
-              className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-4 text-white font-bold focus:border-[#FF7A00]/50 outline-none"
-            />
+            <div className="relative">
+              <div className="relative flex items-center">
+                <input
+                  type="datetime-local"
+                  ref={dateInputRef}
+                  className="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  onChange={(e) =>
+                    setFormData({ ...formData, eventDate: e.target.value })
+                  }
+                  value={formData.eventDate}
+                  tabIndex={-1}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    dateInputRef.current && dateInputRef.current.showPicker()
+                  }
+                  className="flex items-center gap-2 px-4 py-4 w-full bg-[#121417] border border-[#FF7A00] rounded-xl text-white font-bold focus:border-[#FF7A00] outline-none"
+                  style={{ position: "relative", zIndex: 20 }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="#FF7A00"
+                    className="w-6 h-6"
+                  >
+                    <rect
+                      x="3"
+                      y="5"
+                      width="18"
+                      height="16"
+                      rx="2"
+                      stroke="#FF7A00"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M16 3v4M8 3v4M3 9h18"
+                      stroke="#FF7A00"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                  <span className="ml-2 text-white font-bold">
+                    {formData.eventDate
+                      ? new Date(formData.eventDate).toLocaleString()
+                      : "Pick Date & Time"}
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Amenities Vertical with Plus */}
@@ -265,6 +423,14 @@ const AddEvent = () => {
                   <Trash2
                     size={14}
                     className="text-gray-600 hover:text-red-500 cursor-pointer"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        amenities: formData.amenities.filter(
+                          (_, idx) => idx !== i,
+                        ),
+                      });
+                    }}
                   />
                 </div>
               ))}
@@ -272,29 +438,114 @@ const AddEvent = () => {
                 <input
                   className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-[10px] text-white outline-none focus:border-[#FF7A00]/50 font-bold uppercase"
                   placeholder="NEW AMENITY..."
+                  value={newAmenity}
+                  onChange={(e) => setNewAmenity(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newAmenity.trim()) {
+                      setFormData({
+                        ...formData,
+                        amenities: [...formData.amenities, newAmenity.trim()],
+                      });
+                      setNewAmenity("");
+                    }
+                  }}
                 />
-                <button className="absolute right-2 top-[13px] p-1.5 bg-[#FF7A00] text-black rounded-lg hover:bg-white transition-all shadow-lg">
+                <button
+                  type="button"
+                  className="absolute right-2 top-[13px] p-1.5 bg-[#FF7A00] text-black rounded-lg hover:bg-white transition-all shadow-lg"
+                  onClick={() => {
+                    if (newAmenity.trim()) {
+                      setFormData({
+                        ...formData,
+                        amenities: [...formData.amenities, newAmenity.trim()],
+                      });
+                      setNewAmenity("");
+                    }
+                  }}
+                >
                   <Plus size={14} strokeWidth={4} />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Poster Upload */}
-          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
+          {/* FLYER ARCHIVE - INDIVIDUAL DIV BOXES */}
+          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
+            <h3 className="text-white font-bold uppercase tracking-tight text-sm">
               Flyer Archive
             </h3>
-            <div className="w-full aspect-[4/5] bg-[#121417] border border-dashed border-white/[0.2] rounded-[1.5rem] flex flex-col items-center justify-center text-gray-500 hover:border-[#FF7A00] hover:text-[#FF7A00] transition-colors cursor-pointer group">
-              <Upload
-                size={32}
-                className="mb-4 group-hover:-translate-y-2 transition-transform"
-              />
-              <p className="font-black text-[10px] uppercase tracking-widest">
-                Upload Poster
-              </p>
-              <p className="text-[9px] mt-2 opacity-50">PNG, JPG UP TO 10MB</p>
+
+            <div className="space-y-4">
+              {formData?.images?.map((file, index) => (
+                <div
+                  key={index}
+                  className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative"
+                >
+                  <div className="w-16 h-16 rounded-xl border border-white/5 overflow-hidden shrink-0 bg-black">
+                    {file.type && file.type.startsWith("image/") ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="preview"
+                        className="w-full h-full object-cover opacity-80"
+                      />
+                    ) : (
+                      <span className="text-gray-500 text-xs">No Preview</span>
+                    )}
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-[10px] font-black uppercase text-gray-300 truncate">
+                      {file.name}
+                    </p>
+                    <p className="text-[9px] font-bold text-gray-600 uppercase italic">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const updated = formData.images.filter(
+                        (_, i) => i !== index,
+                      );
+                      setFormData({ ...formData, images: updated });
+                    }}
+                    className="p-2 text-red-500/60 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
             </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                posterInputRef.current && posterInputRef.current.click()
+              }
+              className="w-full h-32 bg-[#121417] border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95 group"
+            >
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={posterInputRef}
+                multiple
+                onChange={(e) => {
+                  const files = Array.from(e.target.files);
+                  if (files.length)
+                    setFormData({
+                      ...formData,
+                      images: [...formData.images, ...files],
+                    });
+                }}
+              />
+              <Plus
+                size={32}
+                strokeWidth={4}
+                className="group-hover:scale-110 transition-transform"
+              />
+              <p className="font-black text-[11px] uppercase tracking-[0.2em] italic">
+                Add Visual Intel
+              </p>
+            </button>
           </div>
 
           <div className="p-6 bg-[#FF7A00]/5 border border-[#FF7A00]/10 rounded-3xl flex items-center gap-4">

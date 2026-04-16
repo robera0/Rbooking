@@ -1,8 +1,10 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { ServiceProvider, useService } from "./Context/ServiceContext";
 import { ApiProvider } from "./Context/ApiEvent";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
+import { Toaster } from "react-hot-toast";
 
 import Home from "../admin/Home";
 import Main from "../user/Main";
@@ -19,7 +21,6 @@ import Profile from "../user/Profile";
 import Setting from "../user/Setting";
 import EventInfo from "../user/EventInfo";
 import { ProtectedRoute } from "./components/Reusable";
-import { Toaster } from "react-hot-toast";
 import Events from "../user/Events";
 
 import EventMang from "../admin/EventMang";
@@ -44,6 +45,7 @@ import Review from "../admin/Review";
 import User_Setting from "../admin/User_Setting";
 import User from "../admin/User";
 import Verification from "../admin/Verification";
+
 const queryClient = new QueryClient();
 
 // Framer Motion variants
@@ -71,25 +73,31 @@ const PageWrapper = ({ children }) => (
     {children}
   </motion.div>
 );
-<Toaster
-  position="top-center"
-  toastOptions={{
-    style: {
-      background: "#2A2C31",
-      color: "#fff",
-    },
-    success: {
-      style: {
-        border: "1px solid #FF7800",
-      },
-    },
-    error: {
-      style: {
-        border: "1px solid red",
-      },
-    },
-  }}
-/>;
+
+// Google OAuth handler page
+const GoogleAuthHandler = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { setIsLoggedIn } = useService();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("access_token", token);
+      setIsLoggedIn(true);
+      navigate("/", { replace: true });
+    } else {
+      navigate("/login", { replace: true });
+    }
+  }, [location, navigate, setIsLoggedIn]);
+
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <span>Signing you in with Google...</span>
+    </div>
+  );
+};
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -98,6 +106,8 @@ const AnimatedRoutes = () => {
     <AnimatePresence>
       <Toaster position="top-right" />
       <Routes key={location.pathname} location={location}>
+        {/* Google OAuth Redirect Handler */}
+        <Route path="/google-auth" element={<GoogleAuthHandler />} />
         <Route
           path="/login"
           element={

@@ -17,8 +17,12 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        // Password required only if not Google user
+        return !this.googleId;
+      },
     },
+    googleId: { type: String },
     refreshTokens: [
       {
         token: { type: String, required: true },

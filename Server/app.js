@@ -11,6 +11,8 @@ import authrouter from "./routes/authRoutes.js";
 import userProfilesRouter from "./routes/profileRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
+import passport from "./config/googleAuth.js";
+import session from "express-session";
 
 dotenv.config();
 const app = express();
@@ -29,6 +31,8 @@ const startServer = async () => {
 };
 
 app.use(express.json());
+
+// CORS must come first so preflight OPTIONS requests are handled before auth middleware
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://paysso.netlify.app"],
@@ -36,6 +40,17 @@ app.use(
   }),
 );
 app.use(cookieParser());
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }, // Set to true if using HTTPS
+  }),
+);
+// passport.session() removed — app uses JWTs (session: false on OAuth callback)
+app.use(passport.initialize());
 
 app.use("/api", eventrouter);
 app.use("/api", commentrouter);
