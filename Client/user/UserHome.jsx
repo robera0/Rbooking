@@ -312,9 +312,9 @@ const UserHome = () => {
                   {/* Image Container */}
                   <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
                     <img
-                      src={e.img}
+                      src={e?.pictures[0]}
                       className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
-                      alt={e.name}
+                      alt={e?.name}
                     />
                     {/* Hover Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -363,7 +363,7 @@ const UserHome = () => {
                       className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
                     />
                     <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
-                      {e.rating || "4.9"}
+                      {e.rating.score || "4.9"}
                     </span>
                   </div>
                 </div>
@@ -383,7 +383,7 @@ const UserHome = () => {
                     </span>
                     <div className="flex items-baseline gap-1">
                       <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
-                        ${e.price}
+                        ${e?.priceRanges[0]?.min}
                       </span>
                       <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
                         /pp
