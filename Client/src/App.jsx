@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { ServiceProvider, useService } from "./Context/ServiceContext";
 import { ApiProvider } from "./Context/ApiEvent";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -121,7 +127,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/sign_up"
           element={
@@ -135,7 +140,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/admin/home"
           element={
@@ -146,7 +150,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         {/* Admin routes */}
         <Route
           path="/admin/login"
@@ -156,7 +159,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/dashboard"
           element={
@@ -167,7 +169,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/admin/users"
           element={
@@ -178,7 +179,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/admin/events"
           element={
@@ -189,7 +189,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/admin/events/add"
           element={
@@ -200,7 +199,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/admin/orders"
           element={
@@ -211,7 +209,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/payment"
           element={
@@ -222,7 +219,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/marketing"
           element={
@@ -233,7 +229,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/marketing/create_notification"
           element={
@@ -244,7 +239,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/reports"
           element={
@@ -255,7 +249,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/setting"
           element={
@@ -266,7 +259,6 @@ const AnimatedRoutes = () => {
             </Home>
           }
         />
-
         <Route
           path="/"
           element={
@@ -277,22 +269,8 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
-        {/* 
-<Route
-  path="/events/:eventId/tickets/:ticketId"
-  element={
-    <PageWrapper>
-      <Main>
-        <EventInfo />
-      </Main>
-    </PageWrapper>
-  }
-/> 
-*/}
-
         <Route
-          path="/events/1"
+          path="/events/:eventId/tickets/:ticketId"
           element={
             <PageWrapper>
               <Main>
@@ -312,7 +290,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/tickets_home"
           element={
@@ -325,7 +302,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/tickets_home/:ticketId"
           element={
@@ -338,7 +314,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/account"
           element={
@@ -353,7 +328,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/account/favorites"
           element={
@@ -368,7 +342,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/account/setting"
           element={
@@ -381,7 +354,6 @@ const AnimatedRoutes = () => {
             </PageWrapper>
           }
         />
-
         <Route
           path="/event_sports"
           element={

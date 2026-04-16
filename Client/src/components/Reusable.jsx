@@ -370,7 +370,8 @@ export const AccountMenu = ({ icon, header, path, action }) => {
 export const AccountSideMenu = () => {
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:5000/api/auth/logout", {
+      const { API_URL } = useService();
+      await fetch(`${API_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

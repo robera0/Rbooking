@@ -23,7 +23,7 @@ const AddEvent = () => {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    eventType: "concert",
+    eventType: "Event",
     eventName: "",
     artistName: "",
     venue: "",
@@ -56,7 +56,7 @@ const AddEvent = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminEvents"] });
-      toast.success(`${type} PUBLISHED"`);
+      toast.success(`${formData.eventType} PUBLISHED`);
       navigate("/admin/events");
     },
   });
@@ -89,9 +89,9 @@ const AddEvent = () => {
             >
               <ArrowLeft size={24} />
             </button>
+
             <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
-              Create{" "}
-              <span className="text-[#FF7A00]">{formData.eventType}</span>
+              Create <span className="text-[#FF7A00]">{formData.type}</span>
             </h1>
           </div>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00] ml-14" />
