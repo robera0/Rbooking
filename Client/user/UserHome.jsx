@@ -308,7 +308,14 @@ const UserHome = () => {
           {events?.events?.map((e) => (
             <motion.div variants={itemVariants} className="group">
               <div className="relative">
-                <Link to={`/events/${e._id}`} className="block">
+                <Link
+                  to={
+                    e?.tickets?.length > 0
+                      ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                      : `/events/${e?._id}`
+                  }
+                  className="block"
+                >
                   {/* Image Container */}
                   <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
                     <img
