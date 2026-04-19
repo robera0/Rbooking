@@ -24,6 +24,43 @@ import {
 } from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+// Skeleton for Featured Event Card
+function FeaturedEventSkeleton() {
+  return (
+    <div className="group animate-pulse">
+      {/* Image Skeleton */}
+      <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
+        <Skeleton
+          height="100%"
+          width="100%"
+          className="w-full h-full"
+          style={{ minHeight: 180 }}
+        />
+      </div>
+      {/* Metadata */}
+      <div className="mt-5 px-1 space-y-4">
+        {/* Location + Rating */}
+        <div className="flex justify-between items-center">
+          <Skeleton height={12} width={80} borderRadius={8} />
+          <Skeleton height={20} width={40} borderRadius={8} />
+        </div>
+        {/* Event Name */}
+        <Skeleton height={20} width="75%" borderRadius={8} />
+        {/* Price */}
+        <div className="flex justify-between items-end pt-1">
+          <div className="space-y-2">
+            <Skeleton height={12} width={60} borderRadius={8} />
+            <Skeleton height={24} width={80} borderRadius={8} />
+          </div>
+          <Skeleton height={40} width={40} borderRadius={12} />
+        </div>
+      </div>
+    </div>
+  );
+}
+import "react-loading-skeleton/dist/skeleton.css";
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
@@ -305,113 +342,121 @@ const UserHome = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8">
-          {events?.events?.map((e) => (
-            <motion.div variants={itemVariants} className="group">
-              <div className="relative">
-                <Link
-                  to={
-                    e?.tickets?.length > 0
-                      ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
-                      : `/events/${e?._id}`
-                  }
-                  className="block"
+          {isLoading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <FeaturedEventSkeleton key={i} />
+              ))
+            : events?.events?.map((e) => (
+                <motion.div
+                  variants={itemVariants}
+                  className="group"
+                  key={e._id}
                 >
-                  {/* Image Container */}
-                  <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
-                    <img
-                      src={e?.pictures[0]}
-                      className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
-                      alt={e?.name}
-                    />
-                    {/* Hover Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </Link>
+                  <div className="relative">
+                    <Link
+                      to={
+                        e?.tickets?.length > 0
+                          ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                          : `/events/${e?._id}`
+                      }
+                      className="block"
+                    >
+                      {/* Image Container */}
+                      <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
+                        <img
+                          src={e?.pictures[0]}
+                          className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
+                          alt={e?.name}
+                        />
+                        {/* Hover Gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </Link>
 
-                {/* Wishlist Button */}
-                <button
-                  onClick={(ev) => {
-                    ev.preventDefault();
-                    setAddFav(!addFav);
-                  }}
-                  className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
-                    addFav
-                      ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
-                      : "bg-black/20 border-white/10 text-white hover:bg-black/40"
-                  }`}
-                >
-                  <Heart
-                    size={18}
-                    fill={addFav ? "currentColor" : "none"}
-                    strokeWidth={2.5}
-                  />
-                </button>
-              </div>
-
-              {/* Metadata Section */}
-              <div className="mt-5 px-1 space-y-4">
-                {/* Row 1: Location & Rating (Desktop Scaled) */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5 text-[#FF7A00]">
-                    <MapPin
-                      size={12}
-                      className="md:w-3.5 md:h-3.5"
-                      strokeWidth={3}
-                    />
-                    <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
-                      {e.location || "London, UK"}
-                    </span>
+                    {/* Wishlist Button */}
+                    <button
+                      onClick={(ev) => {
+                        ev.preventDefault();
+                        setAddFav(!addFav);
+                      }}
+                      className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
+                        addFav
+                          ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
+                          : "bg-black/20 border-white/10 text-white hover:bg-black/40"
+                      }`}
+                    >
+                      <Heart
+                        size={18}
+                        fill={addFav ? "currentColor" : "none"}
+                        strokeWidth={2.5}
+                      />
+                    </button>
                   </div>
 
-                  {/* Scaled Rating Badge for Desktop */}
-                  <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
-                    <Star
-                      size={12}
-                      className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
-                    />
-                    <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
-                      {e.rating.score || "4.9"}
-                    </span>
-                  </div>
-                </div>
+                  {/* Metadata Section */}
+                  <div className="mt-5 px-1 space-y-4">
+                    {/* Row 1: Location & Rating (Desktop Scaled) */}
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-1.5 text-[#FF7A00]">
+                        <MapPin
+                          size={12}
+                          className="md:w-3.5 md:h-3.5"
+                          strokeWidth={3}
+                        />
+                        <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
+                          {e.location || "London, UK"}
+                        </span>
+                      </div>
 
-                {/* Row 2: Event Name */}
-                <Link to={`/events/${e._id}`}>
-                  <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
-                    {e.name}
-                  </h3>
-                </Link>
+                      {/* Scaled Rating Badge for Desktop */}
+                      <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
+                        <Star
+                          size={12}
+                          className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
+                        />
+                        <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
+                          {e.rating.score || "4.9"}
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Row 3: Pricing & Action */}
-                <div className="flex justify-between items-end pt-1">
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-[9px] lg:text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] mb-1">
-                      Entry From
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
-                        ${e?.priceRanges[0]?.min}
-                      </span>
-                      <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
-                        /pp
-                      </span>
+                    {/* Row 2: Event Name */}
+                    <Link to={`/events/${e._id}`}>
+                      <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
+                        {e.name}
+                      </h3>
+                    </Link>
+
+                    {/* Row 3: Pricing & Action */}
+                    <div className="flex justify-between items-end pt-1">
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-[9px] lg:text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] mb-1">
+                          Entry From
+                        </span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
+                            ${e?.priceRanges[0]?.min}
+                          </span>
+                          <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
+                            /pp
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        to={`/events/${e._id}`}
+                        className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
+                      >
+                        <Ticket
+                          size={20}
+                          className="md:w-6 md:h-6"
+                          strokeWidth={2.5}
+                        />
+                      </Link>
                     </div>
                   </div>
-
-                  <Link
-                    to={`/events/${e._id}`}
-                    className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
-                  >
-                    <Ticket
-                      size={20}
-                      className="md:w-6 md:h-6"
-                      strokeWidth={2.5}
-                    />
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                </motion.div>
+              ))}
         </div>
       </motion.section>
 

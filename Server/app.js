@@ -32,7 +32,6 @@ const startServer = async () => {
 
 app.use(express.json());
 
-// CORS must come first so preflight OPTIONS requests are handled before auth middleware
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://paysso.netlify.app"],

@@ -6,7 +6,7 @@ import { TicketModel } from "../models/TicketModel.js";
 export const get_events = async (req, res) => {
   try {
     const events = await Event.find();
-    console.log(events);
+
     // Get tickets for each event
     const eventsWithTickets = await Promise.all(
       events.map(async (event) => {
