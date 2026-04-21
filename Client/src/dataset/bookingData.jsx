@@ -28,6 +28,3 @@ export const dateAxisFormatter = (value, context) =>
     month: context.location === "tooltip" ? "long" : "short",
     year: "numeric",
   });
-
-
-  

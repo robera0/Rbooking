@@ -24,8 +24,10 @@ import {
 } from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
+
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+
 // Skeleton for Featured Event Card
 function FeaturedEventSkeleton() {
   return (
@@ -60,7 +62,6 @@ function FeaturedEventSkeleton() {
     </div>
   );
 }
-import "react-loading-skeleton/dist/skeleton.css";
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
