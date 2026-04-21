@@ -95,6 +95,13 @@ const EventInfo = () => {
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
 
+  // Scroll to top after event data is loaded, preserving all animations
+  useEffect(() => {
+    if (!isLoading) {
+      setTimeout(() => window.scrollTo(0, 0), 50);
+    }
+  }, [isLoading]);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
@@ -787,7 +794,11 @@ const EventInfo = () => {
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.0, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{
+                    delay: 1.0,
+                    duration: 0.6,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setShowTicketDropdown(!showTicketDropdown)}
@@ -810,8 +821,8 @@ const EventInfo = () => {
                   {showTicketDropdown && (
                     <>
                       {/* invisible closer backdrop */}
-                      <div 
-                        className="fixed inset-0 z-10" 
+                      <div
+                        className="fixed inset-0 z-10"
                         onClick={() => setShowTicketDropdown(false)}
                       />
                       <motion.div
@@ -822,23 +833,48 @@ const EventInfo = () => {
                         className="absolute top-full left-0 right-0 mt-3 z-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1a1c1e]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                       >
                         {[
-                          { type: "VIP", price: "120", accent: "#60A5FA", icon: "👑" },
-                          { type: "Early Bird", price: "40", accent: "#4ADE80", icon: "🐦" },
-                          { type: "Regular", price: "60", accent: "#FACC15", icon: "🎟️" },
-                          { type: "General Admission", price: "25", accent: "#FF7A00", icon: "🎫" }
+                          {
+                            type: "VIP",
+                            price: "120",
+                            accent: "#60A5FA",
+                            icon: "👑",
+                          },
+                          {
+                            type: "Early Bird",
+                            price: "40",
+                            accent: "#4ADE80",
+                            icon: "🐦",
+                          },
+                          {
+                            type: "Regular",
+                            price: "60",
+                            accent: "#FACC15",
+                            icon: "🎟️",
+                          },
+                          {
+                            type: "General Admission",
+                            price: "25",
+                            accent: "#FF7A00",
+                            icon: "🎫",
+                          },
                         ].map((tier) => (
                           <motion.button
                             key={tier.type}
-                            whileHover={{ backgroundColor: "rgba(255,255,255,0.03)" }}
+                            whileHover={{
+                              backgroundColor: "rgba(255,255,255,0.03)",
+                            }}
                             onClick={() => {
-                              setSelectedTicket({ type: tier.type, price: tier.price });
+                              setSelectedTicket({
+                                type: tier.type,
+                                price: tier.price,
+                              });
                               setShowTicketDropdown(false);
                             }}
                             className="w-full px-5 py-4 flex items-center justify-between border-b border-white/[0.04] last:border-0 group transition-colors"
                           >
                             <div className="flex items-center gap-3">
-                              <span 
-                                className="w-1.5 h-1.5 rounded-full" 
+                              <span
+                                className="w-1.5 h-1.5 rounded-full"
                                 style={{ backgroundColor: tier.accent }}
                               />
                               <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-white transition-colors">
@@ -977,4 +1013,4 @@ const EventInfo = () => {
   );
 };
 
-export default EventInfo
+export default EventInfo;
