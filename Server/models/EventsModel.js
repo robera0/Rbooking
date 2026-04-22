@@ -156,7 +156,7 @@ const ConcertSchema = new mongoose.Schema({
     name: String,
   },
 
-  musicGenre: String,
+  musicGenre: [String],
   familyFriendly: {
     type: Boolean,
     default: false,

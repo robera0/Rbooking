@@ -92,7 +92,6 @@ const FilterTab = ({ label, active, count, onClick }) => (
   </button>
 );
 
-/* ═══════════════════ MAIN ═══════════════════ */
 const TicketHome = () => {
   const navigate = useNavigate();
   const { isLoggedIn } = useService();
@@ -249,7 +248,7 @@ const TicketHome = () => {
 
         {/* ── TICKET STUBS (identical structure to EventInfo) ── */}
         {!ticketLoading && filtered.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-22">
             {filtered.map((t, idx) => {
               const event = t.ticketId?.eventId;
               const ticketId = t.ticketId;
