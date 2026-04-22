@@ -42,14 +42,15 @@ export const update_user = async (req, res) => {
       nationality,
       phone,
       dateOfBirth,
-      gender,
+      Gender,
       address,
       bio,
-      avatarUrl,
     } = req.body;
 
+    // Build avatarUrl from the uploaded file (handled by multer)
+    let avatarUrl;
     if (req.file) {
-      avatarUrl = `/uploads/${req.file.filename}`;
+      avatarUrl = `uploads/${req.file.filename}`;
     }
 
     const updates = Object.fromEntries(
@@ -58,11 +59,11 @@ export const update_user = async (req, res) => {
         nationality,
         phone,
         dateOfBirth,
-        gender,
+        Gender,
         address,
         bio,
         avatarUrl,
-      }).filter(([_, v]) => v !== undefined),
+      }).filter(([_, v]) => v !== undefined && v !== ""),
     );
 
     const updatedProfile = await ProfileModel.findOneAndUpdate(

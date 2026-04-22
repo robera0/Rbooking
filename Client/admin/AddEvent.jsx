@@ -25,7 +25,7 @@ const AddEvent = () => {
   const [formData, setFormData] = useState({
     eventType: "Event",
     eventName: "",
-    artistName: "",
+    artistName: [],
     venue: "",
     description: "",
     eventDate: "",

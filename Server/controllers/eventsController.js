@@ -3,6 +3,61 @@ import { TicketModel } from "../models/TicketModel.js";
 
 //ADD EVENTS
 
+export const add_event = async (req, res) => {
+  try {
+    const {
+      type,
+      name,
+      artist,
+      locale,
+      info,
+      policies,
+      priceRanges,
+      dates,
+      sales,
+      musicGenre,
+      amenities,
+      desc,
+    } = req.body;
+
+    let pictures;
+    if (req.file) {
+      pictures = `uploads/${req.file.filename}`;
+    }
+
+    const events = Object.fromEntries(
+      Object.entries({
+        type,
+        name,
+        artist,
+        locale,
+        info,
+        policies,
+        priceRanges,
+        dates,
+        sales,
+        musicGenre,
+        amenities,
+        pictures,
+        desc,
+      }).filter(([_, v]) => v !== undefined && v !== ""),
+    );
+    const newEvent = await Event.create(events);
+
+    return res.status(200).json({
+      success: true,
+      event: newEvent,
+      message: "event  created  successfully",
+    });
+  } catch (error) {
+    console.error("Error adding events:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
 export const get_events = async (req, res) => {
   try {
     const events = await Event.find();

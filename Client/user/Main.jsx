@@ -185,7 +185,7 @@ const Main = ({ children }) => {
               className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] bg-[#1A1C1E]/95 backdrop-blur-xl py-4 px-10 z-[55] border border-white/10 rounded-2xl shadow-2xl flex justify-between items-center"
             >
               <MenuBar icon={<House size={20} />} path="/" />
-              <MenuBar icon={<Ticket size={20} />} path="/tickets" />
+              <MenuBar icon={<Ticket size={20} />} path="/tickets_home" />
               <MenuBar icon={<CircleUser size={20} />} path="/account" />
             </motion.div>
           )}
