@@ -39,6 +39,9 @@ export const login_user = async (req, res) => {
   const user = await UserModel.findOne({ email });
 
   if (!user) return res.status(400).json({ message: "your are not a user" });
+  if (user.status === "banned") {
+    return res.status(400).json({ message: "your banned from using Paysso" });
+  }
 
   const isMatch = await comparePassword(password, user.password);
   if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
