@@ -15,7 +15,13 @@ import adminRouter from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
 import passport from "./config/googleAuth.js";
 import session from "express-session";
-
+import {
+  Event,
+  Concert,
+  Festival,
+  GenericEvent,
+} from "./models/EventsModel.js";
+// Importing these ensures .discriminator() is called and registered
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,7 +64,6 @@ app.use(
 // passport.session() removed — app uses JWTs (session: false on OAuth callback)
 app.use(passport.initialize());
 
-
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api", eventrouter);
@@ -72,4 +77,3 @@ app.use("/api/auth", authrouter);
 
 app.use("/api/admin", adminRouter);
 startServer();
-

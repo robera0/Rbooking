@@ -5,3 +5,10 @@
 [] test the add event 
 [] design of the wishlist 
 []design the other dashboards 
+
+
+
+// Today 
+ [] add a toast animation when event is added 
+ [] make the admin block suspend  user 
+ [] send the total amount ticket to the tickets route

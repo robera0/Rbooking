@@ -67,7 +67,6 @@ const StatBadge = ({ icon: Icon, label, value }) => (
   </motion.div>
 );
 
-/* ─── main component ────────────────────────────────────────────────────── */
 const EventInfo = () => {
   const { eventId, ticketId } = useParams();
   const { setEditMenuActive, setCheckoutOpen, checkoutOpen } = useService();

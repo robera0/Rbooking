@@ -23,15 +23,15 @@ const AddEvent = () => {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    eventType: "Event",
+    type: "",
     eventName: "",
-    artistName: [],
+    artistName: "",
     venue: "",
     description: "",
     eventDate: "",
     ticketTiers: [],
     amenities: [],
-    images: [],
+    pictures: [],
   });
   const [newAmenity, setNewAmenity] = useState("");
   const [newTier, setNewTier] = useState({
@@ -46,18 +46,61 @@ const AddEvent = () => {
 
   const createMutation = useMutation({
     mutationFn: async (payload) => {
-      const res = await fetch(`${API_URL}/api/admin/events`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const form = new FormData();
+
+      form.append("type", payload.type);
+      form.append("name", payload.name);
+      form.append("locale", payload.locale);
+      form.append("desc", payload.desc);
+
+      form.append("artist", JSON.stringify(payload.artist));
+      form.append("priceRanges", JSON.stringify(payload.priceRanges));
+      form.append("dates", JSON.stringify(payload.dates));
+      form.append("amenities", JSON.stringify(payload.amenities));
+      form.append("musicGenre", JSON.stringify(payload.musicGenre));
+
+      // upload first image
+      formData.pictures.forEach((img) => {
+        form.append("pictures", img);
       });
+
+      const res = await fetch(`${API_URL}/api/addEvents`, {
+        method: "POST",
+        body: form,
+      });
+
       if (!res.ok) throw new Error("Failed to create event");
+
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminEvents"] });
-      toast.success(`${formData.eventType} PUBLISHED`);
-      navigate("/admin/events");
+      // 1. Trigger the Success Toast
+      toast.success("Event Published Successfully!", {
+        duration: 2000,
+        style: {
+          background: "#1C1F22",
+          color: "#fff",
+          border: "1px solid #FF7A00",
+        },
+      });
+      setFormData({
+        type: "",
+        eventName: "",
+        artistName: "",
+        venue: "",
+        description: "",
+        eventDate: "",
+        ticketTiers: [],
+        amenities: [],
+        pictures: [],
+      });
+
+      setTimeout(() => {
+        navigate("/admin/events");
+      }, 2000);
+    },
+    onError: (error) => {
+      toast.error(`Error: ${error.message}`);
     },
   });
 
@@ -66,13 +109,44 @@ const AddEvent = () => {
       return setError("Event Name is required to publish");
     setError("");
     createMutation.mutate({
-      type: formData.eventType,
+      type: formData.type.toLowerCase(),
       name: formData.eventName,
-      artist: { name: formData.artistName },
+      artist: {
+        name: formData.artistName,
+      },
       locale: formData.venue,
+
+      musicGenre: ["General"],
+
+      priceRanges: formData.ticketTiers.map((tier) => ({
+        type: tier.tierName,
+        currency: "ETB",
+        min: Number(tier.price),
+        max: Number(tier.price),
+      })),
       desc: formData.description,
-      date: formData.eventDate,
+      dates: {
+        start: {
+          localDate: formData.eventDate?.split("T")[0],
+          localTime: formData.eventDate?.split("T")[1],
+          dateTime: formData.eventDate ? new Date(formData.eventDate) : null,
+        },
+        timezone: "Africa/Addis_Ababa",
+        status: {
+          code: "onsale",
+        },
+      },
+
+      amenities: {
+        activity: formData.amenities,
+        payment_method: [],
+        safety: [],
+        other: [],
+      },
     });
+
+    console.log(formData);
+    console.log("yes");
   };
 
   return (
@@ -117,7 +191,7 @@ const AddEvent = () => {
                 <Tag size={14} className="text-[#FF7A00]" /> Classification Type
               </h3>
               <div className="grid grid-cols-3 gap-4">
-                {["concert", "festival", "event"].map((t) => (
+                {["concert", "festival", "generic"].map((t) => (
                   <button
                     key={t}
                     type="button"
@@ -476,7 +550,7 @@ const AddEvent = () => {
             </h3>
 
             <div className="space-y-4">
-              {formData?.images?.map((file, index) => (
+              {formData?.pictures?.map((file, index) => (
                 <div
                   key={index}
                   className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative"
@@ -502,10 +576,10 @@ const AddEvent = () => {
                   </div>
                   <button
                     onClick={() => {
-                      const updated = formData.images.filter(
+                      const updated = formData.pictures.filter(
                         (_, i) => i !== index,
                       );
-                      setFormData({ ...formData, images: updated });
+                      setFormData({ ...formData, pictures: updated });
                     }}
                     className="p-2 text-red-500/60 hover:text-red-500 transition-colors"
                   >
@@ -533,7 +607,7 @@ const AddEvent = () => {
                   if (files.length)
                     setFormData({
                       ...formData,
-                      images: [...formData.images, ...files],
+                      pictures: [...formData.pictures, ...files],
                     });
                 }}
               />

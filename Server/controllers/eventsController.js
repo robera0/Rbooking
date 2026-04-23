@@ -1,11 +1,25 @@
 import { Event } from "../models/EventsModel.js";
 import { TicketModel } from "../models/TicketModel.js";
-
+import multer from "multer";
 //ADD EVENTS
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+
+  filename: function (req, file, cb) {
+    const uniqueName =
+      Date.now() + "-" + file.originalname.replace(/\s+/g, "-");
+
+    cb(null, uniqueName);
+  },
+});
+
+export const upload = multer({ storage });
 export const add_event = async (req, res) => {
   try {
-    const {
+    let {
       type,
       name,
       artist,
@@ -20,44 +34,54 @@ export const add_event = async (req, res) => {
       desc,
     } = req.body;
 
-    let pictures;
-    if (req.file) {
-      pictures = `uploads/${req.file.filename}`;
+    const normalizedType = type?.toLowerCase();
+
+    // Parse JSON fields
+    artist = JSON.parse(artist || "{}");
+    priceRanges = JSON.parse(priceRanges || "[]");
+    dates = JSON.parse(dates || "{}");
+    amenities = JSON.parse(amenities || "{}");
+    musicGenre = JSON.parse(musicGenre || "[]");
+
+    // Handle multiple images
+    let pictures = [];
+
+    if (req.files && req.files.length > 0) {
+      pictures = req.files.map((file) => `uploads/${file.filename}`);
     }
 
-    const events = Object.fromEntries(
-      Object.entries({
-        type,
-        name,
-        artist,
-        locale,
-        info,
-        policies,
-        priceRanges,
-        dates,
-        sales,
-        musicGenre,
-        amenities,
-        pictures,
-        desc,
-      }).filter(([_, v]) => v !== undefined && v !== ""),
-    );
+    const events = {
+      type: normalizedType,
+      name,
+      artist,
+      locale,
+      info,
+      policies,
+      priceRanges,
+      dates,
+      sales,
+      musicGenre,
+      amenities,
+      pictures,
+      desc,
+    };
+
     const newEvent = await Event.create(events);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       event: newEvent,
-      message: "event  created  successfully",
+      message: "event created successfully",
     });
   } catch (error) {
     console.error("Error adding events:", error);
+
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message,
     });
   }
 };
-
 export const get_events = async (req, res) => {
   try {
     const events = await Event.find();
