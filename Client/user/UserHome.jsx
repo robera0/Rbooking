@@ -15,6 +15,7 @@ import {
   Star,
   MapPin,
 } from "lucide-react";
+import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { CalendarDemo } from "@/components/ui/calendar";
 import {
   motion,
@@ -63,12 +64,32 @@ function FeaturedEventSkeleton() {
   );
 }
 
+
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
-  const { events, isLoading } = eventService();
-  const { type, setType, date, setDate, artist, setArtist, addFav, setAddFav } =
-    useService();
+  const { events, isLoading, wishlist, wishlistIsError } = eventService();
+  const { type, setType, date, setDate, artist, setArtist } = useService();
+  const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
+
+  const checkWishlist = (eventId) => {
+    return (
+      wishlist?.wishlists?.events?.some((item) => item?._id === eventId) ||
+      false
+    );
+  };
+
+  const handleWishlistToggle = (eventId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const isCurrentlyAdded = checkWishlist(eventId);
+
+    wishlistMutation.mutate({
+      event_id: eventId,
+      isAdding: !isCurrentlyAdded,
+    });
+  };
 
   // Scroll logic for Hero section
   const containerRef = useRef(null);
@@ -263,7 +284,7 @@ const UserHome = () => {
             <MapIcon className="text-gray-600" size={16} />
             <div className="flex-1">
               <label className="block text-[7px] lg:text-[12px]  text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
-                Location
+                Category / Venue
               </label>
               <input
                 type="text"
@@ -283,12 +304,12 @@ const UserHome = () => {
               className="w-full h-full flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all"
             >
               <CalendarIcon className="text-gray-600" size={16} />
-              <div className="text-left space-y-6">
+              <div className="text-left">
                 <span className="block text-[7px] lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
                   Schedule
                 </span>
                 <span className="font-bold text-[11px] lg:text-[12px] block truncate text-white">
-                  {date ? date.toLocaleDateString() : "All Dates"}
+                  {date instanceof Date ? date.toLocaleDateString() : "All Dates"}
                 </span>
               </div>
             </button>
@@ -309,7 +330,10 @@ const UserHome = () => {
               )}
             </AnimatePresence>
           </div>
-          <button className="h-[56px] md:h-[64px] lg:w-[70px] bg-[#FF7A00] rounded-[1.5rem] md:rounded-[1.8rem] flex items-center justify-center hover:bg-white group transition-all shrink-0 active:scale-95 shadow-lg shadow-[#FF7A00]/10">
+          <button 
+            onClick={() => navigate("/event")}
+            className="h-[56px] md:h-[64px] lg:w-[70px] bg-[#FF7A00] rounded-[1.5rem] md:rounded-[1.8rem] flex items-center justify-center hover:bg-white group transition-all shrink-0 active:scale-95 shadow-lg shadow-[#FF7A00]/10"
+          >
             <Search
               className="text-black group-hover:scale-110 transition-transform"
               size={20}
@@ -354,41 +378,50 @@ const UserHome = () => {
                   key={e._id}
                 >
                   <div className="relative">
-                    <Link
-                      to={
-                        e?.tickets?.length > 0
-                          ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
-                          : `/events/${e?._id}`
-                      }
-                      className="block"
-                    >
-                      {/* Image Container */}
-                      <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
-                        <img
-                          src={e?.pictures[0]}
-                          className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
-                          alt={e?.name}
-                        />
-                        {/* Hover Gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </Link>
+                      {/* Sold Out Overlay */}
+                      {e?.tickets?.length === 0 && (
+                        <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
+                          <div className="bg-red-600/90 text-white px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2 shadow-2xl border border-white/20">
+                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                            Sold Out
+                          </div>
+                        </div>
+                      )}
+                      
+                      <Link
+                        to={
+                          e?.tickets?.length > 0
+                            ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                            : "#"
+                        }
+                        className={`block ${e?.tickets?.length === 0 ? "cursor-not-allowed" : ""}`}
+                        onClick={(ev) => e?.tickets?.length === 0 && ev.preventDefault()}
+                      >
+                        {/* Image Container */}
+                        <div className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${e?.tickets?.length === 0 ? "grayscale brightness-50" : ""}`}>
+                          <img
+                            src={e?.pictures[0]}
+                            className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
+                            alt={e?.name}
+                          />
+                          {/* Hover Gradient */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </Link>
 
                     {/* Wishlist Button */}
                     <button
-                      onClick={(ev) => {
-                        ev.preventDefault();
-                        setAddFav(!addFav);
-                      }}
+                      onClick={(ev) => handleWishlistToggle(e._id, ev)}
+                      disabled={wishlistMutation.isLoading}
                       className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
-                        addFav
+                        checkWishlist(e._id)
                           ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
                           : "bg-black/20 border-white/10 text-white hover:bg-black/40"
                       }`}
                     >
                       <Heart
                         size={18}
-                        fill={addFav ? "currentColor" : "none"}
+                        fill={checkWishlist(e._id) ? "currentColor" : "none"}
                         strokeWidth={2.5}
                       />
                     </button>
@@ -422,7 +455,13 @@ const UserHome = () => {
                     </div>
 
                     {/* Row 2: Event Name */}
-                    <Link to={`/events/${e._id}`}>
+                    <Link
+                      to={
+                        e?.tickets?.length > 0
+                          ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                          : `/events/${e?._id}`
+                      }
+                    >
                       <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
                         {e.name}
                       </h3>
@@ -436,7 +475,7 @@ const UserHome = () => {
                         </span>
                         <div className="flex items-baseline gap-1">
                           <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
-                            ${e?.priceRanges[0]?.min}
+                            ${e?.priceRanges?.[0]?.min || e?.price || "0"}
                           </span>
                           <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
                             /pp
@@ -505,6 +544,116 @@ const UserHome = () => {
               </div>
             </div>
           ))}
+        </div>
+      </motion.section>
+
+      {/* ================= 5. LIVE EXPERIENCE (Photos & Video) ================= */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={containerVariants}
+        className="px-6 lg:px-10 pb-32 max-w-[1380px] mx-auto z-10 relative"
+      >
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-stretch">
+          
+          {/* Photos Side */}
+          <div className="flex-1 space-y-10">
+            <motion.div variants={itemVariants} className="space-y-4">
+               <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none">
+                 EXP THE <span className="text-[#FF7A00]">PULSE</span>
+               </h2>
+               <p className="text-gray-500 text-sm font-medium tracking-tight max-w-md">
+                 From the main stage to your pocket. Witness the real energy captured by our global community at every sold-out venue.
+               </p>
+            </motion.div>
+
+            <div className="grid grid-cols-2 gap-4 h-[400px] md:h-[600px]">
+               <motion.div 
+                 variants={itemVariants}
+                 className="col-span-1 rounded-[2.5rem] overflow-hidden border border-white/10 relative group"
+               >
+                 <img 
+                   src="/home/datniggarobi/.gemini/antigravity/brain/caf8d5e8-c64b-4b1c-9dfd-869398a8911e/event_gallery_experience_1776992959526.png" 
+                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                   alt="Live Experience"
+                 />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                 <div className="absolute bottom-6 left-6">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">Main Stage</span>
+                    <p className="text-white font-bold leading-tight">Warehouse Session #2</p>
+                 </div>
+               </motion.div>
+               
+               <div className="col-span-1 flex flex-col gap-4">
+                  <motion.div 
+                     variants={itemVariants}
+                     className="flex-1 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative grayscale hover:grayscale-0 transition-all duration-700"
+                  >
+                    <img src="/Login.jpg" className="w-full h-full object-cover" alt="Venue" />
+                  </motion.div>
+                  <motion.div 
+                     variants={itemVariants}
+                     className="flex-1 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative grayscale hover:grayscale-0 transition-all duration-700"
+                  >
+                    <img src="/1308183.jpeg" className="w-full h-full object-cover" alt="Fans" />
+                  </motion.div>
+               </div>
+            </div>
+          </div>
+
+          {/* Video Side */}
+          <motion.div 
+            variants={itemVariants}
+            className="w-full lg:w-[450px] space-y-10"
+          >
+             <div className="space-y-4">
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Walkthrough</span>
+                <h3 className="text-2xl font-black uppercase tracking-tighter text-white italic">Frictionless Access</h3>
+             </div>
+
+             <div className="relative aspect-[9/16] lg:aspect-square xl:aspect-[9/16] bg-[#1C1F22] rounded-[3rem] p-4 border border-white/[0.08] shadow-2xl group flex flex-col">
+                <div className="relative w-full h-full rounded-[2.2rem] overflow-hidden">
+                   <img 
+                     src="/home/datniggarobi/.gemini/antigravity/brain/caf8d5e8-c64b-4b1c-9dfd-869398a8911e/ticket_purchase_demo_frame_1776993034120.png" 
+                     className="w-full h-full object-cover brightness-75 group-hover:brightness-100 transition-all duration-700"
+                     alt="Purchase Demo"
+                   />
+                   
+                   {/* Play Button Interface */}
+                   <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-20 h-20 rounded-full bg-[#FF7A00] flex items-center justify-center text-black shadow-2xl group-hover:scale-110 transition-transform cursor-pointer">
+                         <Activity size={32} strokeWidth={3} />
+                      </div>
+                   </div>
+
+                   {/* Progress Bar (Mock) */}
+                   <div className="absolute bottom-10 left-10 right-10 h-1 bg-white/20 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: "0%" }}
+                        whileInView={{ width: "65%" }}
+                        transition={{ duration: 2, ease: "easeInOut" }}
+                        className="h-full bg-[#FF7A00]"
+                      />
+                   </div>
+                </div>
+
+                <div className="mt-8 px-4 flex items-center justify-between">
+                   <div className="flex -space-x-3">
+                      {[1,2,3].map(i => (
+                        <div key={i} className="w-10 h-10 rounded-full border-4 border-[#121417] bg-gray-800 overflow-hidden">
+                           <img src={`/1308183.jpeg`} className="w-full h-full object-cover" alt="User" />
+                        </div>
+                      ))}
+                      <div className="w-10 h-10 rounded-full border-4 border-[#121417] bg-[#FF7A00] flex items-center justify-center text-black text-[10px] font-black">
+                         +2k
+                      </div>
+                   </div>
+                   <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest italic">Live Recording</span>
+                </div>
+             </div>
+          </motion.div>
+
         </div>
       </motion.section>
     </div>

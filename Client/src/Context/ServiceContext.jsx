@@ -40,6 +40,7 @@ export const ServiceProvider = ({ children }) => {
   const [type, setType] = useState("");
   const [artist, setArtist] = useState("");
   const [date, setDate] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
   const toggleWishlist = async ({ event_id, isAdding }) => {
     const url = isAdding
@@ -126,6 +127,8 @@ export const ServiceProvider = ({ children }) => {
         setArtist,
         setDate,
         date,
+        menuOpen,
+        setMenuOpen,
       }}
     >
       {children}

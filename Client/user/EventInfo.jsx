@@ -27,11 +27,11 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import toast, { Toaster } from "react-hot-toast";
-
+import { ProtectedRoute } from "@/components/Reusable";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
-
+import { useLocation } from "react-router-dom";
 /* ─── tiny helpers ──────────────────────────────────────────────────────── */
 const Orb = ({ className }) => (
   <div
@@ -70,7 +70,8 @@ const StatBadge = ({ icon: Icon, label, value }) => (
 const EventInfo = () => {
   const { eventId, ticketId } = useParams();
   const { setEditMenuActive, setCheckoutOpen, checkoutOpen } = useService();
-  const { fetchEventById } = eventService();
+  const { fetchEventById, usererror, userIsLoading, user } = eventService();
+  const location = useLocation();
 
   const [showMap, setShowMap] = useState(false);
   const [showTicketDropdown, setShowTicketDropdown] = useState(false);
@@ -167,11 +168,23 @@ const EventInfo = () => {
       accentColor: "#FF7A00",
       label: "General Admission",
     },
+    soldout: {
+      bandGradient:
+        "linear-gradient(120deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%)",
+      ctaGradient:
+        "linear-gradient(135deg, #444 0%, #333 50%, #222 100%)",
+      accentColor: "#EF4444",
+      label: "SOLD OUT",
+    },
   };
 
-  const ticketType =
-    (selectedTicket?.type || ticket?.type || "default").toLowerCase().trim() ||
+  const isSoldOut = event?.tickets?.length === 0;
+
+  const ticketType = isSoldOut 
+    ? "soldout"
+    : (selectedTicket?.type || ticket?.type || "default").toLowerCase().trim() ||
     "default";
+  
   const theme = ticketThemes[ticketType] ?? ticketThemes.default;
 
   const activeTicket = selectedTicket || ticket;
@@ -708,30 +721,45 @@ const EventInfo = () => {
                     ))}
                   </div>
 
-                  {/* CTA */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setCheckoutOpen(true)}
-                    className="relative w-full py-5 rounded-2xl flex items-center justify-center gap-3 overflow-hidden"
-                    style={{ background: theme.ctaGradient }}
-                  >
-                    {/* shimmer */}
-                    <motion.div
-                      animate={{ x: ["-100%", "200%"] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 2.5,
-                        ease: "easeInOut",
-                        repeatDelay: 1,
+                  <ProtectedRoute>
+                    <motion.button
+                      whileHover={!isSoldOut ? { scale: 1.02 } : {}}
+                      whileTap={!isSoldOut ? { scale: 0.97 } : {}}
+                      disabled={isSoldOut}
+                      onClick={() => {
+                        if (!user || usererror) {
+                          return (
+                            <Navigate
+                              to="/login"
+                              state={{ from: location }}
+                              replace
+                            />
+                          );
+                        }
+                        setCheckoutOpen(true);
                       }}
-                      className="absolute inset-0 w-1/3 bg-white/20 skew-x-[-20deg] pointer-events-none"
-                    />
-                    <span className="relative text-[12px] font-black uppercase tracking-widest text-black">
-                      Get Tickets
-                    </span>
-                    <MoveRight size={16} className="relative text-black" />
-                  </motion.button>
+                      className={`relative w-full py-5 rounded-2xl flex items-center justify-center gap-3 overflow-hidden ${isSoldOut ? "cursor-not-allowed opacity-80" : ""}`}
+                      style={{ background: theme.ctaGradient }}
+                    >
+                      {/* shimmer */}
+                      {!isSoldOut && (
+                        <motion.div
+                          animate={{ x: ["-100%", "200%"] }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 2.5,
+                            ease: "easeInOut",
+                            repeatDelay: 1,
+                          }}
+                          className="absolute inset-0 w-1/3 bg-white/20 skew-x-[-20deg] pointer-events-none"
+                        />
+                      )}
+                      <span className={`relative text-[12px] font-black uppercase tracking-widest ${isSoldOut ? "text-red-500" : "text-black"}`}>
+                        {isSoldOut ? "Sold Out" : "Get Tickets"}
+                      </span>
+                      {!isSoldOut && <MoveRight size={16} className="relative text-black" />}
+                    </motion.button>
+                  </ProtectedRoute>
 
                   {/* trust row */}
                   <div className="flex justify-around pt-1">
