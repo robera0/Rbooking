@@ -26,7 +26,7 @@ import {
 } from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
-
+import toast, { Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -67,26 +67,34 @@ function FeaturedEventSkeleton() {
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
-  const { events, isLoading, wishlist, wishlistIsError } = eventService();
+  const { events, user, isLoading, wishlist, wishlistIsError } = eventService();
   const { type, setType, date, setDate, artist, setArtist } = useService();
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
 
   const checkWishlist = (eventId) => {
     return (
-      wishlist?.wishlists?.events?.some((item) => item?._id === eventId) ||
-      false
+      wishlist?.wishlist?.items?.some(
+        (item) => item?.eventId?._id === eventId,
+      ) || false
     );
   };
 
-  const handleWishlistToggle = (eventId, e) => {
+  const handleWishlistToggle = (eventId, ticketId, e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!user) {
+      toast.error("Please sign in to save events");
+      navigate("/login", { state: { from: location } });
+      return;
+    }
 
     const isCurrentlyAdded = checkWishlist(eventId);
 
     wishlistMutation.mutate({
-      event_id: eventId,
+      eventId: eventId,
+      ticketId: ticketId,
       isAdding: !isCurrentlyAdded,
     });
   };
@@ -421,7 +429,9 @@ const UserHome = () => {
 
                     {/* Wishlist Button */}
                     <button
-                      onClick={(ev) => handleWishlistToggle(e._id, ev)}
+                      onClick={(ev) =>
+                        handleWishlistToggle(e._id, e.tickets[0]?._id, ev)
+                      }
                       disabled={wishlistMutation.isLoading}
                       className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
                         checkWishlist(e._id)
@@ -494,7 +504,11 @@ const UserHome = () => {
                       </div>
 
                       <Link
-                        to={`/events/${e._id}`}
+                        to={
+                          e?.tickets?.length > 0
+                            ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                            : `/events/${e?._id}`
+                        }
                         className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
                       >
                         <Ticket

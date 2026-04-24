@@ -42,12 +42,16 @@ export const ServiceProvider = ({ children }) => {
   const [date, setDate] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
-  const toggleWishlist = async ({ event_id, isAdding }) => {
+  const toggleWishlist = async ({ eventId, ticketId, isAdding }) => {
     const url = isAdding
       ? `${API_URL}/api/auth/wishlist/add`
       : `${API_URL}/api/auth/wishlist/remove`;
 
-    return axios.post(url, { events: event_id }, { withCredentials: true });
+    return axios.post(
+      url,
+      { eventId, ticketId },
+      { withCredentials: true },
+    );
   };
 
   return (

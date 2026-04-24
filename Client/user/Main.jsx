@@ -143,7 +143,7 @@ const Main = ({ children }) => {
 
             <nav className="hidden md:flex gap-10">
               {[
-                { label: "Explore", path: "/" },
+                { label: "Explore", path: "/event" },
                 { label: "Venues", path: "/venues" },
                 { label: "Artists", path: "/artists" },
               ].map((item) => (

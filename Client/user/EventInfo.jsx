@@ -861,65 +861,53 @@ const EventInfo = () => {
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         className="absolute top-full left-0 right-0 mt-3 z-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1a1c1e]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                       >
-                        {[
-                          {
-                            type: "VIP",
-                            price: "120",
-                            accent: "#60A5FA",
-                            icon: "👑",
-                          },
-                          {
-                            type: "Early Bird",
-                            price: "40",
-                            accent: "#4ADE80",
-                            icon: "🐦",
-                          },
-                          {
-                            type: "Regular",
-                            price: "60",
-                            accent: "#FACC15",
-                            icon: "🎟️",
-                          },
-                          {
-                            type: "General Admission",
-                            price: "25",
-                            accent: "#FF7A00",
-                            icon: "🎫",
-                          },
-                        ].map((tier) => (
-                          <motion.button
-                            key={tier.type}
-                            whileHover={{
-                              backgroundColor: "rgba(255,255,255,0.03)",
-                            }}
-                            onClick={() => {
-                              setSelectedTicket({
-                                type: tier.type,
-                                price: tier.price,
-                              });
-                              setShowTicketDropdown(false);
-                            }}
-                            className="w-full px-5 py-4 flex items-center justify-between border-b border-white/[0.04] last:border-0 group transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span
-                                className="w-1.5 h-1.5 rounded-full"
-                                style={{ backgroundColor: tier.accent }}
-                              />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-white transition-colors">
-                                {tier.type}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold text-white">
-                                ${tier.price}
-                              </span>
-                              <span className="text-sm opacity-50 group-hover:opacity-100 transition-opacity">
-                                {tier.icon}
-                              </span>
-                            </div>
-                          </motion.button>
-                        ))}
+                        {(event?.tickets || []).map((t) => {
+                          const typeKey =
+                            t.type?.toLowerCase()?.trim() || "default";
+                          const tTheme =
+                            ticketThemes[typeKey] || ticketThemes.default;
+
+                          const getIcon = (type) => {
+                            if (type.includes("vip")) return "👑";
+                            if (type.includes("early")) return "🐦";
+                            if (type.includes("regular")) return "🎟️";
+                            return "🎫";
+                          };
+
+                          return (
+                            <motion.button
+                              key={t._id}
+                              whileHover={{
+                                backgroundColor: "rgba(255,255,255,0.03)",
+                              }}
+                              onClick={() => {
+                                setSelectedTicket(t);
+                                setShowTicketDropdown(false);
+                              }}
+                              className="w-full px-5 py-4 flex items-center justify-between border-b border-white/[0.04] last:border-0 group transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{
+                                    backgroundColor: tTheme.accentColor,
+                                  }}
+                                />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-white transition-colors">
+                                  {t.type}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-white">
+                                  ${t.price}
+                                </span>
+                                <span className="text-sm opacity-50 group-hover:opacity-100 transition-opacity">
+                                  {getIcon(typeKey)}
+                                </span>
+                              </div>
+                            </motion.button>
+                          );
+                        })}
                       </motion.div>
                     </>
                   )}

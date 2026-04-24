@@ -73,17 +73,26 @@ const Events = () => {
 
   const checkWishlist = (eventId) => {
     return (
-      wishlist?.wishlists?.events?.some((item) => item?._id === eventId) ||
-      false
+      wishlist?.wishlist?.items?.some(
+        (item) => item?.eventId?._id === eventId,
+      ) || false
     );
   };
 
-  const handleWishlistToggle = (eventId, e) => {
+  const handleWishlistToggle = (eventId, ticketId, e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!user) {
+      toast.error("Please sign in to save events");
+      navigate("/login", { state: { from: location } });
+      return;
+    }
+
     const isCurrentlyAdded = checkWishlist(eventId);
     wishlistMutation.mutate({
-      event_id: eventId,
+      eventId: eventId,
+      ticketId: ticketId,
       isAdding: !isCurrentlyAdded,
     });
   };
@@ -241,7 +250,7 @@ const Events = () => {
 
                       {/* Wishlist Button */}
                       <button 
-                         onClick={(ev) => handleWishlistToggle(e._id, ev)}
+                         onClick={(ev) => handleWishlistToggle(e._id, e.tickets?.[0]?._id, ev)}
                          className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-xl backdrop-blur-md border border-white/10 flex items-center justify-center transition-all active:scale-90 ${
                            isAdded 
                              ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20" 
@@ -254,7 +263,13 @@ const Events = () => {
 
                     <div className="space-y-3 px-2">
                        <div className="flex items-center justify-between">
-                          <Link to={`/events/${e._id}`}>
+                          <Link
+                            to={
+                              e.tickets?.length > 0
+                                ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
+                                : `/events/${e._id}`
+                            }
+                          >
                             <h3 className="text-xl font-black uppercase italic tracking-tighter text-white hover:text-[#FF7A00] transition-colors line-clamp-1">
                               {e.name}
                             </h3>
@@ -276,7 +291,13 @@ const Events = () => {
                              </div>
                           </div>
                           
-                          <Link to={`/events/${e._id}`}>
+                          <Link
+                            to={
+                              e.tickets?.length > 0
+                                ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
+                                : `/events/${e._id}`
+                            }
+                          >
                             <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn">
                                Details <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                             </button>

@@ -2,13 +2,12 @@
 [] add a schema of  a review about the app
 [] make the notification side work
 [] make the view in wishlist work 
-[] test the add event 
 [] design of the wishlist 
 []design the other dashboards 
 
 
 
 // Today 
- [] add a toast animation when event is added 
- [] make the admin block suspend  user 
+ [c] add a toast animation when event is added 
+ [c] make the admin block suspend  user 
  [] send the total amount ticket to the tickets route
