@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   motion,
   AnimatePresence,
@@ -72,6 +72,7 @@ const EventInfo = () => {
   const { setEditMenuActive, setCheckoutOpen, checkoutOpen } = useService();
   const { fetchEventById, usererror, userIsLoading, user } = eventService();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [showMap, setShowMap] = useState(false);
   const [showTicketDropdown, setShowTicketDropdown] = useState(false);
@@ -721,45 +722,46 @@ const EventInfo = () => {
                     ))}
                   </div>
 
-                  <ProtectedRoute>
-                    <motion.button
-                      whileHover={!isSoldOut ? { scale: 1.02 } : {}}
-                      whileTap={!isSoldOut ? { scale: 0.97 } : {}}
-                      disabled={isSoldOut}
-                      onClick={() => {
-                        if (!user || usererror) {
-                          return (
-                            <Navigate
-                              to="/login"
-                              state={{ from: location }}
-                              replace
-                            />
-                          );
-                        }
-                        setCheckoutOpen(true);
-                      }}
-                      className={`relative w-full py-5 rounded-2xl flex items-center justify-center gap-3 overflow-hidden ${isSoldOut ? "cursor-not-allowed opacity-80" : ""}`}
-                      style={{ background: theme.ctaGradient }}
+                  <motion.button
+                    whileHover={!isSoldOut ? { scale: 1.02 } : {}}
+                    whileTap={!isSoldOut ? { scale: 0.97 } : {}}
+                    disabled={isSoldOut}
+                    onClick={() => {
+                      if (!user || usererror) {
+                        navigate("/login", { state: { from: location } });
+                        return;
+                      }
+                      setCheckoutOpen(true);
+                    }}
+                    className={`relative w-full py-5 rounded-2xl flex items-center justify-center gap-3 overflow-hidden ${
+                      isSoldOut ? "cursor-not-allowed opacity-80" : ""
+                    }`}
+                    style={{ background: theme.ctaGradient }}
+                  >
+                    {/* shimmer */}
+                    {!isSoldOut && (
+                      <motion.div
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 2.5,
+                          ease: "easeInOut",
+                          repeatDelay: 1,
+                        }}
+                        className="absolute inset-0 w-1/3 bg-white/20 skew-x-[-20deg] pointer-events-none"
+                      />
+                    )}
+                    <span
+                      className={`relative text-[12px] font-black uppercase tracking-widest ${
+                        isSoldOut ? "text-red-500" : "text-black"
+                      }`}
                     >
-                      {/* shimmer */}
-                      {!isSoldOut && (
-                        <motion.div
-                          animate={{ x: ["-100%", "200%"] }}
-                          transition={{
-                            repeat: Infinity,
-                            duration: 2.5,
-                            ease: "easeInOut",
-                            repeatDelay: 1,
-                          }}
-                          className="absolute inset-0 w-1/3 bg-white/20 skew-x-[-20deg] pointer-events-none"
-                        />
-                      )}
-                      <span className={`relative text-[12px] font-black uppercase tracking-widest ${isSoldOut ? "text-red-500" : "text-black"}`}>
-                        {isSoldOut ? "Sold Out" : "Get Tickets"}
-                      </span>
-                      {!isSoldOut && <MoveRight size={16} className="relative text-black" />}
-                    </motion.button>
-                  </ProtectedRoute>
+                      {isSoldOut ? "Sold Out" : "Get Tickets"}
+                    </span>
+                    {!isSoldOut && (
+                      <MoveRight size={16} className="relative text-black" />
+                    )}
+                  </motion.button>
 
                   {/* trust row */}
                   <div className="flex justify-around pt-1">

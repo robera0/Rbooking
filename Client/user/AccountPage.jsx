@@ -100,8 +100,20 @@ const AccountPage = ({ children, pa, h = "h-[72vh]" }) => {
         >
           {/* ── LEFT: BRAND PANEL ── */}
           <div className="w-[45%] p-16 flex flex-col justify-between border-r border-white/[0.05] relative overflow-hidden">
+            {/* background video with zoom effect */}
+            <motion.video 
+              src="/Screencast From 2026-04-24 05-03-04.mp4"
+              autoPlay
+              loop
+              muted
+              className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale blur-[2px]"
+            />
+            
+            {/* dark overlay for text contrast */}
+            <div className="absolute inset-0 bg-black/40" />
+
             {/* inner orb */}
-            <div className="absolute w-72 h-72 rounded-full bg-[#FF7A00]/[0.06] blur-[80px] -bottom-16 -left-16 pointer-events-none" />
+            <div className="absolute w-72 h-72 rounded-full bg-[#FF7A00]/[0.1] blur-[80px] -bottom-16 -left-16 pointer-events-none z-10" />
 
             <div className="relative z-10 space-y-10 my-auto">
               {/* logo */}

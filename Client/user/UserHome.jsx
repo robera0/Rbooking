@@ -14,6 +14,7 @@ import {
   Heart,
   Star,
   MapPin,
+  ClockFading,
 } from "lucide-react";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { CalendarDemo } from "@/components/ui/calendar";
@@ -210,7 +211,7 @@ const UserHome = () => {
             <div className="w-full h-full rounded-[2.5rem] overflow-hidden border border-white/[0.06] shadow-2xl bg-[#1C1F22]">
               <img
                 src="/1763661369611.webp"
-                className="w-full h-full object-cover grayscale brightness-90 hover:grayscale-0 transition-all duration-1000"
+                className="w-full h-full object-cover brightness-100 transition-all duration-1000"
                 alt="Concert"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#121417] via-transparent to-transparent" />
@@ -242,14 +243,14 @@ const UserHome = () => {
           </div>
           <div className="absolute -bottom-6 -left-2 sm:left-6 bg-white p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl flex items-center gap-4 md:gap-5 -rotate-2 hover:rotate-0 transition-all z-20">
             <div className="bg-[#FF7A00] p-3 md:p-3.5 rounded-xl text-white">
-              <Mic2 size={18} />
+              <ClockFading size={18} />
             </div>
             <div>
               <p className="font-black text-lg md:text-xl uppercase italic text-black leading-none">
-                Live Now
+                24 Hours
               </p>
               <p className="text-gray-400 font-bold text-[7px] md:text-[8px] uppercase tracking-[0.2em] mt-1">
-                Tour 2026
+                ACCESS SYSTEM
               </p>
             </div>
           </div>
@@ -398,10 +399,10 @@ const UserHome = () => {
                         onClick={(ev) => e?.tickets?.length === 0 && ev.preventDefault()}
                       >
                         {/* Image Container */}
-                        <div className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${e?.tickets?.length === 0 ? "grayscale brightness-50" : ""}`}>
+                        <div className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${e?.tickets?.length === 0 ? "brightness-75" : ""}`}>
                           <img
                             src={e?.pictures[0]}
-                            className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
+                            className="w-full h-full object-cover brightness-95 transition-transform duration-700"
                             alt={e?.name}
                           />
                           {/* Hover Gradient */}
@@ -547,111 +548,124 @@ const UserHome = () => {
         </div>
       </motion.section>
 
-      {/* ================= 5. LIVE EXPERIENCE (Photos & Video) ================= */}
+      {/* LIVE EXPERIENCE (Photos & Video) */}
       <motion.section
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
         variants={containerVariants}
-        className="px-6 lg:px-10 pb-32 max-w-[1380px] mx-auto z-10 relative"
+        className="px-6 lg:px-10 pb-32 max-w-[1200px] mx-auto z-10 relative"
       >
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-stretch">
+        <div className="flex flex-col items-center text-center space-y-16">
           
-          {/* Photos Side */}
-          <div className="flex-1 space-y-10">
-            <motion.div variants={itemVariants} className="space-y-4">
-               <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter leading-none">
-                 EXP THE <span className="text-[#FF7A00]">PULSE</span>
-               </h2>
-               <p className="text-gray-500 text-sm font-medium tracking-tight max-w-md">
-                 From the main stage to your pocket. Witness the real energy captured by our global community at every sold-out venue.
-               </p>
-            </motion.div>
+          {/* Header */}
+          <motion.div variants={itemVariants} className="space-y-6">
+             <h2 className="text-4xl md:text-6xl  uppercase  tracking-tighter leading-none">
+               EXP THE <span className="text-[#FF7A00]">PULSE</span>
+             </h2>
+             <p className="text-gray-500 text-sm md:text-base font-medium tracking-tight max-w-2xl mx-auto">
+               From the main stage to your pocket. Witness the real energy captured by our global community at every sold-out venue.
+             </p>
+          </motion.div>
 
-            <div className="grid grid-cols-2 gap-4 h-[400px] md:h-[600px]">
-               <motion.div 
-                 variants={itemVariants}
-                 className="col-span-1 rounded-[2.5rem] overflow-hidden border border-white/10 relative group"
-               >
-                 <img 
-                   src="/home/datniggarobi/.gemini/antigravity/brain/caf8d5e8-c64b-4b1c-9dfd-869398a8911e/event_gallery_experience_1776992959526.png" 
-                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                   alt="Live Experience"
-                 />
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                 <div className="absolute bottom-6 left-6">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">Main Stage</span>
-                    <p className="text-white font-bold leading-tight">Warehouse Session #2</p>
-                 </div>
-               </motion.div>
-               
-               <div className="col-span-1 flex flex-col gap-4">
-                  <motion.div 
-                     variants={itemVariants}
-                     className="flex-1 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative grayscale hover:grayscale-0 transition-all duration-700"
-                  >
-                    <img src="/Login.jpg" className="w-full h-full object-cover" alt="Venue" />
-                  </motion.div>
-                  <motion.div 
-                     variants={itemVariants}
-                     className="flex-1 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-white/10 relative grayscale hover:grayscale-0 transition-all duration-700"
-                  >
-                    <img src="/1308183.jpeg" className="w-full h-full object-cover" alt="Fans" />
-                  </motion.div>
+          {/* Screenshots Grid */}
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+             {/* Left: Main Hero Screenshot */}
+             <motion.div 
+               variants={itemVariants}
+               className="rounded-[2.5rem] overflow-hidden border border-white/10 relative bg-black shadow-2xl h-fit"
+             >
+               <img 
+                 src="/Screenshot From 2026-04-24 04-49-36.png" 
+                 className="w-full h-auto object-contain"
+                 alt="Hero View"
+               />
+               <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">System Milestone — 01</span>
+                  <p className="text-white font-bold text-lg">Cinema Mode Interface</p>
                </div>
-            </div>
+             </motion.div>
+             
+             {/* Right: Sub-Screenshots */}
+             <div className="flex flex-col gap-12">
+                <motion.div 
+                   variants={itemVariants}
+                   className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
+                >
+                  <img src="/Screenshot From 2026-04-24 04-50-09.png" className="w-full h-auto object-contain" alt="Wishlist" />
+                  <div className="absolute bottom-4 left-6">
+                     <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Wishlist Management</span>
+                  </div>
+                </motion.div>
+                <motion.div 
+                   variants={itemVariants}
+                   className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
+                >
+                  <img src="/Login.jpg" className="w-full h-auto object-contain" alt="Account" />
+                  <div className="absolute bottom-4 left-6">
+                     <span className="text-[10px] font-black uppercase tracking-widest text-white/40">User Profile System</span>
+                  </div>
+                </motion.div>
+             </div>
           </div>
 
-          {/* Video Side */}
+          {/* Video Walkthrough (Centered) */}
           <motion.div 
             variants={itemVariants}
-            className="w-full lg:w-[450px] space-y-10"
+            className="w-full max-w-4xl space-y-10 pt-10"
           >
              <div className="space-y-4">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Walkthrough</span>
-                <h3 className="text-2xl font-black uppercase tracking-tighter text-white italic">Frictionless Access</h3>
+                <span className="text-[12px] font-black uppercase tracking-[0.4em] text-gray-600">Dynamic Synchronization</span>
+                <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic">Authentication Walkthrough</h3>
              </div>
 
-             <div className="relative aspect-[9/16] lg:aspect-square xl:aspect-[9/16] bg-[#1C1F22] rounded-[3rem] p-4 border border-white/[0.08] shadow-2xl group flex flex-col">
-                <div className="relative w-full h-full rounded-[2.2rem] overflow-hidden">
-                   <img 
-                     src="/home/datniggarobi/.gemini/antigravity/brain/caf8d5e8-c64b-4b1c-9dfd-869398a8911e/ticket_purchase_demo_frame_1776993034120.png" 
-                     className="w-full h-full object-cover brightness-75 group-hover:brightness-100 transition-all duration-700"
-                     alt="Purchase Demo"
+           
+                <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
+                   <video 
+                     src="/Screencast From 2026-04-24 05-03-04.mp4" 
+                     autoPlay 
+                     loop 
+                     muted 
+                     className="w-full h-full object-cover"
                    />
                    
                    {/* Play Button Interface */}
-                   <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-20 h-20 rounded-full bg-[#FF7A00] flex items-center justify-center text-black shadow-2xl group-hover:scale-110 transition-transform cursor-pointer">
-                         <Activity size={32} strokeWidth={3} />
+                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-12 h-12 md:w-20 md:h-20 rounded-full bg-[#FF7A00] flex items-center justify-center text-black shadow-2xl">
+                         <Activity size={24} md:size={32} strokeWidth={3} />
                       </div>
                    </div>
 
                    {/* Progress Bar (Mock) */}
-                   <div className="absolute bottom-10 left-10 right-10 h-1 bg-white/20 rounded-full overflow-hidden">
+                   <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 h-1 md:h-1.5 bg-white/10 rounded-full overflow-hidden">
                       <motion.div 
                         initial={{ width: "0%" }}
-                        whileInView={{ width: "65%" }}
-                        transition={{ duration: 2, ease: "easeInOut" }}
-                        className="h-full bg-[#FF7A00]"
+                        whileInView={{ width: "100%" }}
+                        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                        className="h-full bg-gradient-to-r from-[#FF7A00] to-orange-400 shadow-[0_0_15px_rgba(255,122,0,0.5)]"
                       />
                    </div>
                 </div>
 
-                <div className="mt-8 px-4 flex items-center justify-between">
-                   <div className="flex -space-x-3">
-                      {[1,2,3].map(i => (
-                        <div key={i} className="w-10 h-10 rounded-full border-4 border-[#121417] bg-gray-800 overflow-hidden">
-                           <img src={`/1308183.jpeg`} className="w-full h-full object-cover" alt="User" />
-                        </div>
-                      ))}
-                      <div className="w-10 h-10 rounded-full border-4 border-[#121417] bg-[#FF7A00] flex items-center justify-center text-black text-[10px] font-black">
-                         +2k
+                <div className="mt-6 md:mt-10 px-2 md:px-6 flex items-center justify-between">
+                   <div className="flex items-center gap-3 md:gap-6">
+                      <div className="flex -space-x-2 md:-space-x-3">
+                         {[1,2,3].map(i => (
+                           <div key={i} className="w-8 h-8 md:w-12 md:h-12 rounded-full border-2 md:border-4 border-[#121417] bg-gray-800 overflow-hidden">
+                              <img src={`/1308183.jpeg`} className="w-full h-full object-cover" alt="User" />
+                           </div>
+                         ))}
+                      </div>
+                      <div className="text-left">
+                         <p className="text-white text-[10px] md:text-xs font-black uppercase tracking-tight">Sync Active</p>
+                         <p className="text-gray-500 text-[8px] md:text-[10px] font-bold md:block hidden">+2.4k community views</p>
                       </div>
                    </div>
-                   <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest italic">Live Recording</span>
+                   <div className="bg-white/5 border border-white/10 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl">
+                      <span className="text-[#FF7A00] text-[8px] md:text-[10px] font-black uppercase tracking-widest italic animate-pulse">● System Live</span>
+                   </div>
                 </div>
-             </div>
+            
           </motion.div>
 
         </div>

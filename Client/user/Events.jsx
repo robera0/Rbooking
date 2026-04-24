@@ -188,7 +188,7 @@ const Events = () => {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-10"
             >
               {filteredEvents.map((e) => {
                 const isSoldOut = e.tickets?.length === 0;
@@ -200,11 +200,11 @@ const Events = () => {
                     variants={itemVariants}
                     className="group"
                   >
-                    <div className="relative mb-6">
+                    <div className="relative mb-5">
                       {/* Sold Out Overlay */}
                       {isSoldOut && (
-                        <div className="absolute inset-0 z-10 bg-black/50 backdrop-blur-[1px] rounded-[2.5rem] flex items-center justify-center pointer-events-none">
-                           <div className="bg-red-600/90 text-white px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.3em] border border-white/20 shadow-2xl">
+                        <div className="absolute inset-0 z-10 bg-black/50 backdrop-blur-[1px] rounded-[2rem] flex items-center justify-center pointer-events-none">
+                           <div className="bg-red-600/90 text-white px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-[0.3em] border border-white/20 shadow-2xl">
                              Sold Out
                            </div>
                         </div>
@@ -213,7 +213,7 @@ const Events = () => {
                       <Link 
                         to={isSoldOut ? "#" : `/events/${e._id}/tickets/${e.tickets?.[0]?._id}`}
                         onClick={(ev) => isSoldOut && ev.preventDefault()}
-                        className={`block relative aspect-[3.5/4.5] rounded-[2.5rem] overflow-hidden border border-white/[0.06] bg-[#1C1F22] transition-all duration-700 ${isSoldOut ? "grayscale" : ""}`}
+                        className={`block relative aspect-[4/5] rounded-[2rem] overflow-hidden border border-white/[0.06] bg-[#1C1F22] transition-all duration-700 ${isSoldOut ? "grayscale" : ""}`}
                       >
                         <img 
                           src={e.pictures?.[0] || "/Login.jpg"} 
@@ -223,17 +223,17 @@ const Events = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
                         
                         {/* Instant Details Overlay (Desktop Hover) */}
-                        <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 duration-500">
+                        <div className="absolute inset-0 flex flex-col justify-end p-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 duration-500">
                            <div className="flex items-center gap-3 text-white">
-                              <Calendar size={14} />
-                              <span className="text-[10px] font-black uppercase tracking-widest">{e.dates?.start?.localDate || "TBA"}</span>
+                              <Calendar size={12} />
+                              <span className="text-[9px] font-black uppercase tracking-widest">{e.dates?.start?.localDate || "TBA"}</span>
                            </div>
                         </div>
 
                         {/* Location Badge */}
-                        <div className="absolute top-6 left-6 px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl flex items-center gap-2 group-hover:bg-[#FF7A00] transition-colors duration-500">
-                           <MapPin size={12} className={isSoldOut ? "text-gray-500" : "text-[#FF7A00] group-hover:text-black"} />
-                           <span className={`text-[9px] font-black uppercase tracking-wider ${isSoldOut ? "text-gray-500" : "text-white group-hover:text-black"}`}>
+                        <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg flex items-center gap-2 group-hover:bg-[#FF7A00] transition-colors duration-500">
+                           <MapPin size={10} className={isSoldOut ? "text-gray-500" : "text-[#FF7A00] group-hover:text-black"} />
+                           <span className={`text-[8px] font-black uppercase tracking-wider ${isSoldOut ? "text-gray-500" : "text-white group-hover:text-black"}`}>
                               {e.locale || "Main Venue"}
                            </span>
                         </div>
@@ -242,26 +242,26 @@ const Events = () => {
                       {/* Wishlist Button */}
                       <button 
                          onClick={(ev) => handleWishlistToggle(e._id, ev)}
-                         className={`absolute top-6 right-6 z-20 w-12 h-12 rounded-2xl backdrop-blur-md border border-white/10 flex items-center justify-center transition-all active:scale-90 ${
+                         className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-xl backdrop-blur-md border border-white/10 flex items-center justify-center transition-all active:scale-90 ${
                            isAdded 
                              ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20" 
                              : "bg-black/20 text-white hover:bg-white hover:text-black"
                          }`}
                       >
-                        <Heart size={18} fill={isAdded ? "currentColor" : "none"} strokeWidth={2.5} />
+                        <Heart size={16} fill={isAdded ? "currentColor" : "none"} strokeWidth={2.5} />
                       </button>
                     </div>
 
-                    <div className="space-y-4 px-2">
+                    <div className="space-y-3 px-2">
                        <div className="flex items-center justify-between">
                           <Link to={`/events/${e._id}`}>
-                            <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white hover:text-[#FF7A00] transition-colors line-clamp-1">
+                            <h3 className="text-xl font-black uppercase italic tracking-tighter text-white hover:text-[#FF7A00] transition-colors line-clamp-1">
                               {e.name}
                             </h3>
                           </Link>
-                          <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1.5 rounded-lg border border-white/[0.08]">
-                             <Star size={12} fill="#FF7A00" stroke="#FF7A00" />
-                             <span className="text-white text-xs font-black">{e.rating?.score || "4.9"}</span>
+                          <div className="flex items-center gap-1 bg-white/[0.04] px-2 py-1 rounded-md border border-white/[0.08]">
+                             <Star size={10} fill="#FF7A00" stroke="#FF7A00" />
+                             <span className="text-white text-[10px] font-black">{e.rating?.score || "4.9"}</span>
                           </div>
                        </div>
 
