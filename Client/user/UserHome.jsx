@@ -65,7 +65,6 @@ function FeaturedEventSkeleton() {
   );
 }
 
-
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const { events, isLoading, wishlist, wishlistIsError } = eventService();
@@ -310,7 +309,9 @@ const UserHome = () => {
                   Schedule
                 </span>
                 <span className="font-bold text-[11px] lg:text-[12px] block truncate text-white">
-                  {date instanceof Date ? date.toLocaleDateString() : "All Dates"}
+                  {date instanceof Date
+                    ? date.toLocaleDateString()
+                    : "All Dates"}
                 </span>
               </div>
             </button>
@@ -331,7 +332,7 @@ const UserHome = () => {
               )}
             </AnimatePresence>
           </div>
-          <button 
+          <button
             onClick={() => navigate("/event")}
             className="h-[56px] md:h-[64px] lg:w-[70px] bg-[#FF7A00] rounded-[1.5rem] md:rounded-[1.8rem] flex items-center justify-center hover:bg-white group transition-all shrink-0 active:scale-95 shadow-lg shadow-[#FF7A00]/10"
           >
@@ -378,37 +379,45 @@ const UserHome = () => {
                   className="group"
                   key={e._id}
                 >
-                  <div className="relative">
-                      {/* Sold Out Overlay */}
-                      {e?.tickets?.length === 0 && (
-                        <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
-                          <div className="bg-red-600/90 text-white px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2 shadow-2xl border border-white/20">
-                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                            Sold Out
-                          </div>
+                  <div className="relative rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
+                    {/* Sold Out Overlay */}
+                    {e?.tickets?.length === 0 && (
+                      <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[2px] rounded-[1.5rem] md:rounded-[2.2rem]  flex items-center justify-center pointer-events-none">
+                        <div className="bg-red-600/90 text-white px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2 shadow-2xl border border-white/20">
+                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                          Sold Out
                         </div>
-                      )}
-                      
-                      <Link
-                        to={
-                          e?.tickets?.length > 0
-                            ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
-                            : "#"
-                        }
-                        className={`block ${e?.tickets?.length === 0 ? "cursor-not-allowed" : ""}`}
-                        onClick={(ev) => e?.tickets?.length === 0 && ev.preventDefault()}
+                      </div>
+                    )}
+
+                    <Link
+                      to={
+                        e?.tickets?.length > 0
+                          ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                          : "#"
+                      }
+                      className={`block ${
+                        e?.tickets?.length === 0 ? "cursor-not-allowed" : ""
+                      }`}
+                      onClick={(ev) =>
+                        e?.tickets?.length === 0 && ev.preventDefault()
+                      }
+                    >
+                      {/* Image Container */}
+                      <div
+                        className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${
+                          e?.tickets?.length === 0 ? "brightness-75" : ""
+                        }`}
                       >
-                        {/* Image Container */}
-                        <div className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${e?.tickets?.length === 0 ? "brightness-75" : ""}`}>
-                          <img
-                            src={e?.pictures[0]}
-                            className="w-full h-full object-cover brightness-95 transition-transform duration-700"
-                            alt={e?.name}
-                          />
-                          {/* Hover Gradient */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      </Link>
+                        <img
+                          src={e?.pictures[0]}
+                          className="w-full h-full object-cover brightness-95 transition-transform duration-700"
+                          alt={e?.name}
+                        />
+                        {/* Hover Gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </Link>
 
                     {/* Wishlist Button */}
                     <button
@@ -557,117 +566,151 @@ const UserHome = () => {
         className="px-6 lg:px-10 pb-32 max-w-[1200px] mx-auto z-10 relative"
       >
         <div className="flex flex-col items-center text-center space-y-16">
-          
           {/* Header */}
           <motion.div variants={itemVariants} className="space-y-6">
-             <h2 className="text-4xl md:text-6xl  uppercase  tracking-tighter leading-none">
-               EXP THE <span className="text-[#FF7A00]">PULSE</span>
-             </h2>
-             <p className="text-gray-500 text-sm md:text-base font-medium tracking-tight max-w-2xl mx-auto">
-               From the main stage to your pocket. Witness the real energy captured by our global community at every sold-out venue.
-             </p>
+            <h2 className="text-4xl md:text-6xl  uppercase  tracking-tighter leading-none">
+              EXP THE <span className="text-[#FF7A00]">PULSE</span>
+            </h2>
+            <p className="text-gray-500 text-sm md:text-base font-medium tracking-tight max-w-2xl mx-auto">
+              From the main stage to your pocket. Witness the real energy
+              captured by our global community at every sold-out venue.
+            </p>
           </motion.div>
 
           {/* Screenshots Grid */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-             {/* Left: Main Hero Screenshot */}
-             <motion.div 
-               variants={itemVariants}
-               className="rounded-[2.5rem] overflow-hidden border border-white/10 relative bg-black shadow-2xl h-fit"
-             >
-               <img 
-                 src="/Screenshot From 2026-04-24 04-49-36.png" 
-                 className="w-full h-auto object-contain"
-                 alt="Hero View"
-               />
-               <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">System Milestone — 01</span>
-                  <p className="text-white font-bold text-lg">Cinema Mode Interface</p>
-               </div>
-             </motion.div>
-             
-             {/* Right: Sub-Screenshots */}
-             <div className="flex flex-col gap-12">
-                <motion.div 
-                   variants={itemVariants}
-                   className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
-                >
-                  <img src="/Screenshot From 2026-04-24 04-50-09.png" className="w-full h-auto object-contain" alt="Wishlist" />
-                  <div className="absolute bottom-4 left-6">
-                     <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Wishlist Management</span>
-                  </div>
-                </motion.div>
-                <motion.div 
-                   variants={itemVariants}
-                   className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
-                >
-                  <img src="/Login.jpg" className="w-full h-auto object-contain" alt="Account" />
-                  <div className="absolute bottom-4 left-6">
-                     <span className="text-[10px] font-black uppercase tracking-widest text-white/40">User Profile System</span>
-                  </div>
-                </motion.div>
-             </div>
+            {/* Left: Main Hero Screenshot */}
+            <motion.div
+              variants={itemVariants}
+              className="rounded-[2.5rem] overflow-hidden border border-white/10 relative bg-black shadow-2xl h-fit"
+            >
+              <img
+                src="/Screenshot From 2026-04-24 04-49-36.png"
+                className="w-full h-auto object-contain"
+                alt="Hero View"
+              />
+              <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">
+                  System Milestone — 01
+                </span>
+                <p className="text-white font-bold text-lg">
+                  Cinema Mode Interface
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Right: Sub-Screenshots */}
+            <div className="flex flex-col gap-12">
+              <motion.div
+                variants={itemVariants}
+                className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
+              >
+                <img
+                  src="/Screenshot From 2026-04-24 04-50-09.png"
+                  className="w-full h-auto object-contain"
+                  alt="Wishlist"
+                />
+                <div className="absolute bottom-4 left-6">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                    Wishlist Management
+                  </span>
+                </div>
+              </motion.div>
+              <motion.div
+                variants={itemVariants}
+                className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
+              >
+                <img
+                  src="/Login.jpg"
+                  className="w-full h-auto object-contain"
+                  alt="Account"
+                />
+                <div className="absolute bottom-4 left-6">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                    User Profile System
+                  </span>
+                </div>
+              </motion.div>
+            </div>
           </div>
 
           {/* Video Walkthrough (Centered) */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="w-full max-w-4xl space-y-10 pt-10"
           >
-             <div className="space-y-4">
-                <span className="text-[12px] font-black uppercase tracking-[0.4em] text-gray-600">Dynamic Synchronization</span>
-                <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic">Authentication Walkthrough</h3>
-             </div>
+            <div className="space-y-4">
+              <span className="text-[12px] font-black uppercase tracking-[0.4em] text-gray-600">
+                Dynamic Synchronization
+              </span>
+              <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic">
+                Authentication Walkthrough
+              </h3>
+            </div>
 
-           
-                <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
-                   <video 
-                     src="/Screencast From 2026-04-24 05-03-04.mp4" 
-                     autoPlay 
-                     loop 
-                     muted 
-                     className="w-full h-full object-cover"
-                   />
-                   
-                   {/* Play Button Interface */}
-                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-12 h-12 md:w-20 md:h-20 rounded-full bg-[#FF7A00] flex items-center justify-center text-black shadow-2xl">
-                         <Activity size={24} md:size={32} strokeWidth={3} />
-                      </div>
-                   </div>
+            <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
+              <video
+                src="/Screencast From 2026-04-24 05-03-04.mp4"
+                autoPlay
+                loop
+                muted
+                className="w-full h-full object-cover"
+              />
 
-                   {/* Progress Bar (Mock) */}
-                   <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 h-1 md:h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: "0%" }}
-                        whileInView={{ width: "100%" }}
-                        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                        className="h-full bg-gradient-to-r from-[#FF7A00] to-orange-400 shadow-[0_0_15px_rgba(255,122,0,0.5)]"
+              {/* Play Button Interface */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-12 h-12 md:w-20 md:h-20 rounded-full bg-[#FF7A00] flex items-center justify-center text-black shadow-2xl">
+                  <Activity size={24} md:size={32} strokeWidth={3} />
+                </div>
+              </div>
+
+              {/* Progress Bar (Mock) */}
+              <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 h-1 md:h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: "0%" }}
+                  whileInView={{ width: "100%" }}
+                  transition={{
+                    duration: 15,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  className="h-full bg-gradient-to-r from-[#FF7A00] to-orange-400 shadow-[0_0_15px_rgba(255,122,0,0.5)]"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 md:mt-10 px-2 md:px-6 flex items-center justify-between">
+              <div className="flex items-center gap-3 md:gap-6">
+                <div className="flex -space-x-2 md:-space-x-3">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="w-8 h-8 md:w-12 md:h-12 rounded-full border-2 md:border-4 border-[#121417] bg-gray-800 overflow-hidden"
+                    >
+                      <img
+                        src={`/1308183.jpeg`}
+                        className="w-full h-full object-cover"
+                        alt="User"
                       />
-                   </div>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="mt-6 md:mt-10 px-2 md:px-6 flex items-center justify-between">
-                   <div className="flex items-center gap-3 md:gap-6">
-                      <div className="flex -space-x-2 md:-space-x-3">
-                         {[1,2,3].map(i => (
-                           <div key={i} className="w-8 h-8 md:w-12 md:h-12 rounded-full border-2 md:border-4 border-[#121417] bg-gray-800 overflow-hidden">
-                              <img src={`/1308183.jpeg`} className="w-full h-full object-cover" alt="User" />
-                           </div>
-                         ))}
-                      </div>
-                      <div className="text-left">
-                         <p className="text-white text-[10px] md:text-xs font-black uppercase tracking-tight">Sync Active</p>
-                         <p className="text-gray-500 text-[8px] md:text-[10px] font-bold md:block hidden">+2.4k community views</p>
-                      </div>
-                   </div>
-                   <div className="bg-white/5 border border-white/10 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl">
-                      <span className="text-[#FF7A00] text-[8px] md:text-[10px] font-black uppercase tracking-widest italic animate-pulse">● System Live</span>
-                   </div>
+                <div className="text-left">
+                  <p className="text-white text-[10px] md:text-xs font-black uppercase tracking-tight">
+                    Sync Active
+                  </p>
+                  <p className="text-gray-500 text-[8px] md:text-[10px] font-bold md:block hidden">
+                    +2.4k community views
+                  </p>
                 </div>
-            
+              </div>
+              <div className="bg-white/5 border border-white/10 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl">
+                <span className="text-[#FF7A00] text-[8px] md:text-[10px] font-black uppercase tracking-widest italic animate-pulse">
+                  ● System Live
+                </span>
+              </div>
+            </div>
           </motion.div>
-
         </div>
       </motion.section>
     </div>
