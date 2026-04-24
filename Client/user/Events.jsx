@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { eventService } from "@/Context/ApiEvent.jsx";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   Star, 
   MapPin, 
@@ -20,8 +20,10 @@ import toast, { Toaster } from "react-hot-toast";
 
 const Events = () => {
   const { type, setType, date, setDate, artist, setArtist } = useService();
-  const { events, isLoading, error, wishlist, wishlistIsError } = eventService();
+  const { events, user, isLoading, error, wishlist, wishlistIsError } = eventService();
   const { mutation: wishlistMutation } = useWishlistMutation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const containerVariants = {
     hidden: { opacity: 0 },

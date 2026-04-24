@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   CalendarIcon,
   Search,
@@ -67,10 +67,11 @@ function FeaturedEventSkeleton() {
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
-  const { events, user, isLoading, wishlist, wishlistIsError } = eventService();
+  const { events, user, isLoading, error, wishlist, wishlistIsError } = eventService();
   const { type, setType, date, setDate, artist, setArtist } = useService();
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const checkWishlist = (eventId) => {
     return (
