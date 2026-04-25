@@ -103,6 +103,36 @@ export const get_transaction_ledger = async (req, res) => {
   }
 };
 
+export const get_transaction_by_id = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const transaction = await UserTicketModel.findById(id)
+      .populate("userId", "username email fullName role")
+      .populate({
+        path: "ticketId",
+        populate: {
+          path: "eventId",
+          model: "Event",
+          select: "name type locale dates pictures"
+        }
+      });
+
+    if (!transaction) {
+      return res.status(404).json({ success: false, message: "Transaction not found" });
+    }
+
+    const formattedTransaction = {
+      ...transaction.toObject(),
+      commissionAmount: transaction.status === 'paid' ? (transaction.totalAmount * 0.10) : 0 
+    };
+
+    res.status(200).json({ success: true, transaction: formattedTransaction });
+  } catch (error) {
+    console.error("Fetch Transaction Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const get_revenue_history = async (req, res) => {
   try {
      // Aggregates revenue per month for the current year

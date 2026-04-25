@@ -27,6 +27,7 @@ import Report from "../admin/Report";
 import Payment from "../admin/Payment";
 import AdminAccount from "../admin/AdminAccount";
 import CreateNotification from "../admin/CreateNotification";
+import AdminViewTicket from "../admin/AdminViewTicket";
 import { ProtectedRoute } from "./components/Reusable";
 import { GoogleAuthHandler } from "./components/GoogleAuthHandler";
 
@@ -110,12 +111,10 @@ export const router = createBrowserRouter([
           { path: "home", element: <PageWrapper><Dashboard /></PageWrapper> },
           { path: "events", element: <PageWrapper><EventMang /></PageWrapper> },
           { path: "events/add", element: <PageWrapper><AddEvent /></PageWrapper> },
-          { 
-            path: "events/:eventId", 
-            element: <PageWrapper><EditEvent /></PageWrapper>,
-            loader: editEventLoader 
-          },
+          
+          { path: "events/:eventId", element: <PageWrapper><EditEvent /></PageWrapper>, loader: editEventLoader },
           { path: "orders", element: <PageWrapper><TicketOrders /></PageWrapper> },
+          { path: "orders/:orderId", element: <PageWrapper><AdminViewTicket /></PageWrapper> },
           { path: "users", element: <PageWrapper><User /></PageWrapper> },
           { path: "login", element: <PageWrapper><LoginPage /></PageWrapper> },
           { path: "marketing", element: <PageWrapper><Marketing /></PageWrapper> },

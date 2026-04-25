@@ -10,8 +10,7 @@ import {
 import { Cards } from "./Cards";
 import GridDemo from "./Graphs";
 import ArcDesign from "./Guage";
-import RevenueChart from "./RevenueGraph";
-import RevenueChart from "./RevenueGraph";
+import RevenueChart from "./RevenueGraph"
 import { useQuery } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
 import { Loader2 } from "lucide-react";

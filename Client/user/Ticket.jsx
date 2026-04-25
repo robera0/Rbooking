@@ -395,11 +395,10 @@ const TicketHome = () => {
                       ))}
                     </div>
 
-                    {/* CTA */}
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => navigate(`/tickets_home/${ticketId?._id}`)}
+                      onClick={() => navigate(`/tickets_home/${t._id}`)}
                       className="relative w-full py-3 rounded-xl flex items-center justify-center gap-2 overflow-hidden"
                       style={{ background: theme.ctaGradient }}
                     >

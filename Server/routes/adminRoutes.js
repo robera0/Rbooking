@@ -11,6 +11,7 @@ import {
 import { 
   get_dashboard_stats, 
   get_transaction_ledger, 
+  get_transaction_by_id,
   get_revenue_history 
 } from "../controllers/analyticsController.js";
 
@@ -28,6 +29,7 @@ adminRouter.post("/events", add_event);
 // Analytics
 adminRouter.get("/analytics/dashboard", get_dashboard_stats);
 adminRouter.get("/analytics/transactions", get_transaction_ledger);
+adminRouter.get("/analytics/transactions/:id", get_transaction_by_id);
 adminRouter.get("/analytics/revenue", get_revenue_history);
 
 export default adminRouter;

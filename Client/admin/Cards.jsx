@@ -281,8 +281,30 @@ export const EventTable = ({ search = "", filter = "" }) => {
   );
 };
 
-export const TicketTable = () => {
+export const TicketTable = ({ search = "", filter = "" }) => {
   const navigate = useNavigate();
+  const { API_URL } = useService();
+
+  const { data: transactions = [], isLoading } = useQuery({
+    queryKey: ['adminTransactions'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/admin/analytics/transactions`);
+      if (!res.ok) throw new Error("Failed to load transactions");
+      const json = await res.json();
+      return json.transactions || [];
+    }
+  });
+
+  const filteredTransactions = transactions.filter(txn => {
+    const custName = (txn.userId?.fullName || txn.userId?.username || "Guest").toLowerCase();
+    const idKey = (txn._id || "").toLowerCase();
+    
+    const matchesSearch = custName.includes(search.toLowerCase()) || idKey.includes(search.toLowerCase());
+    const matchesFilter = filter ? txn.status?.toLowerCase() === filter.toLowerCase() : true;
+    
+    return matchesSearch && matchesFilter;
+  });
+
   return (
     <table className="w-full table-fixed text-sm text-left">
       <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
@@ -292,26 +314,29 @@ export const TicketTable = () => {
           </th>
           <th className="px-6 py-4 w-[150px] text-white font-bold uppercase tracking-wider text-[10px]">Order ID</th>
           <th className="px-6 py-4 w-[180px] text-white font-bold uppercase tracking-wider text-[10px]">Customer</th>
-          <th className="px-6 py-4 w-[200px] text-center text-white font-bold uppercase tracking-wider text-[10px]">Event</th>
+          <th className="px-6 py-4 w-[200px] text-center text-white font-bold uppercase tracking-wider text-[10px]">Ticket Level</th>
           <th className="px-6 py-4 w-[140px] text-center text-white font-bold uppercase tracking-wider text-[10px]">Date</th>
           <th className="px-6 py-4 w-[120px] text-center text-white font-bold uppercase tracking-wider text-[10px]">Total</th>
           <th className="px-6 py-4 w-[160px] text-center text-white font-bold uppercase tracking-wider text-[10px]">Action</th>
         </tr>
       </thead>
       <tbody className="text-gray-300 font-medium">
-        {[1,2,3,4,5,6].map((_, idx) => (
-          <tr key={idx} className="bg-transparent hover:bg-white/[0.02] border-b border-white/[0.04] transition-colors">
+        {isLoading && <tr><td colSpan="7" className="text-center py-8">Fetching orders...</td></tr>}
+        {filteredTransactions.map((txn, idx) => (
+          <tr key={txn._id || idx} className="bg-transparent hover:bg-white/[0.02] border-b border-white/[0.04] transition-colors">
             <td className="px-6 py-4 text-center">
               <input type="checkbox" className="w-4 h-4 accent-[#FF7A00]" />
             </td>
-            <td className="px-6 py-4 font-black tracking-widest text-[#FF7A00]">#TK-00${idx+1}</td>
-            <td className="px-6 py-4 font-bold text-white">Christian Brooks</td>
-            <td className="px-6 py-4 text-center font-bold">Warehouse Project</td>
-            <td className="px-6 py-4 text-center font-bold text-gray-400">Oct 24, 2026</td>
-            <td className="px-6 py-4 text-center font-black text-white">$45.00</td>
+            <td className="px-6 py-4 font-black tracking-widest text-[#FF7A00]">#{txn._id?.slice(-8).toUpperCase()}</td>
+            <td className="px-6 py-4 font-bold text-white">{txn.userId?.fullName || txn.userId?.username || "Guest"}</td>
+            <td className="px-6 py-4 text-center font-bold">{txn.ticketId?.type || "General"}</td>
+            <td className="px-6 py-4 text-center font-bold text-gray-400">
+              {new Date(txn.purchasedAt).toLocaleDateString()}
+            </td>
+            <td className="px-6 py-4 text-center font-black text-white">{txn.totalAmount} ETB</td>
             <td className="px-6 py-4 text-center">
               <button
-                onClick={() => navigate("/admin/orders/1")}
+                onClick={() => navigate(`/admin/orders/${txn._id}`)}
                 className="text-gray-400 hover:text-white font-black uppercase text-[10px] tracking-widest transition-colors"
                >
                 View
