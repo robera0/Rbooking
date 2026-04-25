@@ -24,7 +24,7 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import toast, { Toaster } from "react-hot-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useService } from "@/Context/ServiceContext";
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -246,6 +246,20 @@ const Profile = () => {
     Gender: "",
     address: "",
   });
+
+  useEffect(() => {
+    if (userProfile?.user) {
+      setFormData({
+        fullName: userProfile.user.fullName || "",
+        nationality: userProfile.user.nationality || "",
+        phone: userProfile.user.phone || "",
+        dateOfBirth: userProfile.user.dateOfBirth ? userProfile.user.dateOfBirth.split("T")[0] : "",
+        Gender: userProfile.user.Gender || "",
+        address: userProfile.user.address || "",
+      });
+    }
+  }, [userProfile]);
+
 
   const [credentials, setCredentials] = useState({
     email: "",
@@ -489,7 +503,7 @@ const Profile = () => {
                       <FloatingInput
                         label="Full Name"
                         name="fullName"
-                        value={formData.fullName || userProfile?.user?.fullName || ""}
+                        value={formData.fullName}
                         onChange={handleChange}
                       />
                       <FloatingInput
@@ -511,13 +525,13 @@ const Profile = () => {
                       <FloatingInput
                         label="Phone Number"
                         name="phone"
-                        value={formData.phone || userProfile?.user?.phone || ""}
+                        value={formData.phone}
                         onChange={handleChange}
                       />
                       <FloatingInput
                         label="Nationality"
                         name="nationality"
-                        value={formData.nationality || userProfile?.user?.nationality || ""}
+                        value={formData.nationality}
                         onChange={handleChange}
                       />
                     </div>
@@ -528,12 +542,7 @@ const Profile = () => {
                         label="Date of Birth"
                         name="dateOfBirth"
                         type="date"
-                        value={
-                          formData.dateOfBirth ||
-                          (userProfile?.user?.dateOfBirth
-                            ? userProfile.user.dateOfBirth.split("T")[0]
-                            : "")
-                        }
+                        value={formData.dateOfBirth}
                         onChange={handleChange}
                       />
 
@@ -544,8 +553,7 @@ const Profile = () => {
                           {["Male", "Female"].map((g) => {
                             const val = g.toLowerCase();
                             const checked =
-                              formData.Gender === val ||
-                              (!formData.Gender && userProfile?.user?.Gender === val);
+                              formData.Gender === val;
                             return (
                               <label
                                 key={g}
@@ -591,7 +599,7 @@ const Profile = () => {
                       <textarea
                         name="address"
                         rows={2}
-                        value={formData.address || userProfile?.user?.address || ""}
+                        value={formData.address}
                         onChange={handleChange}
                         placeholder="Your address"
                         className={`${INPUT_BASE} resize-none`}
