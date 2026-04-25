@@ -1,6 +1,8 @@
 import {
   Cards,
   TransactionTable,
+  CustomSelect,
+  SearchInput,
 } from "./Cards";
 import {
   CalendarDays,
@@ -9,9 +11,36 @@ import {
   CloudUpload,
   ChevronsRight,
   ChevronsLeft,
+  Loader2
 } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useService } from "../src/Context/ServiceContext";
 
 const Payment = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const { API_URL } = useService();
+
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['adminDashboardStats'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/admin/analytics/dashboard`);
+      if (!res.ok) throw new Error("Failed to fetch payout stats");
+      const json = await res.json();
+      return json.data;
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 size={48} className="text-[#FF7A00] animate-spin" />
+        <p className="text-gray-500 font-black uppercase tracking-[0.2em]">Locating Ledgers...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
       {/* Header */}
@@ -28,58 +57,58 @@ const Payment = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Cards
           header="Total Earnings"
-          num="150,000 ETB"
+          num={`${stats?.revenue?.totalEarnings?.toLocaleString() || "0"} ETB`}
           topicons={<Receipt strokeWidth={2.5} className="w-6 h-6 text-[#FF7A00]" />}
-          percent_change="+ 12%"
+          percent_change={`+ ${stats?.revenue?.recentEarnings?.toLocaleString() || "0"} ETB`}
           daily_diff="Past 30 Days"
           bg="bg-[#FF7A00]/10"
         />
         <Cards
           header="Platform Commission"
-          num="15,000 ETB"
+          num={`${stats?.revenue?.platformCommission?.toLocaleString() || "0"} ETB`}
           topicons={<Receipt strokeWidth={2.5} className="w-6 h-6 text-[#5EC750]" />}
-          percent_change="+ 4.3%"
+          percent_change={`+ ${stats?.revenue?.recentCommission?.toLocaleString() || "0"} ETB`}
           daily_diff="Past 30 Days"
           bg="bg-[#5EC750]/10"
         />
         <Cards
-          header="Avg. Commission"
-          num="5,000 ETB"
+          header="Avg. Daily Commission"
+          num={`${(stats?.revenue?.recentCommission / 30 || 0).toFixed(2).toLocaleString()} ETB`}
           topicons={<Receipt strokeWidth={2.5} className="w-6 h-6 text-purple-500" />}
-          percent_change="+ 2.1%"
-          daily_diff="Past 30 Days"
+          percent_change={`${(stats?.revenue?.commissionRate * 100) || 0}%`}
+          daily_diff="Current Rate"
           bg="bg-purple-500/10"
         />
       </div>
 
       {/* Main Table Interface */}
-      <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl">
+      <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl flex flex-col min-h-[500px]">
         <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
           <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Transaction <span className="text-[#FF7A00]">History</span></h2>
           
           <div className="flex flex-wrap items-center gap-4">
-            {/* Filter */}
-            <button className="h-12 px-6 flex justify-center items-center bg-[#121417] border border-white/[0.06] hover:border-[#FF7A00]/50 rounded-full gap-3 transition-colors group">
-              <Funnel className="text-gray-500 group-hover:text-[#FF7A00] w-4 h-4 transition-colors" />
-              <select className="bg-transparent text-white font-bold text-xs uppercase tracking-widest outline-none cursor-pointer">
-                <option className="bg-[#1C1F22]" value="">All Statuses</option>
-                <option className="bg-[#1C1F22]" value="success">Success</option>
-                <option className="bg-[#1C1F22]" value="failed">Failed</option>
-              </select>
-            </button>
-
-            {/* Date Range */}
-            <div className="h-12 px-4 flex items-center bg-[#121417] border border-white/[0.06] rounded-full gap-3 text-white">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="text-gray-500 w-4 h-4" />
-                <input type="date" className="bg-transparent text-xs font-bold outline-none text-white w-[110px]" />
-              </div>
-              <span className="text-gray-600 font-bold text-xs uppercase">To</span>
-              <div className="flex items-center gap-2">
-                <CalendarDays className="text-gray-500 w-4 h-4" />
-                <input type="date" className="bg-transparent text-xs font-bold outline-none text-white w-[110px]" />
-              </div>
+            {/* Search */}
+            <div className="min-w-[240px]">
+              <SearchInput 
+                h="h-12"
+                placeholder="Search Reference or Customer..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
+
+            {/* Status Filter */}
+            <CustomSelect 
+              icon={Funnel}
+              options={[
+                { label: "All Statuses", value: "" },
+                { label: "Success", value: "success" },
+                { label: "Failed", value: "failed" },
+              ]}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              placeholder="Filter by Status"
+            />
 
             {/* Export */}
             <button className="h-12 px-6 flex justify-center items-center bg-[#FF7A00] text-black hover:bg-white rounded-full gap-2 transition-all active:scale-95 shadow-lg group">
@@ -89,36 +118,41 @@ const Payment = () => {
           </div>
         </div>
 
+        {/* Date Filter Bar */}
+        <div className="flex items-center gap-4 mb-8 bg-[#121417]/50 p-2 rounded-2xl border border-white/[0.04] w-fit">
+           <div className="h-10 px-4 flex items-center bg-[#121417] border border-white/[0.06] rounded-xl gap-3 text-white">
+              <CalendarDays className="text-gray-500 w-4 h-4" />
+              <input type="date" className="bg-transparent text-[10px] font-black uppercase outline-none text-white w-[120px] cursor-pointer" />
+            </div>
+            <span className="text-gray-600 font-bold text-[10px] uppercase tracking-widest">TO</span>
+            <div className="h-10 px-4 flex items-center bg-[#121417] border border-white/[0.06] rounded-xl gap-3 text-white">
+              <CalendarDays className="text-gray-500 w-4 h-4" />
+              <input type="date" className="bg-transparent text-[10px] font-black uppercase outline-none text-white w-[120px] cursor-pointer" />
+            </div>
+        </div>
+
         {/* Table Render */}
-        <div className="w-full overflow-x-auto rounded-tl-xl rounded-tr-xl border border-white/[0.08]">
-          <TransactionTable />
+        <div className="w-full overflow-x-auto flex-1">
+          <TransactionTable search={searchTerm} filter={statusFilter} />
         </div>
 
         {/* Pagination Footer */}
         <div className="w-full mt-6 flex flex-wrap justify-between items-center gap-4 border-t border-white/[0.04] pt-6">
-          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest pl-4">
-            Showing <span className="text-white">10</span> from <span className="text-[#FF7A00]">160</span> entries
+          <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">
+            Showing filtered analytics results
           </p>
           
           <div className="flex items-center gap-2">
             <button className="h-10 px-4 flex justify-center items-center text-[10px] font-black uppercase tracking-widest text-[#FF7A00] bg-[#FF7A00]/10 hover:bg-[#FF7A00] hover:text-black transition duration-300 rounded-xl gap-2 active:scale-95">
-              <ChevronsLeft strokeWidth={2.5} className="w-4 h-4" /> Prev
+              <ChevronsLeft strokeWidth={2.5} className="w-4 h-4" />
             </button>
 
             <div className="flex bg-[#121417] border border-white/[0.06] rounded-xl h-10 p-1">
-              {[1, 2, 3].map((page) => (
-                <button 
-                  key={page}
-                  className={`w-10 h-full flex justify-center items-center text-xs font-black rounded-lg transition-colors ${page === 1 ? 'bg-[#FF7A00] text-black shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/[0.04]'}`}
-                >
-                  {page}
-                </button>
-              ))}
-              <div className="w-10 h-full flex justify-center items-center text-gray-500 font-bold">...</div>
+                <button className={`w-8 h-full flex justify-center items-center text-xs font-black rounded-lg bg-[#FF7A00] text-black shadow-md`}>1</button>
             </div>
 
             <button className="h-10 px-4 flex justify-center items-center text-[10px] font-black uppercase tracking-widest text-[#FF7A00] bg-[#FF7A00]/10 hover:bg-[#FF7A00] hover:text-black transition duration-300 rounded-xl gap-2 active:scale-95">
-              Next <ChevronsRight strokeWidth={2.5} className="w-4 h-4" />
+              <ChevronsRight strokeWidth={2.5} className="w-4 h-4" />
             </button>
           </div>
         </div>

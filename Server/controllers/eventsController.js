@@ -42,6 +42,7 @@ export const add_event = async (req, res) => {
     dates = JSON.parse(dates || "{}");
     amenities = JSON.parse(amenities || "{}");
     musicGenre = JSON.parse(musicGenre || "[]");
+    policies = JSON.parse(policies || "[]");
 
     // Handle multiple images
     let pictures = [];
@@ -173,5 +174,102 @@ export const fetchevents_id = async (req, res) => {
   } catch (error) {
     console.error("ERROR in fetchevents_id:", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const get_event_by_id = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
+    }
+    res.status(200).json({ success: true, event });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const update_event = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    let {
+      type,
+      name,
+      artist,
+      locale,
+      info,
+      policies,
+      priceRanges,
+      dates,
+      sales,
+      musicGenre,
+      amenities,
+      desc,
+      existingPictures,
+    } = req.body;
+
+    const normalizedType = type?.toLowerCase();
+
+    // Parse JSON fields
+    if (artist) artist = JSON.parse(artist);
+    if (priceRanges) priceRanges = JSON.parse(priceRanges);
+    if (dates) dates = JSON.parse(dates);
+    if (amenities) amenities = JSON.parse(amenities);
+    if (musicGenre) musicGenre = JSON.parse(musicGenre);
+    if (policies) policies = JSON.parse(policies);
+    if (existingPictures) existingPictures = JSON.parse(existingPictures);
+
+    // Handle images
+    let pictures = existingPictures || [];
+    if (req.files && req.files.length > 0) {
+      const newPictures = req.files.map((file) => `uploads/${file.filename}`);
+      pictures = [...pictures, ...newPictures];
+    }
+
+    const updateData = {
+      type: normalizedType,
+      name,
+      artist,
+      locale,
+      info,
+      policies,
+      priceRanges,
+      dates,
+      sales,
+      musicGenre,
+      amenities,
+      pictures,
+      desc,
+    };
+
+    // Remove undefined
+    Object.keys(updateData).forEach(
+      (key) => updateData[key] === undefined && delete updateData[key],
+    );
+
+    const updatedEvent = await Event.findByIdAndUpdate(eventId, updateData, {
+      new: true,
+    });
+
+    if (!updatedEvent) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      event: updatedEvent,
+      message: "Event updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating event:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

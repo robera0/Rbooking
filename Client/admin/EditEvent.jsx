@@ -1,40 +1,64 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Plus,
   Save,
   ArrowLeft,
-  Upload,
   Trash2,
   ShieldCheck,
-  Music,
-  Tv,
   Tag,
-  Zap,
   Check,
+  Loader2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { CustomSelect } from "./Cards";
+import { useNavigate, useParams, useLoaderData } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Toaster, toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
-import { CustomSelect } from "./Cards";
 
-const AddEvent = () => {
+const EditEvent = () => {
+  const { eventId } = useParams();
   const navigate = useNavigate();
   const { API_URL } = useService();
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState({
-    type: "",
-    eventName: "",
-    artistName: "",
-    venue: "",
-    description: "",
-    eventDate: "",
-    tickets: [],
-    policies: [], // New field
-    amenities: [],
-    pictures: [],
+  const eventData = useLoaderData();
+
+  const [formData, setFormData] = useState(() => {
+    if (eventData?.event) {
+      const ev = eventData.event;
+      return {
+        type: ev.type || "concert",
+        eventName: ev.name || "",
+        artistName: ev.artist?.name || "",
+        venue: ev.locale || "",
+        description: ev.desc || "",
+        eventDate: ev.dates?.start?.dateTime ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16) : "",
+        tickets: ev.priceRanges?.map(pr => ({
+          name: pr.type,
+          price: pr.min,
+          capacity: pr.max 
+        })) || [],
+        policies: ev.policies || [],
+        amenities: ev.amenities?.activity || [],
+        existingPictures: ev.pictures || [],
+        newPictures: [],
+      };
+    }
+    return {
+      type: "",
+      eventName: "",
+      artistName: "",
+      venue: "",
+      description: "",
+      eventDate: "",
+      tickets: [],
+      policies: [],
+      amenities: [],
+      existingPictures: [],
+      newPictures: [],
+    };
   });
+
   const [newAmenity, setNewAmenity] = useState("");
   const [newTicket, setNewTicket] = useState({
     name: "",
@@ -43,10 +67,9 @@ const AddEvent = () => {
   });
   const dateInputRef = useRef(null);
   const posterInputRef = useRef(null);
-
   const [error, setError] = useState("");
 
-  const createMutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: async (payload) => {
       const form = new FormData();
 
@@ -60,25 +83,23 @@ const AddEvent = () => {
       form.append("policies", JSON.stringify(payload.policies));
       form.append("dates", JSON.stringify(payload.dates));
       form.append("amenities", JSON.stringify(payload.amenities));
-      form.append("musicGenre", JSON.stringify(payload.musicGenre));
+      form.append("existingPictures", JSON.stringify(payload.existingPictures));
 
-      // upload first image
-      formData.pictures.forEach((img) => {
+      // Append new files
+      formData.newPictures.forEach((img) => {
         form.append("pictures", img);
       });
 
-      const res = await fetch(`${API_URL}/api/addEvents`, {
-        method: "POST",
+      const res = await fetch(`${API_URL}/api/events/${eventId}`, {
+        method: "PUT",
         body: form,
       });
 
-      if (!res.ok) throw new Error("Failed to create event");
-
+      if (!res.ok) throw new Error("Failed to update event");
       return res.json();
     },
     onSuccess: () => {
-      // 1. Trigger the Success Toast
-      toast.success("Event Published Successfully!", {
+      toast.success("Event Updated Successfully!", {
         duration: 2000,
         style: {
           background: "#1C1F22",
@@ -86,19 +107,8 @@ const AddEvent = () => {
           border: "1px solid #FF7A00",
         },
       });
-      setFormData({
-        type: "",
-        eventName: "",
-        artistName: "",
-        venue: "",
-        description: "",
-        eventDate: "",
-        tickets: [],
-        policies: [],
-        amenities: [],
-        pictures: [],
-      });
-
+      queryClient.invalidateQueries(["adminEvents"]);
+      
       setTimeout(() => {
         navigate("/admin/events");
       }, 2000);
@@ -109,18 +119,16 @@ const AddEvent = () => {
   });
 
   const handleSubmit = () => {
-    if (!formData.eventName)
-      return setError("Event Name is required to publish");
+    if (!formData.eventName) return setError("Event Name is required");
     setError("");
-    createMutation.mutate({
+    
+    updateMutation.mutate({
       type: formData.type.toLowerCase(),
       name: formData.eventName,
-      artist: {
-        name: formData.artistName,
-      },
+      artist: { name: formData.artistName },
       locale: formData.venue,
-
-      musicGenre: ["General"],
+      desc: formData.description,
+      existingPictures: formData.existingPictures,
       policies: formData.policies,
       priceRanges: formData.tickets.map((t) => ({
         type: t.name,
@@ -128,7 +136,6 @@ const AddEvent = () => {
         min: Number(t.price),
         max: Number(t.price),
       })),
-      desc: formData.description,
       dates: {
         start: {
           localDate: formData.eventDate?.split("T")[0],
@@ -136,11 +143,8 @@ const AddEvent = () => {
           dateTime: formData.eventDate ? new Date(formData.eventDate) : null,
         },
         timezone: "Africa/Addis_Ababa",
-        status: {
-          code: "onsale",
-        },
+        status: { code: "onsale" },
       },
-
       amenities: {
         activity: formData.amenities,
         payment_method: [],
@@ -148,16 +152,22 @@ const AddEvent = () => {
         other: [],
       },
     });
-
-    console.log(formData);
-    console.log("yes");
   };
+
+  if (!formData.eventName && !eventData?.event) {
+    return (
+      <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 size={48} className="text-[#FF7A00] animate-spin" />
+        <p className="text-gray-500 font-black uppercase tracking-[0.2em]">Syncing Terminal...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
       <Toaster position="top-center" />
 
-      {/* Header - Styled like Second Code */}
+      {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
@@ -167,123 +177,90 @@ const AddEvent = () => {
             >
               <ArrowLeft size={24} />
             </button>
-
             <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
-              Create <span className="text-[#FF7A00]">{formData.type}</span>
+              Manage <span className="text-[#FF7A00]">{formData.type}</span>
             </h1>
           </div>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00] ml-14" />
         </div>
         <button
           onClick={handleSubmit}
-          disabled={createMutation.isLoading}
+          disabled={updateMutation.isLoading}
           className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
         >
           <Save size={16} strokeWidth={3} />
-          {createMutation.isLoading ? "Publishing..." : "Publish Event"}
+          {updateMutation.isLoading ? "Saving Changes..." : "Save Changes"}
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          {/* Discriminator Selection - From First Code */}
-          {/* LEFT COLUMN: CORE INTEL */}
-          <div className="lg:col-span-8 space-y-10">
-            {/* TYPE SELECTOR */}
-            <section className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <Tag size={14} className="text-[#FF7A00]" /> Classification Type
-                </h3>
-                <CustomSelect 
-                  options={[
-                    { label: "Concert", value: "concert" },
-                    { label: "Festival", value: "festival" },
-                    { label: "Generic", value: "generic" }
-                  ]}
-                  value={formData.type.toLowerCase()}
-                  onChange={(val) => setFormData({ ...formData, type: val })}
-                  placeholder="Select Type"
-                />
-              </div>
-            </section>
-          </div>
+          {/* Classification Selection */}
+          <section className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-8 space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                <Tag size={14} className="text-[#FF7A00]" /> Classification Type
+              </h3>
+              <CustomSelect 
+                options={[
+                  { label: "Concert", value: "concert" },
+                  { label: "Festival", value: "festival" },
+                  { label: "Generic", value: "generic" }
+                ]}
+                value={formData.type.toLowerCase()}
+                onChange={(val) => setFormData({ ...formData, type: val })}
+                placeholder="Select Type"
+              />
+            </div>
+          </section>
 
-          {/* Event Details - Background from Second Code */}
+          {/* Event Details */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
-            <h3 className="text-white font-bold uppercase tracking-tight text-sm">
-              Transmission Details
-            </h3>
+            <h3 className="text-white font-bold uppercase tracking-tight text-sm">Transmission Details</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                  Event Title
-                </label>
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Event Title</label>
                 <input
                   type="text"
                   value={formData.eventName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, eventName: e.target.value })
-                  }
-                  className={`w-full bg-[#121417] border ${
-                    error ? "border-red-500/50" : "border-white/[0.06]"
-                  } rounded-xl px-4 py-4 text-white focus:border-[#FF7A00]/50 outline-none transition-colors font-bold`}
-                  placeholder="e.g. WAREHOUSE PROJECT"
+                  onChange={(e) => setFormData({ ...formData, eventName: e.target.value })}
+                  className={`w-full bg-[#121417] border ${error ? "border-red-500/50" : "border-white/[0.06]"} rounded-xl px-4 py-4 text-white focus:border-[#FF7A00]/50 outline-none transition-colors font-bold`}
                 />
-                {error && (
-                  <p className="text-red-500 font-black tracking-widest uppercase text-[9px] mt-2">
-                    {error}
-                  </p>
-                )}
+                {error && <p className="text-red-500 font-black tracking-widest uppercase text-[9px] mt-2">{error}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                    Artist / Talent
-                  </label>
+                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Artist / Talent</label>
                   <input
                     type="text"
                     value={formData.artistName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, artistName: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, artistName: e.target.value })}
                     className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none"
-                    placeholder="Main artist"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                    Venue Locale
-                  </label>
+                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Venue Locale</label>
                   <input
                     type="text"
                     value={formData.venue}
-                    onChange={(e) =>
-                      setFormData({ ...formData, venue: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
                     className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none"
-                    placeholder="Location"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                  Description
-                </label>
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Description</label>
                 <textarea
                   rows="4"
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none italic"
-                  placeholder="Event details..."
                 />
               </div>
             </div>
           </div>
 
-          {/* Event Tickets */}
+          {/* Tickets */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
             <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Event Tickets</h3>
             <div className="space-y-4">
@@ -345,7 +322,7 @@ const AddEvent = () => {
                     value={newTicket?.name || ""}
                     onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
                     className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
-                    placeholder="Ticket Name"
+                    placeholder="New Ticket Name"
                   />
                 </div>
                 <div className="w-24">
@@ -436,213 +413,96 @@ const AddEvent = () => {
           </div>
         </div>
 
-        {/* Sidebar Space */}
+        {/* Sidebar */}
         <div className="space-y-8">
-          {/* Schedule */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
-              Schedule
-            </h3>
-            <div className="relative">
-              <div className="relative flex items-center">
-                <input
-                  type="datetime-local"
-                  ref={dateInputRef}
-                  className="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  onChange={(e) =>
-                    setFormData({ ...formData, eventDate: e.target.value })
-                  }
-                  value={formData.eventDate}
-                  tabIndex={-1}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    dateInputRef.current && dateInputRef.current.showPicker()
-                  }
-                  className="flex items-center gap-2 px-4 py-4 w-full bg-[#121417] border border-[#FF7A00] rounded-xl text-white font-bold focus:border-[#FF7A00] outline-none"
-                  style={{ position: "relative", zIndex: 20 }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="#FF7A00"
-                    className="w-6 h-6"
-                  >
-                    <rect
-                      x="3"
-                      y="5"
-                      width="18"
-                      height="16"
-                      rx="2"
-                      stroke="#FF7A00"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="M16 3v4M8 3v4M3 9h18"
-                      stroke="#FF7A00"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                  <span className="ml-2 text-white font-bold">
-                    {formData.eventDate
-                      ? new Date(formData.eventDate).toLocaleString()
-                      : "Pick Date & Time"}
-                  </span>
-                </button>
-              </div>
-            </div>
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Schedule</h3>
+            <button
+              type="button"
+              onClick={() => dateInputRef.current && dateInputRef.current.showPicker()}
+              className="flex items-center gap-2 px-4 py-4 w-full bg-[#121417] border border-[#FF7A00] rounded-xl text-white font-bold outline-none"
+            >
+              <input
+                type="datetime-local"
+                ref={dateInputRef}
+                className="absolute opacity-0 w-0 h-0"
+                onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                value={formData.eventDate}
+              />
+              <span className="text-white font-bold">
+                {formData.eventDate ? new Date(formData.eventDate).toLocaleString() : "Pick Date & Time"}
+              </span>
+            </button>
           </div>
 
-          {/* Amenities Vertical with Plus */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
-              Amenities
-            </h3>
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Amenities</h3>
             <div className="space-y-3">
               {formData.amenities.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between bg-[#121417] px-4 py-3 rounded-xl border border-white/[0.06] group"
-                >
-                  <span className="text-[10px] font-black uppercase text-gray-400 group-hover:text-white transition-colors">
-                    {item}
-                  </span>
-                  <Trash2
-                    size={14}
-                    className="text-gray-600 hover:text-red-500 cursor-pointer"
-                    onClick={() => {
-                      setFormData({
-                        ...formData,
-                        amenities: formData.amenities.filter(
-                          (_, idx) => idx !== i,
-                        ),
-                      });
-                    }}
-                  />
+                <div key={i} className="flex items-center justify-between bg-[#121417] px-4 py-3 rounded-xl border border-white/[0.06]">
+                  <span className="text-[10px] font-black uppercase text-gray-400">{item}</span>
+                  <Trash2 size={14} className="text-gray-600 hover:text-red-500 cursor-pointer" onClick={() => setFormData({ ...formData, amenities: formData.amenities.filter((_, idx) => idx !== i) })} />
                 </div>
               ))}
               <div className="relative pt-2">
                 <input
-                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-[10px] text-white outline-none focus:border-[#FF7A00]/50 font-bold uppercase"
+                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-[10px] text-white outline-none font-bold uppercase"
                   placeholder="NEW AMENITY..."
                   value={newAmenity}
                   onChange={(e) => setNewAmenity(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && newAmenity.trim()) {
-                      setFormData({
-                        ...formData,
-                        amenities: [...formData.amenities, newAmenity.trim()],
-                      });
+                      setFormData({ ...formData, amenities: [...formData.amenities, newAmenity.trim()] });
                       setNewAmenity("");
                     }
                   }}
                 />
-                <button
-                  type="button"
-                  className="absolute right-2 top-[13px] p-1.5 bg-[#FF7A00] text-black rounded-lg hover:bg-white transition-all shadow-lg"
-                  onClick={() => {
-                    if (newAmenity.trim()) {
-                      setFormData({
-                        ...formData,
-                        amenities: [...formData.amenities, newAmenity.trim()],
-                      });
-                      setNewAmenity("");
-                    }
-                  }}
-                >
-                  <Plus size={14} strokeWidth={4} />
-                </button>
               </div>
             </div>
           </div>
 
-          {/* FLYER ARCHIVE - INDIVIDUAL DIV BOXES */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
-            <h3 className="text-white font-bold uppercase tracking-tight text-sm">
-              Flyer Archive
-            </h3>
-
+            <h3 className="text-white font-bold uppercase tracking-tight text-sm">Flyer Archive</h3>
             <div className="space-y-4">
-              {formData?.pictures?.map((file, index) => (
-                <div
-                  key={index}
-                  className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative"
-                >
-                  <div className="w-16 h-16 rounded-xl border border-white/5 overflow-hidden shrink-0 bg-black">
-                    {file.type && file.type.startsWith("image/") ? (
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt="preview"
-                        className="w-full h-full object-cover opacity-80"
-                      />
-                    ) : (
-                      <span className="text-gray-500 text-xs">No Preview</span>
-                    )}
-                  </div>
+              {/* Existing Pictures */}
+              {formData.existingPictures.map((src, index) => (
+                <div key={`existing-${index}`} className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative">
+                  <img src={`${API_URL}/${src}`} className="w-16 h-16 rounded-xl object-cover opacity-80" alt="existing" />
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-[10px] font-black uppercase text-gray-300 truncate">
-                      {file.name}
-                    </p>
-                    <p className="text-[9px] font-bold text-gray-600 uppercase italic">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
+                    <p className="text-[10px] font-black uppercase text-gray-300 truncate">Existing Asset</p>
                   </div>
-                  <button
-                    onClick={() => {
-                      const updated = formData.pictures.filter(
-                        (_, i) => i !== index,
-                      );
-                      setFormData({ ...formData, pictures: updated });
-                    }}
-                    className="p-2 text-red-500/60 hover:text-red-500 transition-colors"
-                  >
+                  <button onClick={() => setFormData({ ...formData, existingPictures: formData.existingPictures.filter((_, i) => i !== index) })} className="p-2 text-red-500/60 hover:text-red-500">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+              {/* New Pictures */}
+              {formData.newPictures.map((file, index) => (
+                <div key={`new-${index}`} className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative">
+                  <img src={URL.createObjectURL(file)} className="w-16 h-16 rounded-xl object-cover opacity-80" alt="new" />
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-[10px] font-black uppercase text-[#FF7A00] truncate">{file.name}</p>
+                  </div>
+                  <button onClick={() => setFormData({ ...formData, newPictures: formData.newPictures.filter((_, i) => i !== index) })} className="p-2 text-red-500/60 hover:text-red-500">
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
             </div>
-
             <button
               type="button"
-              onClick={() =>
-                posterInputRef.current && posterInputRef.current.click()
-              }
-              className="w-full h-32 bg-[#121417] border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95 group"
+              onClick={() => posterInputRef.current && posterInputRef.current.click()}
+              className="w-full h-32 bg-[#121417] border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95"
             >
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={posterInputRef}
-                multiple
-                onChange={(e) => {
-                  const files = Array.from(e.target.files);
-                  if (files.length)
-                    setFormData({
-                      ...formData,
-                      pictures: [...formData.pictures, ...files],
-                    });
-                }}
-              />
-              <Plus
-                size={32}
-                strokeWidth={4}
-                className="group-hover:scale-110 transition-transform"
-              />
-              <p className="font-black text-[11px] uppercase tracking-[0.2em] italic">
-                Add Visual Intel
-              </p>
+              <input type="file" multiple className="hidden" ref={posterInputRef} onChange={(e) => setFormData({ ...formData, newPictures: [...formData.newPictures, ...Array.from(e.target.files)] })} />
+              <Plus size={32} strokeWidth={4} />
+              <p className="font-black text-[11px] uppercase tracking-[0.2em] italic">Add New Media</p>
             </button>
           </div>
 
           <div className="p-6 bg-[#FF7A00]/5 border border-[#FF7A00]/10 rounded-3xl flex items-center gap-4">
             <ShieldCheck size={24} className="text-[#FF7A00]" />
-            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-tight">
-              Validated <br /> Terminal Ready
-            </p>
+            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-tight">Terminal Root Access <br /> Authorized</p>
           </div>
         </div>
       </div>
@@ -650,4 +510,4 @@ const AddEvent = () => {
   );
 };
 
-export default AddEvent;
+export default EditEvent;

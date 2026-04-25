@@ -21,12 +21,12 @@ import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 
 import { useService } from "../src/Context/ServiceContext";
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom";
 import { eventService } from "@/Context/ApiEvent";
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useCallback } from "react";
 
-const Main = ({ children }) => {
+const Main = () => {
   const { isAccountActive, menuOpen, setMenuOpen, API_URL } = useService();
 
   const location = useLocation();
@@ -276,7 +276,7 @@ const Main = ({ children }) => {
         {/* ================= CONTENT ================= */}
 
         <main className="flex-1 flex flex-col">
-          <div className="flex-1 pb-20 md:pb-0">{children}</div>
+          <div className="flex-1 pb-20 md:pb-0"><Outlet /></div>
 
           {/* ================= FOOTER ================= */}
 

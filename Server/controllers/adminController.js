@@ -89,3 +89,22 @@ export const add_user = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const update_user = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role, status } = req.body;
+
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: { role, status } },
+      { new: true }
+    ).select("-password -refreshTokens");
+
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

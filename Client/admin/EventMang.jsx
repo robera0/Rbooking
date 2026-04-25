@@ -1,9 +1,12 @@
-import { Plus } from "lucide-react";
+import { Plus, Funnel, Search as SearchIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { EventTable } from "./Cards";
+import { EventTable, SearchInput, CustomSelect } from "./Cards";
+import { useState } from "react";
 
 const EventMang = () => {
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("");
 
   return (
     <div className="w-full max-w-full space-y-8">
@@ -24,8 +27,38 @@ const EventMang = () => {
         </button>
       </div>
 
-      <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl overflow-hidden overflow-x-auto">
-        <EventTable />
+      <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl flex flex-col min-h-[400px]">
+        {/* Filters Wrapper */}
+        <div className="w-full flex flex-wrap items-center gap-4 mb-6">
+          <div className="flex-1 min-w-[200px]">
+            <SearchInput
+              w="w-full"
+              h="h-12"
+              top="top-1/2 -translate-y-1/2"
+              left="left-4"
+              placeholder="Search event name or location..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <CustomSelect 
+             icon={Funnel}
+             options={[
+               { label: "All Types", value: "" },
+               { label: "Concert", value: "concert" },
+               { label: "Festival", value: "festival" },
+               { label: "Generic", value: "generic" }
+             ]}
+             value={filterType}
+             onChange={setFilterType}
+             placeholder="All Types"
+          />
+        </div>
+
+        <div className="w-full overflow-x-auto flex-1">
+          <EventTable search={searchTerm} filter={filterType} />
+        </div>
       </div>
     </div>
   );
