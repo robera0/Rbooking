@@ -2,37 +2,133 @@ import { generateRefreshToken, generateAccessToken } from "../service/token.js";
 import { hashPasswords, comparePassword } from "../service/password.js";
 import { UserModel } from "../models/UserModel.js";
 import dotenv from "dotenv";
+import { Admin } from "../models/UserModel.js";
 
 import jwt from "jsonwebtoken";
 dotenv.config();
 
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
-export const register_users = async (req, res) => {
-  const { username, email, password } = req.body;
+export const register_admin = async (req, res) => {
+  try {
+    let {
+      username,
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      organizationName,
+      businessType,
+      businessRegistrationNumber,
+      taxId,
+      country,
+      city,
+      region,
+      streetAddress,
+      adminRole,
+      idDocument,
+      businessLicense,
+      companyLogo,
+      twoFactorEnabled,
+    } = req.body;
 
-  const existingUser = await UserModel.findOne({ email });
+    if (
+      !username ||
+      !email ||
+      !password ||
+      !firstName ||
+      !lastName ||
+      !phone ||
+      !organizationName
+    ) {
+      return res.status(400).json({
+        message: "Missing required fields",
+      });
+    }
 
-  if (existingUser)
-    return res.status(400).json({ message: "Email already exists" });
+    email = email.toLowerCase();
 
-  const hashedPassword = await hashPasswords(password);
-  const user = await UserModel.create({
-    username,
-    email,
-    password: hashedPassword,
-  });
+    const existingUser = await UserModel.findOne({ email });
 
-  res.status(201).json({
-    message: "User registered successfully",
-    user: {
-      id: user._id,
-      username: user.username,
-      role: user.role,
-    },
-  });
+    if (existingUser)
+      return res.status(400).json({ message: "Email already exists" });
+
+    const hashedPassword = await hashPasswords(password);
+    const user = {
+      username,
+      email,
+      password: hashedPassword,
+      role: "admin",
+      firstName,
+      lastName,
+      phone,
+      organizationName,
+      businessType,
+      businessRegistrationNumber,
+      taxId,
+      country,
+      city,
+      region,
+      streetAddress,
+      adminRole,
+      idDocument,
+      businessLicense,
+      companyLogo,
+      twoFactorEnabled,
+    };
+    const newUser = await Admin.create(user);
+
+    res.status(201).json({
+      success: true,
+      message: "Admin created successfully",
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        role: newUser.role,
+      },
+    });
+  } catch (error) {
+    console.error("register user error:", error);
+    return res.status(500).json({
+      message: "The user cannot be registered ",
+      error: error.message,
+    });
+  }
 };
+// REGISTER USER
 
+export const register_user = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    const existingUser = await UserModel.findOne({ email });
+
+    if (existingUser)
+      return res.status(400).json({ message: "Email already exists" });
+
+    const hashedPassword = await hashPasswords(password);
+
+    const newUser = await UserModel.create({
+      username,
+      email,
+      password: hashedPassword,
+      role: "user",
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user: newUser,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "User registration failed",
+    });
+  }
+};
 export const login_user = async (req, res) => {
   const { email, password } = req.body;
 

@@ -257,7 +257,7 @@ const Main = () => {
                               Sign In
                             </Link>
                             <Link
-                              to="/register"
+                              to="/sign_up"
                               className="w-full block text-center py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-colors"
                             >
                               Create Account

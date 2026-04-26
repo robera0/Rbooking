@@ -30,6 +30,7 @@ import CreateNotification from "../admin/CreateNotification";
 import AdminViewTicket from "../admin/AdminViewTicket";
 import { ProtectedRoute } from "./components/Reusable";
 import { GoogleAuthHandler } from "./components/GoogleAuthHandler";
+import RegistrationPage from "../admin/RegistrationPage";
 
 const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
@@ -82,6 +83,10 @@ export const router = createBrowserRouter([
       {
         path: "google-auth",
         element: <GoogleAuthHandler />,
+      },
+      {
+        path: "admin/register",
+        element: <PageWrapper><RegistrationPage /></PageWrapper>
       },
       {
         path: "login",

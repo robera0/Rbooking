@@ -1,9 +1,10 @@
 import express from "express";
 import {
-  register_users,
+  register_admin,
   login_user,
   refresh,
   logout,
+  register_user,
 } from "../controllers/authController.js";
 import { user } from "../controllers/userController.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
@@ -62,7 +63,8 @@ authrouter.get(
 );
 
 authrouter.get("/user", authenticateTokenMiddleware, user);
-authrouter.post("/signup", register_users);
+authrouter.post("/signup/user", register_user);
+authrouter.post("/signup/admin", register_admin);
 authrouter.post("/login", login_user);
 authrouter.post("/logout", authenticateTokenMiddleware, logout);
 authrouter.post("/tokens", refresh);
