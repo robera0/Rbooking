@@ -148,9 +148,6 @@ const AddEvent = () => {
         other: [],
       },
     });
-
-    console.log(formData);
-    console.log("yes");
   };
 
   return (
@@ -193,13 +190,14 @@ const AddEvent = () => {
             <section className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-8 space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <Tag size={14} className="text-[#FF7A00]" /> Classification Type
+                  <Tag size={14} className="text-[#FF7A00]" /> Classification
+                  Type
                 </h3>
-                <CustomSelect 
+                <CustomSelect
                   options={[
                     { label: "Concert", value: "concert" },
                     { label: "Festival", value: "festival" },
-                    { label: "Generic", value: "generic" }
+                    { label: "Generic", value: "generic" },
                   ]}
                   value={formData.type.toLowerCase()}
                   onChange={(val) => setFormData({ ...formData, type: val })}
@@ -285,12 +283,19 @@ const AddEvent = () => {
 
           {/* Event Tickets */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Event Tickets</h3>
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
+              Event Tickets
+            </h3>
             <div className="space-y-4">
               {formData.tickets.map((ticket, idx) => (
-                <div key={idx} className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]">
+                <div
+                  key={idx}
+                  className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
+                >
                   <div className="flex-1">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Ticket Name</label>
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Ticket Name
+                    </label>
                     <input
                       value={ticket.name}
                       onChange={(e) => {
@@ -302,7 +307,9 @@ const AddEvent = () => {
                     />
                   </div>
                   <div className="w-24">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Price (ETB)</label>
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Price (ETB)
+                    </label>
                     <input
                       value={ticket.price}
                       onChange={(e) => {
@@ -314,7 +321,9 @@ const AddEvent = () => {
                     />
                   </div>
                   <div className="w-24">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Capacity</label>
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Capacity
+                    </label>
                     <input
                       type="number"
                       value={ticket.capacity}
@@ -329,7 +338,9 @@ const AddEvent = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      const updated = formData.tickets.filter((_, i) => i !== idx);
+                      const updated = formData.tickets.filter(
+                        (_, i) => i !== idx,
+                      );
                       setFormData({ ...formData, tickets: updated });
                     }}
                     className="ml-2 text-red-500 hover:text-red-700"
@@ -343,7 +354,9 @@ const AddEvent = () => {
                 <div className="flex-1">
                   <input
                     value={newTicket?.name || ""}
-                    onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
+                    onChange={(e) =>
+                      setNewTicket({ ...newTicket, name: e.target.value })
+                    }
                     className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
                     placeholder="Ticket Name"
                   />
@@ -351,7 +364,9 @@ const AddEvent = () => {
                 <div className="w-24">
                   <input
                     value={newTicket?.price || ""}
-                    onChange={(e) => setNewTicket({ ...newTicket, price: e.target.value })}
+                    onChange={(e) =>
+                      setNewTicket({ ...newTicket, price: e.target.value })
+                    }
                     className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
                     placeholder="Price"
                   />
@@ -360,7 +375,9 @@ const AddEvent = () => {
                   <input
                     type="number"
                     value={newTicket?.capacity || ""}
-                    onChange={(e) => setNewTicket({ ...newTicket, capacity: e.target.value })}
+                    onChange={(e) =>
+                      setNewTicket({ ...newTicket, capacity: e.target.value })
+                    }
                     className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     placeholder="Cap"
                   />
@@ -368,7 +385,11 @@ const AddEvent = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (newTicket?.name && newTicket?.price && newTicket?.capacity) {
+                    if (
+                      newTicket?.name &&
+                      newTicket?.price &&
+                      newTicket?.capacity
+                    ) {
                       setFormData({
                         ...formData,
                         tickets: [...formData.tickets, { ...newTicket }],
@@ -386,10 +407,15 @@ const AddEvent = () => {
 
           {/* Event Policies */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Event Policies</h3>
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
+              Event Policies
+            </h3>
             <div className="space-y-4">
               {formData.policies.map((policy, idx) => (
-                <div key={idx} className="bg-[#121417] p-5 rounded-xl border border-white/[0.06] space-y-3">
+                <div
+                  key={idx}
+                  className="bg-[#121417] p-5 rounded-xl border border-white/[0.06] space-y-3"
+                >
                   <div className="flex justify-between items-start">
                     <input
                       value={policy.header}
@@ -404,7 +430,9 @@ const AddEvent = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        const updated = formData.policies.filter((_, i) => i !== idx);
+                        const updated = formData.policies.filter(
+                          (_, i) => i !== idx,
+                        );
                         setFormData({ ...formData, policies: updated });
                       }}
                       className="text-red-500 hover:text-red-700"
@@ -427,7 +455,15 @@ const AddEvent = () => {
               ))}
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, policies: [...formData.policies, { header: "", descriptions: "" }] })}
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    policies: [
+                      ...formData.policies,
+                      { header: "", descriptions: "" },
+                    ],
+                  })
+                }
                 className="w-full py-4 border border-dashed border-white/[0.1] rounded-xl text-gray-500 hover:text-[#FF7A00] hover:border-[#FF7A00] transition-all text-[10px] font-black uppercase tracking-widest"
               >
                 + Add New Policy

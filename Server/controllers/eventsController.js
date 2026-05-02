@@ -127,7 +127,7 @@ export const featured_events = async (req, res) => {
 };
 
 // FETCH WITH RESPECT TO ITS INDEX
-export const fetchevents_id = async (req, res) => {
+export const fetchEvents_id = async (req, res) => {
   try {
     const { eventId, ticketId } = req.params;
 

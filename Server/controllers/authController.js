@@ -27,32 +27,41 @@ export const register_admin = async (req, res) => {
       region,
       streetAddress,
       adminRole,
-      idDocument,
-      businessLicense,
-      companyLogo,
       twoFactorEnabled,
     } = req.body;
 
-    if (
-      !username ||
-      !email ||
-      !password ||
-      !firstName ||
-      !lastName ||
-      !phone ||
-      !organizationName
-    ) {
-      return res.status(400).json({
-        message: "Missing required fields",
-      });
-    }
+    // Trim all string fields
+    username = typeof username === "string" ? username.trim() : username;
+    email = typeof email === "string" ? email.trim().toLowerCase() : email;
+    password = typeof password === "string" ? password.trim() : password;
+    firstName = typeof firstName === "string" ? firstName.trim() : firstName;
+    lastName = typeof lastName === "string" ? lastName.trim() : lastName;
+    phone = typeof phone === "string" ? phone.trim() : phone;
+    organizationName =
+      typeof organizationName === "string"
+        ? organizationName.trim()
+        : organizationName;
+    businessType =
+      typeof businessType === "string" ? businessType.trim() : businessType;
+    businessRegistrationNumber =
+      typeof businessRegistrationNumber === "string"
+        ? businessRegistrationNumber.trim()
+        : businessRegistrationNumber;
+    taxId = typeof taxId === "string" ? taxId.trim() : taxId;
+    country = typeof country === "string" ? country.trim() : country;
+    city = typeof city === "string" ? city.trim() : city;
+    region = typeof region === "string" ? region.trim() : region;
+    streetAddress =
+      typeof streetAddress === "string" ? streetAddress.trim() : streetAddress;
+    adminRole = typeof adminRole === "string" ? adminRole.trim() : adminRole;
 
-    email = email.toLowerCase();
-
-    const existingUser = await UserModel.findOne({ email });
-
+    const existingUser = await Admin.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: "Email already exists" });
+
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ message: "Required fields are missing" });
+    }
 
     const hashedPassword = await hashPasswords(password);
     const user = {
@@ -72,10 +81,7 @@ export const register_admin = async (req, res) => {
       region,
       streetAddress,
       adminRole,
-      idDocument,
-      businessLicense,
-      companyLogo,
-      twoFactorEnabled,
+      twoFactorEnabled: twoFactorEnabled === "true",
     };
     const newUser = await Admin.create(user);
 
