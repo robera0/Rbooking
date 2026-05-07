@@ -5,13 +5,13 @@ import {
 } from "../controllers/commentController.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 
-const commentrouter = express.Router();
+const commentRouter = express.Router();
 // getting the event id
-commentrouter.get("/events/:id", get_comments);
-commentrouter.post(
+commentRouter.get("/events/:id", get_comments);
+commentRouter.post(
   "/auth/comments/:id",
   authenticateTokenMiddleware,
   post_comments,
 );
 
-export default commentrouter;
+export default commentRouter;

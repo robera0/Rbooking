@@ -157,6 +157,7 @@ export const login_user = async (req, res) => {
   const refresh_token = generateRefreshToken(payload);
   user.refreshTokens.push({ token: refresh_token });
   await user.save();
+
   res
     .cookie("access_token", access_token, {
       httpOnly: true,

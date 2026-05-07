@@ -4,12 +4,12 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./config/databse.js";
-import eventrouter from "./routes/eventRoutes.js";
-import ticketrouter from "./routes/ticketRoutes.js";
-import commentrouter from "./routes/commentRoutes.js";
-import wishlistrouter from "./routes/wishlistRoutes.js";
-import notirouter from "./routes/notificationRouter.js";
-import authrouter from "./routes/authRoutes.js";
+import eventRouter from "./routes/eventRoutes.js";
+import ticketRouter from "./routes/ticketRoutes.js";
+import commentRouter from "./routes/commentRoutes.js";
+import wishlistRouter from "./routes/wishlistRoutes.js";
+import notiRouter from "./routes/notificationRouter.js";
+import authRouter from "./routes/authRoutes.js";
 import userProfilesRouter from "./routes/profileRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
@@ -66,14 +66,14 @@ app.use(passport.initialize());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use("/api", eventrouter);
-app.use("/api", commentrouter);
+app.use("/api", eventRouter);
+app.use("/api", commentRouter);
 
 app.use("/api/auth", userProfilesRouter);
-app.use("/api/auth", ticketrouter);
-app.use("/api/auth", wishlistrouter);
-app.use("/api/auth", notirouter);
-app.use("/api/auth", authrouter);
+app.use("/api/auth", ticketRouter);
+app.use("/api/auth", wishlistRouter);
+app.use("/api/auth", notiRouter);
+app.use("/api/auth", authRouter);
 
 app.use("/api/admin", adminRouter);
 startServer();

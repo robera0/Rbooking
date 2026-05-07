@@ -6,20 +6,20 @@ import {
   update_ticket_status,
 } from "../controllers/usersTicketController.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
-const ticketrouter = express.Router();
+const ticketRouter = express.Router();
 
-ticketrouter.get("/tickets_home", authenticateTokenMiddleware, get_tickets);
-ticketrouter.get(
+ticketRouter.get("/tickets_home", authenticateTokenMiddleware, get_tickets);
+ticketRouter.get(
   "/tickets_home/:ticketId",
   authenticateTokenMiddleware,
   get_tickets_info,
 );
-ticketrouter.post(
+ticketRouter.post(
   "/purchase/:id/:ticketId",
   authenticateTokenMiddleware,
   purchase_ticket,
 );
 
-ticketrouter.patch("/ticket/:ticketId/status", update_ticket_status);
+ticketRouter.patch("/ticket/:ticketId/status", update_ticket_status);
 
-export default ticketrouter;
+export default ticketRouter;

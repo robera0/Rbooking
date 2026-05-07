@@ -80,6 +80,34 @@ export const ApiProvider = ({ children }) => {
     enabled: !!user,
   });
 
+  //GET NOTIFICATION
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/notifications`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        throw new Error("Login required");
+      }
+      return res.json();
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  const {
+    data: notifications,
+    isLoading: notificationLoading,
+    isError: notificationIsError,
+    error: notificationError,
+  } = useQuery({
+    queryKey: ["notification"],
+    queryFn: fetchNotifications,
+    enabled: !!user,
+  });
+
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
     const res = await fetch(`${API_URL}/api/auth/tickets_home/${ticketId}`, {
@@ -181,6 +209,9 @@ export const ApiProvider = ({ children }) => {
         ticketLoading,
         ticketsError,
         ticketIsError,
+        notifications,
+        notificationIsError,
+        notificationError,
         wishlist,
         wishlistError,
         wishlistLoading,

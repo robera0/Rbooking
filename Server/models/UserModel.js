@@ -102,6 +102,7 @@ const adminSchema = new mongoose.Schema(
         "event_manager",
         "ticket_manager",
         "finance_manager",
+        "corporate_events",
       ],
       default: "event_manager",
     },

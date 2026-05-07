@@ -6,7 +6,7 @@ const ProfileSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true, // ensures one profile per user
+      unique: true,
     },
     fullName: {
       type: String,

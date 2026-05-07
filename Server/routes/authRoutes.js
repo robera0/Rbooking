@@ -10,16 +10,16 @@ import { user } from "../controllers/userController.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { updateUser } from "../controllers/userController.js";
 import passport from "../config/googleAuth.js";
-const authrouter = express.Router();
+const authRouter = express.Router();
 // Google OAuth
-authrouter.get(
+authRouter.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
 import { generateAccessToken, generateRefreshToken } from "../service/token.js";
 
-authrouter.get(
+authRouter.get(
   "/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/login",
@@ -62,12 +62,12 @@ authrouter.get(
   },
 );
 
-authrouter.get("/user", authenticateTokenMiddleware, user);
-authrouter.post("/signup/user", register_user);
-authrouter.post("/signup/admin", register_admin);
-authrouter.post("/login", login_user);
-authrouter.post("/logout", authenticateTokenMiddleware, logout);
-authrouter.post("/tokens", refresh);
-authrouter.put("/user", authenticateTokenMiddleware, updateUser);
+authRouter.get("/user", authenticateTokenMiddleware, user);
+authRouter.post("/signup/user", register_user);
+authRouter.post("/signup/admin", register_admin);
+authRouter.post("/login", login_user);
+authRouter.post("/logout", authenticateTokenMiddleware, logout);
+authRouter.post("/tokens", refresh);
+authRouter.put("/user", authenticateTokenMiddleware, updateUser);
 
-export default authrouter;
+export default authRouter;

@@ -9,13 +9,13 @@ import {
   upload,
 } from "../controllers/eventsController.js";
 
-const eventrouter = express.Router();
+const eventRouter = express.Router();
 
-eventrouter.get("/events", get_events);
-eventrouter.get("/events/:eventId", get_event_by_id);
-eventrouter.put("/events/:eventId", upload.array("pictures", 10), update_event);
-eventrouter.post("/addEvents", upload.array("pictures", 10), add_event);
-eventrouter.get("/", featured_events);
-eventrouter.get("/events/:eventId/tickets/:ticketId", fetchEvents_id);
+eventRouter.get("/events", get_events);
+eventRouter.get("/events/:eventId", get_event_by_id);
+eventRouter.put("/events/:eventId", upload.array("pictures", 10), update_event);
+eventRouter.post("/addEvents", upload.array("pictures", 10), add_event);
+eventRouter.get("/", featured_events);
+eventRouter.get("/events/:eventId/tickets/:ticketId", fetchEvents_id);
 
-export default eventrouter;
+export default eventRouter;

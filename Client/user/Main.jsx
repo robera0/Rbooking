@@ -33,13 +33,9 @@ const Main = () => {
   const { user, userIsLoading, userProfile } = eventService();
   const navigate = useNavigate();
 
-  /* ---------------- STATE ---------------- */
-
   const [activeOverlay, setActiveOverlay] = useState(null);
   const [isMinimalMenu, setIsMinimalMenu] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
-  /* ---------------- HANDLERS ---------------- */
 
   const handleLogout = async () => {
     try {
@@ -276,7 +272,9 @@ const Main = () => {
         {/* ================= CONTENT ================= */}
 
         <main className="flex-1 flex flex-col">
-          <div className="flex-1 pb-20 md:pb-0"><Outlet /></div>
+          <div className="flex-1 pb-20 md:pb-0">
+            <Outlet />
+          </div>
 
           {/* ================= FOOTER ================= */}
 

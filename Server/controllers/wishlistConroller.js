@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 /*  GET WISHLIST  */
 
 export const get_wishlist = async (req, res) => {
+  console.log(req.user);
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
 
