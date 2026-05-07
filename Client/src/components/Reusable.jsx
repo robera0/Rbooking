@@ -784,10 +784,8 @@ export const NotificationSidebar = ({ setIsOpen }) => {
                 {/* Content */}
                 <div className="flex-1 space-y-1">
                   <div className="flex justify-between items-start">
-                    <h4 className="font-black uppercase italic text-sm tracking-tight leading-none">
-                      {Object.keys(titles).find(
-                        (key) => titles[key] === note?.title,
-                      )}
+                    <h4 className="font-semibold uppercase   text-sm tracking-tight leading-none">
+                      {titles[note?.type]}
                     </h4>
 
                     <span className="text-[9px] font-black uppercase text-gray-600 tracking-widest">
