@@ -722,6 +722,7 @@ export const NotificationSidebar = ({ setIsOpen }) => {
     notificationError,
     readNotification,
   } = eventService();
+  const { titles } = useService();
 
   const getIcon = (type) => {
     switch (type) {
@@ -734,14 +735,6 @@ export const NotificationSidebar = ({ setIsOpen }) => {
       default:
         return <MessageCircleMore size={20} />;
     }
-  };
-
-  const titles = {
-    booking: "Booking Confirmed",
-    payment: "Payment Confirmed",
-    event: "Event Updated",
-    reminder: "Event Reminder",
-    system: "System Notification",
   };
 
   return (

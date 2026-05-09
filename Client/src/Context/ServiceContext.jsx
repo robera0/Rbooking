@@ -47,11 +47,14 @@ export const ServiceProvider = ({ children }) => {
       ? `${API_URL}/api/auth/wishlist/add`
       : `${API_URL}/api/auth/wishlist/remove`;
 
-    return axios.post(
-      url,
-      { eventId, ticketId },
-      { withCredentials: true },
-    );
+    return axios.post(url, { eventId, ticketId }, { withCredentials: true });
+  };
+  const titles = {
+    booking: "Booking Confirmed",
+    payment: "Payment Confirmed",
+    event: "Event Updated",
+    reminder: "Event Reminder",
+    system: "System Notification",
   };
 
   return (
@@ -69,6 +72,7 @@ export const ServiceProvider = ({ children }) => {
         ellipis,
         setEllipis,
         Time,
+        titles,
         setTime,
         addservice,
         setAddservice,
