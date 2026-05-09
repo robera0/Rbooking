@@ -161,15 +161,16 @@ const Main = () => {
 
             <div className="flex items-center gap-6">
               {/* Notification */}
+              {user && (
+                <button
+                  onClick={openNotification}
+                  className="relative text-gray-500 hover:text-[#FF7A00] transition"
+                >
+                  <Bell size={20} />
 
-              <button
-                onClick={openNotification}
-                className="relative text-gray-500 hover:text-[#FF7A00] transition"
-              >
-                <Bell size={20} />
-
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#FF7A00] animate-ping rounded-full" />
-              </button>
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-[#FF7A00] animate-ping rounded-full" />
+                </button>
+              )}
 
               {/* Profile Wrapper with Hover Menu */}
               <div

@@ -12,6 +12,7 @@ import {
   CreditCard,
   Heart,
   Calendar,
+  Zap,
   ToggleRightIcon,
   CheckCheck,
   ChevronDown,
@@ -29,6 +30,7 @@ import { useService } from "@/Context/ServiceContext";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import axios from "axios";
 
 export const ProtectedRoute = ({ children }) => {
   const { usererror, userIsLoading, user } = eventService();
@@ -714,8 +716,12 @@ export const EditMenuBar = () => {
 };
 
 export const NotificationSidebar = ({ setIsOpen }) => {
-  const { notifications, notificationIsError, notificationError } =
-    eventService();
+  const {
+    notifications,
+    notificationIsError,
+    notificationError,
+    readNotification,
+  } = eventService();
 
   const getIcon = (type) => {
     switch (type) {
@@ -764,42 +770,50 @@ export const NotificationSidebar = ({ setIsOpen }) => {
       <div className="overflow-y-auto custom-scrollbar flex-1">
         {notifications?.len > 0 ? (
           <div className="divide-y divide-white/[0.03]">
-            {notifications?.notifications?.map((note, index) => (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                key={note?._id}
-                className="group relative flex gap-4 p-6 hover:bg-white/[0.02] transition-colors cursor-pointer"
-              >
-                {/* Status Indicator Bar */}
+            {notifications?.notifications?.map(
+              (note, index) =>
+                !note?.read && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    key={note?._id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      readNotification(note?._id);
+                      console.log(note?._id);
+                    }}
+                    className="group relative flex gap-4 p-6 hover:bg-white/[0.02] transition-colors cursor-pointer"
+                  >
+                    {/* Status Indicator Bar */}
 
-                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                {/* Icon Container */}
-                <div className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-[#1C1F22] border border-white/[0.08] text-[#FF7A00] group-hover:bg-[#FF7A00] group-hover:text-black transition-all">
-                  {getIcon(note?.type)}
-                </div>
+                    {/* Icon Container */}
+                    <div className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-[#1C1F22] border border-white/[0.08] text-[#FF7A00] group-hover:bg-[#FF7A00] group-hover:text-black transition-all">
+                      {getIcon(note?.type)}
+                    </div>
 
-                {/* Content */}
-                <div className="flex-1 space-y-1">
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-semibold uppercase   text-sm tracking-tight leading-none">
-                      {titles[note?.type]}
-                    </h4>
+                    {/* Content */}
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-semibold uppercase   text-sm tracking-tight leading-none">
+                          {titles[note?.type]}
+                        </h4>
 
-                    <span className="text-[9px] font-black uppercase text-gray-600 tracking-widest">
-                      {formatDistanceToNow(new Date(note?.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-gray-500 text-xs font-medium leading-relaxed">
-                    {note?.message}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                        <span className="text-[9px] font-black uppercase text-gray-600 tracking-widest">
+                          {formatDistanceToNow(new Date(note?.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                        {note?.message}
+                      </p>
+                    </div>
+                  </motion.div>
+                ),
+            )}
           </div>
         ) : (
           /* Empty State */

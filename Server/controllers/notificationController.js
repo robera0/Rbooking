@@ -2,7 +2,6 @@ import { notificationModel } from "../models/NotificationModel.js";
 import mongoose from "mongoose";
 
 export const get_notification = async (req, res) => {
-  console.log(req.user);
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
     if (!userId) return res.status(401).json({ message: "No user found" });
@@ -22,19 +21,34 @@ export const get_notification = async (req, res) => {
 export const read_notification = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
-    if (!userId) return res.status(401).json({ message: "their is no user " });
     const { notId } = req.body;
+    const notificationObjectId = new mongoose.Types.ObjectId(notId);
+
     const updatedNotification = await notificationModel.findOneAndUpdate(
-      { userId, "notifications._id": notId },
+      { userId },
       {
         $set: {
-          "notifications.$.read": true,
+          "notifications.$[elem].read": true,
         },
       },
+      {
+        arrayFilters: [{ "elem._id": notificationObjectId }],
+        new: true,
+      },
     );
+    console.log(userId, notificationObjectId);
 
-    return updatedNotification;
-  } catch {
-    res.status(401).json({ message: "the user id is not true " });
+    if (!updatedNotification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    return res.json({
+      success: true,
+      data: updatedNotification,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };
