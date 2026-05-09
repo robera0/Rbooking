@@ -30,7 +30,7 @@ const Main = () => {
   const { isAccountActive, menuOpen, setMenuOpen, API_URL } = useService();
 
   const location = useLocation();
-  const { user, userIsLoading, userProfile } = eventService();
+  const { user, userIsLoading, userProfile, notifications } = eventService();
   const navigate = useNavigate();
 
   const [activeOverlay, setActiveOverlay] = useState(null);
@@ -168,7 +168,11 @@ const Main = () => {
                 >
                   <Bell size={20} />
 
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-[#FF7A00] animate-ping rounded-full" />
+                  <span
+                    className={`absolute top-1 right-1 w-2 h-2 bg-[#FF7A00] ${
+                      notifications?.len > 0 ? "animate-ping" : "hidden"
+                    } rounded-full`}
+                  />
                 </button>
               )}
 

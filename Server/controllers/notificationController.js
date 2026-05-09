@@ -8,7 +8,9 @@ export const get_notification = async (req, res) => {
     const validUser = await notificationModel
       .findOne({ userId })
       .select("notifications");
-    const notificationlength = validUser?.notifications.length;
+    const notificationlength = validUser?.notifications?.filter(
+      (noti) => noti.read === false,
+    ).length;
     return res.status(200).json({
       notifications: validUser?.notifications || [],
       len: notificationlength,
