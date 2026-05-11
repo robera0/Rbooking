@@ -7,7 +7,7 @@ import { CHAPA_CREATE_PAYMENT } from "../config/chapa.config.js";
 dotenv.config();
 
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
-const createPayment = catchAsync(async (req, res, next) => {
+export const createPayment = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
 
   const { email, id } = req.user;
