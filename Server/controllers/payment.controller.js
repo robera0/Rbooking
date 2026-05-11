@@ -1,9 +1,10 @@
-import TransactionService from "../services/transaction.service.js";
-import EventService from "../services/event.service.js";
+import TransactionService from "../service/transaction.service.js";
+import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
+import dotenv from "dotenv";
 import axios from "axios";
-import { CHAPA_CREATE_PAYMENT } from "../config/chapa.config.js";
+import { CHAPA_CREATE_PAYMENT } from "../config/chap.config.js";
 dotenv.config();
 
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;

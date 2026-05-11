@@ -1,4 +1,4 @@
-import { Event } from "Server/models/EventsModel";
+import { Event } from "../models/EventsModel.js";
 
 class EventService {
   static create(eventData) {

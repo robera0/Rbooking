@@ -2,11 +2,16 @@ import express from "express";
 import {
   get_tickets,
   get_tickets_info,
-  purchase_ticket,
   update_ticket_status,
 } from "../controllers/usersTicketController.js";
+import dotenv from "dotenv";
+import axios from "axios";
+import TransactionService from "../service/transaction.service.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
-import { createPayment } from "Server/controllers/payment.controller.js";
+import { createPayment } from "../controllers/payment.controller.js";
+dotenv.config();
+
+const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 const ticketRouter = express.Router();
 
 ticketRouter.get("/tickets_home", authenticateTokenMiddleware, get_tickets);
@@ -42,7 +47,7 @@ async function verifyChapaPayment(trx_ref) {
       `https://api.chapa.co/v1/transaction/verify/${trx_ref}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.CHAPA_SECRET_KEY}`,
+          Authorization: `Bearer ${CHAPA_SECRET_KEY}`,
         },
       },
     );

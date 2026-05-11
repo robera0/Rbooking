@@ -2,7 +2,7 @@ import { UserTicketModel } from "../models/UserTicketModel.js";
 import { TicketModel } from "../models/TicketModel.js";
 import mongoose from "mongoose";
 
-export const purchase_ticket = async (req, res) => {
+/* export const purchase_ticket = async (req, res) => {
   const session = await mongoose.startSession();
   console.log(session);
   session.startTransaction();
@@ -65,7 +65,7 @@ export const purchase_ticket = async (req, res) => {
       message: error.message,
     });
   }
-};
+};*/
 
 export const get_tickets = async (req, res) => {
   try {
