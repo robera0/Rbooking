@@ -172,8 +172,7 @@ const EventInfo = () => {
     soldout: {
       bandGradient:
         "linear-gradient(120deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%)",
-      ctaGradient:
-        "linear-gradient(135deg, #444 0%, #333 50%, #222 100%)",
+      ctaGradient: "linear-gradient(135deg, #444 0%, #333 50%, #222 100%)",
       accentColor: "#EF4444",
       label: "SOLD OUT",
     },
@@ -181,11 +180,12 @@ const EventInfo = () => {
 
   const isSoldOut = event?.tickets?.length === 0;
 
-  const ticketType = isSoldOut 
+  const ticketType = isSoldOut
     ? "soldout"
-    : (selectedTicket?.type || ticket?.type || "default").toLowerCase().trim() ||
-    "default";
-  
+    : (selectedTicket?.type || ticket?.type || "default")
+        .toLowerCase()
+        .trim() || "default";
+
   const theme = ticketThemes[ticketType] ?? ticketThemes.default;
 
   const activeTicket = selectedTicket || ticket;
