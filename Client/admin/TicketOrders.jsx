@@ -1,6 +1,11 @@
-import { TicketTable } from "./Cards";
+import { Funnel } from "lucide-react";
+import { TicketTable, SearchInput, CustomSelect } from "./Cards";
+import { useState } from "react";
 
 const TicketOrders = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("");
+
   return (
     <div className="w-full max-w-full space-y-8">
       {/* Header */}
@@ -13,8 +18,37 @@ const TicketOrders = () => {
         </div>
       </div>
 
-      <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl overflow-hidden overflow-x-auto">
-         <TicketTable />
+      <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl flex flex-col min-h-[400px]">
+        {/* Filters Wrapper */}
+        <div className="w-full flex flex-wrap items-center gap-4 mb-6">
+          <div className="flex-1 min-w-[200px]">
+            <SearchInput
+              w="w-full"
+              h="h-12"
+              top="top-1/2 -translate-y-1/2"
+              left="left-4"
+              placeholder="Search by Order ID or Customer..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <CustomSelect 
+             icon={Funnel}
+             options={[
+               { label: "All Status", value: "" },
+               { label: "Paid", value: "paid" },
+               { label: "Pending", value: "pending" }
+             ]}
+             value={filterType}
+             onChange={setFilterType}
+             placeholder="All Status"
+          />
+        </div>
+
+        <div className="w-full overflow-x-auto flex-1">
+          <TicketTable search={searchTerm} filter={filterType} />
+        </div>
       </div>
     </div>
   );

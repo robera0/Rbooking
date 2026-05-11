@@ -1,12 +1,92 @@
 import { Event } from "../models/EventsModel.js";
 import { TicketModel } from "../models/TicketModel.js";
-
+import multer from "multer";
 //ADD EVENTS
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+
+  filename: function (req, file, cb) {
+    const uniqueName =
+      Date.now() + "-" + file.originalname.replace(/\s+/g, "-");
+
+    cb(null, uniqueName);
+  },
+});
+
+export const upload = multer({ storage });
+export const add_event = async (req, res) => {
+  try {
+    let {
+      type,
+      name,
+      artist,
+      locale,
+      info,
+      policies,
+      priceRanges,
+      dates,
+      sales,
+      musicGenre,
+      amenities,
+      desc,
+    } = req.body;
+
+    const normalizedType = type?.toLowerCase();
+
+    // Parse JSON fields
+    artist = JSON.parse(artist || "{}");
+    priceRanges = JSON.parse(priceRanges || "[]");
+    dates = JSON.parse(dates || "{}");
+    amenities = JSON.parse(amenities || "{}");
+    musicGenre = JSON.parse(musicGenre || "[]");
+    policies = JSON.parse(policies || "[]");
+
+    // Handle multiple images
+    let pictures = [];
+
+    if (req.files && req.files.length > 0) {
+      pictures = req.files.map((file) => `uploads/${file.filename}`);
+    }
+
+    const events = {
+      type: normalizedType,
+      name,
+      artist,
+      locale,
+      info,
+      policies,
+      priceRanges,
+      dates,
+      sales,
+      musicGenre,
+      amenities,
+      pictures,
+      desc,
+    };
+
+    const newEvent = await Event.create(events);
+
+    res.status(200).json({
+      success: true,
+      event: newEvent,
+      message: "event created successfully",
+    });
+  } catch (error) {
+    console.error("Error adding events:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 export const get_events = async (req, res) => {
   try {
     const events = await Event.find();
-    console.log(events);
+
     // Get tickets for each event
     const eventsWithTickets = await Promise.all(
       events.map(async (event) => {
@@ -47,7 +127,7 @@ export const featured_events = async (req, res) => {
 };
 
 // FETCH WITH RESPECT TO ITS INDEX
-export const fetchevents_id = async (req, res) => {
+export const fetchEvents_id = async (req, res) => {
   try {
     const { eventId, ticketId } = req.params;
 
@@ -94,5 +174,102 @@ export const fetchevents_id = async (req, res) => {
   } catch (error) {
     console.error("ERROR in fetchevents_id:", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const get_event_by_id = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
+    }
+    res.status(200).json({ success: true, event });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const update_event = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    let {
+      type,
+      name,
+      artist,
+      locale,
+      info,
+      policies,
+      priceRanges,
+      dates,
+      sales,
+      musicGenre,
+      amenities,
+      desc,
+      existingPictures,
+    } = req.body;
+
+    const normalizedType = type?.toLowerCase();
+
+    // Parse JSON fields
+    if (artist) artist = JSON.parse(artist);
+    if (priceRanges) priceRanges = JSON.parse(priceRanges);
+    if (dates) dates = JSON.parse(dates);
+    if (amenities) amenities = JSON.parse(amenities);
+    if (musicGenre) musicGenre = JSON.parse(musicGenre);
+    if (policies) policies = JSON.parse(policies);
+    if (existingPictures) existingPictures = JSON.parse(existingPictures);
+
+    // Handle images
+    let pictures = existingPictures || [];
+    if (req.files && req.files.length > 0) {
+      const newPictures = req.files.map((file) => `uploads/${file.filename}`);
+      pictures = [...pictures, ...newPictures];
+    }
+
+    const updateData = {
+      type: normalizedType,
+      name,
+      artist,
+      locale,
+      info,
+      policies,
+      priceRanges,
+      dates,
+      sales,
+      musicGenre,
+      amenities,
+      pictures,
+      desc,
+    };
+
+    // Remove undefined
+    Object.keys(updateData).forEach(
+      (key) => updateData[key] === undefined && delete updateData[key],
+    );
+
+    const updatedEvent = await Event.findByIdAndUpdate(eventId, updateData, {
+      new: true,
+    });
+
+    if (!updatedEvent) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      event: updatedEvent,
+      message: "Event updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating event:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

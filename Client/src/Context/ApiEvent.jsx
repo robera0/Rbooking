@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useService } from "./ServiceContext";
-
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
@@ -49,7 +49,7 @@ export const ApiProvider = ({ children }) => {
 
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchOnMount: false, // optional
+    refetchOnMount: false,
     select: (data) => data?.user || null,
   });
   // GET TICKETS
@@ -78,6 +78,60 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["tickets"],
     queryFn: fetchTickets,
     enabled: !!user,
+  });
+
+  //GET NOTIFICATION
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/notifications`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        throw new Error("Login required");
+      }
+      return res.json();
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  const {
+    data: notifications,
+    isLoading: notificationLoading,
+    isError: notificationIsError,
+    error: notificationError,
+  } = useQuery({
+    queryKey: ["notification"],
+    queryFn: fetchNotifications,
+    enabled: !!user,
+  });
+
+  // READ NOTIFICATION
+  const queryClient = useQueryClient();
+
+  const patchReadNotification = async (notId) => {
+    const res = await axios.patch(
+      `${API_URL}/api/auth/notifications/read`,
+      { notId },
+      { withCredentials: true },
+    );
+    return res.data;
+  };
+
+  // 2. Mutation Hook using the function
+  const { mutate: readNotification } = useMutation({
+    mutationFn: patchReadNotification,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notification"] });
+    },
+    onError: (error) => {
+      console.error(
+        "Failed to mark read:",
+        error.response?.data || error.message,
+      );
+    },
   });
 
   // GET TICKETS BY ID
@@ -181,6 +235,10 @@ export const ApiProvider = ({ children }) => {
         ticketLoading,
         ticketsError,
         ticketIsError,
+        notifications,
+        notificationIsError,
+        notificationError,
+        readNotification,
         wishlist,
         wishlistError,
         wishlistLoading,

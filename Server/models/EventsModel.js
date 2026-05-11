@@ -94,7 +94,7 @@ const BaseEventSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["event", "concert", "festival"],
+      enum: ["generic", "concert", "festival"],
     },
     name: String,
     desc: String,
@@ -156,7 +156,7 @@ const ConcertSchema = new mongoose.Schema({
     name: String,
   },
 
-  musicGenre: String,
+  musicGenre: [String],
   familyFriendly: {
     type: Boolean,
     default: false,
@@ -181,4 +181,4 @@ const GenericEventSchema = new mongoose.Schema({
   category: String, // sports, conference, expo, etc.
 });
 
-export const GenericEvent = Event.discriminator("event", GenericEventSchema);
+export const GenericEvent = Event.discriminator("generic", GenericEventSchema);

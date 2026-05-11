@@ -1,27 +1,39 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import connectDB from "./config/databse.js";
-import eventrouter from "./routes/eventRoutes.js";
-import ticketrouter from "./routes/ticketRoutes.js";
-import commentrouter from "./routes/commentRoutes.js";
-import wishlistrouter from "./routes/wishlistRoutes.js";
-import notirouter from "./routes/notificationRouter.js";
-import authrouter from "./routes/authRoutes.js";
+import eventRouter from "./routes/eventRoutes.js";
+import ticketRouter from "./routes/ticketRoutes.js";
+import commentRouter from "./routes/commentRoutes.js";
+import wishlistRouter from "./routes/wishlistRoutes.js";
+import notiRouter from "./routes/notificationRouter.js";
+import authRouter from "./routes/authRoutes.js";
 import userProfilesRouter from "./routes/profileRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
 import passport from "./config/googleAuth.js";
 import session from "express-session";
-
+import {
+  Event,
+  Concert,
+  Festival,
+  GenericEvent,
+} from "./models/EventsModel.js";
+// Importing these ensures .discriminator() is called and registered
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 5001;
+
 //connect the db
 const startServer = async () => {
   try {
     await connectDB();
-
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
@@ -32,7 +44,6 @@ const startServer = async () => {
 
 app.use(express.json());
 
-// CORS must come first so preflight OPTIONS requests are handled before auth middleware
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://paysso.netlify.app"],
@@ -46,9 +57,10 @@ app.use(
     secret: process.env.SESSION_SECRET || "secret",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }, // Set to true if using HTTPS
+    cookie: { secure: false },
   }),
 );
+
 // passport.session() removed — app uses JWTs (session: false on OAuth callback)
 app.use(passport.initialize());
 
@@ -80,21 +92,23 @@ async function verifyChapaPayment(trx_ref) {
 
     if (response.data.status === "success") {
       console.log("Payment Verified Successfully!");
-      return response.data; // This contains full details including ref_id
+      return response.data; //
     }
   } catch (error) {
     console.error("Verification failed:", error.response?.data || error.message);
   }
 }
 
-app.use("/api", eventrouter);
-app.use("/api", commentrouter);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+app.use("/api", eventRouter);
+app.use("/api", commentRouter);
 
 app.use("/api/auth", userProfilesRouter);
-app.use("/api/auth", ticketrouter);
-app.use("/api/auth", wishlistrouter);
-app.use("/api/auth", notirouter);
-app.use("/api/auth", authrouter);
+app.use("/api/auth", ticketRouter);
+app.use("/api/auth", wishlistRouter);
+app.use("/api/auth", notiRouter);
+app.use("/api/auth", authRouter);
 
 app.use("/api/admin", adminRouter);
 

@@ -17,16 +17,18 @@ const SideMenu = ({ name, icon, path, isDanger }) => {
         `
         }
       >
-        <div
-          className={({ isActive }) => 
-            `flex-shrink-0 transition-transform duration-300 group-hover:scale-110
-            ${isActive ? "text-black" : isDanger ? "text-red-400 group-hover:text-red-500" : "text-gray-500 group-hover:text-[#FF7A00]"}
-          `}
-        >
-          {icon}
-        </div>
-
-        <h1 className={`text-xs md:text-sm font-bold tracking-wide ${isDanger ? 'uppercase text-[10px] tracking-[0.1em]' : ''}`}>{name}</h1>
+        {({ isActive }) => (
+          <>
+            <div
+              className={`flex-shrink-0 transition-transform duration-300 group-hover:scale-110
+                ${isActive ? "text-black" : isDanger ? "text-red-400 group-hover:text-red-500" : "text-gray-500 group-hover:text-[#FF7A00]"}
+              `}
+            >
+              {icon}
+            </div>
+            <h1 className={`text-xs md:text-sm font-bold tracking-wide ${isDanger ? 'uppercase text-[10px] tracking-[0.1em]' : ''}`}>{name}</h1>
+          </>
+        )}
       </NavLink>
     </div>
   );

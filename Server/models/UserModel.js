@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "active",
-      enum: ["active", "suspended"],
+      enum: ["active", "suspended", "banned"],
     },
   },
   { timestamps: true },
@@ -52,3 +52,78 @@ userSchema.set("toJSON", {
 });
 
 export const UserModel = mongoose.model("User", userSchema);
+
+const adminSchema = new mongoose.Schema(
+  {
+    // Personal Info
+    firstName: {
+      type: String,
+      required: true,
+    },
+
+    lastName: {
+      type: String,
+      required: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+    },
+
+    // Organization Info
+    organizationName: {
+      type: String,
+      required: true,
+    },
+
+    businessType: {
+      type: String,
+      enum: [
+        "Event Organizer",
+        "Venue Owner",
+        "Ticket Reseller",
+        "Festival Organizer",
+        "Corporate Events",
+        "Sports Organizer",
+      ],
+    },
+
+    businessRegistrationNumber: String,
+    taxId: String,
+    country: String,
+    city: String,
+    region: String,
+    streetAddress: String,
+    adminRole: {
+      type: String,
+      enum: [
+        "super_admin",
+        "event_manager",
+        "ticket_manager",
+        "finance_manager",
+        "corporate_events",
+      ],
+      default: "event_manager",
+    },
+
+    // Files
+    idDocument: String,
+    businessLicense: String,
+    companyLogo: String,
+
+    // Security
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true },
+);
+
+export const Admin = UserModel.discriminator("admin", adminSchema);

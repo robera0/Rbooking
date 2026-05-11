@@ -5,14 +5,14 @@ import {
   remove_wishlist,
 } from "../controllers/wishlistConroller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
-const wishlistrouter = express.Router();
+const wishlistRouter = express.Router();
 
-wishlistrouter.get("/wishlist", authenticateTokenMiddleware, get_wishlist);
-wishlistrouter.post("/wishlist/add", authenticateTokenMiddleware, add_wishlist);
-wishlistrouter.post(
+wishlistRouter.get("/wishlist", authenticateTokenMiddleware, get_wishlist);
+wishlistRouter.post("/wishlist/add", authenticateTokenMiddleware, add_wishlist);
+wishlistRouter.post(
   "/wishlist/remove",
   authenticateTokenMiddleware,
   remove_wishlist,
 );
 
-export default wishlistrouter;
+export default wishlistRouter;

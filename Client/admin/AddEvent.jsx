@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Toaster, toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+import { CustomSelect } from "./Cards";
 
 const AddEvent = () => {
   const navigate = useNavigate();
@@ -23,19 +24,20 @@ const AddEvent = () => {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    eventType: "Event",
+    type: "",
     eventName: "",
     artistName: "",
     venue: "",
     description: "",
     eventDate: "",
-    ticketTiers: [],
+    tickets: [],
+    policies: [], // New field
     amenities: [],
-    images: [],
+    pictures: [],
   });
   const [newAmenity, setNewAmenity] = useState("");
-  const [newTier, setNewTier] = useState({
-    tierName: "",
+  const [newTicket, setNewTicket] = useState({
+    name: "",
     price: "",
     capacity: "",
   });
@@ -46,18 +48,63 @@ const AddEvent = () => {
 
   const createMutation = useMutation({
     mutationFn: async (payload) => {
-      const res = await fetch(`${API_URL}/api/admin/events`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const form = new FormData();
+
+      form.append("type", payload.type);
+      form.append("name", payload.name);
+      form.append("locale", payload.locale);
+      form.append("desc", payload.desc);
+
+      form.append("artist", JSON.stringify(payload.artist));
+      form.append("priceRanges", JSON.stringify(payload.priceRanges));
+      form.append("policies", JSON.stringify(payload.policies));
+      form.append("dates", JSON.stringify(payload.dates));
+      form.append("amenities", JSON.stringify(payload.amenities));
+      form.append("musicGenre", JSON.stringify(payload.musicGenre));
+
+      // upload first image
+      formData.pictures.forEach((img) => {
+        form.append("pictures", img);
       });
+
+      const res = await fetch(`${API_URL}/api/addEvents`, {
+        method: "POST",
+        body: form,
+      });
+
       if (!res.ok) throw new Error("Failed to create event");
+
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminEvents"] });
-      toast.success(`${formData.eventType} PUBLISHED`);
-      navigate("/admin/events");
+      // 1. Trigger the Success Toast
+      toast.success("Event Published Successfully!", {
+        duration: 2000,
+        style: {
+          background: "#1C1F22",
+          color: "#fff",
+          border: "1px solid #FF7A00",
+        },
+      });
+      setFormData({
+        type: "",
+        eventName: "",
+        artistName: "",
+        venue: "",
+        description: "",
+        eventDate: "",
+        tickets: [],
+        policies: [],
+        amenities: [],
+        pictures: [],
+      });
+
+      setTimeout(() => {
+        navigate("/admin/events");
+      }, 2000);
+    },
+    onError: (error) => {
+      toast.error(`Error: ${error.message}`);
     },
   });
 
@@ -66,12 +113,40 @@ const AddEvent = () => {
       return setError("Event Name is required to publish");
     setError("");
     createMutation.mutate({
-      type: formData.eventType,
+      type: formData.type.toLowerCase(),
       name: formData.eventName,
-      artist: { name: formData.artistName },
+      artist: {
+        name: formData.artistName,
+      },
       locale: formData.venue,
+
+      musicGenre: ["General"],
+      policies: formData.policies,
+      priceRanges: formData.tickets.map((t) => ({
+        type: t.name,
+        currency: "ETB",
+        min: Number(t.price),
+        max: Number(t.price),
+      })),
       desc: formData.description,
-      date: formData.eventDate,
+      dates: {
+        start: {
+          localDate: formData.eventDate?.split("T")[0],
+          localTime: formData.eventDate?.split("T")[1],
+          dateTime: formData.eventDate ? new Date(formData.eventDate) : null,
+        },
+        timezone: "Africa/Addis_Ababa",
+        status: {
+          code: "onsale",
+        },
+      },
+
+      amenities: {
+        activity: formData.amenities,
+        payment_method: [],
+        safety: [],
+        other: [],
+      },
     });
   };
 
@@ -113,25 +188,21 @@ const AddEvent = () => {
           <div className="lg:col-span-8 space-y-10">
             {/* TYPE SELECTOR */}
             <section className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-8 space-y-6">
-              <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                <Tag size={14} className="text-[#FF7A00]" /> Classification Type
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {["concert", "festival", "event"].map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, type: t })}
-                    className={`py-4 rounded-xl font-black uppercase  text-[11px] border transition-all
-                    ${
-                      formData.type === t
-                        ? "bg-[#FF7A00] border-[#FF7A00] text-black"
-                        : "bg-white/5 border-white/5 text-gray-500 hover:text-white"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                  <Tag size={14} className="text-[#FF7A00]" /> Classification
+                  Type
+                </h3>
+                <CustomSelect
+                  options={[
+                    { label: "Concert", value: "concert" },
+                    { label: "Festival", value: "festival" },
+                    { label: "Generic", value: "generic" },
+                  ]}
+                  value={formData.type.toLowerCase()}
+                  onChange={(val) => setFormData({ ...formData, type: val })}
+                  placeholder="Select Type"
+                />
               </div>
             </section>
           </div>
@@ -210,27 +281,27 @@ const AddEvent = () => {
             </div>
           </div>
 
-          {/* Ticketing Tiers - Style from Second Code */}
+          {/* Event Tickets */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
             <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
-              Ticketing Tiers
+              Event Tickets
             </h3>
             <div className="space-y-4">
-              {formData.ticketTiers.map((tier, idx) => (
+              {formData.tickets.map((ticket, idx) => (
                 <div
                   key={idx}
                   className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
                 >
                   <div className="flex-1">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Tier Name
+                      Ticket Name
                     </label>
                     <input
-                      value={tier.tierName}
+                      value={ticket.name}
                       onChange={(e) => {
-                        const updated = [...formData.ticketTiers];
-                        updated[idx].tierName = e.target.value;
-                        setFormData({ ...formData, ticketTiers: updated });
+                        const updated = [...formData.tickets];
+                        updated[idx].name = e.target.value;
+                        setFormData({ ...formData, tickets: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
                     />
@@ -240,11 +311,11 @@ const AddEvent = () => {
                       Price (ETB)
                     </label>
                     <input
-                      value={tier.price}
+                      value={ticket.price}
                       onChange={(e) => {
-                        const updated = [...formData.ticketTiers];
+                        const updated = [...formData.tickets];
                         updated[idx].price = e.target.value;
-                        setFormData({ ...formData, ticketTiers: updated });
+                        setFormData({ ...formData, tickets: updated });
                       }}
                       className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
                     />
@@ -255,11 +326,11 @@ const AddEvent = () => {
                     </label>
                     <input
                       type="number"
-                      value={tier.capacity}
+                      value={ticket.capacity}
                       onChange={(e) => {
-                        const updated = [...formData.ticketTiers];
+                        const updated = [...formData.tickets];
                         updated[idx].capacity = e.target.value;
-                        setFormData({ ...formData, ticketTiers: updated });
+                        setFormData({ ...formData, tickets: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
@@ -267,81 +338,136 @@ const AddEvent = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      const updated = formData.ticketTiers.filter(
+                      const updated = formData.tickets.filter(
                         (_, i) => i !== idx,
                       );
-                      setFormData({ ...formData, ticketTiers: updated });
+                      setFormData({ ...formData, tickets: updated });
                     }}
                     className="ml-2 text-red-500 hover:text-red-700"
-                    title="Remove tier"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
-              {/* New Tier Adder */}
+              {/* New Ticket Adder */}
               <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00] mt-4">
                 <div className="flex-1">
-                  <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                    Tier Name
-                  </label>
                   <input
-                    value={newTier?.tierName || ""}
+                    value={newTicket?.name || ""}
                     onChange={(e) =>
-                      setNewTier({ ...newTier, tierName: e.target.value })
+                      setNewTicket({ ...newTicket, name: e.target.value })
                     }
                     className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
-                    placeholder="Tier Name"
+                    placeholder="Ticket Name"
                   />
                 </div>
                 <div className="w-24">
-                  <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                    Price (ETB)
-                  </label>
                   <input
-                    value={newTier?.price || ""}
+                    value={newTicket?.price || ""}
                     onChange={(e) =>
-                      setNewTier({ ...newTier, price: e.target.value })
+                      setNewTicket({ ...newTicket, price: e.target.value })
                     }
                     className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
-                    placeholder="Add Price"
+                    placeholder="Price"
                   />
                 </div>
                 <div className="w-24">
-                  <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                    Capacity
-                  </label>
                   <input
                     type="number"
-                    value={newTier?.capacity || ""}
+                    value={newTicket?.capacity || ""}
                     onChange={(e) =>
-                      setNewTier({ ...newTier, capacity: e.target.value })
+                      setNewTicket({ ...newTicket, capacity: e.target.value })
                     }
                     className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                    placeholder="0"
+                    placeholder="Cap"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     if (
-                      newTier?.tierName &&
-                      newTier?.price &&
-                      newTier?.capacity
+                      newTicket?.name &&
+                      newTicket?.price &&
+                      newTicket?.capacity
                     ) {
                       setFormData({
                         ...formData,
-                        ticketTiers: [...formData.ticketTiers, { ...newTier }],
+                        tickets: [...formData.tickets, { ...newTicket }],
                       });
-                      setNewTier({ tierName: "", price: "", capacity: "" });
+                      setNewTicket({ name: "", price: "", capacity: "" });
                     }
                   }}
-                  className="ml-2 text-[#22c55e] hover:text-green-700 border border-[#22c55e] rounded-full p-2 flex items-center justify-center"
-                  title="Add tier"
+                  className="ml-2 text-[#22c55e] border border-[#22c55e] rounded-full p-2"
                 >
                   <Check size={18} />
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Event Policies */}
+          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
+              Event Policies
+            </h3>
+            <div className="space-y-4">
+              {formData.policies.map((policy, idx) => (
+                <div
+                  key={idx}
+                  className="bg-[#121417] p-5 rounded-xl border border-white/[0.06] space-y-3"
+                >
+                  <div className="flex justify-between items-start">
+                    <input
+                      value={policy.header}
+                      onChange={(e) => {
+                        const updated = [...formData.policies];
+                        updated[idx].header = e.target.value;
+                        setFormData({ ...formData, policies: updated });
+                      }}
+                      className="bg-transparent border-none text-white font-bold outline-none w-full uppercase text-xs"
+                      placeholder="Policy Header"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = formData.policies.filter(
+                          (_, i) => i !== idx,
+                        );
+                        setFormData({ ...formData, policies: updated });
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                  <textarea
+                    value={policy.descriptions}
+                    onChange={(e) => {
+                      const updated = [...formData.policies];
+                      updated[idx].descriptions = e.target.value;
+                      setFormData({ ...formData, policies: updated });
+                    }}
+                    className="w-full bg-transparent border-none text-gray-400 text-[11px] outline-none italic resize-none"
+                    placeholder="Policy details..."
+                    rows={2}
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    policies: [
+                      ...formData.policies,
+                      { header: "", descriptions: "" },
+                    ],
+                  })
+                }
+                className="w-full py-4 border border-dashed border-white/[0.1] rounded-xl text-gray-500 hover:text-[#FF7A00] hover:border-[#FF7A00] transition-all text-[10px] font-black uppercase tracking-widest"
+              >
+                + Add New Policy
+              </button>
             </div>
           </div>
         </div>
@@ -476,7 +602,7 @@ const AddEvent = () => {
             </h3>
 
             <div className="space-y-4">
-              {formData?.images?.map((file, index) => (
+              {formData?.pictures?.map((file, index) => (
                 <div
                   key={index}
                   className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative"
@@ -502,10 +628,10 @@ const AddEvent = () => {
                   </div>
                   <button
                     onClick={() => {
-                      const updated = formData.images.filter(
+                      const updated = formData.pictures.filter(
                         (_, i) => i !== index,
                       );
-                      setFormData({ ...formData, images: updated });
+                      setFormData({ ...formData, pictures: updated });
                     }}
                     className="p-2 text-red-500/60 hover:text-red-500 transition-colors"
                   >
@@ -533,7 +659,7 @@ const AddEvent = () => {
                   if (files.length)
                     setFormData({
                       ...formData,
-                      images: [...formData.images, ...files],
+                      pictures: [...formData.pictures, ...files],
                     });
                 }}
               />

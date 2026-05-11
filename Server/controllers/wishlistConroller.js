@@ -1,68 +1,109 @@
 import { wishlistModel } from "../models/Wishlist.js";
 import mongoose from "mongoose";
 
+/*  GET WISHLIST  */
+
 export const get_wishlist = async (req, res) => {
+  console.log(req.user);
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
-    console.log(userId);
-    const wishlist = await wishlistModel.findOne({ userId }).populate({
-      path: "events",
-      select: "name price date locale pictures priceRanges.min",
-    });
+
+    const wishlist = await wishlistModel
+      .findOne({ userId })
+
+      .populate([
+        {
+          path: "items.eventId",
+          select: "_id name date locale pictures priceRanges",
+        },
+
+        {
+          path: "items.ticketId",
+          select: "_id name price quantity availableSeats",
+        },
+      ]);
 
     if (!wishlist) {
       return res.status(404).json({
-        message: "Wishlist not found for this user",
+        message: "Wishlist not found",
       });
     }
 
-    console.log("the wishlist is ", wishlist);
-    res.status(200).json({ wishlists: wishlist });
+    res.status(200).json({
+      wishlist,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("GET WISHLIST ERROR:", error);
+
     res.status(500).json({
       message: "Server error while fetching wishlist",
     });
   }
 };
 
+/*  ADD TO WISHLIST  */
+
 export const add_wishlist = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
 
-    const events = new mongoose.Types.ObjectId(req.body.events);
+    const eventId = new mongoose.Types.ObjectId(req.body.eventId);
 
-    const newWishlist = await wishlistModel.findOneAndUpdate(
+    const ticketId = new mongoose.Types.ObjectId(req.body.ticketId);
+
+    const updatedWishlist = await wishlistModel.findOneAndUpdate(
       { userId },
-      { $addToSet: { events: events } },
-      { new: true, upsert: true },
+
+      {
+        $addToSet: {
+          items: {
+            eventId,
+            ticketId,
+          },
+        },
+      },
+
+      {
+        new: true,
+        upsert: true,
+      },
     );
 
-    if (!newWishlist) {
-      return res.status(404).json({
-        message: "newWishlist not added bc user was not found",
-      });
-    }
-
-    console.log("the wishlist added is ", newWishlist);
-    res.status(200).json({ wishlists: newWishlist });
+    res.status(200).json({
+      message: "Added to wishlist",
+      wishlist: updatedWishlist,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("ADD WISHLIST ERROR:", error);
+
     res.status(500).json({
       message: error.message,
     });
   }
 };
 
+/*  REMOVE FROM WISHLIST  */
+
 export const remove_wishlist = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
-    const eventId = new mongoose.Types.ObjectId(req.body.events);
+
+    const ticketId = new mongoose.Types.ObjectId(req.body.ticketId);
 
     const updatedWishlist = await wishlistModel.findOneAndUpdate(
       { userId },
-      { $pull: { events: eventId } },
-      { new: true },
+
+      {
+        $pull: {
+          items: {
+            ticketId,
+          },
+        },
+      },
+
+      {
+        new: true,
+      },
     );
 
     if (!updatedWishlist) {
@@ -72,11 +113,14 @@ export const remove_wishlist = async (req, res) => {
     }
 
     res.status(200).json({
-      message: "Event removed successfully",
+      message: "Removed from wishlist",
       wishlist: updatedWishlist,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    console.error("REMOVE WISHLIST ERROR:", error);
+
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };

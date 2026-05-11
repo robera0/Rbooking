@@ -90,9 +90,9 @@ export const get_tickets = async (req, res) => {
 
 export const get_tickets_info = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { ticketId } = req.params;
 
-    const ticket = await UserTicketModel.findById(id).populate({
+    const ticket = await UserTicketModel.findById(ticketId).populate({
       path: "ticketId",
       populate: {
         path: "eventId",

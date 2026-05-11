@@ -6,9 +6,8 @@ export const useWishlistMutation = () => {
 
   const mutation = useMutation({
     mutationFn: toggleWishlist,
-    onSuccess: (_, { isAdding }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
-      setAddFav(isAdding);
     },
   });
 

@@ -1,5 +1,19 @@
 import mongoose from "mongoose";
 
+const wishlistItemSchema = new mongoose.Schema({
+  eventId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Event",
+    required: true,
+  },
+
+  ticketId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ticket",
+    required: true,
+  },
+});
+
 const wishlistSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -7,12 +21,8 @@ const wishlistSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  events: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Event",
-    },
-  ],
+
+  items: [wishlistItemSchema],
 });
 
-export const wishlistModel = new mongoose.model("wishlist", wishlistSchema);
+export const wishlistModel = mongoose.model("wishlist", wishlistSchema);

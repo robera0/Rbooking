@@ -1,7 +1,19 @@
-[] learn about notification design and design the schema for email notification
+[f] learn about notification design and design the schema for email notification
 [] add a schema of  a review about the app
-[] make the notification side work
-[] make the footer stuck in the end
-// enhance filter performance 
-[] the profile is failing to load the image fix that
-[] make the view in wishlist work 
+[f] make the notification side work
+[f] make the view in wishlist work 
+[f] design of the wishlist 
+[]design the other dashboards 
+
+
+
+// Today 
+ [c] add a toast animation when event is added 
+ [c] make the admin block suspend  user 
+ [] send the total amount ticket to the tickets route
+ [] create an end point to send notifications
+[] fix the comment section like posting 
+[] show the types of tickets  when  view ticket is clicked 
+[] make the header of eventinfo lil smaller
+[] show the event description 
+[] fix the date input and search engine 

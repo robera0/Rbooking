@@ -40,13 +40,21 @@ export const ServiceProvider = ({ children }) => {
   const [type, setType] = useState("");
   const [artist, setArtist] = useState("");
   const [date, setDate] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
-  const toggleWishlist = async ({ event_id, isAdding }) => {
+  const toggleWishlist = async ({ eventId, ticketId, isAdding }) => {
     const url = isAdding
       ? `${API_URL}/api/auth/wishlist/add`
       : `${API_URL}/api/auth/wishlist/remove`;
 
-    return axios.post(url, { events: event_id }, { withCredentials: true });
+    return axios.post(url, { eventId, ticketId }, { withCredentials: true });
+  };
+  const titles = {
+    booking: "Booking Confirmed",
+    payment: "Payment Confirmed",
+    event: "Event Updated",
+    reminder: "Event Reminder",
+    system: "System Notification",
   };
 
   return (
@@ -64,6 +72,7 @@ export const ServiceProvider = ({ children }) => {
         ellipis,
         setEllipis,
         Time,
+        titles,
         setTime,
         addservice,
         setAddservice,
@@ -126,6 +135,8 @@ export const ServiceProvider = ({ children }) => {
         setArtist,
         setDate,
         date,
+        menuOpen,
+        setMenuOpen,
       }}
     >
       {children}

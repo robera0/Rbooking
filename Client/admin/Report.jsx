@@ -12,71 +12,74 @@ import GridDemo from "./Graphs";
 import ArcDesign from "./Guage";
 import RevenueChart from "./RevenueGraph";
 import { CustomLabels } from "./Graphs";
-const Report = () => {
-  return (
-    <div className="">
-      <div className="w-[97%]  space-y-12">
-        <div>
-          <h1 className="text-3xl font-semibold"> Report & Analytics </h1>
-        </div>
+import { useQuery } from "@tanstack/react-query";
+import { useService } from "../src/Context/ServiceContext";
+import { Loader2 } from "lucide-react";
 
-        <div className="mt-10 flex  flex-wrap gap-10">
+const Report = () => {
+  const { API_URL } = useService();
+
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['adminDashboardStats'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/admin/analytics/dashboard`);
+      if (!res.ok) throw new Error("Failed to fetch analytics");
+      const json = await res.json();
+      return json.data;
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 size={48} className="text-[#FF7A00] animate-spin" />
+        <p className="text-gray-500 font-black uppercase tracking-[0.2em]">Generating Matrices...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-full space-y-8 pb-20">
+      {/* Header */}
+      <div className="flex flex-wrap justify-between items-end mb-8 border-b border-white/[0.04] pb-6">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none text-white">
+            Reports & <span className="text-[#FF7A00]">Analytics</span>
+          </h1>
+          <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-6">
           {/*users */}
           <Cards
-            header="Total User"
-            num="40,689"
-            bg="bg-[#E5E4FF]"
-            topicons={
-              <Users
-                strokeWidth={2}
-                className=" w-9 h-9 fill-[#8280FF] text-[#8280FF]"
-              />
-            }
-            bottomIcon={<TrendingUp className="text-[#0DBAA0] " />}
-            percent_change="8.5%"
-            daily_diff="Up from yesterday"
-          />
-          {/*Registration */}
-          <Cards
-            header="New Registration"
-            num="10,293"
-            bg="bg-[#FFF3D6]"
-            topicons={
-              <UserPlus
-                strokeWidth={2}
-                className=" w-9 h-9 fill-[#FDC142] text-[#FDC142]"
-              />
-            }
-            bottomIcon={<TrendingUp className="text-[#0DBAA0] " />}
-            percent_change="1.3%"
-            daily_diff="Up from past Week"
+            header="Total Users"
+            num={stats?.users?.total?.toLocaleString() || "0"}
+            bg="bg-[#8280FF]/10 border border-[#8280FF]/20"
+            topicons={<Users strokeWidth={2.5} className="w-6 h-6 text-[#8280FF]" />}
+            bottomIcon={<TrendingUp className="text-[#5EC750]" size={16} />}
+            percent_change={`+${stats?.users?.newLast7Days || 0}`}
+            daily_diff="Up from past week"
           />
           {/*Booking */}
           <Cards
             header="Total Booking"
-            num="89,000"
-            bg="bg-[#D9F7E8]"
-            topicons={
-              <CalendarCheck
-                strokeWidth={2}
-                className=" w-9 h-9 fill-#56CA00 text-[#57CA01]"
-              />
-            }
-            bottomIcon={<TrendingDown className="text-[#F9496F] " />}
-            percent_change="4.35%"
-            daily_diff="Down from yesterday"
+            num={stats?.bookings?.total?.toLocaleString() || "0"}
+            bg="bg-[#FDC142]/10 border border-[#FDC142]/20"
+            topicons={<CalendarCheck strokeWidth={2.5} className="w-6 h-6 text-[#FDC142]" />}
+            bottomIcon={<TrendingDown className="text-[#F9496F]" size={16} />}
+            percent_change=""
+            daily_diff="All completed orders"
           />
           {/*Approvals */}
           <Cards
             header="Pending Approvals"
-            num="2040"
-            bg="bg-[#FFDED1]"
-            topicons={
-              <History strokeWidth={2} className=" w-9 h-9  text-[#FF9871]" />
-            }
-            bottomIcon={<TrendingUp className="text-[#0DBAA0] " />}
-            percent_change="1.8%"
-            daily_diff="Up from yesterday"
+            num={stats?.bookings?.pending?.toLocaleString() || "0"}
+            bg="bg-[#FF9871]/10 border border-[#FF9871]/20"
+            topicons={<History strokeWidth={2.5} className="w-6 h-6 text-[#FF9871]" />}
+            bottomIcon={<TrendingUp className="text-[#5EC750]" size={16} />}
+            percent_change=""
+            daily_diff="Waiting clearance"
           />
         </div>
 
@@ -200,7 +203,6 @@ const Report = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
