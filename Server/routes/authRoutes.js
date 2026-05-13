@@ -10,14 +10,15 @@ import { user } from "../controllers/userController.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { updateUser } from "../controllers/userController.js";
 import passport from "../config/googleAuth.js";
+import { generateAccessToken, generateRefreshToken } from "../service/token.js";
+
+import { Router } from "express";
 const authRouter = express.Router();
 // Google OAuth
 authRouter.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] }),
 );
-
-import { generateAccessToken, generateRefreshToken } from "../service/token.js";
 
 authRouter.get(
   "/google/callback",

@@ -7,9 +7,9 @@ import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js
 
 const commentRouter = express.Router();
 // getting the event id
-commentRouter.get("/events/:id", get_comments);
+commentRouter.get("/events/:eventId/comments", get_comments); //fix the get path in the front end
 commentRouter.post(
-  "/auth/comments/:id",
+  "/events/:eventId/comments",
   authenticateTokenMiddleware,
   post_comments,
 );

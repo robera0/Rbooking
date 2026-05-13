@@ -32,6 +32,7 @@ import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
 import { useLocation } from "react-router-dom";
+
 /* ─── tiny helpers ──────────────────────────────────────────────────────── */
 const Orb = ({ className }) => (
   <div
@@ -70,7 +71,17 @@ const StatBadge = ({ icon: Icon, label, value }) => (
 const EventInfo = () => {
   const { eventId, ticketId } = useParams();
   const { setEditMenuActive, setCheckoutOpen, checkoutOpen } = useService();
-  const { fetchEventById, usererror, userIsLoading, user } = eventService();
+  const {
+    fetchEventById,
+    usererror,
+    userIsLoading,
+    user,
+    comments,
+    commentsIsLoading,
+    commentError,
+    useComment,
+  } = eventService();
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -86,6 +97,7 @@ const EventInfo = () => {
   const { scrollY } = useScroll();
   const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
   const heroScale = useTransform(scrollY, [0, 400], [1, 1.08]);
+  const { mutate: postComment, isPending } = useComment();
 
   const { data: event_id, isLoading } = useQuery({
     queryKey: ["event", eventId, ticketId],
@@ -117,7 +129,12 @@ const EventInfo = () => {
 
   const handlePostComment = () => {
     if (!commentText.trim()) return;
-    toast.success("DATA LOGGED");
+
+    postComment({
+      text: commentText,
+    });
+
+    if (postComment) toast.success("DATA LOGGED");
     setCommentText("");
   };
 
@@ -286,7 +303,7 @@ const EventInfo = () => {
           </motion.div>
 
           {/* glitch title */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase italic tracking-tighter leading-none max-w-5xl mb-8 perspective-1000">
+          <h1 className="text-5xl md:text-7xl lg:text-7itxl font-black uppercase italic tracking-tighter leading-none max-w-5xl mb-8 perspective-1000">
             {titleChars.map((char, i) => (
               <GlitchChar
                 key={i}
@@ -481,10 +498,7 @@ const EventInfo = () => {
                   About This Event
                 </span>
                 <p className="text-xl md:text-2xl text-gray-400 italic font-serif leading-relaxed">
-                  "
-                  {event?.description ||
-                    "No description available for this event."}
-                  "
+                  "{event?.desc || "No description available for this event."}"
                 </p>
               </div>
             </motion.section>
@@ -530,7 +544,7 @@ const EventInfo = () => {
 
               {/* comment feed */}
               <div className="space-y-1">
-                {event?.comments?.map((c, i) => (
+                {comments?.comments?.map((c, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, x: -20 }}
@@ -548,7 +562,7 @@ const EventInfo = () => {
                       </span>
                     </div>
                     <p className="text-gray-500 text-xs italic group-hover:text-gray-300 transition-colors leading-relaxed">
-                      "{c.comment?.[0]?.text}"
+                      "{c?.text}"
                     </p>
                   </motion.div>
                 ))}

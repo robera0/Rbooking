@@ -40,6 +40,7 @@ export const ServiceProvider = ({ children }) => {
   const [type, setType] = useState("");
   const [artist, setArtist] = useState("");
   const [date, setDate] = useState("");
+  const [commentId, setCommentId] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
   const toggleWishlist = async ({ eventId, ticketId, isAdding }) => {
@@ -97,6 +98,8 @@ export const ServiceProvider = ({ children }) => {
         startTime,
         setStartTime,
         Endtime,
+        commentId,
+        setCommentId,
         setEndTime,
         duration,
         setDuration,

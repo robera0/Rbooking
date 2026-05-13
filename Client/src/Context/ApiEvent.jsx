@@ -5,7 +5,7 @@ import axios from "axios";
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
-  const { type, artist, date, API_URL } = useService();
+  const { type, artist, date, API_URL, commentId } = useService();
 
   // GET EVENTS
 
@@ -112,15 +112,19 @@ export const ApiProvider = ({ children }) => {
   const queryClient = useQueryClient();
 
   const patchReadNotification = async (notId) => {
-    const res = await axios.patch(
-      `${API_URL}/api/auth/notifications/read`,
-      { notId },
-      { withCredentials: true },
-    );
-    return res.data;
+    try {
+      const res = await axios.patch(
+        `${API_URL}/api/auth/notifications/read`,
+        { notId },
+        { withCredentials: true },
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch event ticket:", error);
+      throw new Error(error);
+    }
   };
 
-  // 2. Mutation Hook using the function
   const { mutate: readNotification } = useMutation({
     mutationFn: patchReadNotification,
     onSuccess: () => {
@@ -133,6 +137,62 @@ export const ApiProvider = ({ children }) => {
       );
     },
   });
+  // GET COMMENT
+  const get_comment = async ({ queryKey }) => {
+    try {
+      const [, commentId] = queryKey;
+      const res = await fetch(`${API_URL}/api/events/${commentId}/comments`);
+      return res.json();
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  const {
+    data: comments,
+    isLoading: commentsIsLoading,
+    isError: commentError,
+  } = useQuery({
+    queryKey: ["comment", commentId],
+    queryFn: get_comment,
+    retry: 1,
+  });
+
+  //POST COMMENT
+  const sendComment = async (comment, eventId) => {
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/auth/events/${eventId}`,
+        { text: comment },
+        { withCredentials: true },
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch event ticket:", error);
+      throw error;
+    }
+  };
+
+  const useComment = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: sendComment,
+
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["comments"],
+        });
+      },
+
+      onError: (error) => {
+        console.error(
+          "Failed to post comment:",
+          error.response?.data || error.message,
+        );
+      },
+    });
+  };
 
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
@@ -239,6 +299,11 @@ export const ApiProvider = ({ children }) => {
         notificationIsError,
         notificationError,
         readNotification,
+        get_comment,
+        comments,
+        commentsIsLoading,
+        commentError,
+        useComment,
         wishlist,
         wishlistError,
         wishlistLoading,

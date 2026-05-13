@@ -67,8 +67,17 @@ function FeaturedEventSkeleton() {
 
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
-  const { events, user, isLoading, error, wishlist, wishlistIsError } = eventService();
-  const { type, setType, date, setDate, artist, setArtist } = useService();
+  const {
+    events,
+    user,
+    isLoading,
+    get_comment,
+    error,
+    wishlist,
+    wishlistIsError,
+  } = eventService();
+  const { type, setType, date, setDate, artist, setArtist, setCommentId } =
+    useService();
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -408,9 +417,11 @@ const UserHome = () => {
                       className={`block ${
                         e?.tickets?.length === 0 ? "cursor-not-allowed" : ""
                       }`}
-                      onClick={(ev) =>
-                        e?.tickets?.length === 0 && ev.preventDefault()
-                      }
+                      onClick={(ev) => {
+                        setCommentId(e?._id);
+
+                        e?.tickets?.length === 0 && ev.preventDefault();
+                      }}
                     >
                       {/* Image Container */}
                       <div

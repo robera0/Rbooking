@@ -1,20 +1,21 @@
 import mongoose from "mongoose";
 import { CommentModel } from "../models/CommentModel.js";
 import { ProfileModel } from "../models/ProfileModel.js";
+
 export const get_comments = async (req, res) => {
   try {
-    const id = req.user.id;
+    const { eventId } = req.params;
 
-    const comment = await CommentModel.find({ eventId: id });
+    const comment = await CommentModel.find({ eventId });
     res.status(200).json({ comments: comment });
   } catch {
-    res.status(401).json({ message: "No comments with the this id " });
+    res.status(500).json({ message: "No comments with the this id " });
   }
 };
 
 export const post_comments = async (req, res) => {
   try {
-    const eventId = new mongoose.Types.ObjectId(req.params.id);
+    const { eventId } = req.params;
     const { text } = req.body;
 
     if (!text || text.trim() === "") {
@@ -43,7 +44,7 @@ export const post_comments = async (req, res) => {
         },
         $push: { comment: newComment },
       },
-      { new: true, upsert: true },
+      { new: true, upsert: true, runValidators: true },
     );
 
     res.status(200).json({
