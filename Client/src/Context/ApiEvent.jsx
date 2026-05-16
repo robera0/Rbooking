@@ -193,7 +193,42 @@ export const ApiProvider = ({ children }) => {
       },
     });
   };
+  //LIKE COMMENT
 
+  const likeComment = async (commentId) => {
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/auth/comments/${commentId}/like`,
+        { commentId },
+        { withCredentials: true },
+      );
+      return res.data;
+    } catch (error) {
+      console.error("Failed to fetch comment :", error);
+      throw error;
+    }
+  };
+
+  const addLikeComment = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: sendComment,
+
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["likeComments"],
+        });
+      },
+
+      onError: (error) => {
+        console.error(
+          "Failed to like comment:",
+          error.response?.data || error.message,
+        );
+      },
+    });
+  };
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
     const res = await fetch(`${API_URL}/api/auth/tickets_home/${ticketId}`, {
@@ -304,6 +339,8 @@ export const ApiProvider = ({ children }) => {
         commentsIsLoading,
         commentError,
         useComment,
+        likeComment,
+        addLikeComment,
         wishlist,
         wishlistError,
         wishlistLoading,

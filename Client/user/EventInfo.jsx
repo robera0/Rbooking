@@ -32,6 +32,7 @@ import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
 import { useLocation } from "react-router-dom";
+import e from "express";
 
 /* ─── tiny helpers ──────────────────────────────────────────────────────── */
 const Orb = ({ className }) => (
@@ -80,14 +81,16 @@ const EventInfo = () => {
     commentsIsLoading,
     commentError,
     useComment,
+    addLikeComment,
   } = eventService();
-
+  const { mutate: likecommentmutation } = addLikeComment();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [showMap, setShowMap] = useState(false);
   const [showTicketDropdown, setShowTicketDropdown] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [rating, setRating] = useState("");
   const [imgIdx, setImgIdx] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -132,9 +135,10 @@ const EventInfo = () => {
 
     postComment({
       text: commentText,
+      rating: rating,
     });
 
-    if (postComment) toast.success("DATA LOGGED");
+    if (postComment) toast.success("comment posted successfully ");
     setCommentText("");
   };
 
@@ -543,27 +547,73 @@ const EventInfo = () => {
               </motion.div>
 
               {/* comment feed */}
-              <div className="space-y-1">
+              <div className="space-y-6">
                 {comments?.comments?.map((c, i) => (
                   <motion.div
                     key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: i * 0.07 }}
-                    className="group px-6 py-5 rounded-2xl hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/[0.04]"
+                    transition={{ delay: i * 0.06 }}
+                    className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[9px] font-black text-[#FF7A00] uppercase tracking-widest">
-                        {c.user?.fullName}
-                      </span>
-                      <span className="text-[8px] text-gray-700 font-bold">
-                        {moment(c.createdAt).fromNow()}
-                      </span>
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      {/* PROFILE IMAGE */}
+                      <div className="flex-shrink-0">
+                        <img
+                          src={
+                            c?.userProfile?.avatarUrl ||
+                            "https://ui-avatars.com/api/?name=User"
+                          }
+                          alt={c?.userProfile?.fullName}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
+                        />
+                      </div>
+
+                      {/* COMMENT CONTENT */}
+                      <div className="flex-1 min-w-0">
+                        {/* HEADER */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                          <div>
+                            <h4 className="text-sm sm:text-base font-semibold text-white truncate">
+                              {c?.userProfile?.fullName}
+                            </h4>
+
+                            <p className="text-[10px] sm:text-xs text-gray-500">
+                              {moment(c.createdAt).fromNow()}
+                            </p>
+                          </div>
+
+                          {/* OPTIONAL RATING */}
+                          {c?.rating > 0 && (
+                            <div className="flex items-center gap-1 text-[#FF7A00] text-xs font-bold">
+                              ⭐ {c.rating}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* COMMENT */}
+                        <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
+                          {c?.text}
+                        </p>
+
+                        {/* ACTIONS */}
+                        <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
+                          <button
+                            onClick={() => {
+                              e.preventDefault();
+                            }}
+                            className="hover:text-white transition-colors"
+                          >
+                            Like
+                          </button>
+
+                          <button className="hover:text-white transition-colors">
+                            Reply
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-gray-500 text-xs italic group-hover:text-gray-300 transition-colors leading-relaxed">
-                      "{c?.text}"
-                    </p>
                   </motion.div>
                 ))}
               </div>

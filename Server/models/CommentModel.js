@@ -11,6 +11,11 @@ const CommentSchema = new mongoose.Schema(
 
     userId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    userProfile: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: "userprofiles",
       required: true,
     },
