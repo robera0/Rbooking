@@ -32,7 +32,7 @@ import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
 import { useLocation } from "react-router-dom";
-import e from "express";
+
 
 /* ─── tiny helpers ──────────────────────────────────────────────────────── */
 const Orb = ({ className }) => (
@@ -600,7 +600,7 @@ const EventInfo = () => {
                         {/* ACTIONS */}
                         <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
                               e.preventDefault();
                             }}
                             className="hover:text-white transition-colors"
