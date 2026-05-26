@@ -33,7 +33,6 @@ import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
 import { useLocation } from "react-router-dom";
 
-
 /* ─── tiny helpers ──────────────────────────────────────────────────────── */
 const Orb = ({ className }) => (
   <div
@@ -158,20 +157,12 @@ const EventInfo = () => {
 
   /* ── ticket-type colour theme (mirrors Ticket.jsx palette) ── */
   const ticketThemes = {
-    vip: {
+    standard: {
       bandGradient:
-        "linear-gradient(120deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%)",
+        "linear-gradient(120deg, #FF7A00 0%, #FF9D00 60%, #FFC347 100%)",
       ctaGradient:
-        "linear-gradient(135deg, #3B82F6 0%, #60A5FA 50%, #3B82F6 100%)",
-      accentColor: "#60A5FA",
-      label: "VIP",
-    },
-    "early bird": {
-      bandGradient:
-        "linear-gradient(120deg, #22C55E 0%, #4ADE80 60%, #86EFAC 100%)",
-      ctaGradient:
-        "linear-gradient(135deg, #22C55E 0%, #4ADE80 50%, #22C55E 100%)",
-      accentColor: "#4ADE80",
+        "linear-gradient(135deg, #FF7A00 0%, #FF9D00 50%, #FF7A00 100%)",
+      accentColor: "#FF7A00",
       label: "Early Bird",
     },
     regular: {
@@ -182,14 +173,24 @@ const EventInfo = () => {
       accentColor: "#FACC15",
       label: "Regular",
     },
-    default: {
+    vip: {
       bandGradient:
-        "linear-gradient(120deg, #FF7A00 0%, #FF9D00 60%, #FFC347 100%)",
+        "linear-gradient(120deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%)",
       ctaGradient:
-        "linear-gradient(135deg, #FF7A00 0%, #FF9D00 50%, #FF7A00 100%)",
-      accentColor: "#FF7A00",
-      label: "General Admission",
+        "linear-gradient(135deg, #3B82F6 0%, #60A5FA 50%, #3B82F6 100%)",
+      accentColor: "#60A5FA",
+      label: "VIP",
     },
+
+    vvip: {
+      bandGradient:
+        "linear-gradient(120deg, #6B7280 0%, #9CA3AF 60%, #D1D5DB 100%)",
+      ctaGradient:
+        "linear-gradient(135deg, #6B7280 0%, #9CA3AF 50%, #6B7280 100%)",
+      accentColor: "#9CA3AF",
+      label: "VVIP",
+    },
+
     soldout: {
       bandGradient:
         "linear-gradient(120deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%)",
@@ -201,15 +202,20 @@ const EventInfo = () => {
 
   const isSoldOut = event?.tickets?.length === 0;
 
+  const baseActiveTicket = selectedTicket || event?.priceRanges?.[0] || ticket;
+  const activeTicket = baseActiveTicket
+    ? {
+        ...baseActiveTicket,
+        price: baseActiveTicket.price ?? baseActiveTicket.min ?? 0,
+        type: baseActiveTicket.type ?? "standard",
+      }
+    : null;
+
   const ticketType = isSoldOut
     ? "soldout"
-    : (selectedTicket?.type || ticket?.type || "default")
-        .toLowerCase()
-        .trim() || "default";
+    : (activeTicket?.type || "standard").toLowerCase().trim() || "standard";
 
   const theme = ticketThemes[ticketType] ?? ticketThemes.default;
-
-  const activeTicket = selectedTicket || ticket;
 
   const prevImg = () => setImgIdx((i) => (i === 0 ? images.length - 1 : i - 1));
   const nextImg = () => setImgIdx((i) => (i === images.length - 1 ? 0 : i + 1));
@@ -327,7 +333,7 @@ const EventInfo = () => {
             <StatBadge
               icon={MapPin}
               label="Venue Locale"
-              value={event?._embedded?.venues?.[0]?.name || "TBA"}
+              value={event?.links?.venues?.name || "TBA"}
             />
             <StatBadge
               icon={Calendar}
@@ -379,7 +385,7 @@ const EventInfo = () => {
                 border: 0,
                 filter: "grayscale(1) invert(1) contrast(0.9)",
               }}
-              src={`https://www.google.com/maps?q=${event?._embedded?.venues?.[0]?.name}&output=embed`}
+              src={`https://www.google.com/maps?q=${event?.links?.venues?.name}&output=embed`}
             />
             <div className="absolute inset-0 pointer-events-none border-b border-[#FF7A00]/20" />
             <motion.button
@@ -646,7 +652,7 @@ const EventInfo = () => {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.6 }}
                   className="relative px-8 pt-8 pb-6 overflow-hidden"
-                  style={{ background: theme.bandGradient }}
+                  style={{ background: theme?.bandGradient }}
                 >
                   {/* decorative circles */}
                   <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10" />
@@ -683,7 +689,7 @@ const EventInfo = () => {
                         Venue
                       </p>
                       <p className="text-[11px] font-black text-black truncate max-w-[130px]">
-                        {event?._embedded?.venues?.[0]?.name || "TBA"}
+                        {event?.links?.venues?.name}
                       </p>
                     </div>
                   </div>
@@ -715,7 +721,7 @@ const EventInfo = () => {
                           Ticket Type
                         </p>
                         <p className="text-lg font-black uppercase tracking-tight">
-                          {activeTicket?.type || "General Admission"}
+                          {activeTicket?.type || "standard"}
                         </p>
                       </motion.div>
                     </AnimatePresence>
@@ -734,11 +740,11 @@ const EventInfo = () => {
                         </p>
                         <div className="flex items-baseline gap-1">
                           <span className="text-4xl font-black tracking-tighter">
-                            ${activeTicket?.price || "0"}
+                            ${activeTicket?.price}
                           </span>
                           <span
                             className="text-[10px] font-black uppercase"
-                            style={{ color: theme.accentColor }}
+                            style={{ color: theme?.accentColor }}
                           >
                             USD
                           </span>
@@ -752,8 +758,7 @@ const EventInfo = () => {
                     {[
                       {
                         label: "Location",
-                        value:
-                          event?._embedded?.venues?.[0]?.city?.name || "TBA",
+                        value: event?.links?.venues?.name || "TBA",
                       },
                       {
                         label: "Category",
@@ -925,12 +930,12 @@ const EventInfo = () => {
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         className="absolute top-full left-0 right-0 mt-3 z-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1a1c1e]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                       >
-                        {(event?.tickets || []).map((t) => {
+                        {(event?.priceRanges || []).map((t) => {
                           const typeKey =
-                            t.type?.toLowerCase()?.trim() || "default";
+                            t.type?.toLowerCase()?.trim() || "standard";
                           const tTheme =
-                            ticketThemes[typeKey] || ticketThemes.default;
-
+                            ticketThemes[typeKey] || ticketThemes.standard;
+                          console.log(t);
                           const getIcon = (type) => {
                             if (type.includes("vip")) return "👑";
                             if (type.includes("early")) return "🐦";
@@ -940,7 +945,7 @@ const EventInfo = () => {
 
                           return (
                             <motion.button
-                              key={t._id}
+                              key={t.type}
                               whileHover={{
                                 backgroundColor: "rgba(255,255,255,0.03)",
                               }}
@@ -954,16 +959,16 @@ const EventInfo = () => {
                                 <span
                                   className="w-1.5 h-1.5 rounded-full"
                                   style={{
-                                    backgroundColor: tTheme.accentColor,
+                                    backgroundColor: tTheme?.accentColor,
                                   }}
                                 />
                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-white transition-colors">
-                                  {t.type}
+                                  {t?.type}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-bold text-white">
-                                  ${t.price}
+                                  ${t?.min}
                                 </span>
                                 <span className="text-sm opacity-50 group-hover:opacity-100 transition-opacity">
                                   {getIcon(typeKey)}

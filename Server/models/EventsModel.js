@@ -129,7 +129,14 @@ const BaseEventSchema = new mongoose.Schema(
         href: String, // current event
       },
       attractions: [{ href: String }], // related artist
-      venues: [{ href: String }],
+      venues: {
+        name: {
+          type: String,
+          required: true,
+        },
+        city: String,
+        address: String,
+      },
     },
     rating: RatingSchema,
     amenities: AmenitySchema,
