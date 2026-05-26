@@ -1,4 +1,9 @@
-import { createBrowserRouter, Navigate, useLocation, Outlet } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  useLocation,
+  Outlet,
+} from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Home from "../admin/Home";
 import Main from "../user/Main";
@@ -15,6 +20,7 @@ import Profile from "../user/Profile";
 import Setting from "../user/Setting";
 import EventInfo from "../user/EventInfo";
 import Events from "../user/Events";
+import Venue from "../user/Venue";
 import EventMang from "../admin/EventMang";
 import AddEvent from "../admin/AddEvent";
 import EditEvent from "../admin/EditEvent";
@@ -59,12 +65,12 @@ const PageWrapper = ({ children }) => (
 );
 
 const Root = () => {
-    const location = useLocation();
-    return (
-        <AnimatePresence mode="wait">
-            <Outlet key={location.pathname} />
-        </AnimatePresence>
-    );
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Outlet key={location.pathname} />
+    </AnimatePresence>
+  );
 };
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -86,81 +92,271 @@ export const router = createBrowserRouter([
       },
       {
         path: "admin/register",
-        element: <PageWrapper><RegistrationPage /></PageWrapper>
+        element: (
+          <PageWrapper>
+            <RegistrationPage />
+          </PageWrapper>
+        ),
       },
       {
         path: "login",
         element: (
           <PageWrapper>
-            <AccountPage pa="Login in to see the best of Events and Exhibitions " h="h-100">
+            <AccountPage
+              pa="Login in to see the best of Events and Exhibitions "
+              h="h-100"
+            >
               <LoginUser />
             </AccountPage>
           </PageWrapper>
-        )
+        ),
       },
       {
         path: "sign_up",
         element: (
           <PageWrapper>
-            <AccountPage pa="Create your account and see the best events " h="h-120">
+            <AccountPage
+              pa="Create your account and see the best events "
+              h="h-120"
+            >
               <SignUp />
             </AccountPage>
           </PageWrapper>
-        )
+        ),
       },
       {
         path: "admin",
         element: <Home />,
         children: [
           { index: true, element: <Navigate to="home" replace /> },
-          { path: "home", element: <PageWrapper><Dashboard /></PageWrapper> },
-          { path: "events", element: <PageWrapper><EventMang /></PageWrapper> },
-          { path: "events/add", element: <PageWrapper><AddEvent /></PageWrapper> },
-          
-          { path: "events/:eventId", element: <PageWrapper><EditEvent /></PageWrapper>, loader: editEventLoader },
-          { path: "orders", element: <PageWrapper><TicketOrders /></PageWrapper> },
-          { path: "orders/:orderId", element: <PageWrapper><AdminViewTicket /></PageWrapper> },
-          { path: "users", element: <PageWrapper><User /></PageWrapper> },
-          { path: "login", element: <PageWrapper><LoginPage /></PageWrapper> },
-          { path: "marketing", element: <PageWrapper><Marketing /></PageWrapper> },
-          { path: "reports", element: <PageWrapper><Report /></PageWrapper> },
-          { path: "payment", element: <PageWrapper><Payment /></PageWrapper> },
-          { path: "profile", element: <PageWrapper><AdminAccount /></PageWrapper> },
-          { path: "setting", element: <PageWrapper><Setting /></PageWrapper> },
-        ]
+          {
+            path: "home",
+            element: (
+              <PageWrapper>
+                <Dashboard />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "events",
+            element: (
+              <PageWrapper>
+                <EventMang />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "events/add",
+            element: (
+              <PageWrapper>
+                <AddEvent />
+              </PageWrapper>
+            ),
+          },
+
+          {
+            path: "events/:eventId",
+            element: (
+              <PageWrapper>
+                <EditEvent />
+              </PageWrapper>
+            ),
+            loader: editEventLoader,
+          },
+          {
+            path: "orders",
+            element: (
+              <PageWrapper>
+                <TicketOrders />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "orders/:orderId",
+            element: (
+              <PageWrapper>
+                <AdminViewTicket />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "users",
+            element: (
+              <PageWrapper>
+                <User />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "login",
+            element: (
+              <PageWrapper>
+                <LoginPage />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "marketing",
+            element: (
+              <PageWrapper>
+                <Marketing />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "reports",
+            element: (
+              <PageWrapper>
+                <Report />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "payment",
+            element: (
+              <PageWrapper>
+                <Payment />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "profile",
+            element: (
+              <PageWrapper>
+                <AdminAccount />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "setting",
+            element: (
+              <PageWrapper>
+                <Setting />
+              </PageWrapper>
+            ),
+          },
+        ],
       },
       {
         path: "",
         element: <Main />,
         children: [
-          { index: true, element: <PageWrapper><UserHome /></PageWrapper> },
-          { path: "events/:eventId", element: <PageWrapper><EventInfo /></PageWrapper> },
-          { path: "events/:eventId/tickets/:ticketId", element: <PageWrapper><EventInfo /></PageWrapper> },
-          { path: "event", element: <PageWrapper><Events /></PageWrapper> },
-          { path: "event_sports", element: <PageWrapper><Sport /></PageWrapper> },
-          { 
-            path: "tickets_home", 
-            element: <ProtectedRoute><Outlet /></ProtectedRoute>,
+          {
+            index: true,
+            element: (
+              <PageWrapper>
+                <UserHome />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "events/:eventId",
+            element: (
+              <PageWrapper>
+                <EventInfo />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "events/:eventId/tickets/:ticketId",
+            element: (
+              <PageWrapper>
+                <EventInfo />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "event",
+            element: (
+              <PageWrapper>
+                <Events />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "venues",
+            element: (
+              <PageWrapper>
+                <Venue />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "event_sports",
+            element: (
+              <PageWrapper>
+                <Sport />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "tickets_home",
+            element: (
+              <ProtectedRoute>
+                <Outlet />
+              </ProtectedRoute>
+            ),
             children: [
-                 { index: true, element: <PageWrapper><Ticket /></PageWrapper> },
-                 { path: ":ticketId", element: <PageWrapper><ViewTicket /></PageWrapper> }
-            ]
+              {
+                index: true,
+                element: (
+                  <PageWrapper>
+                    <Ticket />
+                  </PageWrapper>
+                ),
+              },
+              {
+                path: ":ticketId",
+                element: (
+                  <PageWrapper>
+                    <ViewTicket />
+                  </PageWrapper>
+                ),
+              },
+            ],
           },
           {
             path: "account",
-            element: <ProtectedRoute><Account><Outlet /></Account></ProtectedRoute>,
+            element: (
+              <ProtectedRoute>
+                <Account>
+                  <Outlet />
+                </Account>
+              </ProtectedRoute>
+            ),
             children: [
-              { index: true, element: <PageWrapper><Profile /></PageWrapper> },
-              { path: "favorites", element: <PageWrapper><Wishlist /></PageWrapper> },
-              { path: "setting", element: <PageWrapper><Setting /></PageWrapper> }
-            ]
-          }
-        ]
+              {
+                index: true,
+                element: (
+                  <PageWrapper>
+                    <Profile />
+                  </PageWrapper>
+                ),
+              },
+              {
+                path: "favorites",
+                element: (
+                  <PageWrapper>
+                    <Wishlist />
+                  </PageWrapper>
+                ),
+              },
+              {
+                path: "setting",
+                element: (
+                  <PageWrapper>
+                    <Setting />
+                  </PageWrapper>
+                ),
+              },
+            ],
+          },
+        ],
       },
       // Redirects
       { path: "dashboard", element: <Navigate to="/admin/home" replace /> },
       { path: "admin/login", element: <Navigate to="/admin/login" replace /> },
-      { path: "*", element: <Navigate to="/" replace /> }
-    ]
-  }
+      { path: "*", element: <Navigate to="/" replace /> },
+    ],
+  },
 ]);

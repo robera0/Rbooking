@@ -1,5 +1,7 @@
 
 [] add a schema of  a review about the app
 [] send the total amount ticket to the tickets route
-[] show the types of tickets  when  view ticket is clicked 
+[f] show the types of tickets  when  view ticket is clicked 
+[] show the not selected ticket type
+[f] show the venues in venue search
 [] fix the date input and search engine 
