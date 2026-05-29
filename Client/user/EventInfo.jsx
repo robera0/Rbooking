@@ -33,7 +33,7 @@ import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
 import { useLocation } from "react-router-dom";
 
-/* ─── tiny helpers ──────────────────────────────────────────────────────── */
+/* ─── tiny helpers*/
 const Orb = ({ className }) => (
   <div
     className={`absolute rounded-full blur-[120px] pointer-events-none ${className}`}
@@ -383,7 +383,6 @@ const EventInfo = () => {
               frameBorder="0"
               style={{
                 border: 0,
-                filter: "grayscale(1) invert(1) contrast(0.9)",
               }}
               src={`https://www.google.com/maps?q=${event?.links?.venues?.name}&output=embed`}
             />
@@ -552,76 +551,101 @@ const EventInfo = () => {
                 </motion.button>
               </motion.div>
 
-              {/* comment feed */}
+              {/* comment feed or skeleton loader */}
               <div className="space-y-6">
-                {comments?.comments?.map((c, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 15 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.06 }}
-                    className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
-                  >
-                    <div className="flex items-start gap-3 sm:gap-4">
-                      {/* PROFILE IMAGE */}
-                      <div className="flex-shrink-0">
-                        <img
-                          src={
-                            c?.userProfile?.avatarUrl ||
-                            "https://ui-avatars.com/api/?name=User"
-                          }
-                          alt={c?.userProfile?.fullName}
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
-                        />
-                      </div>
-
-                      {/* COMMENT CONTENT */}
-                      <div className="flex-1 min-w-0">
-                        {/* HEADER */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                          <div>
-                            <h4 className="text-sm sm:text-base font-semibold text-white truncate">
-                              {c?.userProfile?.fullName}
-                            </h4>
-
-                            <p className="text-[10px] sm:text-xs text-gray-500">
-                              {moment(c.createdAt).fromNow()}
-                            </p>
+                {commentsIsLoading
+                  ? // Skeleton loader for comments
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4 sm:p-5 animate-pulse"
+                      >
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          {/* PROFILE IMAGE SKELETON */}
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-700/40" />
                           </div>
-
-                          {/* OPTIONAL RATING */}
-                          {c?.rating > 0 && (
-                            <div className="flex items-center gap-1 text-[#FF7A00] text-xs font-bold">
-                              ⭐ {c.rating}
+                          {/* COMMENT CONTENT SKELETON */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                              <div>
+                                <div className="h-4 w-24 bg-gray-700/40 rounded mb-1" />
+                                <div className="h-3 w-16 bg-gray-700/30 rounded" />
+                              </div>
+                              <div className="h-4 w-10 bg-gray-700/30 rounded" />
                             </div>
-                          )}
-                        </div>
-
-                        {/* COMMENT */}
-                        <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
-                          {c?.text}
-                        </p>
-
-                        {/* ACTIONS */}
-                        <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                            }}
-                            className="hover:text-white transition-colors"
-                          >
-                            Like
-                          </button>
-
-                          <button className="hover:text-white transition-colors">
-                            Reply
-                          </button>
+                            <div className="h-3 w-full bg-gray-700/30 rounded mb-2" />
+                            <div className="h-3 w-2/3 bg-gray-700/20 rounded" />
+                            <div className="flex items-center gap-4 mt-4">
+                              <div className="h-3 w-10 bg-gray-700/20 rounded" />
+                              <div className="h-3 w-10 bg-gray-700/20 rounded" />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    ))
+                  : comments?.comments?.map((c, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.06 }}
+                        className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
+                      >
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          {/* PROFILE IMAGE */}
+                          <div className="flex-shrink-0">
+                            <img
+                              src={
+                                c?.userProfile?.avatarUrl ||
+                                "https://ui-avatars.com/api/?name=User"
+                              }
+                              alt={c?.userProfile?.fullName}
+                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
+                            />
+                          </div>
+                          {/* COMMENT CONTENT */}
+                          <div className="flex-1 min-w-0">
+                            {/* HEADER */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                              <div>
+                                <h4 className="text-sm sm:text-base font-semibold text-white truncate">
+                                  {c?.userProfile?.fullName}
+                                </h4>
+                                <p className="text-[10px] sm:text-xs text-gray-500">
+                                  {moment(c.createdAt).fromNow()}
+                                </p>
+                              </div>
+                              {/* OPTIONAL RATING */}
+                              {c?.rating > 0 && (
+                                <div className="flex items-center gap-1 text-[#FF7A00] text-xs font-bold">
+                                  ⭐ {c.rating}
+                                </div>
+                              )}
+                            </div>
+                            {/* COMMENT */}
+                            <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
+                              {c?.text}
+                            </p>
+                            {/* ACTIONS */}
+                            <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                }}
+                                className="hover:text-white transition-colors"
+                              >
+                                Like
+                              </button>
+                              <button className="hover:text-white transition-colors">
+                                Reply
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
               </div>
             </motion.section>
           </div>
@@ -805,7 +829,7 @@ const EventInfo = () => {
                     className={`relative w-full py-5 rounded-2xl flex items-center justify-center gap-3 overflow-hidden ${
                       isSoldOut ? "cursor-not-allowed opacity-80" : ""
                     }`}
-                    style={{ background: theme.ctaGradient }}
+                    style={{ background: theme?.ctaGradient }}
                   >
                     {/* shimmer */}
                     {!isSoldOut && (
@@ -867,7 +891,7 @@ const EventInfo = () => {
                           key={i}
                           className="rounded-sm"
                           style={{
-                            backgroundColor: theme.accentColor,
+                            backgroundColor: theme?.accentColor,
                             opacity: 0.35,
                             width: i % 3 === 0 ? "3px" : "1.5px",
                             height: `${40 + (i % 5) * 8}%`,
@@ -1020,40 +1044,9 @@ const EventInfo = () => {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              {
-                title: "Age Restriction",
-                icon: "🪪",
-                body: "This event may be age-restricted. Valid government-issued ID required at the door. All sales are final — no refunds for age-related entry denial.",
-              },
-              {
-                title: "No Re-entry",
-                icon: "🚫",
-                body: "Once you leave the venue, re-entry is not permitted. Please plan accordingly and ensure you have everything you need before entering.",
-              },
-              {
-                title: "Prohibited Items",
-                icon: "🎒",
-                body: "Outside food & beverages, professional cameras, laser pointers, and weapons of any kind are strictly prohibited. Bags are subject to search.",
-              },
-              {
-                title: "Refund Policy",
-                icon: "💳",
-                body: "All ticket sales are final. Refunds are only issued if the event is officially cancelled. Exchanges may be available up to 24 hours before the event.",
-              },
-              {
-                title: "Health & Safety",
-                icon: "🛡️",
-                body: "The venue reserves the right to require face coverings or proof of vaccination as per local health guidelines at the time of the event.",
-              },
-              {
-                title: "Lost Tickets",
-                icon: "🎫",
-                body: "Lost or stolen tickets cannot be replaced. Screenshots or digital copies of your Paysso ticket QR code are accepted for entry at all venues.",
-              },
-            ].map(({ title, icon, body }, i) => (
+            {event?.policies?.map((po, i) => (
               <motion.div
-                key={title}
+                key={po?.header}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -1062,13 +1055,12 @@ const EventInfo = () => {
                 className="p-6 rounded-2xl border border-white/[0.05] bg-white/[0.02] transition-all"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-xl">{icon}</span>
                   <h3 className="text-[11px] font-black uppercase tracking-widest text-white">
-                    {title}
+                    {po?.header}
                   </h3>
                 </div>
                 <p className="text-[12px] text-gray-500 leading-relaxed">
-                  {body}
+                  {po?.descriptions}
                 </p>
               </motion.div>
             ))}
@@ -1076,8 +1068,10 @@ const EventInfo = () => {
 
           <p className="text-[10px] text-gray-700 mt-8 text-center">
             Policies are set by{" "}
-            {event?._embedded?.venues?.[0]?.name || "the venue"} and Paysso. For
-            questions, contact{" "}
+            <span className="text-[#FF7A00] font-bold">
+              {event?.links?.venues?.name || "the venue"}
+            </span>{" "}
+            and Paysso. For questions, contact{" "}
             <span className="text-[#FF7A00] font-bold">support@paysso.com</span>
           </p>
         </motion.section>
