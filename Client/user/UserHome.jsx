@@ -27,50 +27,53 @@ import {
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
 import toast, { Toaster } from "react-hot-toast";
-import Skeleton from "react-loading-skeleton";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 // Skeleton for Featured Event Card
-function FeaturedEventSkeleton() {
+export function FeaturedEventSkeleton() {
   return (
-    <div className="group animate-pulse">
-      {/* Image Skeleton */}
-      <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
-        <Skeleton
-          height="100%"
-          width="100%"
-          className="w-full h-full"
-          style={{ minHeight: 180 }}
-        />
-      </div>
-      {/* Metadata */}
-      <div className="mt-5 px-1 space-y-4">
-        {/* Location + Rating */}
-        <div className="flex justify-between items-center">
-          <Skeleton height={12} width={80} borderRadius={8} />
-          <Skeleton height={20} width={40} borderRadius={8} />
+    // Base colors configured for a dark/zinc UI theme
+    <SkeletonTheme baseColor="#1c1f22" highlightColor="#2d3135">
+      <div className="group">
+        {/* Image Skeleton */}
+        <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04]">
+          <Skeleton
+            height="100%"
+            width="100%"
+            containerClassName="absolute inset-0 block h-full w-full"
+          />
         </div>
-        {/* Event Name */}
-        <Skeleton height={20} width="75%" borderRadius={8} />
-        {/* Price */}
-        <div className="flex justify-between items-end pt-1">
-          <div className="space-y-2">
-            <Skeleton height={12} width={60} borderRadius={8} />
-            <Skeleton height={24} width={80} borderRadius={8} />
+
+        {/* Metadata */}
+        <div className="mt-5 px-1 space-y-4">
+          {/* Location + Rating */}
+          <div className="flex justify-between items-center">
+            <Skeleton height={12} width={80} borderRadius={8} />
+            <Skeleton height={20} width={40} borderRadius={8} />
           </div>
-          <Skeleton height={40} width={40} borderRadius={12} />
+          {/* Event Name */}
+          <Skeleton height={20} width="75%" borderRadius={8} />
+          {/* Price */}
+          <div className="flex justify-between items-end pt-1">
+            <div className="space-y-2">
+              <Skeleton height={12} width={60} borderRadius={8} />
+              <Skeleton height={24} width={80} borderRadius={8} />
+            </div>
+            <Skeleton height={40} width={40} borderRadius={12} />
+          </div>
         </div>
       </div>
-    </div>
+    </SkeletonTheme>
   );
 }
-
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const {
     events,
     user,
     isLoading,
+    eventLoading,
     get_comment,
     error,
     wishlist,
@@ -336,6 +339,7 @@ const UserHome = () => {
             <AnimatePresence>
               {dateSlide && (
                 <motion.div
+                  onClick={(e) => e.stopPropagation()}
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
@@ -387,7 +391,7 @@ const UserHome = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8">
-          {isLoading
+          {eventLoading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <FeaturedEventSkeleton key={i} />
               ))
