@@ -92,6 +92,9 @@ const UserHome = () => {
       ) || false
     );
   };
+  const featuredVenues = [
+    ...new Map(events?.events?.map((e) => [e?.links?.venues?.name, e?.links])),
+  ];
 
   const handleWishlistToggle = (eventId, ticketId, e) => {
     e.preventDefault();

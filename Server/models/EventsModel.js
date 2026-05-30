@@ -136,6 +136,7 @@ const BaseEventSchema = new mongoose.Schema(
         },
         city: String,
         address: String,
+        pictures: [String],
       },
     },
     rating: RatingSchema,

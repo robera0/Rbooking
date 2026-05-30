@@ -5,3 +5,10 @@
 [] show the not selected ticket type
 [f] show the venues in venue search
 [] fix the date input and search engine 
+[] on mobile view make the navbar have the venue and artist attribute
+[] add the calendar and put all the event there is on that like a poster
+[] loading when in explore and other showing events and infos
+[] make the heart ones in set
+[] make and pop up error on the comment when uploading
+[] the time the comment posting 
+[] cache the image

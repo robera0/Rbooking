@@ -32,6 +32,8 @@ import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
 import { useLocation } from "react-router-dom";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 /* ─── tiny helpers*/
 const Orb = ({ className }) => (
@@ -553,99 +555,125 @@ const EventInfo = () => {
 
               {/* comment feed or skeleton loader */}
               <div className="space-y-6">
-                {commentsIsLoading
-                  ? // Skeleton loader for comments
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4 sm:p-5 animate-pulse"
-                      >
-                        <div className="flex items-start gap-3 sm:gap-4">
-                          {/* PROFILE IMAGE SKELETON */}
-                          <div className="flex-shrink-0">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-700/40" />
-                          </div>
-                          {/* COMMENT CONTENT SKELETON */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                              <div>
-                                <div className="h-4 w-24 bg-gray-700/40 rounded mb-1" />
-                                <div className="h-3 w-16 bg-gray-700/30 rounded" />
+                {commentsIsLoading ? (
+                  // Skeleton loader for comments
+                  <SkeletonTheme baseColor="#27272a" highlightColor="#3f3f46">
+                    <div className="space-y-6">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4 sm:p-5"
+                        >
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            {/* PROFILE IMAGE SKELETON */}
+                            <div className="flex-shrink-0">
+                              {/* circle={true} outputs a perfect border-radius circle */}
+                              <Skeleton
+                                circle
+                                width={48}
+                                height={48}
+                                className="sm:w-12 sm:h-12"
+                              />
+                            </div>
+
+                            {/* COMMENT CONTENT SKELETON */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <div>
+                                  {/* Replaces user name line */}
+                                  <Skeleton
+                                    width={96}
+                                    height={16}
+                                    className="mb-1"
+                                  />
+                                  {/* Replaces time-stamp line */}
+                                  <Skeleton width={64} height={12} />
+                                </div>
+                                {/* Replaces star rating badge */}
+                                <Skeleton width={40} height={16} />
                               </div>
-                              <div className="h-4 w-10 bg-gray-700/30 rounded" />
+
+                              {/* Replaces the main text block comment (2 lines) */}
+                              <div className="space-y-2">
+                                <Skeleton width="100%" height={12} />
+                                <Skeleton width="66%" height={12} />
+                              </div>
+
+                              {/* Replaces action buttons (Like / Reply) */}
+                              <div className="flex items-center gap-4 mt-4">
+                                <Skeleton width={40} height={12} />
+                                <Skeleton width={40} height={12} />
+                              </div>
                             </div>
-                            <div className="h-3 w-full bg-gray-700/30 rounded mb-2" />
-                            <div className="h-3 w-2/3 bg-gray-700/20 rounded" />
-                            <div className="flex items-center gap-4 mt-4">
-                              <div className="h-3 w-10 bg-gray-700/20 rounded" />
-                              <div className="h-3 w-10 bg-gray-700/20 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SkeletonTheme>
+                ) : (
+                  comments?.comments?.map((c, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 15 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.06 }}
+                      className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
+                    >
+                      <div className="flex items-start gap-3 sm:gap-4">
+                        {/* PROFILE IMAGE */}
+                        <div className="flex-shrink-0">
+                          <img
+                            src={
+                              c?.userProfile?.avatarUrl ||
+                              "https://ui-avatars.com/api/?name=User"
+                            }
+                            alt={c?.userProfile?.fullName}
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
+                          />
+                        </div>
+                        {/* COMMENT CONTENT */}
+                        <div className="flex-1 min-w-0">
+                          {/* HEADER */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <div>
+                              <h4 className="text-sm sm:text-base font-semibold text-white truncate">
+                                {c?.userProfile?.fullName}
+                              </h4>
+                              <p className="text-[10px] sm:text-xs text-gray-500">
+                                {moment(c.createdAt).fromNow()}
+                              </p>
                             </div>
+                            {/* OPTIONAL RATING */}
+                            {c?.rating > 0 && (
+                              <div className="flex items-center gap-1 text-[#FF7A00] text-xs font-bold">
+                                ⭐ {c.rating}
+                              </div>
+                            )}
+                          </div>
+                          {/* COMMENT */}
+                          <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
+                            {c?.text}
+                          </p>
+                          {/* ACTIONS */}
+                          <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                              }}
+                              className="hover:text-white transition-colors"
+                            >
+                              Like
+                            </button>
+                            <button className="hover:text-white transition-colors">
+                              Reply
+                            </button>
                           </div>
                         </div>
                       </div>
-                    ))
-                  : comments?.comments?.map((c, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 15 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: i * 0.06 }}
-                        className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
-                      >
-                        <div className="flex items-start gap-3 sm:gap-4">
-                          {/* PROFILE IMAGE */}
-                          <div className="flex-shrink-0">
-                            <img
-                              src={
-                                c?.userProfile?.avatarUrl ||
-                                "https://ui-avatars.com/api/?name=User"
-                              }
-                              alt={c?.userProfile?.fullName}
-                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
-                            />
-                          </div>
-                          {/* COMMENT CONTENT */}
-                          <div className="flex-1 min-w-0">
-                            {/* HEADER */}
-                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                              <div>
-                                <h4 className="text-sm sm:text-base font-semibold text-white truncate">
-                                  {c?.userProfile?.fullName}
-                                </h4>
-                                <p className="text-[10px] sm:text-xs text-gray-500">
-                                  {moment(c.createdAt).fromNow()}
-                                </p>
-                              </div>
-                              {/* OPTIONAL RATING */}
-                              {c?.rating > 0 && (
-                                <div className="flex items-center gap-1 text-[#FF7A00] text-xs font-bold">
-                                  ⭐ {c.rating}
-                                </div>
-                              )}
-                            </div>
-                            {/* COMMENT */}
-                            <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
-                              {c?.text}
-                            </p>
-                            {/* ACTIONS */}
-                            <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                }}
-                                className="hover:text-white transition-colors"
-                              >
-                                Like
-                              </button>
-                              <button className="hover:text-white transition-colors">
-                                Reply
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
+                    </motion.div>
+                  ))
+                )}
               </div>
             </motion.section>
           </div>

@@ -11,13 +11,15 @@ export const ApiProvider = ({ children }) => {
 
   const fetchEvents = async ({ queryKey }) => {
     const [_key, type, artist, date] = queryKey;
+
     const res = await fetch(
       `${API_URL}/api/events?type=${type?.trim() || ""}&artist=${
         artist?.trim() || ""
-      }&date=${date ? new Date(date).toISOString() : ""}`,
+      }&date=${date}`,
     );
     return res.json();
   };
+  const safeDate = date instanceof Date ? date.toISOString() : "";
   const {
     data: events,
     isLoading: eventLoading,
@@ -25,9 +27,15 @@ export const ApiProvider = ({ children }) => {
     isFetching: isFetching,
   } = useQuery({
     queryFn: fetchEvents,
-    queryKey: ["event", type, artist, date],
+    queryKey: ["event", type, artist, safeDate],
   });
 
+  /*const featuredVenues = [
+    ...new Map(events?.events?.map((e) => [e?.links?.venues?.name, e?.links])),
+  ];
+
+  console.log(featuredVenues.map);
+  */
   // GET LOGGED USERS
 
   const fetchLoggedInUser = async () => {
@@ -162,7 +170,7 @@ export const ApiProvider = ({ children }) => {
   const sendComment = async (comment, eventId) => {
     try {
       const res = await axios.post(
-        `${API_URL}/api/auth/events/${eventId}`,
+        `${API_URL}/api/auth/events/${eventId}/comments`,
         { text: comment },
         { withCredentials: true },
       );
