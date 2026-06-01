@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import {
   Search,
   Heart,
@@ -78,9 +78,7 @@ const EventInfo = () => {
     usererror,
     userIsLoading,
     user,
-    comments,
-    commentsIsLoading,
-    commentError,
+    get_comment,
     useComment,
     addLikeComment,
   } = eventService();
@@ -93,7 +91,6 @@ const EventInfo = () => {
   const [commentText, setCommentText] = useState("");
   const [rating, setRating] = useState("");
   const [imgIdx, setImgIdx] = useState(0);
-  const [scrolled, setScrolled] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const galleryRef = useRef(null);
 
@@ -108,28 +105,20 @@ const EventInfo = () => {
     queryFn: () => fetchEventById(eventId, ticketId),
   });
 
+  const {
+    data: comments,
+    isLoading: commentsIsLoading,
+    isError: commentError,
+  } = useQuery({
+    queryKey: ["comment", eventId],
+    queryFn: get_comment,
+    enabled: !!eventId,
+    retry: 1,
+  });
+
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
-
-  // Scroll to top after event data is loaded, preserving all animations
-  useEffect(() => {
-    if (!isLoading) {
-      setTimeout(() => window.scrollTo(0, 0), 50);
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    if (ticket && !selectedTicket) {
-      setSelectedTicket(ticket);
-    }
-  }, [ticket, selectedTicket]);
 
   const handlePostComment = () => {
     if (!commentText.trim()) return;

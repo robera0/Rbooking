@@ -27,7 +27,17 @@ import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useCallback } from "react";
 
 const Main = () => {
-  const { isAccountActive, menuOpen, setMenuOpen, API_URL } = useService();
+  const {
+    isAccountActive,
+    menuOpen,
+    setMenuOpen,
+    API_URL,
+    setType,
+    setDate,
+    setArtist,
+    setVenues,
+    setSearch,
+  } = useService();
 
   const location = useLocation();
   const { user, userIsLoading, userProfile, notifications } = eventService();
@@ -146,6 +156,15 @@ const Main = () => {
                 <Link
                   key={item.label}
                   to={item.path}
+                  onClick={() => {
+                    if (item.path === "/venues") {
+                      setType("");
+                      setDate("");
+                      setArtist("");
+                      setVenues("");
+                      setSearch("");
+                    }
+                  }}
                   className={`text-[11px] font-black uppercase tracking-[0.25em] transition ${
                     location.pathname === item.path
                       ? "text-[#FF7A00]"

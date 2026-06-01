@@ -1,30 +1,32 @@
-import React, { useState, useRef } from "react";
+import React from "react";
 import { eventService } from "@/Context/ApiEvent.jsx";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Star,
   MapPin,
-  Heart,
-  Share2,
   SearchX,
-  Ticket,
-  Calendar,
   Filter,
   ArrowRight,
   TrendingUp,
 } from "lucide-react";
-import { useWishlistMutation } from "./api/addwishlist.api.jsx";
+
 import { useService } from "@/Context/ServiceContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
-
 const Venue = () => {
-  const { type, setType, date, setDate, artist, setArtist } = useService();
-  const { events, user, isLoading, error, wishlist, wishlistIsError } =
-    eventService();
-  const { mutation: wishlistMutation } = useWishlistMutation();
+  const {
+    type,
+    setType,
+    date,
+    setDate,
+    venues,
+    setVenues,
+    artist,
+    setArtist,
+    search,
+    setSearch,
+  } = useService();
+  const { events, isLoading } = eventService();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -52,34 +54,14 @@ const Venue = () => {
         .filter(
           (e) => e?.links?.venues && Object.keys(e?.links?.venues).length > 0,
         )
-        .map((e) => [e?.links?.venues?.name, e?.links]),
+        .map((e) => [e?.links?.venues?.name, e]),
     ),
   ];
 
-  const checkWishlist = (eventId) => {
-    return (
-      wishlist?.wishlist?.items?.some(
-        (item) => item?.eventId?._id === eventId,
-      ) || false
-    );
-  };
-
-  const handleWishlistToggle = (eventId, ticketId, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!user) {
-      toast.error("Please sign in to save events");
-      navigate("/login", { state: { from: location } });
-      return;
-    }
-
-    const isCurrentlyAdded = checkWishlist(eventId);
-    wishlistMutation.mutate({
-      eventId: eventId,
-      ticketId: ticketId,
-      isAdding: !isCurrentlyAdded,
-    });
+  const handleVenueClick = (venueName) => {
+    setSearch(venueName);
+    setVenues(venueName);
+    navigate("/event");
   };
 
   const venuesCards = [
@@ -129,8 +111,6 @@ const Venue = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#121417] text-white overflow-hidden pb-32">
-      <Toaster position="top-center" />
-
       {/* ── AMBIENT BACKGROUND GLOWS ── */}
       <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-[#FF7A00]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
       <div className="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-white/[0.02] blur-[140px] rounded-full pointer-events-none -z-10" />
@@ -269,9 +249,9 @@ const Venue = () => {
             </div>
             <input
               type="text"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              placeholder="Search by event name, genre, or venue..."
+              value={venues}
+              onChange={(e) => setVenues(e.target.value)}
+              placeholder="Search by venue name"
               className="w-full h-16 bg-white/[0.02] border border-white/[0.08] rounded-2xl pl-16 pr-6 text-sm font-bold placeholder:text-gray-700 outline-none focus:border-[#FF7A00]/40 transition-all focus:bg-white/[0.04]"
             />
           </div>
@@ -297,18 +277,22 @@ const Venue = () => {
               animate="visible"
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-10"
             >
-              {featuredVenues?.map((e) => {
+              {featuredVenues?.map(([venueItems, data]) => {
                 return (
                   <motion.div variants={itemVariants} className="group">
                     <div className="relative mb-5">
-                      <Link
-                        to={`/`}
-                        onClick={(ev) => ev.preventDefault()}
-                        className={`block relative aspect-[4/5] rounded-[2rem] overflow-hidden border border-white/[0.06] bg-[#1C1F22] transition-all duration-700 `}
+                      <button
+                        type="button"
+                        onClick={() => handleVenueClick(venueItems)}
+                        className="block relative aspect-[4/5] rounded-[2rem] overflow-hidden border border-white/[0.06] bg-[#1C1F22] transition-all duration-700 w-full text-left"
                       >
                         <img
-                          src={e[1]?.venues?.pictures || "/Login.jpg"}
-                          alt={e[1]?.venues?.name}
+                          src={
+                            data?.links?.venues?.pictures?.[0] ||
+                            data?.pictures?.[0] ||
+                            "/Login.jpg"
+                          }
+                          alt={data?.links?.venues?.name || venueItems}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
@@ -323,37 +307,43 @@ const Venue = () => {
                             className="text-[8px] font-black uppercase tracking-wider
                                text-white group-hover:text-black"
                           >
-                            {e[1]?.venues?.address || "Main Venue"}
+                            {data?.links?.venues?.address || "Main Venue"}
                           </span>
                         </div>
-                      </Link>
+                      </button>
                     </div>
 
                     <div className="space-y-3 px-2">
                       <div className="flex items-center justify-between">
-                        <Link to={"/"}>
+                        <button
+                          type="button"
+                          onClick={() => handleVenueClick(venueItems)}
+                          className="text-left w-full"
+                        >
                           <h3 className="text-xl font-black uppercase italic tracking-tighter text-white hover:text-[#FF7A00] transition-colors line-clamp-1">
-                            {e[1]?.venues?.name}
+                            {data?.links?.venues?.name}
                           </h3>
-                        </Link>
+                        </button>
                         <div className="flex items-center gap-1 bg-white/[0.04] px-2 py-1 rounded-md border border-white/[0.08]">
                           <Star size={10} fill="#FF7A00" stroke="#FF7A00" />
                           <span className="text-white text-[10px] font-black">
-                            {e.rating?.score || "4.9"}
+                            {data.rating?.score || "4.9"}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-end justify-between border-t border-white/[0.04] pt-4">
-                        <Link to={"/"}>
-                          <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn">
-                            Details{" "}
-                            <ArrowRight
-                              size={14}
-                              className="group-hover/btn:translate-x-1 transition-transform"
-                            />
-                          </button>
-                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleVenueClick(venueItems)}
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn"
+                        >
+                          Details{" "}
+                          <ArrowRight
+                            size={14}
+                            className="group-hover/btn:translate-x-1 transition-transform"
+                          />
+                        </button>
                       </div>
                     </div>
                   </motion.div>
@@ -370,23 +360,10 @@ const Venue = () => {
               <div className="w-20 h-20 rounded-full bg-white/[0.03] flex items-center justify-center mb-8">
                 <SearchX size={32} className="text-gray-700" />
               </div>
-              <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-3">
-                No matches found
-              </h2>
+
               <p className="text-gray-500 max-w-sm font-medium mb-10">
-                We couldn't find any events matching your vault search. Expand
-                your parameters to see more.
+                We couldn't find any Venues at this moment
               </p>
-              <button
-                onClick={() => {
-                  setType("");
-                  setDate("");
-                  setArtist("");
-                }}
-                className="px-8 py-4 bg-[#FF7A00] text-black text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-white transition-all shadow-xl"
-              >
-                Clear All Filters
-              </button>
             </motion.div>
           )}
         </AnimatePresence>

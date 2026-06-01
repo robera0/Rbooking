@@ -158,6 +158,7 @@ export const ApiProvider = ({ children }) => {
   } = useQuery({
     queryKey: ["comment", commentId],
     queryFn: get_comment,
+    enabled: !!commentId,
     retry: 1,
   });
 
@@ -184,7 +185,7 @@ export const ApiProvider = ({ children }) => {
 
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: ["comments"],
+          queryKey: ["comment"],
         });
       },
 

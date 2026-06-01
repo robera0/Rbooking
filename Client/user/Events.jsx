@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React from "react";
 import { eventService } from "@/Context/ApiEvent.jsx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -17,7 +17,6 @@ import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { useService } from "@/Context/ServiceContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
-
 const Events = () => {
   const {
     type,
@@ -26,17 +25,16 @@ const Events = () => {
     venues,
     setVenues,
     setDate,
-    search,
-    setSearch,
     artist,
     setArtist,
+    search,
+    setSearch,
   } = useService();
   const { events, user, isLoading, error, wishlist, wishlistIsError } =
     eventService();
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
   const location = useLocation();
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -55,35 +53,7 @@ const Events = () => {
     },
   };
 
-  const rawEvents = events?.events || [];
-  const normalizedSearch = search?.trim().toLowerCase();
-  const filteredEvents = rawEvents.filter((event) => {
-    if (!normalizedSearch) return true;
-
-    const eventName = event.name?.toLowerCase() || "";
-    const eventType = event.type?.toLowerCase() || "";
-    const eventLocale = event.locale?.toLowerCase() || "";
-    const eventArtist = event.artist?.name?.toLowerCase() || "";
-    const eventVenue = event.links?.venues?.name?.toLowerCase() || "";
-    const eventGenres = [
-      ...(event.musicGenre || []),
-      ...(event.classifications?.flatMap((classification) => [
-        classification.genre?.name,
-        classification.subGenre?.name,
-      ]) || []),
-    ]
-      .filter(Boolean)
-      .map((value) => value.toLowerCase());
-
-    return [
-      eventName,
-      eventType,
-      eventLocale,
-      eventArtist,
-      eventVenue,
-      ...eventGenres,
-    ].some((value) => value.includes(normalizedSearch));
-  });
+  const filteredEvents = events?.events || [];
   const checkWishlist = (eventId) => {
     return (
       wishlist?.wishlist?.items?.some(
@@ -168,7 +138,9 @@ const Events = () => {
               {filterButtons.map((b, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setType(b.type)}
+                  onClick={() => {
+                    setType(b.type);
+                  }}
                   className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
                     b.type === type
                       ? "bg-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
