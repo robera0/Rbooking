@@ -6,10 +6,12 @@ export const get_comments = async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    const comment = await CommentModel.find({ eventId }).populate({
-      path: "userProfile",
-      select: "fullName avatarUrl ",
-    });
+    const comment = await CommentModel.find({ eventId })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "userProfile",
+        select: "fullName avatarUrl ",
+      });
     res.status(200).json({ comments: comment });
   } catch {
     res.status(500).json({ message: "No comments with the this id " });
@@ -32,17 +34,17 @@ export const post_comments = async (req, res) => {
       return res.status(404).json({ message: "User profile not found" });
     }
 
+    const eventObjectId = new mongoose.Types.ObjectId(eventId);
     const newComment = {
-      eventId,
+      eventId: eventObjectId,
       userId: userId,
-      userProfile: userId,
+      userProfile: user_profile._id,
       text,
       rating,
     };
 
     const commentDoc = await CommentModel.create(newComment);
 
-    await commentDoc.save();
     res.status(200).json({
       message: "Comment added successfully",
       comments: commentDoc,

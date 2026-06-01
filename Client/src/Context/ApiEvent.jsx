@@ -205,7 +205,7 @@ export const ApiProvider = ({ children }) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: sendComment,
+      mutationFn: ({ text, eventId }) => sendComment(text, eventId),
 
       onSuccess: () => {
         queryClient.invalidateQueries({

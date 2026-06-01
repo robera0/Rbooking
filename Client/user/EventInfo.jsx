@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   Heart,
@@ -120,16 +120,29 @@ const EventInfo = () => {
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
 
+  // Scroll to top when eventId changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [eventId]);
+
   const handlePostComment = () => {
     if (!commentText.trim()) return;
 
-    postComment({
-      text: commentText,
-      rating: rating,
-    });
-
-    if (postComment) toast.success("comment posted successfully ");
-    setCommentText("");
+    postComment(
+      { text: commentText, rating: rating, eventId: eventId },
+      {
+        onSuccess: () => {
+          toast.success("Comment posted successfully!");
+          setCommentText("");
+          setRating("");
+        },
+        onError: (error) => {
+          toast.error(
+            error.response?.data?.message || "Failed to post comment",
+          );
+        },
+      },
+    );
   };
 
   const handlePayment = async () => {
