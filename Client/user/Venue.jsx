@@ -55,6 +55,7 @@ const Venue = () => {
         .map((e) => [e?.links?.venues?.name, e?.links]),
     ),
   ];
+
   const checkWishlist = (eventId) => {
     return (
       wishlist?.wishlist?.items?.some(
@@ -297,7 +298,6 @@ const Venue = () => {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-10"
             >
               {featuredVenues?.map((e) => {
-                console.log(e[1]?.venues?.address);
                 return (
                   <motion.div variants={itemVariants} className="group">
                     <div className="relative mb-5">

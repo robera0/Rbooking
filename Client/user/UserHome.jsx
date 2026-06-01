@@ -79,8 +79,17 @@ const UserHome = () => {
     wishlist,
     wishlistIsError,
   } = eventService();
-  const { type, setType, date, setDate, artist, setArtist, setCommentId } =
-    useService();
+  const {
+    type,
+    setType,
+    date,
+    setDate,
+    artist,
+    venues,
+    setVenues,
+    setArtist,
+    setCommentId,
+  } = useService();
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -92,9 +101,6 @@ const UserHome = () => {
       ) || false
     );
   };
-  const featuredVenues = [
-    ...new Map(events?.events?.map((e) => [e?.links?.venues?.name, e?.links])),
-  ];
 
   const handleWishlistToggle = (eventId, ticketId, e) => {
     e.preventDefault();

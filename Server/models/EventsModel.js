@@ -126,7 +126,7 @@ const BaseEventSchema = new mongoose.Schema(
     },
     links: {
       self: {
-        href: String, // current event
+        href: String, // current event ,we gone fetch the related event with link instead of hard coding it
       },
       attractions: [{ href: String }], // related artist
       venues: {

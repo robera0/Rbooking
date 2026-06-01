@@ -5,18 +5,19 @@ import axios from "axios";
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
-  const { type, artist, date, API_URL, commentId } = useService();
+  const { type, artist, date, venues, search, API_URL, commentId } =
+    useService();
 
   // GET EVENTS
-
   const fetchEvents = async ({ queryKey }) => {
-    const [_key, type, artist, date] = queryKey;
-
-    const res = await fetch(
-      `${API_URL}/api/events?type=${type?.trim() || ""}&artist=${
-        artist?.trim() || ""
-      }&date=${date}`,
-    );
+    const [_key, type, artist, date, venues, search] = queryKey;
+    const params = new URLSearchParams();
+    if (type?.trim()) params.append("type", type.trim());
+    if (artist?.trim()) params.append("artist", artist.trim());
+    if (venues?.trim()) params.append("venues", venues.trim());
+    if (date) params.append("date", date);
+    if (search?.trim()) params.append("search", search.trim());
+    const res = await fetch(`${API_URL}/api/events?${params.toString()}`);
     return res.json();
   };
   const safeDate = date instanceof Date ? date.toISOString() : "";
@@ -27,15 +28,9 @@ export const ApiProvider = ({ children }) => {
     isFetching: isFetching,
   } = useQuery({
     queryFn: fetchEvents,
-    queryKey: ["event", type, artist, safeDate],
+    queryKey: ["event", type, artist, safeDate, venues, search],
   });
 
-  /*const featuredVenues = [
-    ...new Map(events?.events?.map((e) => [e?.links?.venues?.name, e?.links])),
-  ];
-
-  console.log(featuredVenues.map);
-  */
   // GET LOGGED USERS
 
   const fetchLoggedInUser = async () => {

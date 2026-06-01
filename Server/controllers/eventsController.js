@@ -86,7 +86,44 @@ export const add_event = async (req, res) => {
 };
 export const get_events = async (req, res) => {
   try {
-    const events = await Event.find();
+    const { type, artist, date, venues, search } = req.query;
+
+    const query = {};
+
+    if (type) {
+      query.type = {
+        $regex: type,
+        $options: "i",
+      };
+    }
+
+    if (artist) {
+      query["artist.name"] = {
+        $regex: artist,
+        $options: "i",
+      };
+    }
+
+    if (venues) {
+      query["links.venues.name"] = {
+        $regex: venues,
+        $options: "i",
+      };
+    }
+
+    if (date) {
+      query["dates.start.localDate"] = date;
+    }
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { "artist.name": { $regex: search, $options: "i" } },
+        { "links.venues.name": { $regex: search, $options: "i" } },
+        { type: { $regex: search, $options: "i" } },
+      ];
+    }
+    const events = await Event.find(query);
 
     // Get tickets for each event
     const eventsWithTickets = await Promise.all(

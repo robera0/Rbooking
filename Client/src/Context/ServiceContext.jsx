@@ -38,8 +38,10 @@ export const ServiceProvider = ({ children }) => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [type, setType] = useState("");
+  const [venues, setVenues] = useState("");
   const [artist, setArtist] = useState("");
   const [date, setDate] = useState("");
+  const [search, setSearch] = useState("");
   const [commentId, setCommentId] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
@@ -134,6 +136,10 @@ export const ServiceProvider = ({ children }) => {
         setQuantity,
         type,
         setType,
+        search,
+        setSearch,
+        venues,
+        setVenues,
         artist,
         setArtist,
         setDate,

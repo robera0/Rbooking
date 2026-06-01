@@ -19,7 +19,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 
 const Events = () => {
-  const { type, setType, date, setDate, artist, setArtist } = useService();
+  const {
+    type,
+    setType,
+    date,
+    venues,
+    setVenues,
+    setDate,
+    search,
+    setSearch,
+    artist,
+    setArtist,
+  } = useService();
   const { events, user, isLoading, error, wishlist, wishlistIsError } =
     eventService();
   const { mutation: wishlistMutation } = useWishlistMutation();
@@ -44,34 +55,35 @@ const Events = () => {
     },
   };
 
-  const filteredEvents = React.useMemo(() => {
-    let result = events?.events || [];
+  const rawEvents = events?.events || [];
+  const normalizedSearch = search?.trim().toLowerCase();
+  const filteredEvents = rawEvents.filter((event) => {
+    if (!normalizedSearch) return true;
 
-    if (type) {
-      const lowerType = type.toLowerCase();
-      result = result.filter(
-        (e) =>
-          e.type?.toLowerCase().includes(lowerType) ||
-          e.name?.toLowerCase().includes(lowerType) ||
-          e.locale?.toLowerCase().includes(lowerType),
-      );
-    }
+    const eventName = event.name?.toLowerCase() || "";
+    const eventType = event.type?.toLowerCase() || "";
+    const eventLocale = event.locale?.toLowerCase() || "";
+    const eventArtist = event.artist?.name?.toLowerCase() || "";
+    const eventVenue = event.links?.venues?.name?.toLowerCase() || "";
+    const eventGenres = [
+      ...(event.musicGenre || []),
+      ...(event.classifications?.flatMap((classification) => [
+        classification.genre?.name,
+        classification.subGenre?.name,
+      ]) || []),
+    ]
+      .filter(Boolean)
+      .map((value) => value.toLowerCase());
 
-    if (artist) {
-      const lowerArtist = artist.toLowerCase();
-      result = result.filter((e) =>
-        e.name?.toLowerCase().includes(lowerArtist),
-      );
-    }
-
-    if (date instanceof Date) {
-      const targetDate = date.toISOString().split("T")[0];
-      result = result.filter((e) => e.dates?.start?.localDate === targetDate);
-    }
-
-    return result;
-  }, [events, type, artist, date]);
-
+    return [
+      eventName,
+      eventType,
+      eventLocale,
+      eventArtist,
+      eventVenue,
+      ...eventGenres,
+    ].some((value) => value.includes(normalizedSearch));
+  });
   const checkWishlist = (eventId) => {
     return (
       wishlist?.wishlist?.items?.some(
@@ -178,8 +190,8 @@ const Events = () => {
             </div>
             <input
               type="text"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by event name, genre, or venue..."
               className="w-full h-16 bg-white/[0.02] border border-white/[0.08] rounded-2xl pl-16 pr-6 text-sm font-bold placeholder:text-gray-700 outline-none focus:border-[#FF7A00]/40 transition-all focus:bg-white/[0.04]"
             />
@@ -374,6 +386,7 @@ const Events = () => {
                   setType("");
                   setDate("");
                   setArtist("");
+                  setSearch("");
                 }}
                 className="px-8 py-4 bg-[#FF7A00] text-black text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-white transition-all shadow-xl"
               >
