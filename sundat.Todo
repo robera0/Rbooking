@@ -1,4 +1,3 @@
-
 [] add a schema of  a review about the app
 [] send the total amount ticket to the tickets route
 [f] show the types of tickets  when  view ticket is clicked 
@@ -7,8 +6,9 @@
 [] fix the date input and search engine 
 [] on mobile view make the navbar have the venue and artist attribute
 [] add the calendar and put all the event there is on that like a poster
-[] loading when in explore and other showing events and infos
+[f] loading when in explore and other showing events and infos
 [] make the heart ones in set
 [] make and pop up error on the comment when uploading
 [] the time the comment posting 
-[] cache the image
+[] cache the image  
+[] the featured event should be the 4 latest date

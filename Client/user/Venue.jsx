@@ -336,7 +336,7 @@ const Venue = () => {
                         <button
                           type="button"
                           onClick={() => handleVenueClick(venueItems)}
-                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn"
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn p-2 -mr-2"
                         >
                           Details{" "}
                           <ArrowRight

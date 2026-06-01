@@ -21,6 +21,8 @@ import {
   X,
   ChevronRight,
   MessageCircleMore,
+  MapPin,
+  User,
 } from "lucide-react";
 import { useState } from "react";
 import { Skeleton } from "boneyard-js/react";
@@ -385,6 +387,7 @@ export const AccountMenu = ({ icon, header, path, action }) => {
 
 export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
   const { API_URL, userProfile } = useService();
+  const { user } = eventService();
 
   const handleLogout = async () => {
     try {
@@ -428,7 +431,28 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
     },
   ];
 
-  const menuItems = minimal
+  // Navigation items shown when not logged in
+  const guestNavItems = [
+    {
+      icon: <MapPin size={20} />,
+      label: "Venues",
+      path: "/venues",
+    },
+    {
+      icon: <User size={20} />,
+      label: "Artists",
+      path: "/artists",
+    },
+    {
+      icon: <Search size={20} />,
+      label: "Explore",
+      path: "/event",
+    },
+  ];
+
+  const menuItems = !user
+    ? guestNavItems
+    : minimal
     ? allItems.filter((item) => ["My Tickets", "Wishlist"].includes(item.label))
     : allItems;
 
@@ -466,7 +490,7 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
       )}
 
       {/* Profile Section */}
-      {!minimal && (
+      {!minimal && user && (
         <div className="px-8 py-10 border-b border-white/[0.04] flex flex-col items-center text-center space-y-4 relative overflow-hidden group">
           <div className="absolute inset-0 bg-[#FF7A00]/[0.02] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
@@ -526,16 +550,35 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
         ))}
       </div>
 
-      {/* Logout */}
+      {/* Logout / Login */}
       {!minimal && (
         <div className="px-6 pb-8 pt-4">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.2rem] bg-red-500/5 text-red-500/70 border border-red-500/10 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 group font-black uppercase italic text-xs tracking-widest"
-          >
-            <LogOut size={16} strokeWidth={3} />
-            <span>Sign Out</span>
-          </button>
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.2rem] bg-red-500/5 text-red-500/70 border border-red-500/10 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 group font-black uppercase italic text-xs tracking-widest"
+            >
+              <LogOut size={16} strokeWidth={3} />
+              <span>Sign Out</span>
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <Link
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="w-full block text-center py-3 bg-[#FF7A00] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/sign_up"
+                onClick={() => setIsOpen(false)}
+                className="w-full block text-center py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-colors"
+              >
+                Create Account
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </div>

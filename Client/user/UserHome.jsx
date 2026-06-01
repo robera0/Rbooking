@@ -70,14 +70,11 @@ export function FeaturedEventSkeleton() {
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
   const {
-    events,
     user,
-    isLoading,
-    eventLoading,
-    get_comment,
-    error,
     wishlist,
     wishlistIsError,
+    featuredEvents,
+    featuredEventLoading,
   } = eventService();
   const {
     type,
@@ -88,6 +85,8 @@ const UserHome = () => {
     venues,
     setVenues,
     setArtist,
+    search,
+    setSearch,
     setCommentId,
   } = useService();
   const { mutation: wishlistMutation } = useWishlistMutation();
@@ -295,6 +294,21 @@ const UserHome = () => {
         className="sticky top-4 z-40 px-6 lg:px-10 -mt-8 max-w-[1380px]  mx-auto transition-all duration-300"
       >
         <div className="bg-[#1C1F22]/95 backdrop-blur-md border border-white/[0.08]  p-2 rounded-[2rem] md:rounded-[2.2rem] shadow-2xl flex flex-col lg:flex-row gap-2 md:gap-3">
+          <div className="flex-[1.2] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
+            <Search className="text-gray-600" size={16} />
+            <div className="flex-1">
+              <label className="block text-[7px]  lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
+                Search Events
+              </label>
+              <input
+                type="text"
+                placeholder="Event name, genre..."
+                className="bg-transparent border-none outline-none text-white font-bold w-full p-0 text-[11px] placeholder:text-gray-700"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
           <div className="flex-[0.9] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
             <User className="text-gray-600" size={16} />
             <div className="flex-1">
@@ -400,11 +414,11 @@ const UserHome = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8">
-          {eventLoading
+          {featuredEventLoading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <FeaturedEventSkeleton key={i} />
               ))
-            : events?.events?.map((e) => (
+            : featuredEvents?.events?.map((e) => (
                 <motion.div
                   variants={itemVariants}
                   className="group"

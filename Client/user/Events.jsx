@@ -321,14 +321,13 @@ const Events = () => {
                               ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
                               : `/events/${e._id}`
                           }
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn p-2 -mr-2"
                         >
-                          <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn">
-                            Details{" "}
-                            <ArrowRight
-                              size={14}
-                              className="group-hover/btn:translate-x-1 transition-transform"
-                            />
-                          </button>
+                          Details{" "}
+                          <ArrowRight
+                            size={14}
+                            className="group-hover/btn:translate-x-1 transition-transform"
+                          />
                         </Link>
                       </div>
                     </div>

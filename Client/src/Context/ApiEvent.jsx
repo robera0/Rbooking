@@ -20,7 +20,16 @@ export const ApiProvider = ({ children }) => {
     const res = await fetch(`${API_URL}/api/events?${params.toString()}`);
     return res.json();
   };
-  const safeDate = date instanceof Date ? date.toISOString() : "";
+  const formatDateForAPI = (dateObj) => {
+    if (!dateObj) return "";
+    if (!(dateObj instanceof Date)) return "";
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const safeDate = formatDateForAPI(date);
   const {
     data: events,
     isLoading: eventLoading,
@@ -29,6 +38,21 @@ export const ApiProvider = ({ children }) => {
   } = useQuery({
     queryFn: fetchEvents,
     queryKey: ["event", type, artist, safeDate, venues, search],
+  });
+
+  // GET FEATURED EVENTS (unfiltered for home page)
+  const fetchFeaturedEvents = async () => {
+    const res = await fetch(`${API_URL}/api/events`);
+    return res.json();
+  };
+
+  const {
+    data: featuredEvents,
+    isLoading: featuredEventLoading,
+    error: featuredEventError,
+  } = useQuery({
+    queryFn: fetchFeaturedEvents,
+    queryKey: ["featuredEvents"],
   });
 
   // GET LOGGED USERS
@@ -330,6 +354,9 @@ export const ApiProvider = ({ children }) => {
         eventLoading,
         eventerror,
         isFetching,
+        featuredEvents,
+        featuredEventLoading,
+        featuredEventError,
         tickets,
         ticketLoading,
         ticketsError,

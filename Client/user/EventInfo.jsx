@@ -441,15 +441,15 @@ const EventInfo = () => {
                       <>
                         <button
                           onClick={prevImg}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#FF7A00]/20"
+                          className="absolute left-0 top-0 bottom-0 w-1/4 flex items-center justify-start pl-4 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/20 z-10"
                         >
-                          <ChevronLeft size={18} />
+                          <ChevronLeft size={24} className="text-white" />
                         </button>
                         <button
                           onClick={nextImg}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#FF7A00]/20"
+                          className="absolute right-0 top-0 bottom-0 w-1/4 flex items-center justify-end pr-4 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/20 z-10"
                         >
-                          <ChevronRight size={18} />
+                          <ChevronRight size={24} className="text-white" />
                         </button>
                       </>
                     )}
