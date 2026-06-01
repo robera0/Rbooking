@@ -1,7 +1,8 @@
 import { Event } from "../models/EventsModel.js";
 import { TicketModel } from "../models/TicketModel.js";
 import multer from "multer";
-
+import redisClient from "../config/redis.js";
+import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 //ADD EVENTS
 
 const storage = multer.diskStorage({
@@ -69,7 +70,7 @@ export const add_event = async (req, res) => {
     };
 
     const newEvent = await Event.create(events);
-
+    await clearEventsCache();
     res.status(200).json({
       success: true,
       event: newEvent,
@@ -87,7 +88,16 @@ export const add_event = async (req, res) => {
 export const get_events = async (req, res) => {
   try {
     const { type, artist, date, venues, search } = req.query;
-
+    const cacheKey = `events:list:${JSON.stringify(req.query)}`;
+    //hit the cache
+    const cachedEvents = await redisClient.get(cacheKey);
+    if (cachedEvents) {
+      return res.status(200).json({
+        success: true,
+        events: JSON.parse(cachedEvents),
+        source: "cache",
+      });
+    }
     const query = {};
 
     if (type) {
@@ -139,6 +149,7 @@ export const get_events = async (req, res) => {
         };
       }),
     );
+    await redisClient.setEx(cacheKey, 300, JSON.stringify(eventsWithTickets));
 
     res.status(200).json({
       success: true,
@@ -157,7 +168,17 @@ export const get_events = async (req, res) => {
 export const featured_events = async (req, res) => {
   try {
     const limit = 4;
+    const cacheKey = "events:featured";
+    const cachedEvent = await redisClient.get(cacheKey);
+    if (cachedEvent) {
+      return res.status(200).json({
+        success: true,
+        events: JSON.parse(cachedEvent),
+        source: "cache",
+      });
+    }
     const events = await Event.find().sort({ "date.start": -1 }).limit(limit);
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(events));
     res.status(200).json({ events: events });
   } catch {
     res.status(401).json({ message: "No Filtered Events" });
@@ -168,7 +189,18 @@ export const featured_events = async (req, res) => {
 export const fetchEvents_id = async (req, res) => {
   try {
     const { eventId, ticketId } = req.params;
-
+    const cacheKey = `event:combo:${eventId}:${ticketId}`;
+    const cachedEvent = await redisClient.get(cacheKey);
+    const cachedCombo = await redisClient.get(cacheKey);
+    if (cachedCombo) {
+      const decoded = JSON.parse(cachedCombo);
+      return res.status(200).json({
+        success: true,
+        event: decoded.event,
+        ticket: decoded.ticket,
+        source: "cache",
+      });
+    }
     if (!ticketId || ticketId === "undefined") {
       return res.status(400).json({ message: "Ticket ID is required" });
     }
@@ -204,7 +236,8 @@ export const fetchEvents_id = async (req, res) => {
         .status(404)
         .json({ message: "Ticket not found for this event" });
     }
-
+    const payloadToCache = { event, ticket: ticketInfo };
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(payloadToCache));
     res.status(200).json({
       event: event,
       ticket: ticketInfo,
@@ -218,12 +251,20 @@ export const fetchEvents_id = async (req, res) => {
 export const get_event_by_id = async (req, res) => {
   try {
     const { eventId } = req.params;
+    const cacheKey = `event:single:${eventId}`;
+    const cachedEvent = await redisClient.get(cacheKey);
+    if (cachedEvent) {
+      return res
+        .status(200)
+        .json({ success: true, event: JSON.parse(cachedEvent) });
+    }
     const event = await Event.findById(eventId);
     if (!event) {
       return res
         .status(404)
         .json({ success: false, message: "Event not found" });
     }
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(event));
     res.status(200).json({ success: true, event });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -297,7 +338,8 @@ export const update_event = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Event not found" });
     }
-
+    await clearEventsCache();
+    await clearSingleEventCache();
     res.status(200).json({
       success: true,
       event: updatedEvent,

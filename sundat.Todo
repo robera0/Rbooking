@@ -5,10 +5,17 @@
 [f] show the venues in venue search
 [f] fix the date input and search engine 
 [f] on mobile view make the navbar have the venue and artist attribute
-[] add the calendar and put all the event there is on that like a poster
+
 [f] loading when in explore and other showing events and infos
 [] make the heart ones in set
-[] make and pop up error on the comment when uploading
-[] the time the comment posting 
+[f] make and pop up error on the comment when uploading
+[f] the time the comment posting 
 [] cache the image  
 [f] the featured event should be the 4 latest date
+//
+
+
+
+
+// WHEN THE APP IS PUBLISHED 
+[] add the calendar and put all the event there is on that like a poster

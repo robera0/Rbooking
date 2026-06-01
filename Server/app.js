@@ -15,6 +15,7 @@ import adminRouter from "./routes/adminRoutes.js";
 import cookieParser from "cookie-parser";
 import passport from "./config/googleAuth.js";
 import session from "express-session";
+import rateLimit from "express-rate-limit";
 
 import {
   Event,
@@ -42,6 +43,16 @@ const startServer = async () => {
     console.error("Server failed to start:", error);
   }
 };
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // max 100 requests per IP
+  message: {
+    success: false,
+    message: "Too many requests, please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.use(express.json());
 
@@ -66,7 +77,8 @@ app.use(
 app.use(passport.initialize());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.set("trust proxy", 1);
+app.use(limiter);
 app.use("/api", eventRouter);
 app.use("/api", commentRouter);
 
