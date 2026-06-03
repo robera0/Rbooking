@@ -7,13 +7,15 @@
 [f] on mobile view make the navbar have the venue and artist attribute
 
 [f] loading when in explore and other showing events and infos
-[] make the heart ones in set
+[f] make the heart ones in set
 [f] make and pop up error on the comment when uploading
 [f] the time the comment posting 
-[] cache the image  
+[f] cache the event  
+[] cache the tickets and the images 
+[] make sure the explore fetch based on the date and ticket 
 [f] the featured event should be the 4 latest date
-//
-
+[] make the all experience  wipe the every search
+[] make sure it shows  to log in if they want to post a comment 
 
 
 

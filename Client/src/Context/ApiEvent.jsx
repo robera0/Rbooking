@@ -24,11 +24,11 @@ export const ApiProvider = ({ children }) => {
     if (!dateObj) return "";
     if (!(dateObj instanceof Date)) return "";
     const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObj.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
-  
+
   const safeDate = formatDateForAPI(date);
   const {
     data: events,
@@ -40,9 +40,9 @@ export const ApiProvider = ({ children }) => {
     queryKey: ["event", type, artist, safeDate, venues, search],
   });
 
-  // GET FEATURED EVENTS (unfiltered for home page)
+  // GET FEATURED EVENTS (filtered by date)
   const fetchFeaturedEvents = async () => {
-    const res = await fetch(`${API_URL}/api/events`);
+    const res = await fetch(`${API_URL}/api/featuredevents`);
     return res.json();
   };
 

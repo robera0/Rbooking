@@ -1,14 +1,23 @@
 import { wishlistModel } from "../models/Wishlist.js";
 import mongoose from "mongoose";
+import redisClient, { clearWishListCache } from "../config/redis.js";
 
 /*  GET WISHLIST  */
 
 export const get_wishlist = async (req, res) => {
-  console.log(req.user);
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
-
+    const cacheKey = `wishlist:${userId}`;
+    const cachedWishlist = await redisClient.get(cacheKey);
+    if (cachedWishlist) {
+      return res.status(200).json({
+        success: true,
+        events: JSON.parse(cachedWishlist),
+        source: "cache",
+      });
+    }
     const wishlist = await wishlistModel
+
       .findOne({ userId })
 
       .populate([
@@ -28,7 +37,7 @@ export const get_wishlist = async (req, res) => {
         message: "Wishlist not found",
       });
     }
-
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(wishlist));
     res.status(200).json({
       wishlist,
     });
@@ -68,7 +77,7 @@ export const add_wishlist = async (req, res) => {
         upsert: true,
       },
     );
-
+    await clearWishListCache(userId);
     res.status(200).json({
       message: "Added to wishlist",
       wishlist: updatedWishlist,
@@ -111,7 +120,7 @@ export const remove_wishlist = async (req, res) => {
         message: "Wishlist not found",
       });
     }
-
+    await clearWishListCache(userId);
     res.status(200).json({
       message: "Removed from wishlist",
       wishlist: updatedWishlist,

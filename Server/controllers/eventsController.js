@@ -3,8 +3,8 @@ import { TicketModel } from "../models/TicketModel.js";
 import multer from "multer";
 import redisClient from "../config/redis.js";
 import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
-//ADD EVENTS
 
+//ADD EVENTS
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -88,7 +88,7 @@ export const add_event = async (req, res) => {
 export const get_events = async (req, res) => {
   try {
     const { type, artist, date, venues, search } = req.query;
-    const cacheKey = `events:list:${JSON.stringify(req.query)}`;
+    const cacheKey = `event:list:${JSON.stringify(req.query)}`;
     //hit the cache
     const cachedEvents = await redisClient.get(cacheKey);
     if (cachedEvents) {
@@ -171,15 +171,29 @@ export const featured_events = async (req, res) => {
     const cacheKey = "events:featured";
     const cachedEvent = await redisClient.get(cacheKey);
     if (cachedEvent) {
+      console.log("🔥 CACHE HIT");
       return res.status(200).json({
         success: true,
         events: JSON.parse(cachedEvent),
         source: "cache",
       });
     }
+    console.log("Fetching from database...");
     const events = await Event.find().sort({ "date.start": -1 }).limit(limit);
-    await redisClient.setEx(cacheKey, 3600, JSON.stringify(events));
-    res.status(200).json({ events: events });
+    const featuredEvents = await Promise.all(
+      events?.map(async (event) => {
+        const tickets = await TicketModel.find({
+          eventId: event._id,
+        });
+        return {
+          ...event.toObject(),
+          tickets: tickets,
+          ticketCount: tickets.length,
+        };
+      }),
+    );
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(featuredEvents));
+    res.status(200).json({ events: featuredEvents });
   } catch {
     res.status(401).json({ message: "No Filtered Events" });
   }
@@ -189,8 +203,7 @@ export const featured_events = async (req, res) => {
 export const fetchEvents_id = async (req, res) => {
   try {
     const { eventId, ticketId } = req.params;
-    const cacheKey = `event:combo:${eventId}:${ticketId}`;
-    const cachedEvent = await redisClient.get(cacheKey);
+    const cacheKey = `event:single:${eventId}`;
     const cachedCombo = await redisClient.get(cacheKey);
     if (cachedCombo) {
       const decoded = JSON.parse(cachedCombo);
@@ -339,7 +352,7 @@ export const update_event = async (req, res) => {
         .json({ success: false, message: "Event not found" });
     }
     await clearEventsCache();
-    await clearSingleEventCache();
+    await clearSingleEventCache(eventId);
     res.status(200).json({
       success: true,
       event: updatedEvent,

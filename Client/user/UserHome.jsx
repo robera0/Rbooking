@@ -418,11 +418,12 @@ const UserHome = () => {
             ? Array.from({ length: 4 }).map((_, i) => (
                 <FeaturedEventSkeleton key={i} />
               ))
-            : featuredEvents?.events?.map((e) => (
+            : featuredEvents?.events?.length > 0 &&
+              featuredEvents?.events?.map((e) => (
                 <motion.div
                   variants={itemVariants}
                   className="group"
-                  key={e._id}
+                  key={e?._id}
                 >
                   <div className="relative rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
                     {/* Sold Out Overlay */}
@@ -438,7 +439,7 @@ const UserHome = () => {
                     <Link
                       to={
                         e?.tickets?.length > 0
-                          ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                          ? `/events/${e?._id}/tickets/${e?.tickets[0]?._id}`
                           : "#"
                       }
                       className={`block ${
@@ -446,7 +447,7 @@ const UserHome = () => {
                       }`}
                       onClick={(ev) => {
                         setCommentId(e?._id);
-
+                        console.log(e?._id);
                         e?.tickets?.length === 0 && ev.preventDefault();
                       }}
                     >
@@ -457,7 +458,7 @@ const UserHome = () => {
                         }`}
                       >
                         <img
-                          src={e?.pictures[0]}
+                          src={e?.pictures?.[0]}
                           className="w-full h-full object-cover brightness-95 transition-transform duration-700"
                           alt={e?.name}
                         />
