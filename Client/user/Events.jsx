@@ -12,11 +12,13 @@ import {
   Filter,
   ArrowRight,
   TrendingUp,
+  X,
 } from "lucide-react";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { useService } from "@/Context/ServiceContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
+
 const Events = () => {
   const {
     type,
@@ -35,6 +37,7 @@ const Events = () => {
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
   const location = useLocation();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -54,6 +57,7 @@ const Events = () => {
   };
 
   const filteredEvents = events?.events || [];
+
   const checkWishlist = (eventId) => {
     return (
       wishlist?.wishlist?.items?.some(
@@ -91,13 +95,11 @@ const Events = () => {
     <div className="min-h-screen w-full bg-[#121417] text-white overflow-hidden pb-32">
       <Toaster position="top-center" />
 
-      {/* ── AMBIENT BACKGROUND GLOWS ── */}
       <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-[#FF7A00]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
       <div className="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-white/[0.02] blur-[140px] rounded-full pointer-events-none -z-10" />
 
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 pt-24 lg:pt-32">
-        {/* ── HEADER SECTION ── */}
-        <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-20">
+      <div className="max-w-[1440px] mx-auto px-4  py-2.5 md:px-8 lg:px-12 pt-20 md:pt-24 lg:pt-32">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 md:gap-6 mb-14 md:mb-20">
           <div className="max-w-2xl space-y-6">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -113,7 +115,7 @@ const Events = () => {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-[0.85]"
+              className="text-5xl md:text-6xl lg:text-7xl font-black uppercase italic tracking-tighter leading-[0.85]"
             >
               Discover <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/20">
@@ -132,18 +134,26 @@ const Events = () => {
             </motion.p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-            {/* Filter Chips */}
-            <div className="flex flex-wrap items-center gap-2 bg-white/[0.03] p-1.5 rounded-full border border-white/[0.08] backdrop-blur-xl">
+          <div className="flex items-start gap-4 w-full md:w-auto md:shrink-0">
+            <div className="flex flex-wrap items-center gap-1.5 bg-white/[0.03] p-1.5 rounded-full border border-white/[0.08] backdrop-blur-xl max-w-full overflow-hidden">
               {filterButtons.map((b, idx) => (
                 <button
                   key={idx}
                   onClick={() => {
-                    setType(b.type);
+                    if (b.name === "All Experiences") {
+                      setType("");
+                    } else {
+                      setType(b.type);
+                    }
+                    setDate("");
+                    setArtist("");
+                    setSearch("");
+                    setVenues("");
                   }}
-                  className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                    b.type === type
-                      ? "bg-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
+                  className={`px-3 md:px-2.5 lg:px-4 py-2 md:py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                    b.type === type ||
+                    (b.name === "All Experiences" && type === "")
+                      ? "bg-[#FF7A00] text-black shadow-lg"
                       : "text-gray-400 hover:text-white"
                   }`}
                 >
@@ -162,11 +172,35 @@ const Events = () => {
             </div>
             <input
               type="text"
-              value={search}
+              value={search || type}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by event name, genre, or venue..."
               className="w-full h-16 bg-white/[0.02] border border-white/[0.08] rounded-2xl pl-16 pr-6 text-sm font-bold placeholder:text-gray-700 outline-none focus:border-[#FF7A00]/40 transition-all focus:bg-white/[0.04]"
             />
+            <AnimatePresence>
+              {search && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => {
+                    setType("");
+                    setDate("");
+                    setArtist("");
+                    setSearch("");
+                    setVenues("");
+                  }}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/[0.08] hover:bg-[#FF7A00] flex items-center justify-center transition-colors group/clear"
+                  aria-label="Clear search and filters"
+                >
+                  <X
+                    size={13}
+                    className="text-gray-400 group-hover/clear:text-black transition-colors"
+                  />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -229,7 +263,7 @@ const Events = () => {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
-                        {/* Instant Details Overlay (Desktop Hover) */}
+                        {/* Instant Details Overlay */}
                         <div className="absolute inset-0 flex flex-col justify-end p-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 duration-500">
                           <div className="flex items-center gap-3 text-white">
                             <Calendar size={12} />
@@ -360,6 +394,7 @@ const Events = () => {
                   setDate("");
                   setArtist("");
                   setSearch("");
+                  setVenues("");
                 }}
                 className="px-8 py-4 bg-[#FF7A00] text-black text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-white transition-all shadow-xl"
               >
