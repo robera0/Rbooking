@@ -31,7 +31,7 @@ import { ProtectedRoute } from "@/components/Reusable";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
-import { useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -126,8 +126,11 @@ const EventInfo = () => {
   }, [eventId]);
 
   const handlePostComment = () => {
+    if (!user) {
+      navigate("/login", { state: { from: location } });
+      return;
+    }
     if (!commentText.trim()) return;
-
     postComment(
       { text: commentText, rating: rating, eventId: eventId },
       {
@@ -136,6 +139,7 @@ const EventInfo = () => {
           setCommentText("");
           setRating("");
         },
+
         onError: (error) => {
           toast.error(
             error.response?.data?.message || "Failed to post comment",
@@ -545,6 +549,7 @@ const EventInfo = () => {
                   placeholder="Leave a comment..."
                   className="flex-1 bg-transparent outline-none border-none text-[11px] font-bold uppercase tracking-wide placeholder:text-gray-700 text-white"
                 />
+
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
