@@ -98,7 +98,7 @@ const ViewTicket = () => {
         <div className="h-full w-full bg-gradient-to-r from-[#FF7A00]/60 via-[#FF7A00]/10 to-transparent" />
       </div>
 
-      <div className="relative z-10 max-w-lg mx-auto px-5 pt-8 pb-24">
+      <div className="relative z-10 max-w-lg md:max-w-3xl mx-auto px-5 pt-8 pb-24">
         {/* ── back nav ── */}
         <motion.button
           initial={{ opacity: 0, x: -8 }}
@@ -152,117 +152,128 @@ const ViewTicket = () => {
 
             {/* ── MAIN TICKET CARD ── */}
             <div
-              className={`rounded-2xl ${SURFACE} border ${BORDER} overflow-hidden`}
+              className={`rounded-2xl ${SURFACE} border ${BORDER} overflow-hidden flex flex-col md:flex-row`}
             >
-              {/* event banner */}
-              <div className="relative h-36 overflow-hidden">
-                <img
-                  src={
-                    event?.pictures?.[0] || event?.pictures?.[1] || "/Login.jpg"
-                  }
-                  alt={event?.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#111214] via-[#111214]/40 to-transparent" />
+              {/* Left Section (Banner + Details) */}
+              <div className="flex-1 flex flex-col">
+                {/* event banner */}
+                <div className="relative h-36 md:h-48 overflow-hidden">
+                  <img
+                    src={
+                      event?.pictures?.[0] || event?.pictures?.[1] || "/Login.jpg"
+                    }
+                    alt={event?.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#111214] via-[#111214]/40 to-transparent" />
 
-                {/* tier badge */}
-                <span
-                  className="absolute top-3 right-3 inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg backdrop-blur-sm"
-                  style={{
-                    background: tier.bg,
-                    color: tier.accent,
-                    border: `1px solid ${tier.accent}30`,
-                  }}
+                  {/* tier badge */}
+                  <span
+                    className="absolute top-3 right-3 inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg backdrop-blur-sm"
+                    style={{
+                      background: tier.bg,
+                      color: tier.accent,
+                      border: `1px solid ${tier.accent}30`,
+                    }}
+                  >
+                    <Tag size={10} />
+                    {tier.label}
+                  </span>
+                </div>
+
+                {/* event name pulled over banner */}
+                <div
+                  className="px-6 pt-4 pb-5 border-b"
+                  style={{ borderColor: "#1f2023" }}
                 >
-                  <Tag size={10} />
-                  {tier.label}
-                </span>
-              </div>
+                  <h2 className="text-[16px] font-semibold text-[#f4f4f5] leading-snug">
+                    {event?.name}
+                  </h2>
+                </div>
 
-              {/* event name pulled over banner */}
-              <div
-                className="px-6 pt-4 pb-5 border-b"
-                style={{ borderColor: "#1f2023" }}
-              >
-                <h2 className="text-[16px] font-semibold text-[#f4f4f5] leading-snug">
-                  {event?.name}
-                </h2>
-              </div>
-
-              {/* ── details list ── */}
-              <div className="px-6">
-                <Detail
-                  icon={Calendar}
-                  label="Date"
-                  value={
-                    localDate
-                      ? moment(localDate).format("dddd, MMMM D, YYYY")
-                      : "TBA"
-                  }
-                />
-                <Detail
-                  icon={Clock}
-                  label="Time"
-                  value={localTime ? localTime.slice(0, 5) : "Check venue"}
-                />
-                <Detail
-                  icon={MapPin}
-                  label="Venue"
-                  value={
-                    event?._embedded?.venues?.[0]?.name ||
-                    ticketsinfo?.ticket?.ticketId?.eventId?.locale ||
-                    "TBA"
-                  }
-                />
-                <Detail icon={Hash} label="Order #" value={orderNo || "—"} />
-                <Detail
-                  icon={Tag}
-                  label="Ticket ID"
-                  value={`#${parseInt(ticketId?.slice(-6), 16)}`}
-                />
+                {/* ── details list ── */}
+                <div className="px-6 flex-1 py-2">
+                  <Detail
+                    icon={Calendar}
+                    label="Date"
+                    value={
+                      localDate
+                        ? moment(localDate).format("dddd, MMMM D, YYYY")
+                        : "TBA"
+                    }
+                  />
+                  <Detail
+                    icon={Clock}
+                    label="Time"
+                    value={localTime ? localTime.slice(0, 5) : "Check venue"}
+                  />
+                  <Detail
+                    icon={MapPin}
+                    label="Venue"
+                    value={
+                      event?._embedded?.venues?.[0]?.name ||
+                      ticketsinfo?.ticket?.ticketId?.eventId?.locale ||
+                      "TBA"
+                    }
+                  />
+                  <Detail icon={Hash} label="Order #" value={orderNo || "—"} />
+                  <Detail
+                    icon={Tag}
+                    label="Ticket ID"
+                    value={`#${parseInt(ticketId?.slice(-6), 16)}`}
+                  />
+                </div>
               </div>
 
               {/* ── tear line ── */}
-              <div className="relative flex items-center px-0 my-1">
-                <div className="w-4 h-4 rounded-full -ml-2 bg-[#0c0d0e] shrink-0" />
-                <div
-                  className="flex-1 border-t border-dashed"
-                  style={{ borderColor: "#1f2023" }}
-                />
-                <div className="w-4 h-4 rounded-full -mr-2 bg-[#0c0d0e] shrink-0" />
-              </div>
-
-              {/* ── QR section ── */}
-              <div className="px-6 py-6 flex flex-col items-center gap-4">
-                <div className="p-4 rounded-2xl bg-white inline-block shadow-lg">
-                  <img
-                    src="/qr-code.png"
-                    className="w-28 h-28"
-                    alt="Entry QR Code"
-                  />
-                </div>
-                <div className="text-center">
-                  <p className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-widest">
-                    Scan at entry
-                  </p>
-                  <p className="text-[10px] text-[#4b4d52] mt-0.5">
-                    Present this code to venue staff
-                  </p>
-                </div>
-              </div>
-
-              {/* ── footer ── */}
               <div
-                className="px-6 py-4 border-t flex items-center justify-between"
-                style={{ borderColor: "#1f2023", background: "#0f1011" }}
+                className="relative border-t md:border-t-0 md:border-l border-dashed"
+                style={{ borderColor: "#1f2023" }}
               >
-                <div className="flex items-center gap-2 text-[11px] text-[#4b4d52] font-medium">
-                  <ShieldCheck size={12} className="text-[#4b4d52]" />
-                  Secured by Paysso
+                {/* Top-Left Cutout (Top for desktop, Left for mobile) */}
+                <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#0c0d0e]" />
+                
+                {/* Right Cutout (Mobile) */}
+                <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#0c0d0e] md:hidden" />
+                
+                {/* Bottom Cutout (Desktop) */}
+                <div className="absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2 w-4 h-4 rounded-full bg-[#0c0d0e] hidden md:block" />
+              </div>
+
+              {/* Right Section (QR + Footer) */}
+              <div className="flex flex-col md:w-72 bg-[#0f1011] shrink-0">
+                {/* ── QR section ── */}
+                <div className="px-6 py-6 flex flex-col items-center justify-center flex-1 gap-4">
+                  <div className="p-4 rounded-2xl bg-white inline-block shadow-lg">
+                    <img
+                      src="/qr-code.png"
+                      className="w-28 h-28"
+                      alt="Entry QR Code"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-widest">
+                      Scan at entry
+                    </p>
+                    <p className="text-[10px] text-[#4b4d52] mt-0.5">
+                      Present this code to venue staff
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[10px] text-[#4b4d52]">
-                  #{ticketId?.slice(-8).toUpperCase()}
-                </p>
+
+                {/* ── footer ── */}
+                <div
+                  className="px-6 py-4 border-t flex items-center justify-between"
+                  style={{ borderColor: "#1f2023", background: "#0f1011" }}
+                >
+                  <div className="flex items-center gap-2 text-[11px] text-[#4b4d52] font-medium">
+                    <ShieldCheck size={12} className="text-[#4b4d52]" />
+                    Secured by Paysso
+                  </div>
+                  <p className="text-[10px] text-[#4b4d52]">
+                    #{ticketId?.slice(-8).toUpperCase()}
+                  </p>
+                </div>
               </div>
             </div>
 
