@@ -1,22 +1,19 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { createClient } from "redis";
+import Redis from "ioredis";
 
 dotenv.config();
 const REDIS_URL = process.env.REDIS_URL;
 
-const redisClient = createClient({
-  url: REDIS_URL,
-});
+const redisClient = new Redis(REDIS_URL);
 console.log("REDIS_URL:", REDIS_URL);
+redisClient.on("connect", () =>
+  console.log("Redis Connected Successfully  via ioredis"),
+);
 redisClient.on("error", (err) => console.error("Redis Client Error", err));
-await redisClient.connect();
-
 export default redisClient;
-
 export const clearEventsCache = async () => {
   try {
-    // Scan and delete all matching list cache keys
     const keys = await redisClient.keys("events:*");
 
     if (keys.length > 0) {
@@ -41,9 +38,21 @@ export const clearWishListCache = async (userId) => {
   try {
     if (!userId) return;
 
-    const cacheKey = `wishlist:${userId}`;
-    await redisClient.del(cacheKey);
+    const cacheKey = `user:wishlist:${userId}`;
+    await redisClient.unlink(cacheKey);
   } catch (err) {
     console.error("Failed to clear wishlist cache:", err);
+  }
+};
+
+export const clearTicketCache = async () => {
+  try {
+    const keys = await redisClient.keys("user:ticket:*");
+
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+    }
+  } catch (err) {
+    console.error("Failed to clear ticket cache:", err);
   }
 };

@@ -10,14 +10,12 @@
 [f] make the heart ones in set
 [f] make and pop up error on the comment when uploading
 [f] the time the comment posting 
-[f] cache the event  
+[] cache the event  with pipelines 
 [] cache the tickets and the images 
 [] make sure the explore fetch based on the date and ticket 
 [f] the featured event should be the 4 latest date
 [] make the all experience  wipe the every search
 [] make sure it shows  to log in if they want to post a comment 
-
-
 
 // WHEN THE APP IS PUBLISHED 
 [] add the calendar and put all the event there is on that like a poster

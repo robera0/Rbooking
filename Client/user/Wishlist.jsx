@@ -185,8 +185,8 @@ const Wishlist = () => {
             Events you heart will be stored here for quick access later.
           </p>
           <Link to="/event">
-            <button className="group px-8 py-4 bg-[#FF7A00] text-black text-xs font-black uppercase italic rounded-2xl flex items-center gap-3 hover:bg-white transition-all active:scale-95">
-              Secure Tickets
+            <button className="group px-8 py-4 bg-[#FF7A00] text-black text-xs font-black uppercase  rounded-2xl flex items-center gap-3 hover:bg-white transition-all active:scale-95">
+              Add Events you like
               <ArrowRight
                 size={16}
                 className="group-hover:translate-x-1 transition-transform"

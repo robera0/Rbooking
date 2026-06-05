@@ -241,6 +241,7 @@ const UserHome = () => {
                 src="/1763661369611.webp"
                 className="w-full h-full object-cover brightness-100 transition-all duration-1000"
                 alt="Concert"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#121417] via-transparent to-transparent" />
             </div>
@@ -254,6 +255,7 @@ const UserHome = () => {
                 src="/Login.jpg"
                 className="w-full h-full object-cover"
                 alt="Artist 1"
+                loading="lazy"
               />
             </motion.div>
             <motion.div
@@ -266,6 +268,7 @@ const UserHome = () => {
                 src="/1308183.jpeg"
                 className="w-full h-full object-cover"
                 alt="Artist 2"
+                loading="lazy"
               />
             </motion.div>
           </div>
@@ -419,9 +422,11 @@ const UserHome = () => {
                 <FeaturedEventSkeleton key={i} />
               ))
             : featuredEvents?.events?.length > 0 &&
-              featuredEvents?.events?.map((e) => (
+              featuredEvents?.events?.map((e, i) => (
                 <motion.div
-                  variants={itemVariants}
+                  initial={{ opacity: 0, y: 25, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1], delay: i * 0.1 }}
                   className="group"
                   key={e?._id}
                 >
@@ -461,6 +466,7 @@ const UserHome = () => {
                           src={e?.pictures?.[0]}
                           className="w-full h-full object-cover brightness-95 transition-transform duration-700"
                           alt={e?.name}
+                          loading="lazy"
                         />
                         {/* Hover Gradient */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -642,6 +648,7 @@ const UserHome = () => {
                 src="/Screenshot From 2026-04-24 04-49-36.png"
                 className="w-full h-auto object-contain"
                 alt="Hero View"
+                loading="lazy"
               />
               <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">
@@ -663,6 +670,7 @@ const UserHome = () => {
                   src="/Screenshot From 2026-04-24 04-50-09.png"
                   className="w-full h-auto object-contain"
                   alt="Wishlist"
+                  loading="lazy"
                 />
                 <div className="absolute bottom-4 left-6">
                   <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
@@ -678,6 +686,7 @@ const UserHome = () => {
                   src="/Login.jpg"
                   className="w-full h-auto object-contain"
                   alt="Account"
+                  loading="lazy"
                 />
                 <div className="absolute bottom-4 left-6">
                   <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
@@ -745,6 +754,7 @@ const UserHome = () => {
                         src={`/1308183.jpeg`}
                         className="w-full h-full object-cover"
                         alt="User"
+                        loading="lazy"
                       />
                     </div>
                   ))}

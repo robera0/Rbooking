@@ -312,7 +312,7 @@ const EventInfo = () => {
           >
             <Fingerprint size={13} className="text-[#FF7A00]" />
             <span className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.45em]">
-              ID — {eventId?.slice(-14).toUpperCase()}
+              ID — {eventId?.slice(-14)?.toUpperCase()}
             </span>
           </motion.div>
 
@@ -934,7 +934,7 @@ const EventInfo = () => {
                         Paysso
                       </p>
                       <p className="text-[9px] font-black text-gray-500 tracking-widest">
-                        #{eventId?.slice(-8).toUpperCase()}
+                        #{eventId?.slice(-8)?.toUpperCase()}
                       </p>
                     </div>
                   </div>
@@ -1051,7 +1051,7 @@ const EventInfo = () => {
                   </span>
                 </div>
                 <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
-                  Ref: {eventId?.slice(-8).toUpperCase()}
+                  Ref: {eventId?.slice(-8)?.toUpperCase()}
                 </span>
               </motion.div>
             </div>

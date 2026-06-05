@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import { useService } from "./ServiceContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+
 const ApiContext = createContext();
 
 export const ApiProvider = ({ children }) => {
@@ -264,8 +265,10 @@ export const ApiProvider = ({ children }) => {
       credentials: "include",
     });
     const data = await res.json();
+    console.log(data);
     return data;
   };
+
   const fetchEventById = async (eventid, ticketId) => {
     try {
       const res = await fetch(
@@ -290,7 +293,7 @@ export const ApiProvider = ({ children }) => {
     }
   };
   // GET WISHLIST
-  const fetchWishlist = async (req, res) => {
+  const fetchWishlist = async () => {
     try {
       const res = await fetch(`${API_URL}/api/auth/wishlist`, {
         method: "GET",
@@ -299,7 +302,7 @@ export const ApiProvider = ({ children }) => {
       if (res.status === 401) {
         throw new Error("Login required");
       }
-
+      console.log(res.json);
       return res.json();
     } catch (error) {
       throw new Error(error);

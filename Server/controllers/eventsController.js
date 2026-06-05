@@ -149,8 +149,8 @@ export const get_events = async (req, res) => {
         };
       }),
     );
-    await redisClient.setEx(cacheKey, 300, JSON.stringify(eventsWithTickets));
-
+    await redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets));
+    console.log(eventsWithTickets);
     res.status(200).json({
       success: true,
       events: eventsWithTickets,
@@ -192,7 +192,7 @@ export const featured_events = async (req, res) => {
         };
       }),
     );
-    await redisClient.setEx(cacheKey, 3600, JSON.stringify(featuredEvents));
+    await redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents));
     res.status(200).json({ events: featuredEvents });
   } catch {
     res.status(401).json({ message: "No Filtered Events" });
@@ -250,7 +250,7 @@ export const fetchEvents_id = async (req, res) => {
         .json({ message: "Ticket not found for this event" });
     }
     const payloadToCache = { event, ticket: ticketInfo };
-    await redisClient.setEx(cacheKey, 3600, JSON.stringify(payloadToCache));
+    await redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache));
     res.status(200).json({
       event: event,
       ticket: ticketInfo,
@@ -277,7 +277,7 @@ export const get_event_by_id = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Event not found" });
     }
-    await redisClient.setEx(cacheKey, 3600, JSON.stringify(event));
+    await redisClient.setex(cacheKey, 3600, JSON.stringify(event));
     res.status(200).json({ success: true, event });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
