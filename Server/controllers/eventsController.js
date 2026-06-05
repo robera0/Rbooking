@@ -150,7 +150,7 @@ export const get_events = async (req, res) => {
       }),
     );
     await redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets));
-    console.log(eventsWithTickets);
+
     res.status(200).json({
       success: true,
       events: eventsWithTickets,
@@ -171,7 +171,6 @@ export const featured_events = async (req, res) => {
     const cacheKey = "events:featured";
     const cachedEvent = await redisClient.get(cacheKey);
     if (cachedEvent) {
-      console.log("🔥 CACHE HIT");
       return res.status(200).json({
         success: true,
         events: JSON.parse(cachedEvent),

@@ -107,7 +107,7 @@ export const ApiProvider = ({ children }) => {
     queryFn: fetchTickets,
     enabled: !!user,
   });
-
+  console.log(tickets);
   //GET NOTIFICATION
 
   const fetchNotifications = async () => {
@@ -265,7 +265,6 @@ export const ApiProvider = ({ children }) => {
       credentials: "include",
     });
     const data = await res.json();
-    console.log(data);
     return data;
   };
 
@@ -302,7 +301,7 @@ export const ApiProvider = ({ children }) => {
       if (res.status === 401) {
         throw new Error("Login required");
       }
-      console.log(res.json);
+
       return res.json();
     } catch (error) {
       throw new Error(error);

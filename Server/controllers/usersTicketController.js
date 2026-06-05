@@ -72,6 +72,7 @@ import { RedisClient } from "redis";
 export const get_tickets = async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log("Redis status:", redisClient.status);
     const cacheKey = `user:ticket:list:${userId}`;
     const cachedTickets = await redisClient.smembers(cacheKey);
     if (cachedTickets && cachedTickets.length > 0) {
@@ -88,7 +89,7 @@ export const get_tickets = async (req, res) => {
       await redisClient.expire(cacheKey, 3600);
       return res.status(200).json({
         success: true,
-        events: JSON.parse(cachedTickets),
+        events: populatedTickets,
         source: "cache",
       });
     }
@@ -104,9 +105,7 @@ export const get_tickets = async (req, res) => {
     });
 
     const itemIdsToCache = (tickets || [])
-      .map((item) => {
-        item?._id;
-      })
+      .map((item) => item?._id?.toString())
       .filter(Boolean);
     if (itemIdsToCache && itemIdsToCache.length > 0) {
       const pipeline = redisClient.pipeline();
@@ -114,7 +113,7 @@ export const get_tickets = async (req, res) => {
       pipeline.expire(cacheKey, 3600);
       pipeline.exec();
     }
-    res.status(200).json({ tickets });
+    res.status(200).json({ events: tickets });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -123,7 +122,7 @@ export const get_tickets = async (req, res) => {
 export const get_tickets_info = async (req, res) => {
   try {
     const { ticketId } = req.params;
-    const cacheKey = `user:ticket:list:${ticketId}`;
+    const cacheKey = `user:ticket:list:${JSON.stringify(ticketId)}`;
     const cachedTickets = await redisClient.get(cacheKey);
     if (cachedTickets && cachedTickets.length > 0) {
       const populatedTicket = await UserTicketModel.findById(ticketId).populate(
@@ -138,7 +137,7 @@ export const get_tickets_info = async (req, res) => {
       await redisClient.expire(cacheKey, 3600);
       return res.status(200).json({
         success: true,
-        events: populatedTicket,
+        ticket: populatedTicket,
         source: "cache-hit",
       });
     }

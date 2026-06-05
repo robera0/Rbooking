@@ -105,7 +105,8 @@ const TicketHome = () => {
     setHasAlerted(true);
   }
 
-  const allTickets = Array.isArray(tickets?.tickets) ? tickets.tickets : [];
+  const allTickets = tickets?.events ? tickets?.events : [];
+  console.log("the tickets are", allTickets);
   const filtered =
     filter === "all"
       ? allTickets
@@ -114,8 +115,8 @@ const TicketHome = () => {
         );
 
   const counts = {
-    all: allTickets.length,
-    onsale: allTickets.filter(
+    all: allTickets?.length,
+    onsale: allTickets?.filter(
       (t) => t.ticketId?.eventId?.dates?.status?.code === "onsale",
     ).length,
     upcoming: allTickets.filter(
@@ -398,7 +399,7 @@ const TicketHome = () => {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => navigate(`/tickets_home/${t._id}`)}
+                      onClick={() => navigate(`/tickets_home/${t?._id}`)}
                       className="relative w-full py-3 rounded-xl flex items-center justify-center gap-2 overflow-hidden"
                       style={{ background: theme.ctaGradient }}
                     >

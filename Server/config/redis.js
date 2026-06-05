@@ -45,9 +45,9 @@ export const clearWishListCache = async (userId) => {
   }
 };
 
-export const clearTicketCache = async () => {
+export const clearTicketCache = async (id) => {
   try {
-    const keys = await redisClient.keys("user:ticket:*");
+    const keys = await redisClient.keys(`user:ticket:list:${id}`);
 
     if (keys.length > 0) {
       await redisClient.del(keys);

@@ -22,10 +22,18 @@ const BORDER = "border-[#1f2023]";
 
 /* ─── tier config ─── */
 const TIER = {
-  vip:          { accent: "#60a5fa", label: "VIP",              bg: "rgba(96,165,250,0.08)"  },
-  "early bird": { accent: "#4ade80", label: "Early Bird",        bg: "rgba(74,222,128,0.08)"  },
-  regular:      { accent: "#facc15", label: "Regular",           bg: "rgba(250,204,21,0.08)"  },
-  default:      { accent: "#FF7A00", label: "General Admission", bg: "rgba(255,122,0,0.08)"   },
+  vip: { accent: "#60a5fa", label: "VIP", bg: "rgba(96,165,250,0.08)" },
+  "early bird": {
+    accent: "#4ade80",
+    label: "Early Bird",
+    bg: "rgba(74,222,128,0.08)",
+  },
+  regular: { accent: "#facc15", label: "Regular", bg: "rgba(250,204,21,0.08)" },
+  default: {
+    accent: "#FF7A00",
+    label: "General Admission",
+    bg: "rgba(255,122,0,0.08)",
+  },
 };
 
 /* ─── detail row ─── */
@@ -33,8 +41,12 @@ const Detail = ({ icon: Icon, label, value }) => (
   <div className="flex items-start gap-3 py-3.5 border-b border-[#1a1b1e] last:border-0">
     <Icon size={14} className="text-[#4b4d52] mt-0.5 shrink-0" />
     <div className="flex-1 min-w-0 flex items-start justify-between gap-4">
-      <span className="text-[12px] text-[#6b7280] font-medium shrink-0">{label}</span>
-      <span className="text-[13px] text-[#f4f4f5] font-medium text-right truncate">{value}</span>
+      <span className="text-[12px] text-[#6b7280] font-medium shrink-0">
+        {label}
+      </span>
+      <span className="text-[13px] text-[#f4f4f5] font-medium text-right truncate">
+        {value}
+      </span>
     </div>
   </div>
 );
@@ -44,30 +56,38 @@ const ViewTicket = () => {
   const navigate = useNavigate();
   const { fetchTicketById } = eventService();
 
-  const { data: ticketsinfo, isLoading, isError, error } = useQuery({
+  const {
+    data: ticketsinfo,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["tickets", ticketId],
     queryFn: () => fetchTicketById(ticketId),
     enabled: !!ticketId,
     retry: false,
   });
 
-  const event   = ticketsinfo?.ticket?.ticketId?.eventId;
-  const tkt     = ticketsinfo?.ticket?.ticketId;
+  const event = ticketsinfo?.ticket?.ticketId?.eventId;
+  const tkt = ticketsinfo?.ticket?.ticketId;
   const orderNo = ticketsinfo?.ticket?.orderNo;
   const tierKey = (tkt?.type || "default").toLowerCase().trim();
-  const tier    = TIER[tierKey] ?? TIER.default;
+  const tier = TIER[tierKey] ?? TIER.default;
 
   const localDate = event?.dates?.start?.localDate;
   const localTime = event?.dates?.start?.localTime;
 
   return (
-    <div className="min-h-screen text-[#f4f4f5] antialiased" style={{ background: "#0c0d0e" }}>
-
+    <div
+      className="min-h-screen text-[#f4f4f5] antialiased"
+      style={{ background: "#0c0d0e" }}
+    >
       {/* dot grid */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle, #1f2023 1px, transparent 1px)",
+          backgroundImage:
+            "radial-gradient(circle, #1f2023 1px, transparent 1px)",
           backgroundSize: "28px 28px",
           opacity: 0.5,
         }}
@@ -79,7 +99,6 @@ const ViewTicket = () => {
       </div>
 
       <div className="relative z-10 max-w-lg mx-auto px-5 pt-8 pb-24">
-
         {/* ── back nav ── */}
         <motion.button
           initial={{ opacity: 0, x: -8 }}
@@ -88,7 +107,10 @@ const ViewTicket = () => {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-[13px] font-medium text-[#6b7280] hover:text-[#f4f4f5] transition-colors mb-8 group"
         >
-          <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft
+            size={15}
+            className="group-hover:-translate-x-0.5 transition-transform"
+          />
           My Tickets
         </motion.button>
 
@@ -101,8 +123,12 @@ const ViewTicket = () => {
 
         {/* ── error ── */}
         {isError && (
-          <div className={`rounded-2xl ${SURFACE} border ${BORDER} p-8 text-center`}>
-            <p className="text-[14px] font-medium text-[#f4f4f5] mb-1">Ticket not found</p>
+          <div
+            className={`rounded-2xl ${SURFACE} border ${BORDER} p-8 text-center`}
+          >
+            <p className="text-[14px] font-medium text-[#f4f4f5] mb-1">
+              Ticket not found
+            </p>
             <p className="text-[12px] text-[#6b7280]">{error?.message}</p>
           </div>
         )}
@@ -116,17 +142,24 @@ const ViewTicket = () => {
           >
             {/* page title */}
             <div className="mb-5">
-              <h1 className="text-[20px] font-semibold text-[#f4f4f5]">Ticket Details</h1>
-              <p className="text-[13px] text-[#6b7280] mt-0.5">Your entry pass for this event</p>
+              <h1 className="text-[20px] font-semibold text-[#f4f4f5]">
+                Ticket Details
+              </h1>
+              <p className="text-[13px] text-[#6b7280] mt-0.5">
+                Your entry pass for this event
+              </p>
             </div>
 
             {/* ── MAIN TICKET CARD ── */}
-            <div className={`rounded-2xl ${SURFACE} border ${BORDER} overflow-hidden`}>
-
+            <div
+              className={`rounded-2xl ${SURFACE} border ${BORDER} overflow-hidden`}
+            >
               {/* event banner */}
               <div className="relative h-36 overflow-hidden">
                 <img
-                  src={event?.pictures?.[0] || event?.pictures?.[1] || "/Login.jpg"}
+                  src={
+                    event?.pictures?.[0] || event?.pictures?.[1] || "/Login.jpg"
+                  }
                   alt={event?.name}
                   className="w-full h-full object-cover"
                 />
@@ -161,7 +194,11 @@ const ViewTicket = () => {
                 <Detail
                   icon={Calendar}
                   label="Date"
-                  value={localDate ? moment(localDate).format("dddd, MMMM D, YYYY") : "TBA"}
+                  value={
+                    localDate
+                      ? moment(localDate).format("dddd, MMMM D, YYYY")
+                      : "TBA"
+                  }
                 />
                 <Detail
                   icon={Clock}
@@ -177,11 +214,7 @@ const ViewTicket = () => {
                     "TBA"
                   }
                 />
-                <Detail
-                  icon={Hash}
-                  label="Order #"
-                  value={orderNo || "—"}
-                />
+                <Detail icon={Hash} label="Order #" value={orderNo || "—"} />
                 <Detail
                   icon={Tag}
                   label="Ticket ID"
