@@ -17,6 +17,7 @@
 [f] make sure it shows  to log in if they want to post a comment 
 [f] the login ux in mobile view
 [f] wrap it on docker
-[] make the user profile find with email
+[f] make the user profile find with email
+[] make it fetch fast when the user logged in wid google
 // WHEN THE APP IS PUBLISHED 
 [] add the calendar and put all the event there is on that like a poster
