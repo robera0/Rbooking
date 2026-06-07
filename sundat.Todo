@@ -1,21 +1,21 @@
 [] add a schema of  a review about the app
 [] send the total amount ticket to the tickets route
+[] download the qr code
 [f] show the types of tickets  when  view ticket is clicked 
-[] show the not selected ticket type
 [f] show the venues in venue search
 [f] fix the date input and search engine 
 [f] on mobile view make the navbar have the venue and artist attribute
-
 [f] loading when in explore and other showing events and infos
 [f] make the heart ones in set
 [f] make and pop up error on the comment when uploading
 [f] the time the comment posting 
 [f] cache the event  with pipelines 
 f[] cache the tickets and the images 
-[] make sure the explore fetch based on the date and ticket 
+[f] make sure the explore fetch based on the date and ticket 
 [f] the featured event should be the 4 latest date
-[] make the all experience  wipe the every search
-[] download the qr code
-[] make sure it shows  to log in if they want to post a comment 
+[f] make the all experience  wipe the every search
+[f] make sure it shows  to log in if they want to post a comment 
+[] the login ux in mobile view
+[] wrap it in docker
 // WHEN THE APP IS PUBLISHED 
 [] add the calendar and put all the event there is on that like a poster

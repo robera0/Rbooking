@@ -8,10 +8,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import Home from "../admin/Home";
 import Main from "../user/Main";
 import UserHome from "../user/UserHome";
-import LoginUser from "../user/LoginUser";
+
 import Sport from "../user/Sport";
 import AccountPage from "../user/AccountPage";
-import SignUp from "../user/SignUp";
+
 import Ticket from "../user/Ticket";
 import Account from "../user/Account";
 import ViewTicket from "../user/ViewTicket";
@@ -102,12 +102,7 @@ export const router = createBrowserRouter([
         path: "login",
         element: (
           <PageWrapper>
-            <AccountPage
-              pa="Login in to see the best of Events and Exhibitions "
-              h="h-100"
-            >
-              <LoginUser />
-            </AccountPage>
+            <AccountPage pa="Login in to see the best of Events and Exhibitions " mode="login" />
           </PageWrapper>
         ),
       },
@@ -115,12 +110,7 @@ export const router = createBrowserRouter([
         path: "sign_up",
         element: (
           <PageWrapper>
-            <AccountPage
-              pa="Create your account and see the best events "
-              h="h-120"
-            >
-              <SignUp />
-            </AccountPage>
+            <AccountPage pa="Create your account and see the best events " mode="signup" />
           </PageWrapper>
         ),
       },

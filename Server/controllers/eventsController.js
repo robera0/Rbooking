@@ -133,11 +133,13 @@ export const get_events = async (req, res) => {
         { type: { $regex: search, $options: "i" } },
       ];
     }
-    const events = await Event.find(query);
+    const events = await Event.find(query).sort({
+      "date.start.localDate": -1,
+    });
 
     // Get tickets for each event
     const eventsWithTickets = await Promise.all(
-      events.map(async (event) => {
+      events?.map(async (event) => {
         const tickets = await TicketModel.find({
           eventId: event._id,
         });

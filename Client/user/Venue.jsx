@@ -51,7 +51,7 @@ const Venue = () => {
   const featuredVenues = [
     ...new Map(
       events?.events
-        .filter(
+        ?.filter(
           (e) => e?.links?.venues && Object.keys(e?.links?.venues).length > 0,
         )
         .map((e) => [e?.links?.venues?.name, e]),
@@ -336,7 +336,7 @@ const Venue = () => {
                         <button
                           type="button"
                           onClick={() => handleVenueClick(venueItems)}
-                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn p-2 -mr-2"
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn"
                         >
                           Details{" "}
                           <ArrowRight

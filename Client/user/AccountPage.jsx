@@ -1,6 +1,10 @@
 import React from "react";
 import { Ticket } from "lucide-react";
 import { motion } from "framer-motion";
+import { ArrowLeft, HelpCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import LoginUser from "./LoginUser";
+import SignUp from "./SignUp";
 
 /* ── ambient orb ── */
 const Orb = ({ className }) => (
@@ -9,9 +13,13 @@ const Orb = ({ className }) => (
   />
 );
 
-const AccountPage = ({ children, pa, h = "h-[72vh]" }) => {
+const AccountPage = ({ pa, mode = "login" }) => {
+  const navigate = useNavigate();
+
+  const ContentComponent = mode === "login" ? LoginUser : SignUp;
+
   return (
-    <div className="relative min-h-screen bg-[#080809] text-[#F4F4F5] antialiased overflow-hidden font-sans selection:bg-[#FF7A00]/30">
+    <div className="relative min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-hidden font-sans selection:bg-[#FF7A00]/30">
       {/* ── AMBIENT ORBS ── */}
       <Orb className="w-[600px] h-[600px] top-[-200px] left-[-200px] bg-[#FF7A00]/[0.08]" />
       <Orb className="w-[500px] h-[500px] bottom-[-150px] right-[-150px] bg-purple-700/[0.06]" />
@@ -38,54 +46,41 @@ const AccountPage = ({ children, pa, h = "h-[72vh]" }) => {
         }}
       />
 
-      {/* ===== MOBILE LAYOUT ===== */}
-      <div className="relative z-10 lg:hidden flex flex-col min-h-screen">
-        {/* mobile top brand bar */}
-        <div className="px-8 pt-14 pb-6">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
+      {/* ===== MOBILE LAYOUT — clean full-screen like reference ===== */}
+      <div className="relative z-10 lg:hidden flex flex-col min-h-screen px-6 pt-12 pb-8">
+        {/* top bar: back + help */}
+        <div className="flex items-center justify-between mb-10">
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center gap-3"
+            transition={{ duration: 0.3 }}
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.08]"
           >
-            <div className="bg-[#FF7A00] p-2.5 rounded-2xl shadow-lg shadow-[#FF7A00]/20">
-              <Ticket className="text-black w-6 h-6 rotate-[-12deg]" />
-            </div>
-            <h1 className="text-2xl font-black uppercase italic tracking-tighter leading-none">
-              PAYSSO
-            </h1>
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="mt-4 text-lg font-bold text-gray-300 max-w-xs leading-snug"
+            <ArrowLeft size={18} className="text-white" />
+          </motion.button>
+          <motion.button
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.08]"
           >
-            {pa || (
-              <>
-                Access the{" "}
-                <span className="text-[#FF7A00]">exclusive pulse</span> of the
-                night.
-              </>
-            )}
-          </motion.p>
+            <HelpCircle size={18} className="text-white/50" />
+          </motion.button>
         </div>
 
-        {/* mobile sliding drawer */}
+        {/* content — renders LoginUser or SignUp directly */}
         <motion.div
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          transition={{ type: "spring", damping: 28, stiffness: 220 }}
-          className={`flex flex-col w-full ${h} bg-[#0f0f11] rounded-t-[44px] border-t border-white/[0.06] shadow-[0_-24px_60px_rgba(0,0,0,0.6)] p-8 mt-auto`}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="flex-1 overflow-y-auto"
         >
-          {/* drag handle */}
-          <div className="w-10 h-1 bg-white/10 rounded-full mx-auto mb-8 shrink-0" />
-          <div className="overflow-y-auto pb-10 flex-1">{children}</div>
+          <ContentComponent />
         </motion.div>
       </div>
 
-      {/* ===== DESKTOP LAYOUT ===== */}
+      {/* ===== DESKTOP LAYOUT (unchanged) ===== */}
       <div className="relative z-10 hidden lg:flex items-center justify-center min-h-screen px-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 20 }}
@@ -101,14 +96,14 @@ const AccountPage = ({ children, pa, h = "h-[72vh]" }) => {
           {/* ── LEFT: BRAND PANEL ── */}
           <div className="w-[45%] p-16 flex flex-col justify-between border-r border-white/[0.05] relative overflow-hidden">
             {/* background video with zoom effect */}
-            <motion.video 
+            <motion.video
               src="/Screencast From 2026-04-24 05-03-04.mp4"
               autoPlay
               loop
               muted
               className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale blur-[2px]"
             />
-            
+
             {/* dark overlay for text contrast */}
             <div className="absolute inset-0 bg-black/40" />
 
@@ -180,7 +175,9 @@ const AccountPage = ({ children, pa, h = "h-[72vh]" }) => {
             <div className="absolute inset-0 bg-black/20 pointer-events-none" />
             <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-[#FF7A00]/[0.03] blur-[60px] pointer-events-none" />
 
-            <div className="relative z-10">{children}</div>
+            <div className="relative z-10">
+              <ContentComponent />
+            </div>
           </div>
         </motion.div>
       </div>

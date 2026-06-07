@@ -107,7 +107,7 @@ export const ApiProvider = ({ children }) => {
     queryFn: fetchTickets,
     enabled: !!user,
   });
-  console.log(tickets);
+
   //GET NOTIFICATION
 
   const fetchNotifications = async () => {
