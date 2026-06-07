@@ -37,15 +37,8 @@ export const update_user = async (req, res) => {
       return res.status(401).json({ message: "There is no user" });
     }
 
-    const {
-      fullName,
-      nationality,
-      phone,
-      dateOfBirth,
-      Gender,
-      address,
-      bio,
-    } = req.body;
+    const { fullName, nationality, phone, dateOfBirth, Gender, address, bio } =
+      req.body;
 
     // Build avatarUrl from the uploaded file (handled by multer)
     let avatarUrl;

@@ -35,9 +35,9 @@ import AdminAccount from "../admin/AdminAccount";
 import CreateNotification from "../admin/CreateNotification";
 import AdminViewTicket from "../admin/AdminViewTicket";
 import { ProtectedRoute } from "./components/Reusable";
-import { GoogleAuthHandler } from "./components/GoogleAuthHandler";
+import GoogleAuthCallback from "../user/GoogleAuthCallback";
 import RegistrationPage from "../admin/RegistrationPage";
-
+import CompleteProfile from "../user/CompleteProfile";
 const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
   animate: { opacity: 1, y: 0, scale: 1 },
@@ -88,7 +88,15 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "google-auth",
-        element: <GoogleAuthHandler />,
+        element: <GoogleAuthCallback />,
+      },
+      {
+        path: "complete-profile",
+        element: (
+          <PageWrapper>
+            <CompleteProfile />
+          </PageWrapper>
+        ),
       },
       {
         path: "admin/register",
@@ -102,7 +110,10 @@ export const router = createBrowserRouter([
         path: "login",
         element: (
           <PageWrapper>
-            <AccountPage pa="Login in to see the best of Events and Exhibitions " mode="login" />
+            <AccountPage
+              pa="Login in to see the best of Events and Exhibitions "
+              mode="login"
+            />
           </PageWrapper>
         ),
       },
@@ -110,7 +121,10 @@ export const router = createBrowserRouter([
         path: "sign_up",
         element: (
           <PageWrapper>
-            <AccountPage pa="Create your account and see the best events " mode="signup" />
+            <AccountPage
+              pa="Create your account and see the best events "
+              mode="signup"
+            />
           </PageWrapper>
         ),
       },

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { UserModel } from "../models/UserModel.js";
 import bcrypt from "bcrypt";
-
+import { ProfileModel } from "../models/ProfileModel.js";
 // GET USER PROFILE
 export const user = async (req, res) => {
   try {
@@ -50,5 +50,25 @@ export const updateUser = async (req, res) => {
       message: "The user cannot be updated",
       error: error.message,
     });
+  }
+};
+export const completeProfile = async (req, res) => {
+  try {
+    const { fullName, phoneNumber, city, dateOfBirth } = req.body;
+
+    const user = await UserModel.findById(req.user.id);
+    // update or create profile
+    const profile = await ProfileModel.findOneAndUpdate(
+      { userId: user },
+      { fullName, phone: phoneNumber, address: city, dateOfBirth },
+      { new: true, upsert: true }, // upsert = create if doesn't exist
+    );
+
+    // mark user as profile complete
+    await UserModel.findByIdAndUpdate(req.user.id, { isProfileComplete: true });
+
+    res.json({ success: true, profile });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

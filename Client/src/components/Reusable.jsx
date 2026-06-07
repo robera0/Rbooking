@@ -35,45 +35,24 @@ import { motion } from "framer-motion";
 import axios from "axios";
 
 export const ProtectedRoute = ({ children }) => {
-  const { usererror, userIsLoading, user } = eventService();
+  const { usererror, user } = eventService(); // remove userIsLoading
   const location = useLocation();
 
-  // 1. Loading State (Modern Backdrop)
-  if (userIsLoading) {
+  if (!user && !usererror) {
+    // still loading
     return (
       <div className="fixed inset-0 bg-[#121417] z-[100] flex flex-col items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="relative flex items-center justify-center">
-            {/* Outer Rotating Ring */}
-            <div className="w-16 h-16 border-2 border-white/[0.05] border-t-[#FF7A00] rounded-full animate-spin" />
-            {/* Inner Static Icon */}
-            <Loader2
-              className="absolute text-[#FF7A00] animate-pulse"
-              size={20}
-            />
-          </div>
-
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 animate-pulse">
-            Verifying Session
-          </span>
-        </motion.div>
+        {/* your loading spinner */}
       </div>
     );
   }
 
-  // 2. Redirect to Login if no user or error occurs
   if (!user || usererror) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // 3. Authorized Access
   return children;
 };
-
 export const Toggle = ({ name, toggle, toggleOn, action }) => {
   return (
     <div className="flex w-full justify-between">
