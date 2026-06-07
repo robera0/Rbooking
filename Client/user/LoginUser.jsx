@@ -250,7 +250,7 @@ const LoginUser = () => {
               fill="#34A853"
             />
           </svg>
-        Continue with Google
+          Continue with Google
         </button>
       </form>
 

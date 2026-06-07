@@ -13,7 +13,8 @@ src/Client/admin/sundat.Todo
 dist
 dist-ssr
 *.local
-
+# Docker
+.dockerignore
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

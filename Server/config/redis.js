@@ -1,8 +1,7 @@
+import "dotenv/config";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import Redis from "ioredis";
 
-dotenv.config();
 const REDIS_URL = process.env.REDIS_URL;
 
 const redisClient = new Redis(REDIS_URL);
