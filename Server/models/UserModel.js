@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema(
       default: "active",
       enum: ["active", "suspended", "banned"],
     },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

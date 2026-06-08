@@ -18,7 +18,7 @@ passport.use(
 
         if (!user) {
           // also check by email in case they registered normally before
-          user = await UserModel.findOne({ email: profile.emails[0].value });
+          user = await UserModel.findOne({ email: profile.emails });
 
           if (user) {
             // user exists with same email, just link their Google ID

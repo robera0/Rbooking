@@ -77,7 +77,7 @@ export const ApiProvider = ({ children }) => {
 
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     select: (data) => data?.user || null,
   });
   // GET TICKETS
