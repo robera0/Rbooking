@@ -18,8 +18,8 @@
 [f] the login ux in mobile view
 [f] wrap it on docker
 [f] make the user profile find with email
-[] make it fetch fast when the user logged in wid google
-[] make the signout work
+[f] make it fetch fast when the user logged in wid google
+[f] make the signout work
 [] dont make rate limited on fetching comments
 // WHEN THE APP IS PUBLISHED 
 [] add the calendar and put all the event there is on that like a poster

@@ -17,7 +17,7 @@ const LoginUser = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const { setIsLoggedIn, pasAPI_URL } = useService();
+  const { setIsLoggedIn, API_URL } = useService();
 
   const mutation = useMutation({
     mutationFn: async (userData) => {
@@ -46,7 +46,7 @@ const LoginUser = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/api/auth/google`;
+    window.location.href = `${API_URL}/api/auth/google/callback`;
   };
 
   return (
