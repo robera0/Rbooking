@@ -53,30 +53,30 @@ const limiter = rateLimit({
 });
 
 app.use(express.json());
-
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://paysso.netlify.app"],
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "https://paysso.netlify.app",
+      ];
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
 app.use(cookieParser());
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "secret",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false },
-  }),
-);
-
-// passport.session() removed — app uses JWTs (session: false on OAuth callback)
-app.use(passport.initialize());
-
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.set("trust proxy", 1);
 app.use(limiter);
+app.use(passport.initialize());
+
 app.use("/api", eventRouter);
 app.use("/api", commentRouter);
 
