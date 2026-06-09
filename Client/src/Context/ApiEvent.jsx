@@ -320,17 +320,17 @@ export const ApiProvider = ({ children }) => {
   });
 
   // GET USERPROFILE
-  const fetchUser = async (req, res) => {
+  const fetchUser = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/user_profile`, {
+      const response = await fetch(`${API_URL}/api/auth/user_profile`, {
         method: "GET",
         credentials: "include",
       });
-      if (res.status === 401) {
+      if (response.status === 401) {
         throw new Error("Login required");
       }
 
-      return res.json();
+      return response.json();
     } catch (error) {
       throw new Error(error);
     }

@@ -26,7 +26,7 @@ authRouter.get(
     session: false,
   }),
   async (req, res) => {
-    console.log("✅ Google callback hit!");
+    console.log(" Google callback hit!");
     console.log("user:", req.user);
     // Issue JWT and set cookie, then redirect to frontend with token
     try {

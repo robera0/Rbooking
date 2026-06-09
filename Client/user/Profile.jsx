@@ -98,14 +98,18 @@ const FloatingInput = ({
         placeholder={active ? placeholder : ""}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className={`${INPUT_BASE} pt-5 pb-2.5 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`${INPUT_BASE} pt-5 pb-2.5 ${
+          readOnly ? "opacity-50 cursor-not-allowed" : ""
+        }`}
         style={{ colorScheme: "dark" }}
       />
       <label
         className="absolute left-4 pointer-events-none transition-all duration-200 origin-left"
         style={{
           top: active ? "8px" : "50%",
-          transform: active ? "translateY(0) scale(0.75)" : "translateY(-50%) scale(1)",
+          transform: active
+            ? "translateY(0) scale(0.75)"
+            : "translateY(-50%) scale(1)",
           color: focused ? "#FF7A00" : "#4b4d52",
           fontSize: "13.5px",
           fontWeight: 500,
@@ -114,7 +118,9 @@ const FloatingInput = ({
         {label}
       </label>
       {suffix && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2">{suffix}</div>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          {suffix}
+        </div>
       )}
     </div>
   );
@@ -143,7 +149,9 @@ const PasswordInput = ({ label, name, value, onChange }) => {
         className="absolute left-4 pointer-events-none transition-all duration-200 origin-left"
         style={{
           top: active ? "8px" : "50%",
-          transform: active ? "translateY(0) scale(0.75)" : "translateY(-50%) scale(1)",
+          transform: active
+            ? "translateY(0) scale(0.75)"
+            : "translateY(-50%) scale(1)",
           color: focused ? "#FF7A00" : "#4b4d52",
           fontSize: "13.5px",
           fontWeight: 500,
@@ -188,7 +196,9 @@ const StrengthMeter = ({ password }) => {
             key={i}
             className="h-1 flex-1 rounded-full"
             initial={{ backgroundColor: "#262729" }}
-            animate={{ backgroundColor: i <= score ? colors[score] : "#262729" }}
+            animate={{
+              backgroundColor: i <= score ? colors[score] : "#262729",
+            }}
             transition={{ duration: 0.3, delay: i * 0.05 }}
           />
         ))}
@@ -220,7 +230,12 @@ const NavItem = ({ icon: Icon, label, active, onClick }) => (
         : "text-[#9ca3af] hover:bg-[#18191c] hover:text-[#f4f4f5]"
     }`}
   >
-    <Icon size={15} className={active ? "text-[#FF7A00]" : "text-[#6b7280] group-hover:text-[#9ca3af]"} />
+    <Icon
+      size={15}
+      className={
+        active ? "text-[#FF7A00]" : "text-[#6b7280] group-hover:text-[#9ca3af]"
+      }
+    />
     {label}
     {active && <ChevronRight size={13} className="ml-auto" />}
   </button>
@@ -250,16 +265,17 @@ const Profile = () => {
   useEffect(() => {
     if (userProfile?.user) {
       setFormData({
-        fullName: userProfile.user.fullName || "",
+        fullName: userProfile?.user?.fullName || "",
         nationality: userProfile.user.nationality || "",
         phone: userProfile.user.phone || "",
-        dateOfBirth: userProfile.user.dateOfBirth ? userProfile.user.dateOfBirth.split("T")[0] : "",
+        dateOfBirth: userProfile.user.dateOfBirth
+          ? userProfile.user.dateOfBirth.split("T")[0]
+          : "",
         Gender: userProfile.user.Gender || "",
         address: userProfile.user.address || "",
       });
     }
   }, [userProfile]);
-
 
   const [credentials, setCredentials] = useState({
     email: "",
@@ -316,15 +332,15 @@ const Profile = () => {
 
   const credentialsMutation = useMutation({
     mutationFn: updateCredentials,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
   });
 
   const avatarSrc = preview
     ? preview
     : userProfile?.user?.avatarUrl
-      ? `${API_URL}/${userProfile.user.avatarUrl}`
-      : "/Login.jpg";
-
+    ? `${API_URL}/${userProfile.user.avatarUrl}`
+    : "/Login.jpg";
 
   const userName = userProfile?.user?.fullName || "Your Name";
   const userEmail = userProfile?.user?.userId?.email || "";
@@ -369,7 +385,6 @@ const Profile = () => {
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-5 lg:px-8 pt-10 pb-24">
-
         {/* ════════ PROFILE HERO HEADER ════════ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -405,7 +420,10 @@ const Profile = () => {
                 ref={fileInputRef}
                 onChange={(e) => {
                   const f = e.target.files[0];
-                  if (f) { setSelectedFile(f); setPreview(URL.createObjectURL(f)); }
+                  if (f) {
+                    setSelectedFile(f);
+                    setPreview(URL.createObjectURL(f));
+                  }
                 }}
                 className="hidden"
               />
@@ -416,7 +434,9 @@ const Profile = () => {
               <h1 className="text-xl font-semibold text-[#f4f4f5] truncate">
                 {userName}
               </h1>
-              <p className="text-[13px] text-[#6b7280] mt-0.5 truncate">{userEmail}</p>
+              <p className="text-[13px] text-[#6b7280] mt-0.5 truncate">
+                {userEmail}
+              </p>
 
               {/* verification badges */}
               <div className="flex flex-wrap gap-2 mt-3">
@@ -428,9 +448,13 @@ const Profile = () => {
                     key={label}
                     className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md"
                     style={{
-                      background: ok ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.04)",
+                      background: ok
+                        ? "rgba(34,197,94,0.08)"
+                        : "rgba(255,255,255,0.04)",
                       color: ok ? "#4ade80" : "#6b7280",
-                      border: `1px solid ${ok ? "rgba(34,197,94,0.18)" : "rgba(255,255,255,0.06)"}`,
+                      border: `1px solid ${
+                        ok ? "rgba(34,197,94,0.18)" : "rgba(255,255,255,0.06)"
+                      }`,
                     }}
                   >
                     <CircleCheckBig size={11} />
@@ -442,7 +466,9 @@ const Profile = () => {
 
             {/* ── completion text ── */}
             <div className="text-right shrink-0">
-              <p className="text-[11px] text-[#6b7280] font-medium">Profile complete</p>
+              <p className="text-[11px] text-[#6b7280] font-medium">
+                Profile complete
+              </p>
               <p className="text-2xl font-bold text-[#f4f4f5] mt-0.5">
                 {COMPLETION}
                 <span className="text-sm font-normal text-[#6b7280]">%</span>
@@ -453,7 +479,6 @@ const Profile = () => {
 
         {/* ════════ BODY: sidebar + content ════════ */}
         <div className="flex flex-col lg:flex-row gap-5">
-
           {/* ── SIDEBAR NAV ── */}
           <motion.nav
             initial={{ opacity: 0, x: -16 }}
@@ -478,7 +503,6 @@ const Profile = () => {
           {/* ── CONTENT PANEL ── */}
           <div className="flex-1 min-w-0">
             <AnimatePresence mode="wait">
-
               {/* ══ PROFILE TAB ══ */}
               {activeTab === "profile" && (
                 <motion.div
@@ -495,7 +519,10 @@ const Profile = () => {
                   />
 
                   <form
-                    onSubmit={(e) => { e.preventDefault(); profileMutation.mutate(); }}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      profileMutation.mutate();
+                    }}
                     className="space-y-4"
                   >
                     {/* row 1: name + email */}
@@ -503,7 +530,7 @@ const Profile = () => {
                       <FloatingInput
                         label="Full Name"
                         name="fullName"
-                        value={formData.fullName}
+                        value={formData?.fullName}
                         onChange={handleChange}
                       />
                       <FloatingInput
@@ -548,12 +575,13 @@ const Profile = () => {
 
                       {/* gender radio */}
                       <div>
-                        <p className="text-[11px] font-medium text-[#6b7280] mb-3">Gender</p>
+                        <p className="text-[11px] font-medium text-[#6b7280] mb-3">
+                          Gender
+                        </p>
                         <div className="flex gap-3">
                           {["Male", "Female"].map((g) => {
                             const val = g.toLowerCase();
-                            const checked =
-                              formData.Gender === val;
+                            const checked = formData.Gender === val;
                             return (
                               <label
                                 key={g}
@@ -563,7 +591,9 @@ const Profile = () => {
                                     : "border-[#262729] bg-[#18191c] text-[#6b7280] hover:border-[#35373b]"
                                 }`}
                                 style={{
-                                  background: checked ? "rgba(255,122,0,0.06)" : "",
+                                  background: checked
+                                    ? "rgba(255,122,0,0.06)"
+                                    : "",
                                 }}
                               >
                                 <input
@@ -576,7 +606,9 @@ const Profile = () => {
                                 />
                                 <div
                                   className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
-                                    checked ? "border-[#FF7A00]" : "border-[#4b4d52]"
+                                    checked
+                                      ? "border-[#FF7A00]"
+                                      : "border-[#4b4d52]"
                                   }`}
                                 >
                                   {checked && (
@@ -642,7 +674,9 @@ const Profile = () => {
                   className="space-y-4"
                 >
                   {/* ─ Update Email ─ */}
-                  <div className={`rounded-2xl ${SURFACE} border ${BORDER} p-7`}>
+                  <div
+                    className={`rounded-2xl ${SURFACE} border ${BORDER} p-7`}
+                  >
                     <SectionDivider
                       title="Email Address"
                       description="Change the email associated with your account."
@@ -657,9 +691,14 @@ const Profile = () => {
                       />
 
                       <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#18191c] border border-[#262729]">
-                        <AlertCircle size={14} className="text-[#f59e0b] shrink-0 mt-0.5" />
+                        <AlertCircle
+                          size={14}
+                          className="text-[#f59e0b] shrink-0 mt-0.5"
+                        />
                         <p className="text-[11.5px] text-[#9ca3af] leading-relaxed">
-                          You'll receive a verification link at both your old and new email address. Your email will only change after you verify both links.
+                          You'll receive a verification link at both your old
+                          and new email address. Your email will only change
+                          after you verify both links.
                         </p>
                       </div>
 
@@ -677,7 +716,9 @@ const Profile = () => {
                   </div>
 
                   {/* ─ Update Password ─ */}
-                  <div className={`rounded-2xl ${SURFACE} border ${BORDER} p-7`}>
+                  <div
+                    className={`rounded-2xl ${SURFACE} border ${BORDER} p-7`}
+                  >
                     <SectionDivider
                       title="Password"
                       description="Choose a strong password to protect your account."
@@ -733,7 +774,6 @@ const Profile = () => {
                   </div>
                 </motion.div>
               )}
-
             </AnimatePresence>
           </div>
         </div>

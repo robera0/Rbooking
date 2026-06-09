@@ -33,7 +33,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
-
+import { useQueryClient } from "@tanstack/react-query";
 export const ProtectedRoute = ({ children }) => {
   const { usererror, user } = eventService(); // remove userIsLoading
   const location = useLocation();
@@ -367,16 +367,16 @@ export const AccountMenu = ({ icon, header, path, action }) => {
 export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
   const { API_URL, userProfile } = useService();
   const { user } = eventService();
-
+  const queryClient = useQueryClient();
   const handleLogout = async () => {
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
-
+      queryClient.clear();
       setIsOpen(false);
-      window.location.href = "/";
+      window.location.href = "/login";
     } catch (error) {
       console.error("Logout failed", error);
     }

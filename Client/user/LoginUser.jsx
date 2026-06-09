@@ -17,7 +17,7 @@ const LoginUser = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const { setIsLoggedIn, API_URL } = useService();
+  const { setIsLoggedIn, pasAPI_URL } = useService();
 
   const mutation = useMutation({
     mutationFn: async (userData) => {

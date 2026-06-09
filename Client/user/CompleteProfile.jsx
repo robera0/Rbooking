@@ -31,9 +31,20 @@ const CompleteProfile = () => {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: "#0f0f0f" }}
+      style={{ background: "#0c0d0e" }}
     >
-      <div className="flex flex-col gap-6 w-full max-w-md">
+      {/* dot grid */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #1f2023 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+          opacity: 0.5,
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col gap-6 w-full max-w-md">
         <div className="flex flex-col gap-1">
           <h2 className="text-2xl font-black text-white">
             Complete Your Profile
@@ -82,6 +93,7 @@ const CompleteProfile = () => {
               }
             />
           </div>
+
           <div className="flex flex-col gap-2">
             <label
               className="text-[10px] font-black uppercase tracking-[0.2em]"

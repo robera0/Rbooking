@@ -28,7 +28,7 @@ import { Link, useLocation, Outlet } from "react-router-dom";
 import { eventService } from "@/Context/ApiEvent";
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useCallback } from "react";
-
+import { useQueryClient } from "@tanstack/react-query";
 const Main = () => {
   const {
     isAccountActive,
@@ -49,6 +49,7 @@ const Main = () => {
   const [activeOverlay, setActiveOverlay] = useState(null);
   const [isMinimalMenu, setIsMinimalMenu] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleLogout = async () => {
     try {
@@ -56,9 +57,12 @@ const Main = () => {
         method: "POST",
         credentials: "include",
       });
-      window.location.href = "/";
+
+      queryClient.clear();
+      window.location.href = "/login";
     } catch (error) {
       console.error("Logout failed", error);
+      window.location.href = "/login";
     }
   };
 

@@ -234,11 +234,13 @@ export const logout = async (req, res) => {
       .clearCookie("access_token", {
         httpOnly: true,
         secure: true,
+        sameSite: "None",
         path: "/",
       })
       .clearCookie("refresh_token", {
         httpOnly: true,
         secure: true,
+        sameSite: "None",
         path: "/",
       })
       .status(200)
