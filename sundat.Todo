@@ -20,6 +20,8 @@
 [f] make the user profile find with email
 [f] make it fetch fast when the user logged in wid google
 [f] make the signout work
-[] dont make rate limited on fetching comments
+           // ADMIN SIDE
+[] make the manage event functional wid the database
+[] so make the  cache in the admin side too
 // WHEN THE APP IS PUBLISHED 
 [] add the calendar and put all the event there is on that like a poster

@@ -342,7 +342,7 @@ const Events = () => {
                           </span>
                           <div className="flex items-baseline gap-1">
                             <span className="text-2xl font-black text-white italic">
-                              ${e.tickets?.[0]?.price || e.price || "0"}
+                              ${e?.priceRanges?.[0]?.min || e?.price || "0"}
                             </span>
                             <span className="text-[10px] text-gray-600 font-bold">
                               /pp

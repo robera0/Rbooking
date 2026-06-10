@@ -74,7 +74,7 @@ app.use(cookieParser());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.set("trust proxy", 1);
-app.use(limiter);
+
 app.use(passport.initialize());
 
 app.use("/api", eventRouter);

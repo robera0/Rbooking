@@ -50,7 +50,6 @@ const pageTransition = {
   stiffness: 150,
   mass: 1,
 };
-
 const PageWrapper = ({ children }) => (
   <motion.div
     variants={pageVariants}
@@ -58,12 +57,11 @@ const PageWrapper = ({ children }) => (
     animate="animate"
     exit="exit"
     transition={pageTransition}
-    className="h-full w-full origin-top"
+    className="min-h-screen w-full origin-top"
   >
     {children}
   </motion.div>
 );
-
 const Root = () => {
   const location = useLocation();
   return (

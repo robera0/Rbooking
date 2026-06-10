@@ -32,12 +32,15 @@ const EditEvent = () => {
         artistName: ev.artist?.name || "",
         venue: ev.locale || "",
         description: ev.desc || "",
-        eventDate: ev.dates?.start?.dateTime ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16) : "",
-        tickets: ev.priceRanges?.map(pr => ({
-          name: pr.type,
-          price: pr.min,
-          capacity: pr.max 
-        })) || [],
+        eventDate: ev.dates?.start?.dateTime
+          ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16)
+          : "",
+        tickets:
+          ev.priceRanges?.map((pr) => ({
+            name: pr.type,
+            price: pr.min,
+            capacity: pr.max,
+          })) || [],
         policies: ev.policies || [],
         amenities: ev.amenities?.activity || [],
         existingPictures: ev.pictures || [],
@@ -108,7 +111,8 @@ const EditEvent = () => {
         },
       });
       queryClient.invalidateQueries(["adminEvents"]);
-      
+      queryClient.invalidateQueries(["events"]);
+
       setTimeout(() => {
         navigate("/admin/events");
       }, 2000);
@@ -121,7 +125,7 @@ const EditEvent = () => {
   const handleSubmit = () => {
     if (!formData.eventName) return setError("Event Name is required");
     setError("");
-    
+
     updateMutation.mutate({
       type: formData.type.toLowerCase(),
       name: formData.eventName,
@@ -158,7 +162,9 @@ const EditEvent = () => {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
         <Loader2 size={48} className="text-[#FF7A00] animate-spin" />
-        <p className="text-gray-500 font-black uppercase tracking-[0.2em]">Syncing Terminal...</p>
+        <p className="text-gray-500 font-black uppercase tracking-[0.2em]">
+          Syncing Terminal...
+        </p>
       </div>
     );
   }
@@ -201,11 +207,11 @@ const EditEvent = () => {
               <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
                 <Tag size={14} className="text-[#FF7A00]" /> Classification Type
               </h3>
-              <CustomSelect 
+              <CustomSelect
                 options={[
                   { label: "Concert", value: "concert" },
                   { label: "Festival", value: "festival" },
-                  { label: "Generic", value: "generic" }
+                  { label: "Generic", value: "generic" },
                 ]}
                 value={formData.type.toLowerCase()}
                 onChange={(val) => setFormData({ ...formData, type: val })}
@@ -216,44 +222,68 @@ const EditEvent = () => {
 
           {/* Event Details */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
-            <h3 className="text-white font-bold uppercase tracking-tight text-sm">Transmission Details</h3>
+            <h3 className="text-white font-bold uppercase tracking-tight text-sm">
+              Transmission Details
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Event Title</label>
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                  Event Title
+                </label>
                 <input
                   type="text"
                   value={formData.eventName}
-                  onChange={(e) => setFormData({ ...formData, eventName: e.target.value })}
-                  className={`w-full bg-[#121417] border ${error ? "border-red-500/50" : "border-white/[0.06]"} rounded-xl px-4 py-4 text-white focus:border-[#FF7A00]/50 outline-none transition-colors font-bold`}
+                  onChange={(e) =>
+                    setFormData({ ...formData, eventName: e.target.value })
+                  }
+                  className={`w-full bg-[#121417] border ${
+                    error ? "border-red-500/50" : "border-white/[0.06]"
+                  } rounded-xl px-4 py-4 text-white focus:border-[#FF7A00]/50 outline-none transition-colors font-bold`}
                 />
-                {error && <p className="text-red-500 font-black tracking-widest uppercase text-[9px] mt-2">{error}</p>}
+                {error && (
+                  <p className="text-red-500 font-black tracking-widest uppercase text-[9px] mt-2">
+                    {error}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Artist / Talent</label>
+                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                    Artist / Talent
+                  </label>
                   <input
                     type="text"
                     value={formData.artistName}
-                    onChange={(e) => setFormData({ ...formData, artistName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, artistName: e.target.value })
+                    }
                     className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Venue Locale</label>
+                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                    Venue Locale
+                  </label>
                   <input
                     type="text"
                     value={formData.venue}
-                    onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, venue: e.target.value })
+                    }
                     className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Description</label>
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                  Description
+                </label>
                 <textarea
                   rows="4"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none italic"
                 />
               </div>
@@ -262,12 +292,19 @@ const EditEvent = () => {
 
           {/* Tickets */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Event Tickets</h3>
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
+              Event Tickets
+            </h3>
             <div className="space-y-4">
               {formData.tickets.map((ticket, idx) => (
-                <div key={idx} className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]">
+                <div
+                  key={idx}
+                  className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
+                >
                   <div className="flex-1">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Ticket Name</label>
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Ticket Name
+                    </label>
                     <input
                       value={ticket.name}
                       onChange={(e) => {
@@ -279,7 +316,9 @@ const EditEvent = () => {
                     />
                   </div>
                   <div className="w-24">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Price (ETB)</label>
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Price (ETB)
+                    </label>
                     <input
                       value={ticket.price}
                       onChange={(e) => {
@@ -291,7 +330,9 @@ const EditEvent = () => {
                     />
                   </div>
                   <div className="w-24">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">Capacity</label>
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Capacity
+                    </label>
                     <input
                       type="number"
                       value={ticket.capacity}
@@ -306,7 +347,9 @@ const EditEvent = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      const updated = formData.tickets.filter((_, i) => i !== idx);
+                      const updated = formData.tickets.filter(
+                        (_, i) => i !== idx,
+                      );
                       setFormData({ ...formData, tickets: updated });
                     }}
                     className="ml-2 text-red-500 hover:text-red-700"
@@ -320,7 +363,9 @@ const EditEvent = () => {
                 <div className="flex-1">
                   <input
                     value={newTicket?.name || ""}
-                    onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
+                    onChange={(e) =>
+                      setNewTicket({ ...newTicket, name: e.target.value })
+                    }
                     className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
                     placeholder="New Ticket Name"
                   />
@@ -328,7 +373,9 @@ const EditEvent = () => {
                 <div className="w-24">
                   <input
                     value={newTicket?.price || ""}
-                    onChange={(e) => setNewTicket({ ...newTicket, price: e.target.value })}
+                    onChange={(e) =>
+                      setNewTicket({ ...newTicket, price: e.target.value })
+                    }
                     className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
                     placeholder="Price"
                   />
@@ -337,7 +384,9 @@ const EditEvent = () => {
                   <input
                     type="number"
                     value={newTicket?.capacity || ""}
-                    onChange={(e) => setNewTicket({ ...newTicket, capacity: e.target.value })}
+                    onChange={(e) =>
+                      setNewTicket({ ...newTicket, capacity: e.target.value })
+                    }
                     className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     placeholder="Cap"
                   />
@@ -345,7 +394,11 @@ const EditEvent = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (newTicket?.name && newTicket?.price && newTicket?.capacity) {
+                    if (
+                      newTicket?.name &&
+                      newTicket?.price &&
+                      newTicket?.capacity
+                    ) {
                       setFormData({
                         ...formData,
                         tickets: [...formData.tickets, { ...newTicket }],
@@ -363,10 +416,15 @@ const EditEvent = () => {
 
           {/* Event Policies */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Event Policies</h3>
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
+              Event Policies
+            </h3>
             <div className="space-y-4">
               {formData.policies.map((policy, idx) => (
-                <div key={idx} className="bg-[#121417] p-5 rounded-xl border border-white/[0.06] space-y-3">
+                <div
+                  key={idx}
+                  className="bg-[#121417] p-5 rounded-xl border border-white/[0.06] space-y-3"
+                >
                   <div className="flex justify-between items-start">
                     <input
                       value={policy.header}
@@ -381,7 +439,9 @@ const EditEvent = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        const updated = formData.policies.filter((_, i) => i !== idx);
+                        const updated = formData.policies.filter(
+                          (_, i) => i !== idx,
+                        );
                         setFormData({ ...formData, policies: updated });
                       }}
                       className="text-red-500 hover:text-red-700"
@@ -404,7 +464,15 @@ const EditEvent = () => {
               ))}
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, policies: [...formData.policies, { header: "", descriptions: "" }] })}
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    policies: [
+                      ...formData.policies,
+                      { header: "", descriptions: "" },
+                    ],
+                  })
+                }
                 className="w-full py-4 border border-dashed border-white/[0.1] rounded-xl text-gray-500 hover:text-[#FF7A00] hover:border-[#FF7A00] transition-all text-[10px] font-black uppercase tracking-widest"
               >
                 + Add New Policy
@@ -416,32 +484,58 @@ const EditEvent = () => {
         {/* Sidebar */}
         <div className="space-y-8">
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Schedule</h3>
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
+              Schedule
+            </h3>
             <button
               type="button"
-              onClick={() => dateInputRef.current && dateInputRef.current.showPicker()}
+              onClick={() =>
+                dateInputRef.current && dateInputRef.current.showPicker()
+              }
               className="flex items-center gap-2 px-4 py-4 w-full bg-[#121417] border border-[#FF7A00] rounded-xl text-white font-bold outline-none"
             >
               <input
                 type="datetime-local"
                 ref={dateInputRef}
                 className="absolute opacity-0 w-0 h-0"
-                onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, eventDate: e.target.value })
+                }
                 value={formData.eventDate}
               />
               <span className="text-white font-bold">
-                {formData.eventDate ? new Date(formData.eventDate).toLocaleString() : "Pick Date & Time"}
+                {formData.eventDate
+                  ? new Date(formData.eventDate).toLocaleString()
+                  : "Pick Date & Time"}
               </span>
             </button>
           </div>
 
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">Amenities</h3>
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
+              Amenities
+            </h3>
             <div className="space-y-3">
               {formData.amenities.map((item, i) => (
-                <div key={i} className="flex items-center justify-between bg-[#121417] px-4 py-3 rounded-xl border border-white/[0.06]">
-                  <span className="text-[10px] font-black uppercase text-gray-400">{item}</span>
-                  <Trash2 size={14} className="text-gray-600 hover:text-red-500 cursor-pointer" onClick={() => setFormData({ ...formData, amenities: formData.amenities.filter((_, idx) => idx !== i) })} />
+                <div
+                  key={i}
+                  className="flex items-center justify-between bg-[#121417] px-4 py-3 rounded-xl border border-white/[0.06]"
+                >
+                  <span className="text-[10px] font-black uppercase text-gray-400">
+                    {item}
+                  </span>
+                  <Trash2
+                    size={14}
+                    className="text-gray-600 hover:text-red-500 cursor-pointer"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        amenities: formData.amenities.filter(
+                          (_, idx) => idx !== i,
+                        ),
+                      })
+                    }
+                  />
                 </div>
               ))}
               <div className="relative pt-2">
@@ -452,7 +546,10 @@ const EditEvent = () => {
                   onChange={(e) => setNewAmenity(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && newAmenity.trim()) {
-                      setFormData({ ...formData, amenities: [...formData.amenities, newAmenity.trim()] });
+                      setFormData({
+                        ...formData,
+                        amenities: [...formData.amenities, newAmenity.trim()],
+                      });
                       setNewAmenity("");
                     }
                   }}
@@ -462,28 +559,68 @@ const EditEvent = () => {
           </div>
 
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
-            <h3 className="text-white font-bold uppercase tracking-tight text-sm">Flyer Archive</h3>
+            <h3 className="text-white font-bold uppercase tracking-tight text-sm">
+              Flyer Archive
+            </h3>
             <div className="space-y-4">
               {/* Existing Pictures */}
               {formData.existingPictures.map((src, index) => (
-                <div key={`existing-${index}`} className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative">
-                  <img src={`${API_URL}/${src}`} className="w-16 h-16 rounded-xl object-cover opacity-80" alt="existing" />
+                <div
+                  key={`existing-${index}`}
+                  className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative"
+                >
+                  <img
+                    src={`${API_URL}/${src}`}
+                    className="w-16 h-16 rounded-xl object-cover opacity-80"
+                    alt="existing"
+                  />
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-[10px] font-black uppercase text-gray-300 truncate">Existing Asset</p>
+                    <p className="text-[10px] font-black uppercase text-gray-300 truncate">
+                      Existing Asset
+                    </p>
                   </div>
-                  <button onClick={() => setFormData({ ...formData, existingPictures: formData.existingPictures.filter((_, i) => i !== index) })} className="p-2 text-red-500/60 hover:text-red-500">
+                  <button
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        existingPictures: formData.existingPictures.filter(
+                          (_, i) => i !== index,
+                        ),
+                      })
+                    }
+                    className="p-2 text-red-500/60 hover:text-red-500"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
               {/* New Pictures */}
               {formData.newPictures.map((file, index) => (
-                <div key={`new-${index}`} className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative">
-                  <img src={URL.createObjectURL(file)} className="w-16 h-16 rounded-xl object-cover opacity-80" alt="new" />
+                <div
+                  key={`new-${index}`}
+                  className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative"
+                >
+                  <img
+                    src={URL.createObjectURL(file)}
+                    className="w-16 h-16 rounded-xl object-cover opacity-80"
+                    alt="new"
+                  />
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-[10px] font-black uppercase text-[#FF7A00] truncate">{file.name}</p>
+                    <p className="text-[10px] font-black uppercase text-[#FF7A00] truncate">
+                      {file.name}
+                    </p>
                   </div>
-                  <button onClick={() => setFormData({ ...formData, newPictures: formData.newPictures.filter((_, i) => i !== index) })} className="p-2 text-red-500/60 hover:text-red-500">
+                  <button
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        newPictures: formData.newPictures.filter(
+                          (_, i) => i !== index,
+                        ),
+                      })
+                    }
+                    className="p-2 text-red-500/60 hover:text-red-500"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -491,18 +628,38 @@ const EditEvent = () => {
             </div>
             <button
               type="button"
-              onClick={() => posterInputRef.current && posterInputRef.current.click()}
+              onClick={() =>
+                posterInputRef.current && posterInputRef.current.click()
+              }
               className="w-full h-32 bg-[#121417] border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95"
             >
-              <input type="file" multiple className="hidden" ref={posterInputRef} onChange={(e) => setFormData({ ...formData, newPictures: [...formData.newPictures, ...Array.from(e.target.files)] })} />
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                ref={posterInputRef}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    newPictures: [
+                      ...formData.newPictures,
+                      ...Array.from(e.target.files),
+                    ],
+                  })
+                }
+              />
               <Plus size={32} strokeWidth={4} />
-              <p className="font-black text-[11px] uppercase tracking-[0.2em] italic">Add New Media</p>
+              <p className="font-black text-[11px] uppercase tracking-[0.2em] italic">
+                Add New Media
+              </p>
             </button>
           </div>
 
           <div className="p-6 bg-[#FF7A00]/5 border border-[#FF7A00]/10 rounded-3xl flex items-center gap-4">
             <ShieldCheck size={24} className="text-[#FF7A00]" />
-            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-tight">Terminal Root Access <br /> Authorized</p>
+            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-tight">
+              Terminal Root Access <br /> Authorized
+            </p>
           </div>
         </div>
       </div>
