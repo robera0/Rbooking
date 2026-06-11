@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  register_admin,
   login_user,
   refresh,
   logout,
@@ -71,7 +70,7 @@ authRouter.get(
 
 authRouter.get("/user", authenticateTokenMiddleware, user);
 authRouter.post("/signup/user", register_user);
-authRouter.post("/signup/admin", register_admin);
+//authRouter.post("/signup/admin", register_admin);
 authRouter.post("/login", login_user);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);
 authRouter.post("/tokens", refresh);

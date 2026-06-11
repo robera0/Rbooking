@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { ProfileModel } from "../models/ProfileModel.js";
 import { UserModel } from "../models/UserModel.js";
+import { AdminProfile } from "../models/AdminProfileModel.js";
 import multer from "multer";
 
 const storage = multer.diskStorage({
@@ -18,11 +19,16 @@ export const upload = multer({ storage });
 export const get_user_profile = async (req, res) => {
   try {
     const user_id = req.user.id;
-
-    const user_profile = await ProfileModel.findOne({ userId: user_id })
-      .populate("userId")
-      .exec();
-    res.status(200).json({ user: user_profile });
+    if (req.user.role === "admin") {
+      profile = await AdminProfile.findOne({ userId: user_id })
+        .populate("userId")
+        .exec();
+    } else {
+      profile = await ProfileModel.findOne({ userId: user_id })
+        .populate("userId")
+        .exec();
+    }
+    res.status(200).json({ user: profile });
   } catch (error) {
     res.status(401).json({ message: error.message });
   }

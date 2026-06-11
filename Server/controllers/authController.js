@@ -2,14 +2,13 @@ import { generateRefreshToken, generateAccessToken } from "../service/token.js";
 import { hashPasswords, comparePassword } from "../service/password.js";
 import { UserModel } from "../models/UserModel.js";
 import dotenv from "dotenv";
-import { Admin } from "../models/UserModel.js";
-
+import { AdminProfile } from "../models/AdminProfileModel.js";
 import jwt from "jsonwebtoken";
 dotenv.config();
 
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
-export const register_admin = async (req, res) => {
+/*export const register_admin = async (req, res) => {
   try {
     let {
       username,
@@ -102,6 +101,7 @@ export const register_admin = async (req, res) => {
     });
   }
 };
+*/
 // REGISTER USER
 
 export const register_user = async (req, res) => {
@@ -151,6 +151,7 @@ export const login_user = async (req, res) => {
   const payload = {
     id: user._id,
     email: user.email,
+    role: user.role,
   };
 
   const access_token = generateAccessToken(payload);
@@ -172,7 +173,7 @@ export const login_user = async (req, res) => {
       path: "/",
     })
     .status(200)
-    .json({ message: "Logged in successfully" });
+    .json({ role: user.role, message: "Logged in successfully" });
 };
 
 export const refresh = async (req, res) => {
@@ -197,6 +198,7 @@ export const refresh = async (req, res) => {
       const payload = {
         id: user._id,
         email: user.email,
+        role: user.role,
       };
 
       const newAccessToken = generateAccessToken(payload);

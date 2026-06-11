@@ -30,6 +30,7 @@ const LoginUser = () => {
       if (data.message === "Logged in successfully") {
         setIsLoggedIn(true);
         queryClient.invalidateQueries({ queryKey: ["user"] });
+        if (data.role == "admin") return navigate("/dashboard");
         navigate(from, { replace: true });
       }
     },
