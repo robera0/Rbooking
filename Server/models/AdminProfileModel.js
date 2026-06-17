@@ -13,6 +13,21 @@ const adminProfileSchema = new mongoose.Schema(
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     phone: { type: String, required: true },
+    dateOfBirth: {
+      type: Date,
+    },
+    nationality: {
+      type: String,
+    },
+    bio: {
+      type: String,
+    },
+    address: {
+      type: String,
+    },
+    Gender: {
+      type: String,
+    },
     avatarUrl: String,
 
     // Organization

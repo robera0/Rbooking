@@ -44,22 +44,9 @@ const AdminAccount = () => {
   const [timezone, setTimezone] = useState("eat");
   const [emergencyBroadcasts, setEmergencyBroadcasts] = useState(true);
 
-  const adminInfo = {
-    name: "Senior Administrator",
-    email: "admin@rbooking.com",
-    role: "Super Admin",
-    joined: "January 15, 2026",
-    status: "Verified",
-    permissions: [
-      "Full CRUD",
-      "Finance Access",
-      "User Ban Control",
-      "Audit Logs Viewer",
-    ],
-  };
-
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     nationality: "",
     phone: "",
     dateOfBirth: "",
@@ -70,7 +57,8 @@ const AdminAccount = () => {
   useEffect(() => {
     if (userProfile?.user) {
       setFormData({
-        fullName: userProfile?.user?.fullName || "",
+        firstName: userProfile?.user?.firstName || "",
+        lastName: userProfile?.user?.lastName || "",
         nationality: userProfile.user.nationality || "",
         phone: userProfile.user.phone || "",
         dateOfBirth: userProfile.user.dateOfBirth
@@ -189,7 +177,7 @@ const AdminAccount = () => {
     ? `${API_URL}/${userProfile.user.avatarUrl}`
     : "/Login.jpg";
 
-  const userName = userProfile?.user?.fullName || "Your Name";
+  const userName = userProfile?.user?.firstName || "Your Name";
   const userEmail = userProfile?.user?.userId?.email || "";
 
   const auditLogs = [
@@ -230,24 +218,19 @@ const AdminAccount = () => {
 
       {/* Header Section */}
       <div className="flex flex-wrap justify-between items-end mb-8 border-b border-white/[0.04] pb-8">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-[#FF7A00] font-black uppercase text-[10px] tracking-widest">
-            <Shield size={14} strokeWidth={3} />
-            Admin Side
-          </div>
-          <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none text-white ">
-            Admin <span className="text-[#FF7A00] underline">Credentials</span>
+        <div className="">
+          <h1 className="text-3xl md:text-5xl text-[#FF7A00] font- uppercase tracking-tighter leading-none  ">
+            Admin Credentials
           </h1>
-          <div className="w-20 h-1.5 bg-[#FF7A00]" />
         </div>
 
         <div className="flex items-center gap-4 mt-6 md:mt-0">
           <div className="text-right hidden md:block">
             <p className="text-white font-black text-xs uppercase tracking-widest">
-              {adminInfo.name}
+              {userProfile?.firstName}
             </p>
             <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
-              {adminInfo.email}
+              {userProfile?.email}
             </p>
           </div>
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-orange-700 p-[2px]">
@@ -372,9 +355,10 @@ const AdminAccount = () => {
                         </label>
                         <input
                           name="fullName"
-                          value={formData.fullName}
+                          value={`${formData.firstName} ${" "} ${
+                            formData.lastName
+                          }`}
                           onChange={handleChange}
-                          placeholder={adminInfo.name}
                           className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all"
                         />
                       </div>
@@ -385,7 +369,7 @@ const AdminAccount = () => {
                         <input
                           className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none cursor-not-allowed opacity-60"
                           disabled
-                          value={userEmail || adminInfo.email}
+                          value={userEmail || userProfile?.user?.userId?.email}
                           readOnly
                         />
                       </div>
@@ -455,22 +439,6 @@ const AdminAccount = () => {
                           placeholder="Enter address"
                           className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all"
                         />
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">
-                        Account Permissions
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {adminInfo.permissions.map((perm) => (
-                          <div
-                            key={perm}
-                            className="px-4 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white font-black text-[10px] uppercase tracking-widest"
-                          >
-                            {perm}
-                          </div>
-                        ))}
                       </div>
                     </div>
 

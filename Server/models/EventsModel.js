@@ -3,10 +3,13 @@ import mongoose from "mongoose";
 // Price range
 export const PriceRangeSchema = new mongoose.Schema(
   {
-    type: String, // standard, VIP, day-pass, etc.
-    currency: String, // USD
+    type: String,
+    currency: String,
     min: Number,
     max: Number,
+    activeFrom: Date,
+    activeUntil: Date,
+    isActive: Boolean,
   },
   { _id: false },
 );
@@ -95,6 +98,11 @@ const BaseEventSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["generic", "concert", "festival"],
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // ← points to the admin who created it
+      required: true,
     },
     name: String,
     desc: String,

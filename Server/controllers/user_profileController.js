@@ -19,6 +19,7 @@ export const upload = multer({ storage });
 export const get_user_profile = async (req, res) => {
   try {
     const user_id = req.user.id;
+    let profile;
     if (req.user.role === "admin") {
       profile = await AdminProfile.findOne({ userId: user_id })
         .populate("userId")
@@ -64,17 +65,30 @@ export const update_user = async (req, res) => {
         avatarUrl,
       }).filter(([_, v]) => v !== undefined && v !== ""),
     );
+    let updatedProfile;
+    if (req.user.role === "admin") {
+      updatedProfile = await AdminProfile.findOneAndUpdate(
+        { userId: user_id },
+        updates,
+        {
+          new: true,
+          runValidators: true,
 
-    const updatedProfile = await ProfileModel.findOneAndUpdate(
-      { userId: user_id },
-      updates,
-      {
-        new: true,
-        runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      );
+    } else {
+      updatedProfile = await ProfileModel.findOneAndUpdate(
+        { userId: user_id },
+        updates,
+        {
+          new: true,
+          runValidators: true,
 
-        setDefaultsOnInsert: true,
-      },
-    );
+          setDefaultsOnInsert: true,
+        },
+      );
+    }
 
     return res.status(200).json({
       success: true,

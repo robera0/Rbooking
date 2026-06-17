@@ -346,7 +346,7 @@ export const ApiProvider = ({ children }) => {
     retry: 1,
     enabled: !!user,
   });
-
+  console.log(userProfile);
   return (
     <ApiContext.Provider
       value={{

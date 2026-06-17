@@ -1,6 +1,7 @@
 import { Event } from "../models/EventsModel.js";
 import { UserModel } from "../models/UserModel.js";
 import { AdminProfile } from "../models/AdminProfileModel.js";
+
 export const adminProfile = async (req, res) => {
   const userId = req.user.id;
   if (!userId) return res.status(401).json({ message: "their is no admin  " });

@@ -161,7 +161,7 @@ export const get_events = async (req, res) => {
     console.error("Error fetching events:", error);
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message,
     });
   }
 };
