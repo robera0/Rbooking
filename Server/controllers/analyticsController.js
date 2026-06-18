@@ -1,5 +1,5 @@
 import { Event } from "../models/EventsModel.js";
-import { UserModel } from "../models/UserModel.js";
+import { UserModel } from "../models/user.model.js";
 import { TicketModel } from "../models/TicketModel.js";
 import { UserTicketModel } from "../models/UserTicketModel.js";
 

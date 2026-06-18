@@ -1,5 +1,5 @@
 import { Event } from "../models/EventsModel.js";
-import { UserModel } from "../models/UserModel.js";
+import { UserModel } from "../models/user.model.js";
 import { AdminProfile } from "../models/AdminProfileModel.js";
 
 export const adminProfile = async (req, res) => {
