@@ -11,17 +11,39 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
+
     async (accessToken, refreshToken, profile, done) => {
       try {
         let user = await UserModel.findOne({ googleId: profile.id });
+        let isNewUser = false;
+
         if (!user) {
-          user = await UserModel.create({
-            googleId: profile.id,
-            username: profile.displayName,
-            email: profile.emails[0].value,
-            // You can add more fields as needed
-          });
+          // also check by email in case they registered normally before
+          user = await UserModel.findOne({ email: profile.emails[0].value });
+
+          if (user) {
+            // user exists with same email, just link their Google ID
+            user = await UserModel.findByIdAndUpdate(
+              user._id,
+              { googleId: profile.id },
+              { new: true },
+            );
+          } else {
+            // truly new user
+            isNewUser = true;
+            user = await UserModel.create({
+              googleId: profile.id,
+              username: profile.displayName,
+              email: profile.emails[0].value,
+              isProfileComplete: false,
+            });
+          }
         }
+
+        // attach isNewUser to user object
+
+        user.isNewUser = isNewUser;
+        console.log("EMAIL TYPE:", typeof user.email, "VALUE:", user.email);
         return done(null, user);
       } catch (err) {
         return done(err, null);

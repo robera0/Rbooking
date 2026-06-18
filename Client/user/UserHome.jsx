@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   CalendarIcon,
   Search,
@@ -14,7 +14,9 @@ import {
   Heart,
   Star,
   MapPin,
+  ClockFading,
 } from "lucide-react";
+import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { CalendarDemo } from "@/components/ui/calendar";
 import {
   motion,
@@ -24,13 +26,99 @@ import {
 } from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
+import toast, { Toaster } from "react-hot-toast";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
+// Skeleton for Featured Event Card
+export function FeaturedEventSkeleton() {
+  return (
+    // Base colors configured for a dark/zinc UI theme
+    <SkeletonTheme baseColor="#1c1f22" highlightColor="#2d3135">
+      <div className="group">
+        {/* Image Skeleton */}
+        <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04]">
+          <Skeleton
+            height="100%"
+            width="100%"
+            containerClassName="absolute inset-0 block h-full w-full"
+          />
+        </div>
+
+        {/* Metadata */}
+        <div className="mt-5 px-1 space-y-4">
+          {/* Location + Rating */}
+          <div className="flex justify-between items-center">
+            <Skeleton height={12} width={80} borderRadius={8} />
+            <Skeleton height={20} width={40} borderRadius={8} />
+          </div>
+          {/* Event Name */}
+          <Skeleton height={20} width="75%" borderRadius={8} />
+          {/* Price */}
+          <div className="flex justify-between items-end pt-1">
+            <div className="space-y-2">
+              <Skeleton height={12} width={60} borderRadius={8} />
+              <Skeleton height={24} width={80} borderRadius={8} />
+            </div>
+            <Skeleton height={40} width={40} borderRadius={12} />
+          </div>
+        </div>
+      </div>
+    </SkeletonTheme>
+  );
+}
 const UserHome = () => {
   const [dateSlide, setDateSlide] = useState(false);
-  const { events, isLoading } = eventService();
-  const { type, setType, date, setDate, artist, setArtist, addFav, setAddFav } =
-    useService();
+  const {
+    user,
+    wishlist,
+    wishlistIsError,
+    featuredEvents,
+    featuredEventLoading,
+  } = eventService();
+  const {
+    type,
+    setType,
+    date,
+    setDate,
+    artist,
+    venues,
+    setVenues,
+    setArtist,
+    search,
+    setSearch,
+    setCommentId,
+  } = useService();
+  const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const checkWishlist = (eventId) => {
+    return (
+      wishlist?.wishlist?.items?.some(
+        (item) => item?.eventId?._id === eventId,
+      ) || false
+    );
+  };
+
+  const handleWishlistToggle = (eventId, ticketId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error("Please sign in to save events");
+      navigate("/login", { state: { from: location } });
+      return;
+    }
+
+    const isCurrentlyAdded = checkWishlist(eventId);
+
+    wishlistMutation.mutate({
+      eventId: eventId,
+      ticketId: ticketId,
+      isAdding: !isCurrentlyAdded,
+    });
+  };
 
   // Scroll logic for Hero section
   const containerRef = useRef(null);
@@ -151,8 +239,9 @@ const UserHome = () => {
             <div className="w-full h-full rounded-[2.5rem] overflow-hidden border border-white/[0.06] shadow-2xl bg-[#1C1F22]">
               <img
                 src="/1763661369611.webp"
-                className="w-full h-full object-cover grayscale brightness-90 hover:grayscale-0 transition-all duration-1000"
+                className="w-full h-full object-cover brightness-100 transition-all duration-1000"
                 alt="Concert"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#121417] via-transparent to-transparent" />
             </div>
@@ -166,6 +255,7 @@ const UserHome = () => {
                 src="/Login.jpg"
                 className="w-full h-full object-cover"
                 alt="Artist 1"
+                loading="lazy"
               />
             </motion.div>
             <motion.div
@@ -178,19 +268,20 @@ const UserHome = () => {
                 src="/1308183.jpeg"
                 className="w-full h-full object-cover"
                 alt="Artist 2"
+                loading="lazy"
               />
             </motion.div>
           </div>
           <div className="absolute -bottom-6 -left-2 sm:left-6 bg-white p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl flex items-center gap-4 md:gap-5 -rotate-2 hover:rotate-0 transition-all z-20">
             <div className="bg-[#FF7A00] p-3 md:p-3.5 rounded-xl text-white">
-              <Mic2 size={18} />
+              <ClockFading size={18} />
             </div>
             <div>
               <p className="font-black text-lg md:text-xl uppercase italic text-black leading-none">
-                Live Now
+                24 Hours
               </p>
               <p className="text-gray-400 font-bold text-[7px] md:text-[8px] uppercase tracking-[0.2em] mt-1">
-                Tour 2026
+                ACCESS SYSTEM
               </p>
             </div>
           </div>
@@ -206,6 +297,21 @@ const UserHome = () => {
         className="sticky top-4 z-40 px-6 lg:px-10 -mt-8 max-w-[1380px]  mx-auto transition-all duration-300"
       >
         <div className="bg-[#1C1F22]/95 backdrop-blur-md border border-white/[0.08]  p-2 rounded-[2rem] md:rounded-[2.2rem] shadow-2xl flex flex-col lg:flex-row gap-2 md:gap-3">
+          <div className="flex-[1.2] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
+            <Search className="text-gray-600" size={16} />
+            <div className="flex-1">
+              <label className="block text-[7px]  lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
+                Search Events
+              </label>
+              <input
+                type="text"
+                placeholder="Event name, genre..."
+                className="bg-transparent border-none outline-none text-white font-bold w-full p-0 text-[11px] placeholder:text-gray-700"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
           <div className="flex-[0.9] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
             <User className="text-gray-600" size={16} />
             <div className="flex-1">
@@ -225,7 +331,7 @@ const UserHome = () => {
             <MapIcon className="text-gray-600" size={16} />
             <div className="flex-1">
               <label className="block text-[7px] lg:text-[12px]  text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
-                Location
+                Category / Venue
               </label>
               <input
                 type="text"
@@ -245,18 +351,21 @@ const UserHome = () => {
               className="w-full h-full flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all"
             >
               <CalendarIcon className="text-gray-600" size={16} />
-              <div className="text-left space-y-6">
+              <div className="text-left">
                 <span className="block text-[7px] lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
                   Schedule
                 </span>
                 <span className="font-bold text-[11px] lg:text-[12px] block truncate text-white">
-                  {date ? date.toLocaleDateString() : "All Dates"}
+                  {date instanceof Date
+                    ? date.toLocaleDateString()
+                    : "All Dates"}
                 </span>
               </div>
             </button>
             <AnimatePresence>
               {dateSlide && (
                 <motion.div
+                  onClick={(e) => e.stopPropagation()}
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
@@ -271,7 +380,10 @@ const UserHome = () => {
               )}
             </AnimatePresence>
           </div>
-          <button className="h-[56px] md:h-[64px] lg:w-[70px] bg-[#FF7A00] rounded-[1.5rem] md:rounded-[1.8rem] flex items-center justify-center hover:bg-white group transition-all shrink-0 active:scale-95 shadow-lg shadow-[#FF7A00]/10">
+          <button
+            onClick={() => navigate("/event")}
+            className="h-[56px] md:h-[64px] lg:w-[70px] bg-[#FF7A00] rounded-[1.5rem] md:rounded-[1.8rem] flex items-center justify-center hover:bg-white group transition-all shrink-0 active:scale-95 shadow-lg shadow-[#FF7A00]/10"
+          >
             <Search
               className="text-black group-hover:scale-110 transition-transform"
               size={20}
@@ -305,113 +417,160 @@ const UserHome = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8">
-          {events?.events?.map((e) => (
-            <motion.div variants={itemVariants} className="group">
-              <div className="relative">
-                <Link
-                  to={
-                    e?.tickets?.length > 0
-                      ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
-                      : `/events/${e?._id}`
-                  }
-                  className="block"
-                >
-                  {/* Image Container */}
-                  <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22]">
-                    <img
-                      src={e?.pictures[0]}
-                      className="w-full h-full object-cover brightness-95 group-hover:scale-105 transition-transform duration-700"
-                      alt={e?.name}
-                    />
-                    {/* Hover Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </Link>
-
-                {/* Wishlist Button */}
-                <button
-                  onClick={(ev) => {
-                    ev.preventDefault();
-                    setAddFav(!addFav);
+          {featuredEventLoading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <FeaturedEventSkeleton key={i} />
+              ))
+            : featuredEvents?.events?.length > 0 &&
+              featuredEvents?.events?.map((e, i) => (
+                <motion.div
+                  initial={{ opacity: 0, y: 25, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{
+                    duration: 0.6,
+                    ease: [0.25, 1, 0.5, 1],
+                    delay: i * 0.1,
                   }}
-                  className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
-                    addFav
-                      ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
-                      : "bg-black/20 border-white/10 text-white hover:bg-black/40"
-                  }`}
+                  className="group"
+                  key={e?._id}
                 >
-                  <Heart
-                    size={18}
-                    fill={addFav ? "currentColor" : "none"}
-                    strokeWidth={2.5}
-                  />
-                </button>
-              </div>
+                  <div className="relative rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
+                    {/* Sold Out Overlay */}
+                    {e?.tickets?.length === 0 && (
+                      <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[2px] rounded-[1.5rem] md:rounded-[2.2rem]  flex items-center justify-center pointer-events-none">
+                        <div className="bg-red-600/90 text-white px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2 shadow-2xl border border-white/20">
+                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                          Sold Out
+                        </div>
+                      </div>
+                    )}
 
-              {/* Metadata Section */}
-              <div className="mt-5 px-1 space-y-4">
-                {/* Row 1: Location & Rating (Desktop Scaled) */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5 text-[#FF7A00]">
-                    <MapPin
-                      size={12}
-                      className="md:w-3.5 md:h-3.5"
-                      strokeWidth={3}
-                    />
-                    <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
-                      {e.location || "London, UK"}
-                    </span>
+                    <Link
+                      to={
+                        e?.tickets?.length > 0
+                          ? `/events/${e?._id}/tickets/${e?.tickets[0]?._id}`
+                          : "#"
+                      }
+                      className={`block ${
+                        e?.tickets?.length === 0 ? "cursor-not-allowed" : ""
+                      }`}
+                      onClick={(ev) => {
+                        setCommentId(e?._id);
+                        console.log(e?._id);
+                        e?.tickets?.length === 0 && ev.preventDefault();
+                      }}
+                    >
+                      {/* Image Container */}
+                      <div
+                        className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${
+                          e?.tickets?.length === 0 ? "brightness-75" : ""
+                        }`}
+                      >
+                        <img
+                          src={e?.pictures?.[0]}
+                          className="w-full h-full object-cover brightness-95 transition-transform duration-700"
+                          alt={e?.name}
+                          loading="lazy"
+                        />
+                        {/* Hover Gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </Link>
+
+                    {/* Wishlist Button */}
+                    <button
+                      onClick={(ev) =>
+                        handleWishlistToggle(e._id, e.tickets[0]?._id, ev)
+                      }
+                      disabled={wishlistMutation.isLoading}
+                      className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
+                        checkWishlist(e._id)
+                          ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
+                          : "bg-black/20 border-white/10 text-white hover:bg-black/40"
+                      }`}
+                    >
+                      <Heart
+                        size={18}
+                        fill={checkWishlist(e._id) ? "currentColor" : "none"}
+                        strokeWidth={2.5}
+                      />
+                    </button>
                   </div>
 
-                  {/* Scaled Rating Badge for Desktop */}
-                  <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
-                    <Star
-                      size={12}
-                      className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
-                    />
-                    <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
-                      {e.rating.score || "4.9"}
-                    </span>
-                  </div>
-                </div>
+                  {/* Metadata Section */}
+                  <div className="mt-5 px-1 space-y-4">
+                    {/* Row 1: Location & Rating (Desktop Scaled) */}
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-1.5 text-[#FF7A00]">
+                        <MapPin
+                          size={12}
+                          className="md:w-3.5 md:h-3.5"
+                          strokeWidth={3}
+                        />
+                        <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
+                          {e.location || "London, UK"}
+                        </span>
+                      </div>
 
-                {/* Row 2: Event Name */}
-                <Link to={`/events/${e._id}`}>
-                  <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
-                    {e.name}
-                  </h3>
-                </Link>
+                      {/* Scaled Rating Badge for Desktop */}
+                      <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
+                        <Star
+                          size={12}
+                          className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
+                        />
+                        <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
+                          {e?.rating?.score || "4.9"}
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Row 3: Pricing & Action */}
-                <div className="flex justify-between items-end pt-1">
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-[9px] lg:text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] mb-1">
-                      Entry From
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
-                        ${e?.priceRanges[0]?.min}
-                      </span>
-                      <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
-                        /pp
-                      </span>
+                    {/* Row 2: Event Name */}
+                    <Link
+                      to={
+                        e?.tickets?.length > 0
+                          ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                          : `/events/${e?._id}`
+                      }
+                    >
+                      <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
+                        {e.name}
+                      </h3>
+                    </Link>
+
+                    {/* Row 3: Pricing & Action */}
+                    <div className="flex justify-between items-end pt-1">
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-[9px] lg:text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] mb-1">
+                          Entry From
+                        </span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
+                            ${e?.priceRanges?.[0]?.min || e?.price || "0"}
+                          </span>
+                          <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
+                            /pp
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        to={
+                          e?.tickets?.length > 0
+                            ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                            : `/events/${e?._id}`
+                        }
+                        className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
+                      >
+                        <Ticket
+                          size={20}
+                          className="md:w-6 md:h-6"
+                          strokeWidth={2.5}
+                        />
+                      </Link>
                     </div>
                   </div>
-
-                  <Link
-                    to={`/events/${e._id}`}
-                    className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
-                  >
-                    <Ticket
-                      size={20}
-                      className="md:w-6 md:h-6"
-                      strokeWidth={2.5}
-                    />
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                </motion.div>
+              ))}
         </div>
       </motion.section>
 
@@ -459,6 +618,167 @@ const UserHome = () => {
               </div>
             </div>
           ))}
+        </div>
+      </motion.section>
+
+      {/* LIVE EXPERIENCE (Photos & Video) */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={containerVariants}
+        className="px-6 lg:px-10 pb-32 max-w-[1200px] mx-auto z-10 relative"
+      >
+        <div className="flex flex-col items-center text-center space-y-16">
+          {/* Header */}
+          <motion.div variants={itemVariants} className="space-y-6">
+            <h2 className="text-4xl md:text-6xl  uppercase  tracking-tighter leading-none">
+              EXP THE <span className="text-[#FF7A00]">PULSE</span>
+            </h2>
+            <p className="text-gray-500 text-sm md:text-base font-medium tracking-tight max-w-2xl mx-auto">
+              From the main stage to your pocket. Witness the real energy
+              captured by our global community at every sold-out venue.
+            </p>
+          </motion.div>
+
+          {/* Screenshots Grid */}
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+            {/* Left: Main Hero Screenshot */}
+            <motion.div
+              variants={itemVariants}
+              className="rounded-[2.5rem] overflow-hidden border border-white/10 relative bg-black shadow-2xl h-fit"
+            >
+              <img
+                src="/Screenshot From 2026-04-24 04-49-36.png"
+                className="w-full h-auto object-contain"
+                alt="Hero View"
+                loading="lazy"
+              />
+              <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">
+                  System Milestone — 01
+                </span>
+                <p className="text-white font-bold text-lg">
+                  Cinema Mode Interface
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Right: Sub-Screenshots */}
+            <div className="flex flex-col gap-12">
+              <motion.div
+                variants={itemVariants}
+                className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
+              >
+                <img
+                  src="/Screenshot From 2026-04-24 04-50-09.png"
+                  className="w-full h-auto object-contain"
+                  alt="Wishlist"
+                  loading="lazy"
+                />
+                <div className="absolute bottom-4 left-6">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                    Wishlist Management
+                  </span>
+                </div>
+              </motion.div>
+              <motion.div
+                variants={itemVariants}
+                className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
+              >
+                <img
+                  src="/Login.jpg"
+                  className="w-full h-auto object-contain"
+                  alt="Account"
+                  loading="lazy"
+                />
+                <div className="absolute bottom-4 left-6">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                    User Profile System
+                  </span>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Video Walkthrough (Centered) */}
+          <motion.div
+            variants={itemVariants}
+            className="w-full max-w-4xl space-y-10 pt-10"
+          >
+            <div className="space-y-4">
+              <span className="text-[12px] font-black uppercase tracking-[0.4em] text-gray-600">
+                Dynamic Synchronization
+              </span>
+              <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic">
+                Authentication Walkthrough
+              </h3>
+            </div>
+
+            <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
+              <video
+                src="/Screencast From 2026-04-24 05-03-04.mp4"
+                autoPlay
+                loop
+                muted
+                className="w-full h-full object-cover"
+              />
+
+              {/* Play Button Interface */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-12 h-12 md:w-20 md:h-20 rounded-full bg-[#FF7A00] flex items-center justify-center text-black shadow-2xl">
+                  <Activity size={24} md:size={32} strokeWidth={3} />
+                </div>
+              </div>
+
+              {/* Progress Bar (Mock) */}
+              <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 h-1 md:h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: "0%" }}
+                  whileInView={{ width: "100%" }}
+                  transition={{
+                    duration: 15,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  className="h-full bg-gradient-to-r from-[#FF7A00] to-orange-400 shadow-[0_0_15px_rgba(255,122,0,0.5)]"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 md:mt-10 px-2 md:px-6 flex items-center justify-between">
+              <div className="flex items-center gap-3 md:gap-6">
+                <div className="flex -space-x-2 md:-space-x-3">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="w-8 h-8 md:w-12 md:h-12 rounded-full border-2 md:border-4 border-[#121417] bg-gray-800 overflow-hidden"
+                    >
+                      <img
+                        src={`/1308183.jpeg`}
+                        className="w-full h-full object-cover"
+                        alt="User"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="text-left">
+                  <p className="text-white text-[10px] md:text-xs font-black uppercase tracking-tight">
+                    Sync Active
+                  </p>
+                  <p className="text-gray-500 text-[8px] md:text-[10px] font-bold md:block hidden">
+                    +2.4k community views
+                  </p>
+                </div>
+              </div>
+              <div className="bg-white/5 border border-white/10 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl">
+                <span className="text-[#FF7A00] text-[8px] md:text-[10px] font-black uppercase tracking-widest italic animate-pulse">
+                  ● System Live
+                </span>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </motion.section>
     </div>

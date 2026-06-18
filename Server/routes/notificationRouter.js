@@ -1,8 +1,23 @@
 import express from "express";
-import { get_notification } from "../controllers/notificationController.js";
+import {
+  add_notification,
+  get_notification,
+  read_notification,
+} from "../controllers/notificationController.js";
+import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
+const notiRouter = express.Router();
 
-const notirouter = express.Router();
+notiRouter.get("/notifications", authenticateTokenMiddleware, get_notification);
+notiRouter.post(
+  "/notifications/add",
+  authenticateTokenMiddleware,
+  add_notification,
+);
 
-notirouter.get("/notifications", get_notification);
+notiRouter.patch(
+  "/notifications/read",
+  authenticateTokenMiddleware,
+  read_notification,
+);
 
-export default notirouter;
+export default notiRouter;

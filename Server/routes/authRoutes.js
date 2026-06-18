@@ -1,30 +1,32 @@
 import express from "express";
 import {
-  register_users,
   login_user,
   refresh,
   logout,
+  register_user,
 } from "../controllers/authController.js";
 import { user } from "../controllers/userController.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
-import { updateUser } from "../controllers/userController.js";
+import { updateUser, completeProfile } from "../controllers/userController.js";
 import passport from "../config/googleAuth.js";
-const authrouter = express.Router();
+import { generateAccessToken, generateRefreshToken } from "../service/token.js";
+import { UserModel } from "../models/UserModel.js";
+const authRouter = express.Router();
 // Google OAuth
-authrouter.get(
+authRouter.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
-import { generateAccessToken, generateRefreshToken } from "../service/token.js";
-
-authrouter.get(
+authRouter.get(
   "/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/login",
     session: false,
   }),
   async (req, res) => {
+    console.log(" Google callback hit!");
+    console.log("user:", req.user);
     // Issue JWT and set cookie, then redirect to frontend with token
     try {
       const user = req.user;
@@ -34,6 +36,7 @@ authrouter.get(
             "/login?error=NoUser",
         );
       }
+
       const payload = {
         id: user._id,
         email: user.email,
@@ -41,18 +44,22 @@ authrouter.get(
       const access_token = generateAccessToken(payload);
       const refresh_token = generateRefreshToken(payload);
       // Optionally, store refresh token in DB for session management
-      user.refreshTokens = user.refreshTokens || [];
-      user.refreshTokens.push({ token: refresh_token });
-      await user.save();
+      await UserModel.findByIdAndUpdate(user._id, {
+        $push: { refreshTokens: { token: refresh_token } },
+      });
+
       res.cookie("access_token", access_token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "None",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       });
       // Redirect to frontend with token as query param (optional)
-      const redirectUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/google-auth?token=${access_token}`;
+      const isNewUser = user.isNewUser || !user.isProfileComplete;
+
+      const redirectUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/google-auth?isNewUser=${isNewUser}`;
       res.redirect(redirectUrl);
     } catch (err) {
+      console.error("❌ OAuth error:", err);
       res.redirect(
         (process.env.CLIENT_URL || "http://localhost:5173") +
           "/login?error=OAuthFail",
@@ -61,11 +68,17 @@ authrouter.get(
   },
 );
 
-authrouter.get("/user", authenticateTokenMiddleware, user);
-authrouter.post("/signup", register_users);
-authrouter.post("/login", login_user);
-authrouter.post("/logout", authenticateTokenMiddleware, logout);
-authrouter.post("/tokens", refresh);
-authrouter.put("/user", authenticateTokenMiddleware, updateUser);
+authRouter.get("/user", authenticateTokenMiddleware, user);
+authRouter.post("/signup/user", register_user);
+//authRouter.post("/signup/admin", register_admin);
+authRouter.post("/login", login_user);
+authRouter.post("/logout", authenticateTokenMiddleware, logout);
+authRouter.post("/tokens", refresh);
+authRouter.put(
+  "/complete-profile",
+  authenticateTokenMiddleware,
+  completeProfile,
+);
+authRouter.put("/user", authenticateTokenMiddleware, updateUser);
 
-export default authrouter;
+export default authRouter;

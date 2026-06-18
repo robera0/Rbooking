@@ -1,21 +1,27 @@
 import mongoose from "mongoose";
 import { CommentModel } from "../models/CommentModel.js";
 import { ProfileModel } from "../models/ProfileModel.js";
+
 export const get_comments = async (req, res) => {
   try {
-    const id = req.user.id;
+    const { eventId } = req.params;
 
-    const comment = await CommentModel.find({ eventId: id });
+    const comment = await CommentModel.find({ eventId })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "userProfile",
+        select: "fullName avatarUrl ",
+      });
     res.status(200).json({ comments: comment });
   } catch {
-    res.status(401).json({ message: "No comments with the this id " });
+    res.status(500).json({ message: "No comments with the this id " });
   }
 };
 
 export const post_comments = async (req, res) => {
   try {
-    const eventId = new mongoose.Types.ObjectId(req.params.id);
-    const { text } = req.body;
+    const { eventId } = req.params;
+    const { text, rating } = req.body;
 
     if (!text || text.trim() === "") {
       return res.status(400).json({ message: "Comment text is required" });
@@ -28,23 +34,16 @@ export const post_comments = async (req, res) => {
       return res.status(404).json({ message: "User profile not found" });
     }
 
+    const eventObjectId = new mongoose.Types.ObjectId(eventId);
     const newComment = {
-      userId: user_profile._id,
+      eventId: eventObjectId,
+      userId: userId,
+      userProfile: user_profile._id,
       text,
+      rating,
     };
 
-    const commentDoc = await CommentModel.findOneAndUpdate(
-      { eventId },
-      {
-        $setOnInsert: {
-          eventId,
-          user: userId,
-          rating: 0,
-        },
-        $push: { comment: newComment },
-      },
-      { new: true, upsert: true },
-    );
+    const commentDoc = await CommentModel.create(newComment);
 
     res.status(200).json({
       message: "Comment added successfully",
@@ -53,5 +52,30 @@ export const post_comments = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to add comment" });
+  }
+};
+
+export const update_comment = async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+
+    const { commentId } = req.body;
+
+    const updatedComment = await CommentModel.findByIdAndUpdate(
+      commentId,
+      {
+        $addToSet: {
+          likes: userId,
+        },
+      },
+      { new: true },
+    );
+
+    res.status(200).json({
+      message: "Comment liked successfully",
+      updatedComment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

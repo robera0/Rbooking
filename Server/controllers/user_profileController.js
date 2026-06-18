@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { ProfileModel } from "../models/ProfileModel.js";
 import { UserModel } from "../models/UserModel.js";
+import { AdminProfile } from "../models/AdminProfileModel.js";
 import multer from "multer";
 
 const storage = multer.diskStorage({
@@ -18,11 +19,17 @@ export const upload = multer({ storage });
 export const get_user_profile = async (req, res) => {
   try {
     const user_id = req.user.id;
-
-    const user_profile = await ProfileModel.findOne({ userId: user_id })
-      .populate("userId")
-      .exec();
-    res.status(200).json({ user: user_profile });
+    let profile;
+    if (req.user.role === "admin") {
+      profile = await AdminProfile.findOne({ userId: user_id })
+        .populate("userId")
+        .exec();
+    } else {
+      profile = await ProfileModel.findOne({ userId: user_id })
+        .populate("userId")
+        .exec();
+    }
+    res.status(200).json({ user: profile });
   } catch (error) {
     res.status(401).json({ message: error.message });
   }
@@ -37,19 +44,13 @@ export const update_user = async (req, res) => {
       return res.status(401).json({ message: "There is no user" });
     }
 
-    const {
-      fullName,
-      nationality,
-      phone,
-      dateOfBirth,
-      gender,
-      address,
-      bio,
-      avatarUrl,
-    } = req.body;
+    const { fullName, nationality, phone, dateOfBirth, Gender, address, bio } =
+      req.body;
 
+    // Build avatarUrl from the uploaded file (handled by multer)
+    let avatarUrl;
     if (req.file) {
-      avatarUrl = `/uploads/${req.file.filename}`;
+      avatarUrl = `uploads/${req.file.filename}`;
     }
 
     const updates = Object.fromEntries(
@@ -58,23 +59,36 @@ export const update_user = async (req, res) => {
         nationality,
         phone,
         dateOfBirth,
-        gender,
+        Gender,
         address,
         bio,
         avatarUrl,
-      }).filter(([_, v]) => v !== undefined),
+      }).filter(([_, v]) => v !== undefined && v !== ""),
     );
+    let updatedProfile;
+    if (req.user.role === "admin") {
+      updatedProfile = await AdminProfile.findOneAndUpdate(
+        { userId: user_id },
+        updates,
+        {
+          new: true,
+          runValidators: true,
 
-    const updatedProfile = await ProfileModel.findOneAndUpdate(
-      { userId: user_id },
-      updates,
-      {
-        new: true,
-        runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      );
+    } else {
+      updatedProfile = await ProfileModel.findOneAndUpdate(
+        { userId: user_id },
+        updates,
+        {
+          new: true,
+          runValidators: true,
 
-        setDefaultsOnInsert: true,
-      },
-    );
+          setDefaultsOnInsert: true,
+        },
+      );
+    }
 
     return res.status(200).json({
       success: true,

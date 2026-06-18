@@ -1,36 +1,74 @@
 import mongoose from "mongoose";
 
-// COMMENTS SCHEMA
-
-const CommentSchema = new mongoose.Schema({
-  eventId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Event",
-    required: true,
-  },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  comment: [
-    {
-      userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User_Profile",
-        required: true,
-      },
-      text: {
-        type: String,
-        required: true,
-        trim: true,
-      },
+const CommentSchema = new mongoose.Schema(
+  {
+    eventId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+      required: true,
+      index: true,
     },
-  ],
-  rating: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 5,
-    set: (v) => Math.round(v * 10) / 10, // rounds to 1 decimal
+
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    userProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "userprofiles",
+      required: true,
+    },
+
+    parentComment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+      index: true,
+    },
+
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 1000,
+    },
+
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    repliesCount: {
+      type: Number,
+      default: 0,
+    },
+
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    rating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0,
+      set: (v) => Math.round(v * 10) / 10,
+    },
   },
-  createdAt: { type: Date, default: Date.now },
-});
+  {
+    timestamps: true,
+  },
+);
+
+CommentSchema.index({ eventId: 1, createdAt: -1 });
 
 export const CommentModel = mongoose.model("Comment", CommentSchema);

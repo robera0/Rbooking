@@ -1,7 +1,46 @@
-[] learn about notification design and design the schema for email notification
 [] add a schema of  a review about the app
-[] make the notification side work
-[] make the footer stuck in the end
-// enhance filter performance 
-[] the profile is failing to load the image fix that
-[] make the view in wishlist work 
+[] send the total amount ticket to the tickets route
+[] download the qr code
+[f] show the types of tickets  when  view ticket is clicked 
+[f] show the venues in venue search
+[f] fix the date input and search engine 
+[f] on mobile view make the navbar have the venue and artist attribute
+[f] loading when in explore and other showing events and infos
+[f] make the heart ones in set
+[f] make and pop up error on the comment when uploading
+[f] the time the comment posting 
+[f] cache the event  with pipelines 
+[f] cache the tickets and the images 
+[f] make sure the explore fetch based on the date and ticket 
+[f] the featured event should be the 4 latest date
+[f] make the all experience  wipe the every search
+[f] make sure it shows  to log in if they want to post a comment 
+[f] the login ux in mobile view
+[f] wrap it on docker
+[f] make the user profile find with email
+[f] make it fetch fast when the user logged in wid google
+[f] make the signout work
+           // ADMIN SIDE
+[f] make the manage event functional wid the database
+[] so make the  cache in the admin side too
+// WHEN THE APP IS PUBLISHED 
+[] add the calendar and put all the event there is on that like a poster
+
+
+
+
+src/
+├── api/
+│   ├── auth/
+│   │   └── authApi.js           → login, register, logout, refresh
+│   │
+│   ├── user/
+│   │   └── userApi.js           → getProfile, updateProfile, updateCredentials
+│   │
+│   ├── admin/
+│   │   ├── adminApi.js          → getAdminProfile, updateAdminProfile
+│   │   ├── adminUserApi.js      → getAllUsers, banUser, suspendUser, deleteUser
+│   │   └── adminTicketApi.js    → getAllTickets, refundTicket, cancelTicket
+│   │
+│   └── ticket/
+│       └── ticketApi.js         → buyTicket, getUserTickets, cancelTicket

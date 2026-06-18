@@ -1,7 +1,11 @@
 import express from "express";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
-import { get_user_profile } from "../controllers/user_profileController.js";
-import { update_user } from "../controllers/user_profileController.js";
+import {
+  get_user_profile,
+  update_user,
+  upload,
+} from "../controllers/user_profileController.js";
+
 const userProfilesRouter = express.Router();
 
 userProfilesRouter.get(
@@ -12,6 +16,8 @@ userProfilesRouter.get(
 userProfilesRouter.put(
   "/user_profile",
   authenticateTokenMiddleware,
+  upload.single("avatarUrl"),
   update_user
 );
+
 export default userProfilesRouter;

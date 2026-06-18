@@ -37,7 +37,11 @@ const userSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "active",
-      enum: ["active", "suspended"],
+      enum: ["active", "suspended", "banned"],
+    },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },

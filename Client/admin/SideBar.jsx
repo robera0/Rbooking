@@ -15,7 +15,7 @@ const SideBar = () => {
   return (
     <div className="flex flex-col h-full bg-[#1C1F22]">
       {/*side Bar */}
-      <div className="w-full h-full space-y-6 flex flex-col overflow-y-auto scroll-hidden">
+      <div className="w-full h-full space-y-3 flex flex-col overflow-y-auto scroll-hidden">
         <div className="w-full pt-8 pb-4 flex justify-center items-center space-x-3 border-b border-white/[0.04]">
           <div className="p-2 bg-[#FF7A00]/10 rounded-xl">
             <Tickets className="text-[#FF7A00]" size={24} strokeWidth={2.5} />
@@ -25,7 +25,7 @@ const SideBar = () => {
         <div className="space-y-2 px-4 flex-1">
           {/*Dashboard */}
           <SideMenu
-            path="/dashboard"
+            path="/admin/home"
             name="Dashboard"
             icon={<LayoutDashboard size={20} />}
           />
@@ -47,19 +47,20 @@ const SideBar = () => {
             name="User Management"
             icon={<CreditCard size={20} />}
           />
-          <div className="pt-6 pb-2 pl-4">
-            <h1 className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em]">Others</h1>
-          </div>
-          {/*Setting */}
-          <SideMenu path="/setting" name="Setting" icon={<Settings size={20} />} />
           {/*Payment */}
-          <SideMenu path="/marketing" name="Payment" icon={<Megaphone size={20} />} />
-          {/*Accounts */}
+          <SideMenu path="/admin/payment" name="Earnings & Finance" icon={<Megaphone size={20} />} />
           <SideMenu
-            path="/reports"
-            name="Accounts"
+            path="/admin/reports"
+            name="Reports"
             icon={<ChartNoAxesColumnIncreasing size={20} />}
           />
+          <div className="pt-6 pb-2 pl-4">
+            <h1 className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em]">Account Settings</h1>
+          </div>
+          {/*Profile */}
+          <SideMenu path="/admin/profile" name="Account & Security" icon={<UsersRound size={20} />} />
+          {/*Setting */}
+          <SideMenu path="/admin/setting" name="Preferences" icon={<Settings size={20} />} />
         </div>
         <div className="px-4 pb-8 mt-auto border-t border-white/[0.04] pt-4">
           {/*Logout */}

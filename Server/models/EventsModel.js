@@ -3,10 +3,13 @@ import mongoose from "mongoose";
 // Price range
 export const PriceRangeSchema = new mongoose.Schema(
   {
-    type: String, // standard, VIP, day-pass, etc.
-    currency: String, // USD
+    type: String,
+    currency: String,
     min: Number,
     max: Number,
+    activeFrom: Date,
+    activeUntil: Date,
+    isActive: Boolean,
   },
   { _id: false },
 );
@@ -94,7 +97,12 @@ const BaseEventSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["event", "concert", "festival"],
+      enum: ["generic", "concert", "festival"],
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // ← points to the admin who created it
+      required: true,
     },
     name: String,
     desc: String,
@@ -126,10 +134,18 @@ const BaseEventSchema = new mongoose.Schema(
     },
     links: {
       self: {
-        href: String, // current event
+        href: String, // current event ,we gone fetch the related event with link instead of hard coding it
       },
       attractions: [{ href: String }], // related artist
-      venues: [{ href: String }],
+      venues: {
+        name: {
+          type: String,
+          required: true,
+        },
+        city: String,
+        address: String,
+        pictures: [String],
+      },
     },
     rating: RatingSchema,
     amenities: AmenitySchema,
@@ -156,7 +172,7 @@ const ConcertSchema = new mongoose.Schema({
     name: String,
   },
 
-  musicGenre: String,
+  musicGenre: [String],
   familyFriendly: {
     type: Boolean,
     default: false,
@@ -181,4 +197,4 @@ const GenericEventSchema = new mongoose.Schema({
   category: String, // sports, conference, expo, etc.
 });
 
-export const GenericEvent = Event.discriminator("event", GenericEventSchema);
+export const GenericEvent = Event.discriminator("generic", GenericEventSchema);

@@ -2,16 +2,22 @@ import express from "express";
 import {
   get_comments,
   post_comments,
+  update_comment,
 } from "../controllers/commentController.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 
-const commentrouter = express.Router();
+const commentRouter = express.Router();
 // getting the event id
-commentrouter.get("/events/:id", get_comments);
-commentrouter.post(
-  "/auth/comments/:id",
+commentRouter.get("/events/:eventId/comments", get_comments);
+commentRouter.patch(
+  "/comments/:commentId/like",
+  authenticateTokenMiddleware,
+  update_comment,
+);
+commentRouter.post(
+  "/auth/events/:eventId/comments",
   authenticateTokenMiddleware,
   post_comments,
 );
 
-export default commentrouter;
+export default commentRouter;
