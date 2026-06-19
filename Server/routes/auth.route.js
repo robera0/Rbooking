@@ -1,10 +1,10 @@
 import express from "express";
 import {
-  login_user,
+  login,
   refresh,
   logout,
-  register_user,
-} from "../controllers/authController.js";
+  register,
+} from "../controllers/auth.controller.js";
 import { user } from "../controllers/user.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { updateUser, completeProfile } from "../controllers/user.controller.js";
@@ -68,17 +68,17 @@ authRouter.get(
   },
 );
 
-authRouter.get("/user", authenticateTokenMiddleware, user);
-authRouter.post("/signup/user", register_user);
+authRouter.post("/signup/user", register);
 //authRouter.post("/signup/admin", register_admin);
-authRouter.post("/login", login_user);
+authRouter.post("/login", login);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);
 authRouter.post("/tokens", refresh);
-authRouter.put(
-  "/complete-profile",
-  authenticateTokenMiddleware,
+
+authRouter.use(authenticateTokenMiddleware);
+authRouter.route("/user").get(user).put(updateUser);
+authRouter.route(
+  "/complete-profile",).put(
   completeProfile,
 );
-authRouter.put("/user", authenticateTokenMiddleware, updateUser);
 
 export default authRouter;

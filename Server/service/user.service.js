@@ -34,7 +34,7 @@ class UserService {
     }
 
     static async findByPhoneNumber(phoneNumber) {
-        return User.findOne({ phoneNumber });
+        return await User.findOne({ phoneNumber });
     }
     static async findAll(page = 1, limit = 10) {
         const skip = (page - 1) * limit;
@@ -42,6 +42,12 @@ class UserService {
             .select("-password")
             .skip(skip)
             .limit(limit);
+    }
+
+    static async findByRefreshToken(refreshToken) {
+        return await User.findOne({
+            "refreshTokens.token": refreshToken,
+          });
     }
 }
 
