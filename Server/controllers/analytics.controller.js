@@ -1,7 +1,7 @@
-import { Event } from "../models/EventsModel.js";
+import { Event } from "../models/events.model.js";
 import { UserModel } from "../models/user.model.js";
-import { TicketModel } from "../models/TicketModel.js";
-import { UserTicketModel } from "../models/UserTicketModel.js";
+import { TicketModel } from "../models/ticket.model.js";
+import { UserTicketModel } from "../models/userTicket.model.js";
 
 // Utility function to get dates
 const getDateRanges = () => {
@@ -30,7 +30,7 @@ export const get_dashboard_stats = async (req, res) => {
     });
 
     // 2. Events & Bookings
-    const totalEvents = await Event.countDocuments();
+    const totalEvents = await Event.countDocuments({});
     const totalBookings = await UserTicketModel.countDocuments();
     const pendingApprovals = await UserTicketModel.countDocuments({
       status: "pending",

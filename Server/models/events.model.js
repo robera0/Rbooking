@@ -101,7 +101,7 @@ const BaseEventSchema = new mongoose.Schema(
     },
     adminId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // ← points to the admin who created it
+      ref: "AdminProfile",
       required: true,
     },
     name: String,

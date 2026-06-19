@@ -4,14 +4,14 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import connectDB from "./config/databse.js";
-import eventRouter from "./routes/eventRoutes.js";
-import ticketRouter from "./routes/ticketRoutes.js";
-import commentRouter from "./routes/commentRoutes.js";
-import wishlistRouter from "./routes/wishlistRoutes.js";
-import notiRouter from "./routes/notificationRouter.js";
-import authRouter from "./routes/authRoutes.js";
-import userProfilesRouter from "./routes/profileRoutes.js";
-import adminRouter from "./routes/adminRoutes.js";
+import eventRouter from "./routes/event.routes.js";
+import ticketRouter from "./routes/ticket.routes.js";
+import commentRouter from "./routes/comment.routes.js";
+import wishlistRouter from "./routes/wishlist.routes.js";
+import notiRouter from "./routes/notification.routes.js";
+import authRouter from "./routes/auth.routes.js";
+import userProfilesRouter from "./routes/profile.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 import cookieParser from "cookie-parser";
 import passport from "./config/googleAuth.js";
 import session from "express-session";
@@ -22,7 +22,7 @@ import {
   Concert,
   Festival,
   GenericEvent,
-} from "./models/EventsModel.js";
+} from "./models/events.model.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

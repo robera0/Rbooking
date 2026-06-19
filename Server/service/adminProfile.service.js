@@ -1,4 +1,4 @@
-import { AdminProfile } from "Server/models/AdminProfileModel";
+import { AdminProfile } from "../models/adminProfile.model.js";
 
 class AdminProfileService {
   static async create(userData) {

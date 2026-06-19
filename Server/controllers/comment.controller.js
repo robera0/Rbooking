@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { CommentModel } from "../models/CommentModel.js";
-import { ProfileModel } from "../models/ProfileModel.js";
+import { CommentModel } from "../models/comment.model.js";
+import { ProfileModel } from "../models/profile.model.js";
 
 export const get_comments = async (req, res) => {
   try {

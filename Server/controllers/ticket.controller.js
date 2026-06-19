@@ -1,5 +1,5 @@
-import { UserTicketModel } from "../models/UserTicketModel.js";
-import { TicketModel } from "../models/TicketModel.js";
+import { UserTicketModel } from "../models/userTicket.model.js";
+import { TicketModel } from "../models/ticket.model.js";
 import mongoose from "mongoose";
 import redisClient, { clearTicketCache } from "../config/redis.js";
 import { RedisClient } from "redis";

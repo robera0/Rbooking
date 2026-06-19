@@ -7,13 +7,13 @@ import {
   addEvent,
   addUser,
   updateUser,
-} from "../controllers/adminController.js";
+} from "../controllers/admin.controller.js";
 import {
   get_dashboard_stats,
   get_transaction_ledger,
   get_transaction_by_id,
   get_revenue_history,
-} from "../controllers/analyticsController.js";
+} from "../controllers/analytics.controller.js";
 
 const adminRouter = express.Router();
 

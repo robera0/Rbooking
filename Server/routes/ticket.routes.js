@@ -3,7 +3,7 @@ import {
   get_tickets,
   get_tickets_info,
   update_ticket_status,
-} from "../controllers/usersTicketController.js";
+} from "../controllers/ticket.controller.js";
 import dotenv from "dotenv";
 import axios from "axios";
 import TransactionService from "../service/transaction.service.js";

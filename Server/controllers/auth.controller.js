@@ -2,7 +2,7 @@ import { generateRefreshToken, generateAccessToken } from "../service/token.js";
 import { hashPasswords, comparePassword } from "../service/password.js";
 import { UserModel } from "../models/user.model.js";
 import dotenv from "dotenv";
-import { AdminProfile } from "../models/AdminProfileModel.js";
+import { AdminProfile } from "../models/adminProfile.model.js";
 import jwt from "jsonwebtoken";
 dotenv.config();
 

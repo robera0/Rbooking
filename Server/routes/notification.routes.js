@@ -3,7 +3,7 @@ import {
   add_notification,
   get_notification,
   read_notification,
-} from "../controllers/notificationController.js";
+} from "../controllers/notification.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 const notiRouter = express.Router();
 

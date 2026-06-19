@@ -1,9 +1,9 @@
-import { Event } from "../models/EventsModel.js";
-import { TicketModel } from "../models/TicketModel.js";
+import { Event } from "../models/events.model.js";
+import { TicketModel } from "../models/ticket.model.js";
 import multer from "multer";
 import redisClient from "../config/redis.js";
 import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
-
+import EventService from "../service/event.service.js";
 //ADD EVENTS
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -69,7 +69,7 @@ export const add_event = async (req, res) => {
       desc,
     };
 
-    const newEvent = await Event.create(events);
+    const newEvent = await EventService.create(events);
     await clearEventsCache();
     res.status(200).json({
       success: true,
@@ -133,7 +133,7 @@ export const get_events = async (req, res) => {
         { type: { $regex: search, $options: "i" } },
       ];
     }
-    const events = await Event.find(query).sort({
+    const events = await EventService.find(query).sort({
       "date.start.localDate": -1,
     });
 
@@ -180,7 +180,9 @@ export const featured_events = async (req, res) => {
       });
     }
     console.log("Fetching from database...");
-    const events = await Event.find().sort({ "date.start": -1 }).limit(limit);
+    const events = await EventService.find()
+      .sort({ "date.start": -1 })
+      .limit(limit);
     const featuredEvents = await Promise.all(
       events?.map(async (event) => {
         const tickets = await TicketModel.find({
@@ -220,22 +222,7 @@ export const fetchEvents_id = async (req, res) => {
     }
 
     // FIXED: Correct populate path for your nested schema
-    const event = await Event.findById(eventId).populate({
-      path: "comments", // This is the array of Comment documents in Event
-      populate: [
-        {
-          path: "user", // The user who created the comment document
-          model: "User",
-          select: "fullName avatarUrl",
-        },
-        {
-          path: "comment.userId", // Nested path for individual comments
-          model: "userprofiles",
-          select: "fullName avatarUrl",
-        },
-      ],
-    });
-
+    const event = await EventService.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
@@ -272,7 +259,7 @@ export const get_event_by_id = async (req, res) => {
         .status(200)
         .json({ success: true, event: JSON.parse(cachedEvent) });
     }
-    const event = await Event.findById(eventId);
+    const event = await EventService.findById(eventId);
     if (!event) {
       return res
         .status(404)
@@ -343,9 +330,10 @@ export const update_event = async (req, res) => {
       (key) => updateData[key] === undefined && delete updateData[key],
     );
 
-    const updatedEvent = await Event.findByIdAndUpdate(eventId, updateData, {
-      new: true,
-    });
+    const updatedEvent = await EventService.findByIdAndUpdate(
+      eventId,
+      updateData,
+    );
 
     if (!updatedEvent) {
       return res

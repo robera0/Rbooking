@@ -7,7 +7,7 @@ import {
   get_event_by_id,
   update_event,
   upload,
-} from "../controllers/eventsController.js";
+} from "../controllers/events.controller.js";
 
 const eventRouter = express.Router();
 

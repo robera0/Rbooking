@@ -1,4 +1,4 @@
-import { notificationModel } from "../models/NotificationModel.js";
+import { notificationModel } from "../models/notification.model.js";
 import mongoose from "mongoose";
 
 export const get_notification = async (req, res) => {

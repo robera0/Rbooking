@@ -3,7 +3,7 @@ import {
   get_comments,
   post_comments,
   update_comment,
-} from "../controllers/commentController.js";
+} from "../controllers/comment.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 
 const commentRouter = express.Router();

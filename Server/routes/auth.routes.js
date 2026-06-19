@@ -4,8 +4,8 @@ import {
   refresh,
   logout,
   register_user,
-} from "../controllers/authController.js";
-import { user } from "../controllers/user.controller.js";
+} from "../controllers/auth.controller.js";
+import { getProfile } from "../controllers/user.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { updateUser, completeProfile } from "../controllers/user.controller.js";
 import passport from "../config/googleAuth.js";
@@ -33,7 +33,7 @@ authRouter.get(
       if (!user) {
         return res.redirect(
           (process.env.CLIENT_URL || "http://localhost:5173") +
-          "/login?error=NoUser",
+            "/login?error=NoUser",
         );
       }
 
@@ -62,13 +62,13 @@ authRouter.get(
       console.error("❌ OAuth error:", err);
       res.redirect(
         (process.env.CLIENT_URL || "http://localhost:5173") +
-        "/login?error=OAuthFail",
+          "/login?error=OAuthFail",
       );
     }
   },
 );
 
-authRouter.get("/user", authenticateTokenMiddleware, user);
+authRouter.get("/user", authenticateTokenMiddleware, getProfile);
 authRouter.post("/signup/user", register_user);
 //authRouter.post("/signup/admin", register_admin);
 authRouter.post("/login", login_user);

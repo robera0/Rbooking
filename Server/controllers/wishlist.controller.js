@@ -1,4 +1,4 @@
-import { wishlistModel } from "../models/Wishlist.js";
+import { wishlistModel } from "../models/wishlist.model.js";
 import mongoose from "mongoose";
 import redisClient, { clearWishListCache } from "../config/redis.js";
 
