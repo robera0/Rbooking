@@ -16,11 +16,10 @@ const storage = multer.diskStorage({
 export const upload = multer({ storage });
 
 export const getProfile = catchAsync(async (req, res, next) => {
-
   const userId = req.user.id;
   let profile;
   if (req.user.role === "admin") {
-    profile = await AdminProfile.findOne({ userId: user_id })
+    profile = await AdminProfile.findOne({ userId: userId })
       .populate("userId")
       .exec();
   } else {
@@ -29,12 +28,10 @@ export const getProfile = catchAsync(async (req, res, next) => {
       .exec();
   }
   res.status(200).json({ user: profile });
-
 });
 
 // EDIT USER PROFILE
-export const update_user = catchAsync(async (req, res, next) => {
-
+export const updateUser = catchAsync(async (req, res, next) => {
   const user_id = req.user.id;
 
   if (!user_id) {

@@ -1,24 +1,19 @@
 import express from "express";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import {
-  get_user_profile,
-  update_user,
+  getProfile,
+  updateUser,
   upload,
 } from "../controllers/profile.controller.js";
 
-const userRouter = express.Router();
+const userProfilesRouter = express.Router();
 
-userRouter.get("/profile", getProfile)
-userProfilesRouter.get(
-  "/profile",
-  authenticateTokenMiddleware,
-  get_user_profile
-);
+userProfilesRouter.get("/profile", authenticateTokenMiddleware, getProfile);
 userProfilesRouter.put(
   "/user_profile",
   authenticateTokenMiddleware,
   upload.single("avatarUrl"),
-  update_user
+  updateUser,
 );
 
 export default userProfilesRouter;
