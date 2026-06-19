@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 import { UserModel } from "../models/user.model.js";
 import bcrypt from "bcrypt";
-import { ProfileModel } from "../models/profile.model.js";
 import catchAsync from "../errors/catchAsync.js";
 import UserService from "../service/user.service.js";
+import ProfileService from "../service/profile.service.js";
 
 export const getProfile = catchAsync(async (req, res, next) => {
   const user = req.user.id;
@@ -29,10 +29,7 @@ export const updateUser = catchAsync(async (req, res, next) => {
     updates.password = await bcrypt.hash(updates.password, salt);
   }
 
-  const updatedUser = await UserModel.findByIdAndUpdate(userId, updates, {
-    new: true,
-    runValidators: true,
-  });
+  const updatedUser = await UserService.findByIdAndUpdate(userId, updates);
 
   return res.status(200).json({
     success: true,
@@ -46,14 +43,15 @@ export const completeProfile = catchAsync(async (req, res) => {
 
   const user = await UserModel.findById({ id });
   // update or create profile
-  const profile = await ProfileModel.findOneAndUpdate(
-    { userId: user },
-    { fullName, phone: phoneNumber, address: city, dateOfBirth },
-    { new: true, upsert: true }, // upsert = create if doesn't exist
-  );
+  const profile = await ProfileService.findOneAndUpdate(user, {
+    fullName,
+    phone: phoneNumber,
+    address: city,
+    dateOfBirth,
+  });
 
   // mark user as profile complete
-  await UserModel.findByIdAndUpdate(req.user.id, { isProfileComplete: true });
+  await UserService.findByIdAndUpdate(id, { isProfileComplete: true });
 
   res.json({ success: true, profile });
 });
