@@ -1,81 +1,63 @@
 import mongoose from "mongoose";
-import { CommentModel } from "../models/comment.model.js";
-import { ProfileModel } from "../models/profile.model.js";
+import commentService from "../service/comment.service.js";
+import catchAsync from "../errors/catchAsync.js";
+import ProfileService from "../service/profile.service.js";
 
-export const get_comments = async (req, res) => {
-  try {
-    const { eventId } = req.params;
+// get comment
+export const get_comments = catchAsync(async (req, res) => {
+  const { eventId } = req.params;
 
-    const comment = await CommentModel.find({ eventId })
-      .sort({ createdAt: -1 })
-      .populate({
-        path: "userProfile",
-        select: "fullName avatarUrl ",
-      });
-    res.status(200).json({ comments: comment });
-  } catch {
-    res.status(500).json({ message: "No comments with the this id " });
+  const comment = await commentService.find(eventId);
+
+  res.status(200).json({ comments: comment });
+});
+
+// post comment
+export const post_comments = catchAsync(async (req, res) => {
+  const { eventId } = req.params;
+  const { text, rating } = req.body;
+
+  if (!text || text.trim() === "") {
+    return res.status(400).json({ message: "Comment text is required" });
   }
-};
 
-export const post_comments = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const { text, rating } = req.body;
+  const userId = new mongoose.Types.ObjectId(req.user.id);
 
-    if (!text || text.trim() === "") {
-      return res.status(400).json({ message: "Comment text is required" });
-    }
-
-    const userId = new mongoose.Types.ObjectId(req.user.id);
-
-    const user_profile = await ProfileModel.findOne({ userId });
-    if (!user_profile) {
-      return res.status(404).json({ message: "User profile not found" });
-    }
-
-    const eventObjectId = new mongoose.Types.ObjectId(eventId);
-    const newComment = {
-      eventId: eventObjectId,
-      userId: userId,
-      userProfile: user_profile._id,
-      text,
-      rating,
-    };
-
-    const commentDoc = await CommentModel.create(newComment);
-
-    res.status(200).json({
-      message: "Comment added successfully",
-      comments: commentDoc,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to add comment" });
+  const userProfile = await ProfileService.findByUserId(userId);
+  if (!userProfile) {
+    return res.status(404).json({ message: "User profile not found" });
   }
-};
 
-export const update_comment = async (req, res) => {
-  try {
-    const userId = new mongoose.Types.ObjectId(req.user.id);
+  const eventObjectId = new mongoose.Types.ObjectId(eventId);
+  const newComment = {
+    eventId: eventObjectId,
+    userId: userId,
+    userProfile: userProfile._id,
+    text,
+    rating,
+  };
 
-    const { commentId } = req.body;
+  const commentDoc = await commentService.create(newComment);
 
-    const updatedComment = await CommentModel.findByIdAndUpdate(
-      commentId,
-      {
-        $addToSet: {
-          likes: userId,
-        },
-      },
-      { new: true },
-    );
+  res.status(200).json({
+    message: "Comment added successfully",
+    comments: commentDoc,
+  });
+});
 
-    res.status(200).json({
-      message: "Comment liked successfully",
-      updatedComment,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+// update comment liking and disliking comment
+export const update_comment = catchAsync(async (req, res) => {
+  const userId = new mongoose.Types.ObjectId(req.user.id);
+
+  const { commentId } = req.body;
+
+  const updatedComment = await commentService.findByIdAndUpdate(
+    commentId,
+    userId,
+  );
+
+  res.status(200).json({
+    message: "Comment liked successfully",
+    updatedComment,
+  });
+});

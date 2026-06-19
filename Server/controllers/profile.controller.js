@@ -23,7 +23,7 @@ export const getProfile = catchAsync(async (req, res, next) => {
       .populate("userId")
       .exec();
   } else {
-    profile = await ProfileModel.findOne({ userId: user_id })
+    profile = await ProfileModel.findOne({ userId: userId })
       .populate("userId")
       .exec();
   }

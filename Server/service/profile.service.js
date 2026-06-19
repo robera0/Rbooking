@@ -1,4 +1,4 @@
-import { ProfileModel } from "Server/models/profile.model";
+import { ProfileModel } from "../models/profile.model.js";
 class ProfileService {
   static create(userData) {
     return new ProfileModel(userData);
@@ -12,6 +12,9 @@ class ProfileService {
     return await ProfileModel.findByIdAndUpdate(id, userData, {
       new: true,
     });
+  }
+  static async findByUserId(userId) {
+    return ProfileModel.findOne({ userId }).populate("userId");
   }
 
   static async findById(id) {
