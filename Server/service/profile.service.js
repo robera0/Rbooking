@@ -1,8 +1,8 @@
-import User from "../model/user.model.js";
+import Profile from "../models/profile.model.js";
 
 class ProfileService {
     static create(userData) {
-        return new User(userData);
+        return new Profile(userData);
     }
 
     static async save(obj) {
@@ -10,16 +10,16 @@ class ProfileService {
     }
 
     static async updateById(id, userData) {
-        return await User.findByIdAndUpdate(id, userData, { new: true });
+        return await Profile.findByIdAndUpdate(id, userData, { new: true });
     }
 
 
     static async findById(id) {
-        return await User.findById(id);
+        return await Profile.findById(id);
     }
 
     static async findByPhoneNumber(phoneNumber) {
-        return User.findOne({ phoneNumber });
+        return Profile.findOne({ phoneNumber });
     }
     static async findAll(page = 1, limit = 10) {
         const skip = (page - 1) * limit;

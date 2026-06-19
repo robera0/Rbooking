@@ -1,4 +1,4 @@
-import { ProfileModel } from "../models/ProfileModel.js";
+import { ProfileModel } from "../models/profile.model.js";
 import { AdminProfile } from "../models/AdminProfileModel.js";
 import multer from "multer";
 import catchAsync from "../errors/catchAsync.js";
