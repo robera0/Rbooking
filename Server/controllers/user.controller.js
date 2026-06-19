@@ -6,10 +6,10 @@ import catchAsync from "../errors/catchAsync.js";
 import UserService from "../service/user.service.js";
 
 export const getProfile = catchAsync(async (req, res, next) => {
-  const user = req.user;
+  const user = req.user.id;
   if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-  const validUser = await UserService.findById(user._id).select("-password");
+  const validUser = await UserService.findById(user);
   res.json({ user: validUser });
 });
 
@@ -40,23 +40,20 @@ export const updateUser = catchAsync(async (req, res, next) => {
     message: "User email or password updated successfully",
   });
 });
-export const completeProfile = async (req, res) => {
-  try {
-    const { fullName, phoneNumber, city, dateOfBirth } = req.body;
+export const completeProfile = catchAsync(async (req, res) => {
+  const { id } = req.user.id;
+  const { fullName, phoneNumber, city, dateOfBirth } = req.body;
 
-    const user = await UserModel.findById(req.user.id);
-    // update or create profile
-    const profile = await ProfileModel.findOneAndUpdate(
-      { userId: user },
-      { fullName, phone: phoneNumber, address: city, dateOfBirth },
-      { new: true, upsert: true }, // upsert = create if doesn't exist
-    );
+  const user = await UserModel.findById({ id });
+  // update or create profile
+  const profile = await ProfileModel.findOneAndUpdate(
+    { userId: user },
+    { fullName, phone: phoneNumber, address: city, dateOfBirth },
+    { new: true, upsert: true }, // upsert = create if doesn't exist
+  );
 
-    // mark user as profile complete
-    await UserModel.findByIdAndUpdate(req.user.id, { isProfileComplete: true });
+  // mark user as profile complete
+  await UserModel.findByIdAndUpdate(req.user.id, { isProfileComplete: true });
 
-    res.json({ success: true, profile });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
+  res.json({ success: true, profile });
+});

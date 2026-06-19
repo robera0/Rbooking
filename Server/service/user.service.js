@@ -33,7 +33,7 @@ class UserService {
   }
 
   static async findById(id) {
-    return await UserModel.findById(id);
+    return await UserModel.findById(id).select("-password");
   }
 
   static async findByGoogleId(id) {
