@@ -1,9 +1,7 @@
-import { Event } from "../models/EventsModel.js";
-import { UserModel } from "../models/user.model.js";
-import { AdminProfile } from "../models/AdminProfileModel.js";
-import AdminProfileService from "Server/service/adminProfile.service.js";
+import AdminProfileService from "../service/adminProfile.service.js";
 import catchAsync from "../errors/catchAsync.js";
-import UserService from "Server/service/user.service.js";
+import UserService from "../service/user.service.js";
+import EventService from "../service/event.service.js";
 
 export const getAdminProfile = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
@@ -13,7 +11,7 @@ export const getAdminProfile = catchAsync(async (req, res, next) => {
   }).populate("userId", "email username role status");
   res.json({ admin: validAdmin });
 });
-export const delete_users = catchAsync(async (req, res, next) => {
+export const deleteUsers = catchAsync(async (req, res, next) => {
   const { userIds } = req.body;
   if (!userIds || !Array.isArray(userIds))
     return res
@@ -24,7 +22,7 @@ export const delete_users = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: "Users deleted" });
 });
 
-export const suspend_users = catchAsync(async (req, res, next) => {
+export const suspendUsers = catchAsync(async (req, res, next) => {
   const { userIds } = req.body;
   if (!userIds || !Array.isArray(userIds))
     return res.status(400).json({ success: false, message: "Invalid payload" });
@@ -33,18 +31,18 @@ export const suspend_users = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: "Users suspended" });
 });
 
-export const delete_events = catchAsync(async (req, res, next) => {
+export const deleteEvents = catchAsync(async (req, res, next) => {
   const { eventIds } = req.body;
   if (!eventIds || !Array.isArray(eventIds))
     return res.status(400).json({ success: false, message: "Invalid payload" });
 
-  await Event.deleteMany({ _id: { $in: eventIds } });
+  await EventService.deleteMany(eventIds);
   res.status(200).json({ success: true, message: "Events deleted" });
 });
 
-export const add_event = catchAsync(async (req, res, next) => {
+export const addEvent = catchAsync(async (req, res, next) => {
   const payload = req.body;
-  const newEvent = await Event.create({
+  const newEvent = await EventService.create({
     type: "event", // Base required discriminator
     name: payload.name || "Untitled Event",
     desc: payload.desc || "",
@@ -59,7 +57,7 @@ export const add_event = catchAsync(async (req, res, next) => {
   res.status(201).json({ success: true, event: newEvent });
 });
 
-export const add_user = catchAsync(async (req, res, next) => {
+export const addUser = catchAsync(async (req, res, next) => {
   const payload = req.body;
   const newUser = await UserService.create({
     username: payload.username || `user_${Date.now()}`,
@@ -72,7 +70,7 @@ export const add_user = catchAsync(async (req, res, next) => {
   res.status(201).json({ success: true, user: newUser });
 });
 
-export const update_user = catchAsync(async (req, res) => {
+export const updateUser = catchAsync(async (req, res) => {
   const { userId } = req.params;
   const { role, status } = req.body;
   const updateData = {};

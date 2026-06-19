@@ -1,12 +1,12 @@
 import express from "express";
 import {
-  adminProfile,
-  delete_users,
-  suspend_users,
-  delete_events,
-  add_event,
-  add_user,
-  update_user,
+  getAdminProfile,
+  deleteUsers,
+  suspendUsers,
+  deleteEvents,
+  addEvent,
+  addUser,
+  updateUser,
 } from "../controllers/adminController.js";
 import {
   get_dashboard_stats,
@@ -17,14 +17,14 @@ import {
 
 const adminRouter = express.Router();
 
-adminRouter.get("/admin_users", adminProfile);
-adminRouter.post("/users", add_user);
-adminRouter.put("/users/:userId", update_user);
-adminRouter.post("/users/delete", delete_users);
-adminRouter.post("/users/suspend", suspend_users);
+adminRouter.get("/admin_users", getAdminProfile);
+adminRouter.post("/users", addUser);
+adminRouter.put("/users/:userId", updateUser);
+adminRouter.post("/users/delete", deleteUsers);
+adminRouter.post("/users/suspend", suspendUsers);
 
-adminRouter.post("/events/delete", delete_events);
-adminRouter.post("/events", add_event);
+adminRouter.post("/events/delete", deleteEvents);
+adminRouter.post("/events", addEvent);
 
 // Analytics
 adminRouter.get("/analytics/dashboard", get_dashboard_stats);
