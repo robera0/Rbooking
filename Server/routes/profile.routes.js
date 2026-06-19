@@ -4,12 +4,13 @@ import {
   get_user_profile,
   update_user,
   upload,
-} from "../controllers/user_profileController.js";
+} from "../controllers/profile.controller.js";
 
-const userProfilesRouter = express.Router();
+const userRouter = express.Router();
 
+userRouter.get("/profile", getProfile)
 userProfilesRouter.get(
-  "/user_profile",
+  "/profile",
   authenticateTokenMiddleware,
   get_user_profile
 );

@@ -1,21 +1,20 @@
 import mongoose from "mongoose";
-import { UserModel } from "../models/UserModel.js";
+import { UserModel } from "../models/user.model.js";
 import bcrypt from "bcrypt";
-import { ProfileModel } from "../models/ProfileModel.js";
-// GET USER PROFILE
-export const user = async (req, res) => {
-  try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "their is no user " });
+import { ProfileModel } from "../models/profile.model.js";
+import catchAsync from "../errors/catchAsync.js";
+import UserService from "../service/user.service.js";
 
-    const validUser = await UserModel.findOne({ email: user.email }).select(
-      "-password",
-    );
-    res.json({ user: validUser });
-  } catch {
-    res.status(401).json({ message: "the user id is not true " });
-  }
-};
+export const getProfile = catchAsync(async (req, res, next) => {
+
+  const user = req.user;
+  if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+  const validUser = await UserService.findById(user._id).select(
+    "-password",
+  );
+  res.json({ user: validUser });
+});
 
 export const updateUser = async (req, res) => {
   try {

@@ -5,12 +5,12 @@ import {
   logout,
   register_user,
 } from "../controllers/authController.js";
-import { user } from "../controllers/userController.js";
+import { user } from "../controllers/user.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
-import { updateUser, completeProfile } from "../controllers/userController.js";
+import { updateUser, completeProfile } from "../controllers/user.controller.js";
 import passport from "../config/googleAuth.js";
 import { generateAccessToken, generateRefreshToken } from "../service/token.js";
-import { UserModel } from "../models/UserModel.js";
+import { UserModel } from "../models/user.model.js";
 const authRouter = express.Router();
 // Google OAuth
 authRouter.get(
@@ -33,7 +33,7 @@ authRouter.get(
       if (!user) {
         return res.redirect(
           (process.env.CLIENT_URL || "http://localhost:5173") +
-            "/login?error=NoUser",
+          "/login?error=NoUser",
         );
       }
 
@@ -62,7 +62,7 @@ authRouter.get(
       console.error("❌ OAuth error:", err);
       res.redirect(
         (process.env.CLIENT_URL || "http://localhost:5173") +
-          "/login?error=OAuthFail",
+        "/login?error=OAuthFail",
       );
     }
   },
