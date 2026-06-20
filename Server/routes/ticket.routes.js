@@ -1,12 +1,12 @@
 import express from "express";
 import {
-  get_tickets,
-  get_tickets_info,
-  update_ticket_status,
+  getTickets,
+  getTicketsInfo,
+  updateTicketStatus,
 } from "../controllers/ticket.controller.js";
 import dotenv from "dotenv";
 import axios from "axios";
-import TransactionService from "../service/transaction.service.js";
+import TransactionService from "../service/ticket.service.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { createPayment } from "../controllers/payment.controller.js";
 dotenv.config();
@@ -14,14 +14,14 @@ dotenv.config();
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 const ticketRouter = express.Router();
 
-ticketRouter.get("/tickets_home", authenticateTokenMiddleware, get_tickets);
+ticketRouter.get("/tickets_home", authenticateTokenMiddleware, getTickets);
 ticketRouter.get(
   "/tickets_home/:ticketId",
   authenticateTokenMiddleware,
-  get_tickets_info,
+  getTicketsInfo,
 );
 ticketRouter.post("/tickets_home", authenticateTokenMiddleware, createPayment);
-ticketRouter.patch("/ticket/:ticketId/status", update_ticket_status);
+ticketRouter.patch("/ticket/:ticketId/status", updateTicketStatus);
 
 ticketRouter.get("/ticket/chapa-webhook", async (req, res) => {
   const { trx_ref, status } = req.query;
