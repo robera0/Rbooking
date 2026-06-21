@@ -11,7 +11,7 @@ class UserService {
     return await UserModel.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { new: true },
+      { new: true, runValidators: true },
     ).select("-password -refreshTokens");
   }
   static async suspendUsers(userIds) {
@@ -50,6 +50,10 @@ class UserService {
     return UserModel.deleteMany({
       _id: { $in: userIds },
     });
+  }
+
+  static async countDocuments(query = {}) {
+    return UserModel.countDocuments(query);
   }
   static async findAll(page = 1, limit = 10) {
     const skip = (page - 1) * limit;

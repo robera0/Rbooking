@@ -10,7 +10,7 @@ const userProfilesRouter = express.Router();
 
 userProfilesRouter.get("/profile", authenticateTokenMiddleware, getProfile);
 userProfilesRouter.put(
-  "/user_profile",
+  "/profile",
   authenticateTokenMiddleware,
   upload.single("avatarUrl"),
   updateUser,

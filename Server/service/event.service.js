@@ -43,7 +43,7 @@ class EventService {
     return await Event.deleteMany({ _id: { $in: eventIds } });
   }
 
-  static async countDocuments(query) {
+  static async countDocuments(query = {}) {
     return await Event.countDocuments(query);
   }
 }

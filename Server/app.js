@@ -16,7 +16,7 @@ import cookieParser from "cookie-parser";
 import passport from "./config/googleAuth.js";
 import session from "express-session";
 import rateLimit from "express-rate-limit";
-
+import errorHandler from "./errors/errorHandler.js";
 import {
   Event,
   Concert,
@@ -87,5 +87,5 @@ app.use("/api/auth", notiRouter);
 app.use("/api/auth", authRouter);
 
 app.use("/api/admin", adminRouter);
-
+app.use(errorHandler);
 startServer();

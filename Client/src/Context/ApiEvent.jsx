@@ -322,7 +322,7 @@ export const ApiProvider = ({ children }) => {
   // GET USERPROFILE
   const fetchUser = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/user_profile`, {
+      const response = await fetch(`${API_URL}/api/auth/profile`, {
         method: "GET",
         credentials: "include",
       });
@@ -346,7 +346,7 @@ export const ApiProvider = ({ children }) => {
     retry: 1,
     enabled: !!user,
   });
-  console.log(userProfile);
+  console.log("the profile is ", userProfile);
   return (
     <ApiContext.Provider
       value={{

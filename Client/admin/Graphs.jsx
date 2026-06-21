@@ -20,7 +20,7 @@ const series = [
     dataKey: "rate",
     showMark: true,
     area: true, // enable area fill
-    color: "#A61C68", // line color
+    color: "#FF7A00", // line color
   },
 ];
 
@@ -34,16 +34,20 @@ export default function BookingChart() {
       height={300}
       grid={{ vertical: false, horizontal: true }}
       sx={{
+        backgroundColor: '#1C1F22',
+        "& .MuiChartsAxis-left .MuiChartsAxis-tickLabel": {
+          fill: "#fff",
+        },
         "& .MuiLineElement-root": {
           strokeWidth: 2,
         },
         "& .MuiMarkElement-root": {
-          stroke: "#A61C68",
+          stroke: "#FF7A00",
           strokeWidth: 2,
           fill: "#fff",
         },
         "& .MuiAreaElement-root": {
-          fill: "#E1EAFC",
+          fill: "rgba(255,122,0,0.15)",
           fillOpacity: 1,
         },
       }}

@@ -7,7 +7,13 @@ class ProfileService {
   static async save(obj) {
     await obj.save();
   }
-
+  static async findOneAndUpdate(user, data) {
+    return await ProfileModel.findOneAndUpdate(
+      { userId: user },
+      data,
+      { new: true, upsert: true }, // upsert = create if doesn't exist
+    );
+  }
   static async updateById(id, userData) {
     return await ProfileModel.findByIdAndUpdate(id, userData, {
       new: true,

@@ -1,5 +1,4 @@
-
-import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
+import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 
 const settings = {
   width: 150,
@@ -15,9 +14,10 @@ export default function ArcDesign() {
       sx={(theme) => ({
         [`& .${gaugeClasses.valueText}`]: {
           fontSize: 40,
+          fill: "#ffffff",
         },
         [`& .${gaugeClasses.valueArc}`]: {
-          fill: '#A61866',
+          fill: "#e1611cf0",
         },
         [`& .${gaugeClasses.referenceArc}`]: {
           fill: theme.palette.text.disabled,

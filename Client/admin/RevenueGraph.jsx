@@ -18,7 +18,7 @@ const xLabels = [
 
 export default function StackedAreaChart() {
   return (
-    <Box sx={{ width: '100%', height: 300 }}>
+    <Box sx={{ width: '100%', height: 300, backgroundColor: '#1C1F22', borderRadius: '1rem' }}>
       <LineChart
         series={[
           { data: uData, 
@@ -27,7 +27,7 @@ export default function StackedAreaChart() {
             stack: 'total',
              showMark: false ,
 
-            color:'#E3B9FF'},
+            color:'#FF7A00'},
           { 
             data: pData, 
             label: 'Profit', 

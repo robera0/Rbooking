@@ -1,4 +1,4 @@
-import TransactionService from "../service/transaction.service.js";
+import TransactionService from "../service/ticket.service.js";
 import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
