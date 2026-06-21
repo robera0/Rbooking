@@ -1,5 +1,9 @@
 import { ProfileModel } from "../models/profile.model.js";
+<<<<<<< HEAD
 import { AdminProfile } from "../models/adminProfile.model.js";
+=======
+import { AdminProfile } from "../models/AdminProfileModel.js";
+>>>>>>> origin/main
 import multer from "multer";
 import catchAsync from "../errors/catchAsync.js";
 

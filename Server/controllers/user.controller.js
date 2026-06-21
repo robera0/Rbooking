@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 import { UserModel } from "../models/user.model.js";
 import bcrypt from "bcrypt";
+<<<<<<< HEAD
+=======
+import { ProfileModel } from "../models/profile.model.js";
+>>>>>>> origin/main
 import catchAsync from "../errors/catchAsync.js";
 import UserService from "../service/user.service.js";
 import ProfileService from "../service/profile.service.js";

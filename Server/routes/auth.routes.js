@@ -1,11 +1,11 @@
 import express from "express";
 import {
-  login_user,
+  login,
   refresh,
   logout,
-  register_user,
+  register,
 } from "../controllers/auth.controller.js";
-import { getProfile } from "../controllers/user.controller.js";
+import { user } from "../controllers/user.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { updateUser, completeProfile } from "../controllers/user.controller.js";
 import passport from "../config/googleAuth.js";
@@ -68,17 +68,14 @@ authRouter.get(
   },
 );
 
-authRouter.get("/user", authenticateTokenMiddleware, getProfile);
-authRouter.post("/signup/user", register_user);
+authRouter.post("/signup/user", register);
 //authRouter.post("/signup/admin", register_admin);
-authRouter.post("/login", login_user);
+authRouter.post("/login", login);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);
 authRouter.post("/tokens", refresh);
-authRouter.put(
-  "/complete-profile",
-  authenticateTokenMiddleware,
-  completeProfile,
-);
-authRouter.put("/user", authenticateTokenMiddleware, updateUser);
+
+authRouter.use(authenticateTokenMiddleware);
+authRouter.route("/user").get(user).put(updateUser);
+authRouter.route("/complete-profile").put(completeProfile);
 
 export default authRouter;

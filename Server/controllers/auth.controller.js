@@ -4,6 +4,9 @@ import { UserModel } from "../models/user.model.js";
 import dotenv from "dotenv";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import jwt from "jsonwebtoken";
+import UserService from "../service/user.service.js";
+import catchAsync from "../errors/catchAsync.js";
+import AppError from "../errors/AppError.js";
 dotenv.config();
 
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
@@ -104,45 +107,41 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 */
 // REGISTER USER
 
-export const register_user = async (req, res) => {
-  try {
+export const register = catchAsync(async (req, res, next) => {
     const { username, email, password } = req.body;
 
-    const existingUser = await UserModel.findOne({ email });
+    const existingUser = await UserService.findByEmail(email)
 
     if (existingUser)
-      return res.status(400).json({ message: "Email already exists" });
+      next(new AppError(400, "Email already exists"));
 
     const hashedPassword = await hashPasswords(password);
 
-    const newUser = await UserModel.create({
+    const newUser = UserService.create({
       username,
       email,
       password: hashedPassword,
       role: "user",
     });
 
+    await UserService.save(newUser);
+
     res.status(201).json({
       success: true,
       message: "User registered successfully",
       user: newUser,
     });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "User registration failed",
-    });
   }
-};
-export const login_user = async (req, res) => {
+);
+
+export const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await UserModel.findOne({ email });
+  const user = await UserService.findByEmail({ email });
 
-  if (!user) return res.status(400).json({ message: "your are not a user" });
+  if (!user) next(new AppError(404, "User not found"));
   if (user.status === "banned") {
-    return res.status(400).json({ message: "your banned from using Paysso" });
+    next(new AppError(400, "Your account has been banned from using Paysso"));
   }
 
   const isMatch = await comparePassword(password, user.password);
@@ -154,19 +153,19 @@ export const login_user = async (req, res) => {
     role: user.role,
   };
 
-  const access_token = generateAccessToken(payload);
-  const refresh_token = generateRefreshToken(payload);
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
   user.refreshTokens.push({ token: refresh_token });
   await user.save();
 
   res
-    .cookie("access_token", access_token, {
+    .cookie("access_token", accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
       path: "/",
     })
-    .cookie("refresh_token", refresh_token, {
+    .cookie("refresh_token", refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
@@ -174,20 +173,19 @@ export const login_user = async (req, res) => {
     })
     .status(200)
     .json({ role: user.role, message: "Logged in successfully" });
-};
+});
 
-export const refresh = async (req, res) => {
-  try {
+export const refresh = catchAsync(async (req, res) => {
     const { refresh_token } = req.body;
 
     if (!refresh_token)
       return res.status(401).json({ message: "their is no refresh_token" });
 
     jwt.verify(refresh_token, REFRESH_TOKEN_SECRET, async (error, decoded) => {
-      if (error) return res.status(401).json({ message: error.message });
+      if (error) next(new AppError(error.message, 401));
       const user = await UserModel.findById(decoded.id);
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        next(new AppError(404, "User not found"));
       }
       const tokenExists = user.refreshTokens.some(
         (t) => t.token === refresh_token,
@@ -204,28 +202,20 @@ export const refresh = async (req, res) => {
       const newAccessToken = generateAccessToken(payload);
       res.json({ accessToken: newAccessToken });
     });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+});
 
-export const logout = async (req, res) => {
-  try {
+export const logout = catchAsync(async (req, res) => {
     const refresh_token = req.cookies.refresh_token;
     console.log(refresh_token);
 
     if (!refresh_token) {
-      return res.status(400).json({ message: "Refresh token is required" });
+      next(new AppError(400, "Refresh token is required"));
     }
 
-    const user = await UserModel.findOne({
-      "refreshTokens.token": refresh_token,
-    });
+    const user = await UserService.findByRefreshToken(refresh_token);
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found or token invalid" });
+      next(new AppError(404, "User not found or token invalid"));
     }
 
     user.refreshTokens = user.refreshTokens.filter(
@@ -249,8 +239,4 @@ export const logout = async (req, res) => {
       })
       .status(200)
       .json({ message: "Logged out successfully" });
-  } catch (error) {
-    console.error("Logout error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+});
