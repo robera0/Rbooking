@@ -31,7 +31,6 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useService } from "@/Context/ServiceContext";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
-
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -146,7 +145,7 @@ export default function CheckoutModal({
           {/* Phone Input */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-              Terminal Phone (Primary)
+              Phone Number
             </label>
             <input
               type="tel"
@@ -162,17 +161,24 @@ export default function CheckoutModal({
           <div className="flex gap-4">
             <div className="flex-1 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                Units
+                Tickets
               </label>
               <input
-                type="number"
-                min="1"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={quantity}
-                onChange={(e) =>
-                  setQuantity(Math.max(1, Number(e.target.value)))
-                }
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const digitsOnly = e.target.value.replace(/\D/g, "");
+                  setQuantity(digitsOnly);
+                }}
+                onBlur={() => {
+                  const num = parseInt(quantity, 10);
+                  setQuantity(isNaN(num) || num < 1 ? 1 : num); // only clamp once they're done typing
+                }}
                 className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
-                rounded-2xl px-5 py-4 outline-none font-bold text-center no-spinner"
+  rounded-2xl px-5 py-4 outline-none font-bold text-center no-spinner"
               />
             </div>
             <div className="flex-[2] space-y-2">
