@@ -11,7 +11,22 @@ import {
   Tickets,
 } from "lucide-react";
 
-const SideBar = () => {
+const SideBar = ({ action }) => {
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      queryClient.clear();
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed", error);
+      window.location.href = "/login";
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#1C1F22]">
       {/*side Bar */}
@@ -83,6 +98,7 @@ const SideBar = () => {
           <SideMenu
             path="/"
             name="Logout"
+            action={handleLogout}
             icon={<Power size={20} />}
             isDanger={true}
           />
