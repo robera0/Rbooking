@@ -1,19 +1,106 @@
-import { User, Lock, EyeOff, ShieldCheck, ArrowLeft } from "lucide-react";
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  ArrowLeft,
+} from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { Toaster, toast } from "react-hot-toast";
+import { useService } from "@/Context/ServiceContext";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const { API_URL } = useService();
   const [roleSelection, setRoleSelection] = useState(null); // null, 'user', or 'admin'
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    rememberMe: false,
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
   const handleAdminSelect = () => {
     navigate("/admin/register");
+  };
+
+  const registerUserMutation = useMutation({
+    mutationFn: async (payload) => {
+      const res = await fetch(`${API_URL}/api/auth/signup/user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to create account");
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Account created successfully!");
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        rememberMe: false,
+      });
+      setTimeout(() => navigate("/login"), 1500);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Something went wrong");
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!formData.username || !formData.email || !formData.password) {
+      return toast.error("Please fill in all required fields");
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      return toast.error("Passwords do not match");
+    }
+
+    if (formData.password.length < 8) {
+      return toast.error("Password must be at least 8 characters");
+    }
+
+    registerUserMutation.mutate({
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      rememberMe: formData.rememberMe,
+    });
   };
 
   // If role is not selected, show the two cards
   if (!roleSelection) {
     return (
       <div className="w-full flex flex-col items-center pt-8 px-6">
+        <Toaster />
         <div className="text-white w-full flex flex-col items-center justify-center mb-10">
           <h1 className="text-2xl font-semibold mb-2">Join Paysso</h1>
           <p className="text-[#808080] text-center text-sm">
@@ -71,6 +158,7 @@ const SignUp = () => {
   // If user is selected, show the User Registration Form
   return (
     <>
+      <Toaster />
       <div className="text-white w-full h-[98px] flex flex-col items-center justify-center pt-8 relative">
         <button
           onClick={() => setRoleSelection(null)}
@@ -93,52 +181,106 @@ const SignUp = () => {
         </p>
       </div>
 
-      <div className="px-6 w-full space-y-6 mt-4">
-        {/*username */}
-        <div className=" relative flex items-center justify-center">
+      <form onSubmit={handleSubmit} className="px-6 w-full space-y-6 mt-4">
+        {/* username */}
+        <div className="relative flex items-center justify-center">
           <span className="absolute left-4">
             <User className="text-[#808080] w-5 h-5" />
           </span>
           <input
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
             className="placeholder-[#808080] placeholder:text-sm text-white w-full bg-[#323232] pl-12 h-12 rounded-xl outline-none border border-transparent focus:border-[#FF7800]"
             placeholder="Enter your username"
             type="text"
+            required
           />
         </div>
 
-        {/*passwords */}
-        <div className=" relative flex items-center justify-center">
+        {/* email */}
+        <div className="relative flex items-center justify-center">
           <span className="absolute left-4">
-            <Lock className=" w-5 h-5 text-[#808080]" />
+            <Mail className="text-[#808080] w-5 h-5" />
           </span>
           <input
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
             className="placeholder-[#808080] placeholder:text-sm text-white w-full bg-[#323232] pl-12 h-12 rounded-xl outline-none border border-transparent focus:border-[#FF7800]"
+            placeholder="Enter your email"
+            type="email"
+            required
+          />
+        </div>
+
+        {/* password */}
+        <div className="relative flex items-center justify-center">
+          <span className="absolute left-4">
+            <Lock className="w-5 h-5 text-[#808080]" />
+          </span>
+          <input
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            className="placeholder-[#808080] placeholder:text-sm text-white w-full bg-[#323232] pl-12 pr-12 h-12 rounded-xl outline-none border border-transparent focus:border-[#FF7800]"
             placeholder="Enter your password"
-            type="password"
+            type={showPassword ? "text" : "password"}
+            required
           />
-          <span className="absolute right-4 cursor-pointer">
-            <EyeOff className=" w-4 h-4 text-[#808080] hover:text-white" />
-          </span>
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-4 cursor-pointer"
+          >
+            {showPassword ? (
+              <Eye className="w-4 h-4 text-[#808080] hover:text-white" />
+            ) : (
+              <EyeOff className="w-4 h-4 text-[#808080] hover:text-white" />
+            )}
+          </button>
         </div>
-        {/* confirm passwords */}
-        <div className=" relative flex items-center justify-center">
+
+        {/* confirm password */}
+        <div className="relative flex items-center justify-center">
           <span className="absolute left-4">
-            <Lock className=" w-5 h-5 text-[#808080]" />
+            <Lock className="w-5 h-5 text-[#808080]" />
           </span>
           <input
-            className="placeholder-[#808080] placeholder:text-sm text-white w-full bg-[#323232] pl-12 h-12 rounded-xl outline-none border border-transparent focus:border-[#FF7800]"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            className="placeholder-[#808080] placeholder:text-sm text-white w-full bg-[#323232] pl-12 pr-12 h-12 rounded-xl outline-none border border-transparent focus:border-[#FF7800]"
             placeholder="Confirm your password"
-            type="password"
+            type={showConfirmPassword ? "text" : "password"}
+            required
           />
-          <span className="absolute right-4 cursor-pointer">
-            <EyeOff className=" w-4 h-4 text-[#808080] hover:text-white" />
-          </span>
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword((prev) => !prev)}
+            className="absolute right-4 cursor-pointer"
+          >
+            {showConfirmPassword ? (
+              <Eye className="w-4 h-4 text-[#808080] hover:text-white" />
+            ) : (
+              <EyeOff className="w-4 h-4 text-[#808080] hover:text-white" />
+            )}
+          </button>
         </div>
-        {/*remember me box */}
+
+        {formData.confirmPassword &&
+          formData.password !== formData.confirmPassword && (
+            <p className="text-xs text-red-400 -mt-4">Passwords do not match</p>
+          )}
+
+        {/* remember me box */}
         <div className="w-full flex justify-between items-center text-[#b3b3b3] mt-2">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
+              name="rememberMe"
+              checked={formData.rememberMe}
+              onChange={handleChange}
               className="w-4 h-4 accent-[#FF8D28] rounded"
             />
             <span className="text-sm font-semibold text-[#b3b3b3]">
@@ -146,13 +288,21 @@ const SignUp = () => {
             </span>
           </label>
         </div>
-      </div>
 
-      <div className="w-full flex justify-center mt-8 px-6">
-        <button className="flex items-center justify-center bg-[#FF7800] hover:bg-[#ff8c28] transition-colors text-white w-full h-12 text-md font-semibold rounded-xl cursor-pointer">
-          Sign Up
-        </button>
-      </div>
+        <div className="w-full flex justify-center pt-2">
+          <button
+            type="submit"
+            disabled={registerUserMutation.isPending}
+            className="flex items-center justify-center bg-[#FF7800] hover:bg-[#ff8c28] transition-colors text-white w-full h-12 text-md font-semibold rounded-xl cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {registerUserMutation.isPending ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              "Sign Up"
+            )}
+          </button>
+        </div>
+      </form>
     </>
   );
 };

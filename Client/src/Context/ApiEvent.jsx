@@ -57,29 +57,34 @@ export const ApiProvider = ({ children }) => {
   });
 
   // GET LOGGED USERS
-
   const fetchLoggedInUser = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/auth/user`, {
-        method: "GET",
-        credentials: "include",
-      });
+    const res = await fetch(`${API_URL}/api/auth/user`, {
+      method: "GET",
+      credentials: "include",
+    });
 
-      return res.json();
-    } catch (error) {
-      throw new Error(error);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(
+        data.message || `Request failed with status ${res.status}`,
+      );
     }
+
+    return data;
   };
 
   const { data: user, isError: usererror } = useQuery({
     queryFn: fetchLoggedInUser,
     queryKey: ["user"],
-
+    retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchOnMount: true,
     select: (data) => data?.user || null,
   });
+
+  console.log(user);
   // GET TICKETS
 
   const fetchTickets = async () => {

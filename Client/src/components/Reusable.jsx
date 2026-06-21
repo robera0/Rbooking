@@ -31,18 +31,31 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useService } from "@/Context/ServiceContext";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
-import axios from "axios";
+
 import { useQueryClient } from "@tanstack/react-query";
+import { motion, useReducedMotion } from "framer-motion";
+
+export function Spinner({ className = "w-8 h-8 text-orange-400" }) {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      role="status"
+      aria-label="Loading"
+      className={`rounded-full border-2 border-current border-t-transparent ${className}`}
+      animate={shouldReduceMotion ? {} : { rotate: 360 }}
+      transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+    />
+  );
+}
 export const ProtectedRoute = ({ children }) => {
-  const { usererror, user } = eventService(); // remove userIsLoading
+  const { usererror, user } = eventService();
   const location = useLocation();
 
   if (!user && !usererror) {
-    // still loading
     return (
-      <div className="fixed inset-0 bg-[#121417] z-[100] flex flex-col items-center justify-center">
-        {/* your loading spinner */}
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner className="w-8 h-8 text-orange-400" />
       </div>
     );
   }
