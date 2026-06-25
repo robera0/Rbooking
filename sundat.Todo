@@ -14,8 +14,7 @@
 [f] test if the schema is using the index
 [] add custom  datePicket in the add event 
 [] edit the design of the add event so it can handle all categories also in the event.controller
-
-[f] create a eventservice and edit the deletevent in admincontroller
+[] make the admin registration work 
 // WHEN THE APP IS PUBLISHED 
 
 [] add the calendar and put all the event there is on that like a poster

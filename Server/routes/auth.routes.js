@@ -3,6 +3,7 @@ import {
   login,
   refresh,
   logout,
+  registerAdmin,
   register,
 } from "../controllers/auth.controller.js";
 
@@ -79,6 +80,7 @@ authRouter.get(
 );
 authRouter.get("/user", authenticateTokenMiddleware, user);
 authRouter.post("/signup/user", register);
+authRouter.post("/admin/signup", registerAdmin);
 //authRouter.post("/signup/admin", register_admin);
 authRouter.post("/login", login);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);
