@@ -3,14 +3,14 @@ import {
   Plus,
   Save,
   ArrowLeft,
-  Upload,
   Trash2,
   ShieldCheck,
   Music,
-  Tv,
   Tag,
   Zap,
   Check,
+  Flag,
+  CalendarDays,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,12 +18,644 @@ import { Toaster, toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { CustomSelect } from "./Cards";
 
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { StaticDateTimePicker } from "@mui/x-date-pickers/StaticDateTimePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+
+// ─── MUI Orange Theme ──────────────────────────────────────────────────────
+const orangeTheme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: {
+      main: "#FF7A00",
+      light: "#FF9A40",
+      dark: "#CC6200",
+      contrastText: "#000000",
+    },
+    background: {
+      default: "#121417",
+      paper: "#1C1F22",
+    },
+    text: {
+      primary: "#FFFFFF",
+      secondary: "#9CA3AF",
+    },
+  },
+  components: {
+    MuiPickersToolbar: {
+      styleOverrides: {
+        root: {
+          color: "#FF7A00",
+          borderRadius: "16px 16px 0 0",
+          borderWidth: "1px",
+          borderColor: "rgba(255,122,0,0.2)",
+          border: "1px solid rgba(255,122,0,0.2)",
+          backgroundColor: "#1C1F22",
+        },
+      },
+    },
+    MuiPickersLayout: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#1C1F22",
+          borderRadius: "16px",
+          border: "1px solid rgba(255,122,0,0.15)",
+        },
+        contentWrapper: {
+          backgroundColor: "#1C1F22",
+        },
+      },
+    },
+    MuiDateCalendar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#1C1F22",
+          color: "#FFFFFF",
+          width: "100%",
+          maxHeight: "none",
+        },
+      },
+    },
+    MuiPickersCalendarHeader: {
+      styleOverrides: {
+        root: {
+          color: "#FF7A00",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+        },
+        label: {
+          color: "#FF7A00",
+          fontWeight: 900,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          fontSize: "0.75rem",
+        },
+        switchViewButton: {
+          color: "#FF7A00",
+        },
+      },
+    },
+    MuiPickersArrowSwitcher: {
+      styleOverrides: {
+        button: {
+          color: "#FF7A00",
+          "&:hover": {
+            backgroundColor: "rgba(255,122,0,0.1)",
+          },
+        },
+      },
+    },
+    MuiDayCalendar: {
+      styleOverrides: {
+        weekDayLabel: {
+          color: "#6B7280",
+          fontWeight: 900,
+          textTransform: "uppercase",
+          fontSize: "0.6rem",
+          letterSpacing: "0.08em",
+        },
+        header: {
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+          paddingBottom: "8px",
+          marginBottom: "4px",
+        },
+      },
+    },
+    MuiPickersDay: {
+      styleOverrides: {
+        root: {
+          color: "#FFFFFF",
+          backgroundColor: "transparent",
+          fontWeight: 700,
+          fontSize: "0.75rem",
+          borderRadius: "50%",
+          "&:hover": {
+            backgroundColor: "rgba(255,122,0,0.15)",
+            color: "#FF7A00",
+          },
+          "&.Mui-selected": {
+            backgroundColor: "#FF7A00 !important",
+            color: "#000000 !important",
+            fontWeight: 900,
+            "&:hover": {
+              backgroundColor: "#FF9A40 !important",
+            },
+            "&:focus": {
+              backgroundColor: "#FF7A00 !important",
+            },
+          },
+          "&.MuiPickersDay-today": {
+            border: "1.5px solid #FF7A00",
+            color: "#FF7A00",
+            backgroundColor: "transparent",
+            "&.Mui-selected": {
+              backgroundColor: "#FF7A00 !important",
+              color: "#000 !important",
+            },
+          },
+          "&.Mui-disabled": {
+            color: "#374151",
+          },
+        },
+      },
+    },
+    MuiClock: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#121417",
+          border: "1px solid rgba(255,122,0,0.1)",
+        },
+        clock: {
+          backgroundColor: "#121417",
+        },
+        pin: {
+          backgroundColor: "#FF7A00",
+        },
+        amButton: {
+          color: "#9CA3AF",
+          "&.Mui-selected": {
+            backgroundColor: "#FF7A00",
+            color: "#000",
+          },
+        },
+        pmButton: {
+          color: "#9CA3AF",
+          "&.Mui-selected": {
+            backgroundColor: "#FF7A00",
+            color: "#000",
+          },
+        },
+      },
+    },
+    MuiClockPointer: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#FF7A00",
+        },
+        thumb: {
+          backgroundColor: "#FF7A00",
+          border: "2px solid #FF7A00",
+        },
+      },
+    },
+    MuiClockNumber: {
+      styleOverrides: {
+        root: {
+          color: "#9CA3AF",
+          fontWeight: 700,
+          fontSize: "0.7rem",
+          "&.Mui-selected": {
+            backgroundColor: "#FF7A00",
+            color: "#000000",
+            fontWeight: 900,
+          },
+        },
+      },
+    },
+    MuiTimeClock: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#1C1F22",
+        },
+      },
+    },
+    MuiPickersToolbarText: {
+      styleOverrides: {
+        root: {
+          color: "#9CA3AF",
+          "&.Mui-selected": {
+            color: "#FF7A00",
+          },
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          color: "#6B7280",
+          fontWeight: 900,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          fontSize: "0.6rem",
+          minHeight: "40px",
+          "&.Mui-selected": {
+            color: "#FF7A00",
+          },
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        indicator: {
+          backgroundColor: "#FF7A00",
+        },
+        root: {
+          backgroundColor: "#121417",
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        },
+      },
+    },
+    MuiPickersYear: {
+      styleOverrides: {
+        yearButton: {
+          color: "#9CA3AF",
+          fontWeight: 700,
+          fontSize: "0.75rem",
+          borderRadius: "8px",
+          "&.Mui-selected": {
+            backgroundColor: "#FF7A00",
+            color: "#000000",
+            fontWeight: 900,
+            "&:hover": {
+              backgroundColor: "#FF9A40",
+            },
+          },
+          "&:hover": {
+            backgroundColor: "rgba(255,122,0,0.15)",
+            color: "#FF7A00",
+          },
+        },
+      },
+    },
+    MuiPickersMonth: {
+      styleOverrides: {
+        monthButton: {
+          color: "#9CA3AF",
+          fontWeight: 700,
+          fontSize: "0.75rem",
+          borderRadius: "8px",
+          "&.Mui-selected": {
+            backgroundColor: "#FF7A00",
+            color: "#000000",
+            fontWeight: 900,
+          },
+          "&:hover": {
+            backgroundColor: "rgba(255,122,0,0.15)",
+            color: "#FF7A00",
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          color: "#FF7A00",
+          "&:hover": {
+            backgroundColor: "rgba(255,122,0,0.1)",
+          },
+        },
+      },
+    },
+    MuiPickersLayout: {
+      styleOverrides: {
+        actionBar: {
+          display: "none", // hide default OK/Cancel buttons
+        },
+      },
+    },
+  },
+});
+
+// ─── Date Picker Panel ─────────────────────────────────────────────────────
+const DatePickerPanel = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  // Internal draft value so clock/calendar can freely update their own view
+  const [draft, setDraft] = useState(value ? dayjs(value) : dayjs());
+  const confirmed = value ? dayjs(value) : null;
+
+  const handleConfirm = () => {
+    onChange(draft.format("YYYY-MM-DDTHH:mm"));
+    setOpen(false);
+  };
+
+  const handleOpen = () => {
+    // Reset draft to current confirmed value (or now) each time panel opens
+    setDraft(value ? dayjs(value) : dayjs());
+    setOpen(true);
+  };
+
+  return (
+    <div>
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={open ? handleConfirm : handleOpen}
+        className="flex items-center gap-3 px-4 py-4 w-full bg-[#121417] border border-[#FF7A00]/60 hover:border-[#FF7A00] rounded-xl text-white font-bold outline-none transition-colors"
+      >
+        <CalendarDays size={18} className="text-[#FF7A00] shrink-0" />
+        <span className="text-sm font-bold">
+          {confirmed && !open
+            ? confirmed.format("ddd, MMM D YYYY · HH:mm")
+            : open
+            ? draft?.format("ddd, MMM D YYYY · HH:mm") ?? "Pick Date & Time"
+            : "Pick Date & Time"}
+        </span>
+        <span className="ml-auto text-[#FF7A00] text-[10px] font-black uppercase tracking-widest">
+          {open ? "Confirm ✓" : "Edit"}
+        </span>
+      </button>
+
+      {/* Inline calendar + clock panel */}
+      {open && (
+        <div className="mt-3 rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <ThemeProvider theme={orangeTheme}>
+              <StaticDateTimePicker
+                value={draft}
+                onChange={(newVal) => {
+                  if (newVal) setDraft(newVal);
+                }}
+                disablePast
+                ampm={false}
+                slotProps={{
+                  // Replace action bar with our own confirm button above
+                  actionBar: { actions: [] },
+                  toolbar: {
+                    toolbarFormat: "ddd DD MMM",
+                    hidden: false,
+                  },
+                }}
+                sx={{
+                  width: "100%",
+                  // Calendar grid must have auto height so all rows show
+                  "& .MuiDateCalendar-root": {
+                    width: "100%",
+                    height: "auto",
+                    maxHeight: "none",
+                  },
+                  "& .MuiDayCalendar-monthContainer": {
+                    height: "auto",
+                    minHeight: "200px",
+                  },
+                  "& .MuiDayCalendar-weekContainer": {
+                    margin: "2px 0",
+                  },
+                  // Clock face sizing
+                  "& .MuiTimeClock-root": {
+                    width: "100%",
+                  },
+                  "& .MuiClock-root": {
+                    width: "220px",
+                    height: "220px",
+                    margin: "0 auto",
+                  },
+                  "& .MuiPickersLayout-root": {
+                    width: "100%",
+                    backgroundColor: "#1C1F22",
+                  },
+                  "& .MuiPickersLayout-contentWrapper": {
+                    width: "100%",
+                    backgroundColor: "#1C1F22",
+                  },
+                  // Hide empty action bar space
+                  "& .MuiPickersLayout-actionBar": {
+                    display: "none",
+                  },
+                }}
+              />
+            </ThemeProvider>
+          </LocalizationProvider>
+
+          {/* Custom confirm row */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "10px 16px 14px",
+              borderTop: "1px solid rgba(255,255,255,0.04)",
+              backgroundColor: "#1C1F22",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "0.65rem",
+                fontWeight: 900,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                color: "#6B7280",
+              }}
+            >
+              {draft?.format("dddd, MMMM D, YYYY · HH:mm")}
+            </span>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                style={{
+                  padding: "6px 16px",
+                  borderRadius: "9999px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "transparent",
+                  color: "#9CA3AF",
+                  fontSize: "0.6rem",
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                style={{
+                  padding: "6px 20px",
+                  borderRadius: "9999px",
+                  background: "#FF7A00",
+                  color: "#000",
+                  fontSize: "0.6rem",
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  cursor: "pointer",
+                  border: "none",
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Display confirmed date below trigger when closed */}
+      {!open && confirmed && (
+        <div className="mt-2 flex items-center gap-2 px-4">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#FF7A00]" />
+          <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
+            {confirmed.format("dddd, MMMM D, YYYY")}
+          </span>
+          <span className="text-[10px] text-[#FF7A00] font-black uppercase tracking-widest ml-auto">
+            {confirmed.format("HH:mm")}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Reusable chip-tag input ───────────────────────────────────────────────
+const ChipInput = ({ label, items, onAdd, onRemove, placeholder }) => {
+  const [val, setVal] = useState("");
+  const add = () => {
+    if (val.trim()) {
+      onAdd(val.trim());
+      setVal("");
+    }
+  };
+  return (
+    <div>
+      <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
+        {label}
+      </label>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {items.map((item, i) => (
+          <span
+            key={i}
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#121417] border border-white/[0.06] rounded-full text-[10px] text-gray-300 font-bold uppercase"
+          >
+            {item}
+            <button
+              type="button"
+              onClick={() => onRemove(i)}
+              className="text-gray-600 hover:text-red-400 leading-none"
+            >
+              ×
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-3">
+        <input
+          className="flex-1 bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white text-[11px] font-bold uppercase outline-none focus:border-[#FF7A00]/50 transition-colors"
+          placeholder={placeholder}
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+        />
+        <button
+          type="button"
+          onClick={add}
+          className="px-4 py-2 bg-[#FF7A00] text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Pill selector (single) ────────────────────────────────────────────────
+const PillSelect = ({ label, options, value, onChange }) => (
+  <div>
+    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
+      {label}
+    </label>
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(opt)}
+          className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+            value === opt
+              ? "bg-[#FF7A00] text-black border-[#FF7A00]"
+              : "bg-transparent text-gray-500 border-white/10 hover:border-[#FF7A00] hover:text-[#FF7A00]"
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+// ─── Pill selector (multi) ─────────────────────────────────────────────────
+const PillMultiSelect = ({ label, options, value, onChange }) => {
+  const toggle = (opt) => {
+    const next = value.includes(opt)
+      ? value.filter((x) => x !== opt)
+      : [...value, opt];
+    onChange(next);
+  };
+  return (
+    <div>
+      <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
+        {label}
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => toggle(opt)}
+            className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+              value.includes(opt)
+                ? "bg-[#FF7A00] text-black border-[#FF7A00]"
+                : "bg-transparent text-gray-500 border-white/10 hover:border-[#FF7A00] hover:text-[#FF7A00]"
+            }`}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─── Toggle ────────────────────────────────────────────────────────────────
+const Toggle = ({ label, value, onChange }) => (
+  <div className="flex items-center justify-between pt-5 border-t border-white/[0.04] mt-2">
+    <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest">
+      {label}
+    </span>
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      className={`w-11 h-6 rounded-full transition-all relative flex-shrink-0 ${
+        value ? "bg-[#FF7A00]" : "bg-white/10"
+      }`}
+    >
+      <span
+        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow ${
+          value ? "left-6" : "left-1"
+        }`}
+      />
+    </button>
+  </div>
+);
+
+const SectionCard = ({ icon: Icon, title, badge, children }) => (
+  <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
+    <h3 className="text-white font-bold uppercase tracking-tight text-sm flex items-center gap-2">
+      {Icon && <Icon size={14} className="text-[#FF7A00]" />}
+      {title}
+      {badge && (
+        <span className="ml-1 text-[8px] px-2 py-0.5 rounded-full bg-[#FF7A00]/10 text-[#FF7A00] border border-[#FF7A00]/20 font-black uppercase tracking-widest">
+          {badge}
+        </span>
+      )}
+    </h3>
+    {children}
+  </div>
+);
+
+// ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 const AddEvent = () => {
   const navigate = useNavigate();
   const { API_URL } = useService();
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState({
+  const EMPTY_FORM = {
     type: "",
     eventName: "",
     artistName: "",
@@ -31,53 +663,60 @@ const AddEvent = () => {
     description: "",
     eventDate: "",
     tickets: [],
-    policies: [], // New field
+    policies: [],
     amenities: [],
     pictures: [],
-  });
-  const [newAmenity, setNewAmenity] = useState("");
+    musicGenre: [],
+    supportingArtists: [],
+    familyFriendly: false,
+    durationDays: "",
+    stages: [],
+    category: "",
+  };
+
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const set = (patch) => setFormData((prev) => ({ ...prev, ...patch }));
+
   const [newTicket, setNewTicket] = useState({
     name: "",
     price: "",
     capacity: "",
   });
-  const dateInputRef = useRef(null);
-  const posterInputRef = useRef(null);
-
+  const [newAmenity, setNewAmenity] = useState("");
   const [error, setError] = useState("");
+
+  const posterInputRef = useRef(null);
 
   const createMutation = useMutation({
     mutationFn: async (payload) => {
       const form = new FormData();
-
       form.append("type", payload.type);
       form.append("name", payload.name);
       form.append("locale", payload.locale);
       form.append("desc", payload.desc);
-
       form.append("artist", JSON.stringify(payload.artist));
       form.append("priceRanges", JSON.stringify(payload.priceRanges));
       form.append("policies", JSON.stringify(payload.policies));
       form.append("dates", JSON.stringify(payload.dates));
       form.append("amenities", JSON.stringify(payload.amenities));
       form.append("musicGenre", JSON.stringify(payload.musicGenre));
+      if (payload.familyFriendly !== undefined)
+        form.append("familyFriendly", payload.familyFriendly);
+      if (payload.durationDays !== undefined)
+        form.append("durationDays", payload.durationDays);
+      if (payload.stages) form.append("stages", JSON.stringify(payload.stages));
+      if (payload.category) form.append("category", payload.category);
+      formData.pictures.forEach((img) => form.append("pictures", img));
 
-      // upload first image
-      formData.pictures.forEach((img) => {
-        form.append("pictures", img);
-      });
-
-      const res = await fetch(`${API_URL}/api/addEvents`, {
+      const res = await fetch(`${API_URL}/api/auth/admin/addEvents`, {
         method: "POST",
+        credentials: "include",
         body: form,
       });
-
       if (!res.ok) throw new Error("Failed to create event");
-
       return res.json();
     },
     onSuccess: () => {
-      // 1. Trigger the Success Toast
       toast.success("Event Published Successfully!", {
         duration: 2000,
         style: {
@@ -86,41 +725,24 @@ const AddEvent = () => {
           border: "1px solid #FF7A00",
         },
       });
-      setFormData({
-        type: "",
-        eventName: "",
-        artistName: "",
-        venue: "",
-        description: "",
-        eventDate: "",
-        tickets: [],
-        policies: [],
-        amenities: [],
-        pictures: [],
-      });
-
-      setTimeout(() => {
-        navigate("/admin/events");
-      }, 2000);
+      setFormData(EMPTY_FORM);
+      setTimeout(() => navigate("/admin/events"), 2000);
     },
-    onError: (error) => {
-      toast.error(`Error: ${error.message}`);
-    },
+    onError: (err) => toast.error(`Error: ${err.message}`),
   });
 
   const handleSubmit = () => {
     if (!formData.eventName)
       return setError("Event Name is required to publish");
     setError("");
-    createMutation.mutate({
-      type: formData.type.toLowerCase(),
-      name: formData.eventName,
-      artist: {
-        name: formData.artistName,
-      },
-      locale: formData.venue,
 
-      musicGenre: ["General"],
+    const type = formData.type.toLowerCase();
+
+    const basePayload = {
+      type,
+      name: formData.eventName,
+      artist: { name: formData.artistName },
+      locale: formData.venue,
       policies: formData.policies,
       priceRanges: formData.tickets.map((t) => ({
         type: t.name,
@@ -136,25 +758,38 @@ const AddEvent = () => {
           dateTime: formData.eventDate ? new Date(formData.eventDate) : null,
         },
         timezone: "Africa/Addis_Ababa",
-        status: {
-          code: "onsale",
-        },
+        status: { code: "onsale" },
       },
-
       amenities: {
         activity: formData.amenities,
         payment_method: [],
         safety: [],
         other: [],
       },
-    });
+      musicGenre: type === "concert" ? formData.musicGenre : ["General"],
+    };
+
+    if (type === "concert") {
+      basePayload.artist.supporting = formData.supportingArtists;
+      basePayload.familyFriendly = formData.familyFriendly;
+    }
+    if (type === "festival") {
+      basePayload.durationDays = Number(formData.durationDays) || 0;
+      basePayload.stages = formData.stages;
+      basePayload.familyFriendly = formData.familyFriendly;
+    }
+    if (type === "generic") {
+      basePayload.category = formData.category;
+    }
+
+    createMutation.mutate(basePayload);
   };
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
       <Toaster position="top-center" />
 
-      {/* Header - Styled like Second Code */}
+      {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
@@ -164,9 +799,9 @@ const AddEvent = () => {
             >
               <ArrowLeft size={24} />
             </button>
-
             <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
-              Create <span className="text-[#FF7A00]">{formData.type}</span>
+              Create{" "}
+              <span className="text-[#FF7A00]">{formData.type || "Event"}</span>
             </h1>
           </div>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00] ml-14" />
@@ -182,36 +817,29 @@ const AddEvent = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ── LEFT COLUMN ───────────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Discriminator Selection - From First Code */}
-          {/* LEFT COLUMN: CORE INTEL */}
-          <div className="lg:col-span-8 space-y-10">
-            {/* TYPE SELECTOR */}
-            <section className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 flex items-center gap-2">
-                  <Tag size={14} className="text-[#FF7A00]" /> Classification
-                  Type
-                </h3>
-                <CustomSelect
-                  options={[
-                    { label: "Concert", value: "concert" },
-                    { label: "Festival", value: "festival" },
-                    { label: "Generic", value: "generic" },
-                  ]}
-                  value={formData.type.toLowerCase()}
-                  onChange={(val) => setFormData({ ...formData, type: val })}
-                  placeholder="Select Type"
-                />
-              </div>
-            </section>
-          </div>
+          {/* Type selector */}
+          <SectionCard icon={Tag} title="Classification Type">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
+                Choose event type — extra fields will appear below
+              </p>
+              <CustomSelect
+                options={[
+                  { label: "Concert", value: "concert" },
+                  { label: "Festival", value: "festival" },
+                  { label: "Generic", value: "generic" },
+                ]}
+                value={formData.type}
+                onChange={(val) => set({ type: val })}
+                placeholder="Select Type"
+              />
+            </div>
+          </SectionCard>
 
-          {/* Event Details - Background from Second Code */}
-          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
-            <h3 className="text-white font-bold uppercase tracking-tight text-sm">
-              Transmission Details
-            </h3>
+          {/* Core details */}
+          <SectionCard title="Transmission Details">
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
@@ -220,9 +848,7 @@ const AddEvent = () => {
                 <input
                   type="text"
                   value={formData.eventName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, eventName: e.target.value })
-                  }
+                  onChange={(e) => set({ eventName: e.target.value })}
                   className={`w-full bg-[#121417] border ${
                     error ? "border-red-500/50" : "border-white/[0.06]"
                   } rounded-xl px-4 py-4 text-white focus:border-[#FF7A00]/50 outline-none transition-colors font-bold`}
@@ -242,10 +868,8 @@ const AddEvent = () => {
                   <input
                     type="text"
                     value={formData.artistName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, artistName: e.target.value })
-                    }
-                    className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none"
+                    onChange={(e) => set({ artistName: e.target.value })}
+                    className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
                     placeholder="Main artist"
                   />
                 </div>
@@ -256,10 +880,8 @@ const AddEvent = () => {
                   <input
                     type="text"
                     value={formData.venue}
-                    onChange={(e) =>
-                      setFormData({ ...formData, venue: e.target.value })
-                    }
-                    className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none"
+                    onChange={(e) => set({ venue: e.target.value })}
+                    className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
                     placeholder="Location"
                   />
                 </div>
@@ -271,21 +893,16 @@ const AddEvent = () => {
                 <textarea
                   rows="4"
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none italic"
+                  onChange={(e) => set({ description: e.target.value })}
+                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors italic"
                   placeholder="Event details..."
                 />
               </div>
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Event Tickets */}
-          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
-              Event Tickets
-            </h3>
+          {/* Tickets */}
+          <SectionCard title="Event Tickets">
             <div className="space-y-4">
               {formData.tickets.map((ticket, idx) => (
                 <div
@@ -301,7 +918,7 @@ const AddEvent = () => {
                       onChange={(e) => {
                         const updated = [...formData.tickets];
                         updated[idx].name = e.target.value;
-                        setFormData({ ...formData, tickets: updated });
+                        set({ tickets: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
                     />
@@ -315,7 +932,7 @@ const AddEvent = () => {
                       onChange={(e) => {
                         const updated = [...formData.tickets];
                         updated[idx].price = e.target.value;
-                        setFormData({ ...formData, tickets: updated });
+                        set({ tickets: updated });
                       }}
                       className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
                     />
@@ -330,30 +947,30 @@ const AddEvent = () => {
                       onChange={(e) => {
                         const updated = [...formData.tickets];
                         updated[idx].capacity = e.target.value;
-                        setFormData({ ...formData, tickets: updated });
+                        set({ tickets: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      const updated = formData.tickets.filter(
-                        (_, i) => i !== idx,
-                      );
-                      setFormData({ ...formData, tickets: updated });
-                    }}
+                    onClick={() =>
+                      set({
+                        tickets: formData.tickets.filter((_, i) => i !== idx),
+                      })
+                    }
                     className="ml-2 text-red-500 hover:text-red-700"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
-              {/* New Ticket Adder */}
-              <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00] mt-4">
+
+              {/* New ticket row */}
+              <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
                 <div className="flex-1">
                   <input
-                    value={newTicket?.name || ""}
+                    value={newTicket.name}
                     onChange={(e) =>
                       setNewTicket({ ...newTicket, name: e.target.value })
                     }
@@ -363,7 +980,7 @@ const AddEvent = () => {
                 </div>
                 <div className="w-24">
                   <input
-                    value={newTicket?.price || ""}
+                    value={newTicket.price}
                     onChange={(e) =>
                       setNewTicket({ ...newTicket, price: e.target.value })
                     }
@@ -374,7 +991,7 @@ const AddEvent = () => {
                 <div className="w-24">
                   <input
                     type="number"
-                    value={newTicket?.capacity || ""}
+                    value={newTicket.capacity}
                     onChange={(e) =>
                       setNewTicket({ ...newTicket, capacity: e.target.value })
                     }
@@ -386,14 +1003,11 @@ const AddEvent = () => {
                   type="button"
                   onClick={() => {
                     if (
-                      newTicket?.name &&
-                      newTicket?.price &&
-                      newTicket?.capacity
+                      newTicket.name &&
+                      newTicket.price &&
+                      newTicket.capacity
                     ) {
-                      setFormData({
-                        ...formData,
-                        tickets: [...formData.tickets, { ...newTicket }],
-                      });
+                      set({ tickets: [...formData.tickets, { ...newTicket }] });
                       setNewTicket({ name: "", price: "", capacity: "" });
                     }
                   }}
@@ -403,13 +1017,10 @@ const AddEvent = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Event Policies */}
-          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
-              Event Policies
-            </h3>
+          {/* Policies */}
+          <SectionCard title="Event Policies">
             <div className="space-y-4">
               {formData.policies.map((policy, idx) => (
                 <div
@@ -422,19 +1033,20 @@ const AddEvent = () => {
                       onChange={(e) => {
                         const updated = [...formData.policies];
                         updated[idx].header = e.target.value;
-                        setFormData({ ...formData, policies: updated });
+                        set({ policies: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase text-xs"
                       placeholder="Policy Header"
                     />
                     <button
                       type="button"
-                      onClick={() => {
-                        const updated = formData.policies.filter(
-                          (_, i) => i !== idx,
-                        );
-                        setFormData({ ...formData, policies: updated });
-                      }}
+                      onClick={() =>
+                        set({
+                          policies: formData.policies.filter(
+                            (_, i) => i !== idx,
+                          ),
+                        })
+                      }
                       className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 size={16} />
@@ -445,7 +1057,7 @@ const AddEvent = () => {
                     onChange={(e) => {
                       const updated = [...formData.policies];
                       updated[idx].descriptions = e.target.value;
-                      setFormData({ ...formData, policies: updated });
+                      set({ policies: updated });
                     }}
                     className="w-full bg-transparent border-none text-gray-400 text-[11px] outline-none italic resize-none"
                     placeholder="Policy details..."
@@ -456,8 +1068,7 @@ const AddEvent = () => {
               <button
                 type="button"
                 onClick={() =>
-                  setFormData({
-                    ...formData,
+                  set({
                     policies: [
                       ...formData.policies,
                       { header: "", descriptions: "" },
@@ -469,70 +1080,118 @@ const AddEvent = () => {
                 + Add New Policy
               </button>
             </div>
-          </div>
+          </SectionCard>
+
+          {/* ── CONCERT-SPECIFIC ─────────────────────────────────────────── */}
+          {formData.type === "concert" && (
+            <SectionCard icon={Music} title="Concert Details" badge="Concert">
+              <PillMultiSelect
+                label="Music Genre"
+                options={[
+                  "Pop",
+                  "Rock",
+                  "Hip-Hop",
+                  "Electronic",
+                  "Jazz",
+                  "Afrobeats",
+                  "Gospel",
+                  "R&B",
+                  "Other",
+                ]}
+                value={formData.musicGenre}
+                onChange={(val) => set({ musicGenre: val })}
+              />
+              <ChipInput
+                label="Supporting Artists"
+                items={formData.supportingArtists}
+                onAdd={(v) =>
+                  set({ supportingArtists: [...formData.supportingArtists, v] })
+                }
+                onRemove={(i) =>
+                  set({
+                    supportingArtists: formData.supportingArtists.filter(
+                      (_, idx) => idx !== i,
+                    ),
+                  })
+                }
+                placeholder="e.g. Opening act name..."
+              />
+              <Toggle
+                label="Family Friendly"
+                value={formData.familyFriendly}
+                onChange={(v) => set({ familyFriendly: v })}
+              />
+            </SectionCard>
+          )}
+
+          {/* ── FESTIVAL-SPECIFIC ─────────────────────────────────────────── */}
+          {formData.type === "festival" && (
+            <SectionCard icon={Flag} title="Festival Details" badge="Festival">
+              <div>
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                  Duration (Days)
+                </label>
+                <input
+                  type="number"
+                  value={formData.durationDays}
+                  onChange={(e) => set({ durationDays: e.target.value })}
+                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-colors no-spinner"
+                  placeholder="e.g. 3"
+                />
+              </div>
+              <ChipInput
+                label="Stages"
+                items={formData.stages}
+                onAdd={(v) => set({ stages: [...formData.stages, v] })}
+                onRemove={(i) =>
+                  set({ stages: formData.stages.filter((_, idx) => idx !== i) })
+                }
+                placeholder="e.g. Main Stage, Pyramid..."
+              />
+              <Toggle
+                label="Family Friendly"
+                value={formData.familyFriendly}
+                onChange={(v) => set({ familyFriendly: v })}
+              />
+            </SectionCard>
+          )}
+
+          {/* ── GENERIC-SPECIFIC ─────────────────────────────────────────── */}
+          {formData.type === "generic" && (
+            <SectionCard icon={Zap} title="Event Category" badge="Generic">
+              <PillSelect
+                label="Category"
+                options={[
+                  "Sports",
+                  "Conference",
+                  "Expo",
+                  "Community",
+                  "Corporate",
+                  "Religious",
+                  "Exhibition",
+                  "Other",
+                ]}
+                value={formData.category}
+                onChange={(v) => set({ category: v })}
+              />
+            </SectionCard>
+          )}
         </div>
 
-        {/* Sidebar Space */}
+        {/* ── SIDEBAR ───────────────────────────────────────────────────── */}
         <div className="space-y-8">
-          {/* Schedule */}
+          {/* Schedule — MUI DateTimePicker */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
-              Schedule
+            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm flex items-center gap-2">
+              <CalendarDays size={14} className="text-[#FF7A00]" /> Schedule
             </h3>
-            <div className="relative">
-              <div className="relative flex items-center">
-                <input
-                  type="datetime-local"
-                  ref={dateInputRef}
-                  className="absolute left-0 top-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  onChange={(e) =>
-                    setFormData({ ...formData, eventDate: e.target.value })
-                  }
-                  value={formData.eventDate}
-                  tabIndex={-1}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    dateInputRef.current && dateInputRef.current.showPicker()
-                  }
-                  className="flex items-center gap-2 px-4 py-4 w-full bg-[#121417] border border-[#FF7A00] rounded-xl text-white font-bold focus:border-[#FF7A00] outline-none"
-                  style={{ position: "relative", zIndex: 20 }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="#FF7A00"
-                    className="w-6 h-6"
-                  >
-                    <rect
-                      x="3"
-                      y="5"
-                      width="18"
-                      height="16"
-                      rx="2"
-                      stroke="#FF7A00"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="M16 3v4M8 3v4M3 9h18"
-                      stroke="#FF7A00"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                  <span className="ml-2 text-white font-bold">
-                    {formData.eventDate
-                      ? new Date(formData.eventDate).toLocaleString()
-                      : "Pick Date & Time"}
-                  </span>
-                </button>
-              </div>
-            </div>
+            <DatePickerPanel
+              value={formData.eventDate}
+              onChange={(val) => set({ eventDate: val })}
+            />
           </div>
 
-          {/* Amenities Vertical with Plus */}
+          {/* Amenities */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
             <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
               Amenities
@@ -549,27 +1208,25 @@ const AddEvent = () => {
                   <Trash2
                     size={14}
                     className="text-gray-600 hover:text-red-500 cursor-pointer"
-                    onClick={() => {
-                      setFormData({
-                        ...formData,
+                    onClick={() =>
+                      set({
                         amenities: formData.amenities.filter(
                           (_, idx) => idx !== i,
                         ),
-                      });
-                    }}
+                      })
+                    }
                   />
                 </div>
               ))}
               <div className="relative pt-2">
                 <input
-                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-[10px] text-white outline-none focus:border-[#FF7A00]/50 font-bold uppercase"
+                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-[10px] text-white outline-none focus:border-[#FF7A00]/50 font-bold uppercase transition-colors"
                   placeholder="NEW AMENITY..."
                   value={newAmenity}
                   onChange={(e) => setNewAmenity(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && newAmenity.trim()) {
-                      setFormData({
-                        ...formData,
+                      set({
                         amenities: [...formData.amenities, newAmenity.trim()],
                       });
                       setNewAmenity("");
@@ -581,8 +1238,7 @@ const AddEvent = () => {
                   className="absolute right-2 top-[13px] p-1.5 bg-[#FF7A00] text-black rounded-lg hover:bg-white transition-all shadow-lg"
                   onClick={() => {
                     if (newAmenity.trim()) {
-                      setFormData({
-                        ...formData,
+                      set({
                         amenities: [...formData.amenities, newAmenity.trim()],
                       });
                       setNewAmenity("");
@@ -595,27 +1251,28 @@ const AddEvent = () => {
             </div>
           </div>
 
-          {/* FLYER ARCHIVE - INDIVIDUAL DIV BOXES */}
+          {/* Flyer Archive */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
             <h3 className="text-white font-bold uppercase tracking-tight text-sm">
               Flyer Archive
             </h3>
-
             <div className="space-y-4">
-              {formData?.pictures?.map((file, index) => (
+              {formData.pictures.map((file, index) => (
                 <div
                   key={index}
-                  className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center group relative"
+                  className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center"
                 >
                   <div className="w-16 h-16 rounded-xl border border-white/5 overflow-hidden shrink-0 bg-black">
-                    {file.type && file.type.startsWith("image/") ? (
+                    {file.type?.startsWith("image/") ? (
                       <img
                         src={URL.createObjectURL(file)}
                         alt="preview"
                         className="w-full h-full object-cover opacity-80"
                       />
                     ) : (
-                      <span className="text-gray-500 text-xs">No Preview</span>
+                      <span className="text-gray-500 text-xs flex items-center justify-center h-full">
+                        No Preview
+                      </span>
                     )}
                   </div>
                   <div className="flex-1 overflow-hidden">
@@ -627,12 +1284,13 @@ const AddEvent = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() => {
-                      const updated = formData.pictures.filter(
-                        (_, i) => i !== index,
-                      );
-                      setFormData({ ...formData, pictures: updated });
-                    }}
+                    onClick={() =>
+                      set({
+                        pictures: formData.pictures.filter(
+                          (_, i) => i !== index,
+                        ),
+                      })
+                    }
                     className="p-2 text-red-500/60 hover:text-red-500 transition-colors"
                   >
                     <Trash2 size={16} />
@@ -643,9 +1301,7 @@ const AddEvent = () => {
 
             <button
               type="button"
-              onClick={() =>
-                posterInputRef.current && posterInputRef.current.click()
-              }
+              onClick={() => posterInputRef.current?.click()}
               className="w-full h-32 bg-[#121417] border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95 group"
             >
               <input
@@ -657,10 +1313,7 @@ const AddEvent = () => {
                 onChange={(e) => {
                   const files = Array.from(e.target.files);
                   if (files.length)
-                    setFormData({
-                      ...formData,
-                      pictures: [...formData.pictures, ...files],
-                    });
+                    set({ pictures: [...formData.pictures, ...files] });
                 }}
               />
               <Plus
@@ -669,16 +1322,19 @@ const AddEvent = () => {
                 className="group-hover:scale-110 transition-transform"
               />
               <p className="font-black text-[11px] uppercase tracking-[0.2em] italic">
-                Add Visual Intel
+                Add Cover photo
               </p>
             </button>
           </div>
 
           <div className="p-6 bg-[#FF7A00]/5 border border-[#FF7A00]/10 rounded-3xl flex items-center gap-4">
             <ShieldCheck size={24} className="text-[#FF7A00]" />
-            <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest leading-tight">
-              Validated <br /> Terminal Ready
-            </p>
+            <div>
+              <p className="text-sm font-bold">Secure Booking</p>
+              <p className="text-xs text-gray-500">
+                Fast checkout and verified tickets
+              </p>
+            </div>
           </div>
         </div>
       </div>

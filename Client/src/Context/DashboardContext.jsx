@@ -5,13 +5,13 @@ import axios from "axios";
 
 const DashboardContext = createContext();
 
-export const DashboardApi = ({ children }) => {
+export const DashboardProvider = ({ children }) => {
   const { API_URL } = useService();
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["adminDashboardStats"],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/admin/analytics/dashboard`, {
+      const res = await fetch(`${API_URL}/api/auth/admin/analytics/dashboard`, {
         method: "GET",
         credentials: "include",
       });
@@ -33,4 +33,4 @@ export const DashboardApi = ({ children }) => {
   );
 };
 
-export const dashboardService = () => useContext(DashboardContext);
+export const useDashboard = () => useContext(DashboardContext);

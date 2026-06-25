@@ -25,6 +25,7 @@ export const get_dashboard_stats = catchAsync(async (req, res, next) => {
   const { thirtyDaysAgo, sevenDaysAgo } = getDateRanges();
 
   // 1. Total & New Users
+
   const totalUsers = await UserService.countDocuments({ role: "user" });
   const newRegistrations = await UserService.countDocuments({
     role: "user",
@@ -33,7 +34,6 @@ export const get_dashboard_stats = catchAsync(async (req, res, next) => {
 
   // 2. Events & Bookings
   const totalEvents = await EventService.countDocuments({ adminId: userId });
-  console.log(totalEvents);
   const totalBookings = await UserTicketModel.countDocuments({
     status: "paid",
   });
@@ -89,7 +89,12 @@ export const get_dashboard_stats = catchAsync(async (req, res, next) => {
     },
   });
 });
+export const getEvents = catchAsync(async (req, res, next) => {
+  const userId = new mongoose.Types.ObjectId(req.user.id);
 
+  const events = await EventService.find({ adminId: userId });
+  res.status(200).json({ success: true, events: events });
+});
 export const get_transaction_ledger = catchAsync(async (req, res, next) => {
   const transactions = await UserTicketModel.find()
     .populate("userId", "username email fullName")

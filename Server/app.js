@@ -86,6 +86,6 @@ app.use("/api/auth", wishlistRouter);
 app.use("/api/auth", notiRouter);
 app.use("/api/auth", authRouter);
 
-app.use("/api/admin", adminRouter);
+app.use("/api/auth/admin", adminRouter);
 app.use(errorHandler);
 startServer();

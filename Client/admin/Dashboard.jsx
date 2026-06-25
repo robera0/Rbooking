@@ -14,9 +14,9 @@ import RevenueChart from "./RevenueGraph";
 import { useQuery } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
 import { Loader2 } from "lucide-react";
-import { dashboardService } from "./api/dashboardApi";
+import { useDashboard } from "@/Context/DashboardContext";
 const Dashboard = () => {
-  const { stats, isLoading } = dashboardService();
+  const { stats, isLoading } = useDashboard();
   if (isLoading) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">

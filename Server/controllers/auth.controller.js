@@ -107,16 +107,17 @@ const refreshToken_SECRET = process.env.refreshToken_SECRET;
 */
 // REGISTER USER
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const register = catchAsync(async (req, res, next) => {
   const { username, email, password } = req.body;
 
   const existingUser = await UserService.findByEmail(email);
 
-  if (existingUser) next(new AppError(400, "Email already exists"));
-
+  if (existingUser) return next(new AppError(400, "Email already exists"));
   const hashedPassword = await hashPasswords(password);
 
-  const newUser = UserService.create({
+  const newUser = await UserService.create({
     username,
     email,
     password: hashedPassword,
@@ -153,20 +154,26 @@ export const login = catchAsync(async (req, res) => {
   console.log(payload);
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
+
+  const MAX_TOKENS = 5;
   user.refreshTokens.push({ token: refreshToken });
+  if (user.refreshTokens.length > MAX_TOKENS) {
+    user.refreshTokens = user.refreshTokens.slice(-MAX_TOKENS);
+  }
+
   await user.save();
 
   res
-    .cookie("access_token", accessToken, {
+    .cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       path: "/",
     })
     .cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       path: "/",
     })
     .status(200)
@@ -195,22 +202,30 @@ export const refresh = catchAsync(async (req, res, next) => {
     };
 
     const newAccessToken = generateAccessToken(payload);
-    res.json({ accessToken: newAccessToken });
+    res
+      .cookie("accessToken", newAccessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        path: "/",
+      })
+      .status(200)
+      .json({ message: "Token refreshed" });
   });
 });
 
-export const logout = catchAsync(async (req, res) => {
+export const logout = catchAsync(async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
   console.log(refreshToken);
 
   if (!refreshToken) {
-    next(new AppError(400, "Refresh token is required"));
+    return next(new AppError(400, "Refresh token is required"));
   }
 
   const user = await UserService.findByRefreshToken(refreshToken);
 
   if (!user) {
-    next(new AppError(404, "User not found or token invalid"));
+    return next(new AppError(404, "User not found or token invalid"));
   }
 
   user.refreshTokens = user.refreshTokens.filter(
@@ -220,16 +235,16 @@ export const logout = catchAsync(async (req, res) => {
   await user.save();
 
   res
-    .clearCookie("access_token", {
+    .clearCookie("accessToken", {
       httpOnly: true,
-      secure: true,
-      sameSite: "None",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       path: "/",
     })
     .clearCookie("refreshToken", {
       httpOnly: true,
-      secure: true,
-      sameSite: "None",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       path: "/",
     })
     .status(200)

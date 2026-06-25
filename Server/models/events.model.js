@@ -162,6 +162,7 @@ const BaseEventSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+BaseEventSchema.index({ type: 1 });
 
 export const Event = mongoose.model("Event", BaseEventSchema);
 

@@ -4,7 +4,6 @@ import {
   deleteUsers,
   suspendUsers,
   deleteEvents,
-  addEvent,
   addUser,
   updateUser,
 } from "../controllers/admin.controller.js";
@@ -13,7 +12,9 @@ import {
   get_transaction_ledger,
   get_transaction_by_id,
   get_revenue_history,
+  getEvents,
 } from "../controllers/analytics.controller.js";
+import { upload, addEvent } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 const adminRouter = express.Router();
 
@@ -24,7 +25,12 @@ adminRouter.post("/users/delete", authenticateTokenMiddleware, deleteUsers);
 adminRouter.post("/users/suspend", authenticateTokenMiddleware, suspendUsers);
 
 adminRouter.post("/events/delete", authenticateTokenMiddleware, deleteEvents);
-adminRouter.post("/events", addEvent);
+adminRouter.post(
+  "/addEvents",
+  upload.array("pictures", 10),
+  authenticateTokenMiddleware,
+  addEvent,
+);
 
 // Analytics
 adminRouter.get(
@@ -43,5 +49,6 @@ adminRouter.get(
   authenticateTokenMiddleware,
   get_revenue_history,
 );
+adminRouter.get("/events", authenticateTokenMiddleware, getEvents);
 
 export default adminRouter;
