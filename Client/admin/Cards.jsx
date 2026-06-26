@@ -187,7 +187,8 @@ export const EventTable = ({ search = "", filter = "" }) => {
   const filteredEvents = events?.filter((ev) => {
     const matchesSearch =
       ev?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      ev.locale?.toLowerCase().includes(search.toLowerCase());
+      ev?.locale?.toLowerCase().includes(search.toLowerCase()) ||
+      ev?.links?.venues?.name?.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filter
       ? ev.type?.toLowerCase() === filter.toLowerCase()
       : true;
@@ -281,7 +282,7 @@ export const EventTable = ({ search = "", filter = "" }) => {
                 </p>
               </td>
               <td className="px-6 py-4 text-center font-bold">
-                {item?.locale || "N/A"}
+                {item?.links?.venues?.name || item?.locale || "N/A"}
               </td>
               <td className="px-6 py-4 text-center font-bold text-gray-400">
                 {item?.dates?.start?.localDate || "N/A"}

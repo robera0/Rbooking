@@ -14,7 +14,11 @@ import {
   get_revenue_history,
   getEvents,
 } from "../controllers/analytics.controller.js";
-import { upload, addEvent } from "../controllers/events.controller.js";
+import {
+  upload,
+  addEvent,
+  createTickets,
+} from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 const adminRouter = express.Router();
 
@@ -27,9 +31,15 @@ adminRouter.post("/users/suspend", authenticateTokenMiddleware, suspendUsers);
 adminRouter.post("/events/delete", authenticateTokenMiddleware, deleteEvents);
 adminRouter.post(
   "/addEvents",
-  upload.array("pictures", 10),
   authenticateTokenMiddleware,
+  upload.array("pictures", 10),
   addEvent,
+);
+// eventRouter.js
+adminRouter.post(
+  "/events/:eventId/tickets",
+  authenticateTokenMiddleware,
+  createTickets,
 );
 
 // Analytics

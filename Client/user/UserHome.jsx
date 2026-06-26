@@ -88,6 +88,7 @@ const UserHome = () => {
     search,
     setSearch,
     setCommentId,
+    API_URL,
   } = useService();
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
@@ -467,7 +468,11 @@ const UserHome = () => {
                         }`}
                       >
                         <img
-                          src={e?.pictures?.[0]}
+                          src={
+                            `${API_URL}/${e?.pictures?.[0]}`
+                              ? `${API_URL}/${e?.pictures?.[0]}`
+                              : e?.pictures?.[0]
+                          }
                           className="w-full h-full object-cover brightness-95 transition-transform duration-700"
                           alt={e?.name}
                           loading="lazy"

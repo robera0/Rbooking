@@ -72,7 +72,8 @@ const StatBadge = ({ icon: Icon, label, value }) => (
 
 const EventInfo = () => {
   const { eventId, ticketId } = useParams();
-  const { setEditMenuActive, setCheckoutOpen, checkoutOpen } = useService();
+  const { setEditMenuActive, setCheckoutOpen, API_URL, checkoutOpen } =
+    useService();
   const {
     fetchEventById,
     usererror,
@@ -104,7 +105,7 @@ const EventInfo = () => {
     queryKey: ["event", eventId, ticketId],
     queryFn: () => fetchEventById(eventId, ticketId),
   });
-
+  console.log("M", event_id);
   const {
     data: comments,
     isLoading: commentsIsLoading,
@@ -216,6 +217,7 @@ const EventInfo = () => {
         ...baseActiveTicket,
         price: baseActiveTicket.price ?? baseActiveTicket.min ?? 0,
         type: baseActiveTicket.type ?? "standard",
+        currency: baseActiveTicket?.currency,
       }
     : null;
 
@@ -281,7 +283,7 @@ const EventInfo = () => {
         >
           {images[0] ? (
             <img
-              src={images[0]}
+              src={`${API_URL}/${images[0]}`}
               alt={event?.name}
               className="w-full h-full object-cover"
             />
@@ -434,7 +436,7 @@ const EventInfo = () => {
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={imgIdx}
-                        src={images[imgIdx]}
+                        src={`${API_URL}/${images[imgIdx]}`}
                         alt={`Event ${imgIdx + 1}`}
                         initial={{ opacity: 0, scale: 1.06 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -489,7 +491,7 @@ const EventInfo = () => {
                           }`}
                         >
                           <img
-                            src={img}
+                            src={`${API_URL}/${img}`}
                             className="w-full h-full object-cover"
                             alt=""
                           />
@@ -799,13 +801,14 @@ const EventInfo = () => {
                         </p>
                         <div className="flex items-baseline gap-1">
                           <span className="text-4xl font-black tracking-tighter">
-                            ${activeTicket?.price}
+                            {activeTicket?.currency == "USD" ? "$" : " "}{" "}
+                            {activeTicket?.price}
                           </span>
                           <span
                             className="text-[10px] font-black uppercase"
                             style={{ color: theme?.accentColor }}
                           >
-                            USD
+                            {activeTicket?.currency}
                           </span>
                         </div>
                       </motion.div>

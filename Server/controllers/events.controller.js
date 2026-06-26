@@ -6,7 +6,10 @@ import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
 import { safeParse } from "../utils/safeParse.js";
+import fs from "fs";
+
 //ADD EVENTS
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -28,7 +31,6 @@ export const addEvent = catchAsync(async (req, res, next) => {
     name,
     artist,
     locale,
-    info,
     policies,
     priceRanges,
     dates,
@@ -39,10 +41,9 @@ export const addEvent = catchAsync(async (req, res, next) => {
     links,
     stages,
     durationDays,
-
     category,
-
     familyFriendly,
+    capacity,
   } = req.body;
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
@@ -56,10 +57,11 @@ export const addEvent = catchAsync(async (req, res, next) => {
   musicGenre = safeParse(musicGenre || "[]");
   policies = safeParse(policies || "[]");
   links = safeParse(links || "{}");
+  console.log("parsed links:", JSON.stringify(links)); // ← add this temporarily
   stages = safeParse(stages || "[]");
   sales = safeParse(sales || "{}");
-  info = safeParse(info || "{}");
-  locale = safeParse(locale || "{}");
+  capacity = Number(capacity) || 0;
+  locale = locale || "";
   desc = desc;
   category = safeParse(category || "[]");
   familyFriendly = Boolean(familyFriendly === "true");
@@ -75,8 +77,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
     adminId: userId,
     name,
     artist,
-    locale,
-    info,
+    locale: typeof locale === "string" ? locale : "",
     policies,
     priceRanges,
     dates,
@@ -93,13 +94,51 @@ export const addEvent = catchAsync(async (req, res, next) => {
 
     familyFriendly,
   };
-  events.pictures = pictures;
-  const newEvent = await EventService.create(events);
+
+  const ticket = {};
+  let newEvent;
+
+  try {
+    newEvent = await EventService.create(events);
+    await ticket;
+  } catch (err) {
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file) => {
+        fs.unlink(file.path, (unlinkErr) => {
+          if (unlinkErr)
+            console.error("Failed to delete file:", file.path, unlinkErr);
+        });
+      });
+    }
+    return next(err);
+  }
+
   await clearEventsCache();
   res.status(200).json({
     success: true,
     event: newEvent,
     message: "event created successfully",
+  });
+});
+
+// controller
+export const createTickets = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const { tickets } = req.body;
+
+  const createdTickets = await TicketModel.insertMany(
+    tickets.map((t) => ({
+      eventId,
+      name: t.name,
+      price: Number(t.price),
+      totalQuantity: Number(t.capacity),
+      availableQuantity: Number(t.capacity),
+    })),
+  );
+
+  res.status(201).json({
+    success: true,
+    tickets: createdTickets,
   });
 });
 export const getEvents = catchAsync(async (req, res, next) => {
@@ -288,7 +327,9 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     amenities,
     desc,
     links,
+    existingPictures,
 
+    classifications,
     // festival fields
     stages,
     durationDays,
@@ -312,7 +353,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   if (existingPictures) existingPictures = safeParse(existingPictures);
   if (links) links = safeParse(links);
   if (stages) stages = safeParse(stages);
-  if (rating) rating = safeParse(rating);
+
   if (classifications) classifications = safeParse(classifications);
   if (sales) sales = safeParse(sales);
   if (existingPictures) existingPictures = safeParse(existingPictures);

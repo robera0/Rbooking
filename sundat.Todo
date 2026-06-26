@@ -15,7 +15,10 @@
 [f] add custom  datePicket in the add event 
 [f] edit the design of the add event so it can handle all categories also in the event.controller
 [] make the admin registration work 
+[] make sure to remove the info
 [] post an event too
+[] when user post event the cap should go to the ticket schema so it can show the available number of tickets 
+[] edit the routes to update the admin profile
 // WHEN THE APP IS PUBLISHED 
 
 [] add the calendar and put all the event there is on that like a poster

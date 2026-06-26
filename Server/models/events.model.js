@@ -171,6 +171,7 @@ export const Event = mongoose.model("Event", BaseEventSchema);
 const ConcertSchema = new mongoose.Schema({
   artist: {
     name: String,
+    supporting: [String],
   },
 
   musicGenre: [String],
@@ -195,7 +196,19 @@ export const Festival = Event.discriminator("festival", FestivalSchema);
 // GENERIC EVENT SCHEMA
 
 const GenericEventSchema = new mongoose.Schema({
-  category: String, // sports, conference, expo, etc.
+  category: {
+    type: String,
+    enum: [
+      "sports",
+      "conference",
+      "expo",
+      "community",
+      "corporate",
+      "religious",
+      "exhibition",
+      "other",
+    ],
+    lowercase: true, // normalize "Sports" → "sports" automatically
+  },
 });
-
 export const GenericEvent = Event.discriminator("generic", GenericEventSchema);

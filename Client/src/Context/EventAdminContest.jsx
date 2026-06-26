@@ -22,7 +22,7 @@ export const EventProvider = ({ children }) => {
       return json.events || [];
     },
   });
-  console.log(events);
+  console.log("L", events);
 
   const deleteMutation = useMutation({
     mutationFn: async (eventIds) => {

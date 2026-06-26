@@ -31,6 +31,7 @@ const Events = () => {
     setArtist,
     search,
     setSearch,
+    API_URL,
   } = useService();
   const { events, user, isLoading, error, wishlist, wishlistIsError } =
     eventService();
@@ -227,7 +228,16 @@ const Events = () => {
               {filteredEvents.map((e) => {
                 const isSoldOut = e.tickets?.length === 0;
                 const isAdded = checkWishlist(e._id);
-
+                const baseActiveTicket = e?.priceRanges?.[0] || e?.price || "0";
+                const activeTicket = baseActiveTicket
+                  ? {
+                      ...baseActiveTicket,
+                      price:
+                        baseActiveTicket.price ?? baseActiveTicket.min ?? 0,
+                      type: baseActiveTicket.type ?? "standard",
+                      currency: baseActiveTicket?.currency,
+                    }
+                  : null;
                 return (
                   <motion.div
                     key={e._id}
@@ -256,7 +266,11 @@ const Events = () => {
                         }`}
                       >
                         <img
-                          src={e.pictures?.[0] || "/Login.jpg"}
+                          src={
+                            `${API_URL}/${e?.pictures?.[0]}` != undefined
+                              ? `${API_URL}/${e?.pictures?.[0]}`
+                              : e?.pictures?.[0]
+                          }
                           alt={e.name}
                           loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
@@ -342,9 +356,13 @@ const Events = () => {
                           </span>
                           <div className="flex items-baseline gap-1">
                             <span className="text-2xl font-black text-white italic">
-                              ${e?.priceRanges?.[0]?.min || e?.price || "0"}
+                              {"   "}
+                              {activeTicket?.price}
                             </span>
                             <span className="text-[10px] text-gray-600 font-bold">
+                              {activeTicket?.currency == "USD"
+                                ? "$"
+                                : activeTicket?.currency}{" "}
                               /pp
                             </span>
                           </div>
