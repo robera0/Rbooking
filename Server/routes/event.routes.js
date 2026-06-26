@@ -11,7 +11,7 @@ import {
 const eventRouter = express.Router();
 
 eventRouter.get("/events", getEvents);
-eventRouter.get("/featuredevents", featuredEvents);
+eventRouter.get("/featuredEvents", featuredEvents);
 eventRouter.get("/events/:eventId", getEventById);
 eventRouter.put("/events/:eventId", upload.array("pictures", 10), updateEvent);
 eventRouter.get("/events/:eventId/tickets/:ticketId", fetchEventsId);

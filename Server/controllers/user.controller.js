@@ -14,7 +14,7 @@ export const user = catchAsync(async (req, res, next) => {
 });
 
 export const updateUser = catchAsync(async (req, res, next) => {
-  const userId = new mongoose.Types.ObjectId(req.user);
+  const userId = new mongoose.Types.ObjectId(req.user.id);
 
   if (!userId) return res.status(401).json({ message: "There is no user" });
 

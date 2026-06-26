@@ -12,9 +12,10 @@
 [f] the ticket class
 [f] add the classes in the controller of the events
 [f] test if the schema is using the index
-[] add custom  datePicket in the add event 
-[] edit the design of the add event so it can handle all categories also in the event.controller
+[f] add custom  datePicket in the add event 
+[f] edit the design of the add event so it can handle all categories also in the event.controller
 [] make the admin registration work 
+[] post an event too
 // WHEN THE APP IS PUBLISHED 
 
 [] add the calendar and put all the event there is on that like a poster

@@ -43,7 +43,7 @@ export const ApiProvider = ({ children }) => {
 
   // GET FEATURED EVENTS (filtered by date)
   const fetchFeaturedEvents = async () => {
-    const res = await fetch(`${API_URL}/api/featuredevents`);
+    const res = await fetch(`${API_URL}/api/featuredEvents`);
     return res.json();
   };
 

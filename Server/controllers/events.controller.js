@@ -165,7 +165,8 @@ export const getEvents = catchAsync(async (req, res, next) => {
 
   const eventsWithTickets = events.map((event) => {
     const tickets = ticketsByEvent[event._id.toString()] || [];
-    return { ...event.toObject(), tickets, ticketCount: tickets.length };
+
+    return { ...event, tickets, ticketCount: tickets.length };
   });
   await redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets));
 
@@ -202,17 +203,17 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
     acc[key].push(ticket);
     return acc;
   }, {});
-  const featuredEvents = events?.map((event) => {
+  const featuredEvent = events?.map((event) => {
     const tickets = ticketsByEvent[event._id.toString()] || [];
     return {
-      ...event.toObject(),
+      ...event,
       tickets: tickets,
       ticketCount: tickets.length,
     };
   });
 
   await redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents));
-  res.status(200).json({ events: featuredEvents });
+  res.status(200).json({ events: featuredEvent });
 });
 // FETCH WITH RESPECT TO ITS INDEX
 export const fetchEventsId = catchAsync(async (req, res, next) => {

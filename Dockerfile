@@ -13,6 +13,6 @@ COPY Server/ .
 
 COPY --from=client /build/dist ./public
 
-ENV PORT=5001
-EXPOSE 5001
+ENV PORT=5002
+EXPOSE 5002
 CMD ["node", "app.js"]
