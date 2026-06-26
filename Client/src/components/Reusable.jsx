@@ -1,865 +1,854 @@
-import React, { useState, useRef } from "react";
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Listbox } from "@headlessui/react";
+import { faToggleOff, faToggleOn } from "@fortawesome/free-solid-svg-icons";
+import { Link } from "react-router-dom";
 import {
-  Plus,
-  Save,
-  ArrowLeft,
-  Trash2,
-  ShieldCheck,
-  Music,
-  Tag,
+  Star,
+  CircleUser,
+  Ticket,
+  LogOut,
+  Settings,
+  CreditCard,
+  Heart,
+  Calendar,
   Zap,
-  Check,
-  Flag,
-  CalendarDays,
+  ToggleRightIcon,
+  CheckCheck,
+  ChevronDown,
+  Search,
+  Bell,
+  X,
+  ChevronRight,
+  MessageCircleMore,
+  MapPin,
+  User,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Toaster, toast } from "react-hot-toast";
+import { useState } from "react";
+import { Skeleton } from "boneyard-js/react";
+import { eventService } from "@/Context/ApiEvent";
+import { Navigate, useLocation } from "react-router-dom";
 import { useService } from "@/Context/ServiceContext";
-import { CustomSelect } from "./../../admin/Cards";
-import DatePickerPanel from "./DatePickerPanel";
-// ─── Reusable chip-tag input ───────────────────────────────────────────────
-const ChipInput = ({ label, items, onAdd, onRemove, placeholder }) => {
-  const [val, setVal] = useState("");
-  const add = () => {
-    if (val.trim()) {
-      onAdd(val.trim());
-      setVal("");
-    }
-  };
-  return (
-    <div>
-      <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
-        {label}
-      </label>
-      <div className="flex flex-wrap gap-2 mb-3">
-        {items.map((item, i) => (
-          <span
-            key={i}
-            className="flex items-center gap-2 px-3 py-1.5 bg-[#121417] border border-white/[0.06] rounded-full text-[10px] text-gray-300 font-bold uppercase"
-          >
-            {item}
-            <button
-              type="button"
-              onClick={() => onRemove(i)}
-              className="text-gray-600 hover:text-red-400 leading-none"
-            >
-              ×
-            </button>
-          </span>
-        ))}
+import { formatDistanceToNow } from "date-fns";
+import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
+export const ProtectedRoute = ({ children }) => {
+  const { usererror, user } = eventService(); // remove userIsLoading
+  const location = useLocation();
+
+  if (!user && !usererror) {
+    // still loading
+    return (
+      <div className="fixed inset-0 bg-[#121417] z-[100] flex flex-col items-center justify-center">
+        {/* your loading spinner */}
       </div>
-      <div className="flex gap-3">
-        <input
-          className="flex-1 bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white text-[11px] font-bold uppercase outline-none focus:border-[#FF7A00]/50 transition-colors"
-          placeholder={placeholder}
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add();
-            }
-          }}
+    );
+  }
+
+  if (!user || usererror) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+export const Toggle = ({ name, toggle, toggleOn, action }) => {
+  return (
+    <div className="flex w-full justify-between">
+      <h3 className="text-md w-64 text-left  text-white flex justify-center items-center font-semibold">
+        {name}
+      </h3>
+      <button
+        className="mr-4 cursor-pointer w-10"
+        onClick={() => {
+          if (action) action();
+          if (toggle) toggle();
+        }}
+      >
+        <FontAwesomeIcon
+          className="text-3xl text-[#168FF4] transition ease-in-out duration-300"
+          icon={toggleOn ? faToggleOn : faToggleOff}
         />
-        <button
-          type="button"
-          onClick={add}
-          className="px-4 py-2 bg-[#FF7A00] text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
-        >
-          Add
-        </button>
-      </div>
+      </button>
     </div>
   );
 };
 
-// ─── Pill selector (single) ────────────────────────────────────────────────
-const PillSelect = ({ label, options, value, onChange }) => (
-  <div>
-    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
-      {label}
-    </label>
-    <div className="flex flex-wrap gap-2">
-      {options.map((opt) => (
-        <button
-          key={opt}
-          type="button"
-          onClick={() => onChange(opt)}
-          className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
-            value === opt
-              ? "bg-[#FF7A00] text-black border-[#FF7A00]"
-              : "bg-transparent text-gray-500 border-white/10 hover:border-[#FF7A00] hover:text-[#FF7A00]"
-          }`}
-        >
-          {opt}
-        </button>
-      ))}
-    </div>
-  </div>
-);
+export default function CheckoutModal({
+  isOpen,
+  onClose,
+  amount = 400,
+  name,
+  action,
+}) {
+  const [phone, setPhone] = useState("");
+  const [selected, setSelected] = useState(null);
+  const { quantity, setQuantity } = useService();
 
-// ─── Pill selector (multi) ─────────────────────────────────────────────────
-const PillMultiSelect = ({ label, options, value, onChange }) => {
-  const toggle = (opt) => {
-    const next = value.includes(opt)
-      ? value.filter((x) => x !== opt)
-      : [...value, opt];
-    onChange(next);
-  };
-  return (
-    <div>
-      <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
-        {label}
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {options.map((opt) => (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => toggle(opt)}
-            className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
-              value.includes(opt)
-                ? "bg-[#FF7A00] text-black border-[#FF7A00]"
-                : "bg-transparent text-gray-500 border-white/10 hover:border-[#FF7A00] hover:text-[#FF7A00]"
-            }`}
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
+  const paymentMethods = [
+    { id: "telebirr", name: "Telebirr" },
+    { id: "cbe", name: "CBE Birr" },
+    { id: "boa", name: "Abyssinia" },
+    { id: "awash", name: "Awash" },
+  ];
 
-// ─── Toggle ────────────────────────────────────────────────────────────────
-const Toggle = ({ label, value, onChange }) => (
-  <div className="flex items-center justify-between pt-5 border-t border-white/[0.04] mt-2">
-    <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest">
-      {label}
-    </span>
-    <button
-      type="button"
-      onClick={() => onChange(!value)}
-      className={`w-11 h-6 rounded-full transition-all relative flex-shrink-0 ${
-        value ? "bg-[#FF7A00]" : "bg-white/10"
-      }`}
-    >
-      <span
-        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow ${
-          value ? "left-6" : "left-1"
-        }`}
-      />
-    </button>
-  </div>
-);
+  const totalAmount = amount * quantity;
 
-const SectionCard = ({ icon: Icon, title, badge, children }) => (
-  <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
-    <h3 className="text-white font-bold uppercase tracking-tight text-sm flex items-center gap-2">
-      {Icon && <Icon size={14} className="text-[#FF7A00]" />}
-      {title}
-      {badge && (
-        <span className="ml-1 text-[8px] px-2 py-0.5 rounded-full bg-[#FF7A00]/10 text-[#FF7A00] border border-[#FF7A00]/20 font-black uppercase tracking-widest">
-          {badge}
-        </span>
-      )}
-    </h3>
-    {children}
-  </div>
-);
-
-// ─── MAIN COMPONENT ────────────────────────────────────────────────────────
-const AddEvent = () => {
-  const navigate = useNavigate();
-  const { API_URL } = useService();
-  const queryClient = useQueryClient();
-
-  const EMPTY_FORM = {
-    type: "",
-    eventName: "",
-    artistName: "",
-    venue: "",
-    description: "",
-    eventDate: "",
-    tickets: [],
-    policies: [],
-    amenities: [],
-    pictures: [],
-    musicGenre: [],
-    supportingArtists: [],
-    familyFriendly: false,
-    durationDays: "",
-    stages: [],
-    category: "",
-  };
-
-  const [formData, setFormData] = useState(EMPTY_FORM);
-  const set = (patch) => setFormData((prev) => ({ ...prev, ...patch }));
-
-  const [newTicket, setNewTicket] = useState({
-    name: "",
-    price: "",
-    capacity: "",
-  });
-  const [newAmenity, setNewAmenity] = useState("");
-  const [error, setError] = useState("");
-
-  const posterInputRef = useRef(null);
-
-  const createMutation = useMutation({
-    mutationFn: async (payload) => {
-      const form = new FormData();
-      form.append("type", payload.type);
-      form.append("name", payload.name);
-      form.append("locale", payload.locale);
-      form.append("desc", payload.desc);
-      form.append("artist", JSON.stringify(payload.artist));
-      form.append("priceRanges", JSON.stringify(payload.priceRanges));
-      form.append("policies", JSON.stringify(payload.policies));
-      form.append("dates", JSON.stringify(payload.dates));
-      form.append("amenities", JSON.stringify(payload.amenities));
-      form.append("musicGenre", JSON.stringify(payload.musicGenre));
-      if (payload.familyFriendly !== undefined)
-        form.append("familyFriendly", payload.familyFriendly);
-      if (payload.durationDays !== undefined)
-        form.append("durationDays", payload.durationDays);
-      if (payload.stages) form.append("stages", JSON.stringify(payload.stages));
-      if (payload.category) form.append("category", payload.category);
-      formData.pictures.forEach((img) => form.append("pictures", img));
-
-      const res = await fetch(`${API_URL}/api/auth/admin/addEvents`, {
-        method: "POST",
-        credentials: "include",
-        body: form,
-      });
-      if (!res.ok) throw new Error("Failed to create event");
-      return res.json();
-    },
-    onSuccess: () => {
-      toast.success("Event Published Successfully!", {
-        duration: 2000,
-        style: {
-          background: "#1C1F22",
-          color: "#fff",
-          border: "1px solid #FF7A00",
-        },
-      });
-      setFormData(EMPTY_FORM);
-      setTimeout(() => navigate("/admin/events"), 2000);
-    },
-    onError: (err) => toast.error(`Error: ${err.message}`),
-  });
-
-  const handleSubmit = () => {
-    if (!formData.eventName)
-      return setError("Event Name is required to publish");
-    setError("");
-
-    const type = formData.type.toLowerCase();
-
-    const basePayload = {
-      type,
-      name: formData.eventName,
-      artist: { name: formData.artistName },
-      locale: formData.venue,
-      policies: formData.policies,
-      priceRanges: formData.tickets.map((t) => ({
-        type: t.name,
-        currency: "ETB",
-        min: Number(t.price),
-        max: Number(t.price),
-      })),
-      desc: formData.description,
-      dates: {
-        start: {
-          localDate: formData.eventDate?.split("T")[0],
-          localTime: formData.eventDate?.split("T")[1],
-          dateTime: formData.eventDate ? new Date(formData.eventDate) : null,
-        },
-        timezone: "Africa/Addis_Ababa",
-        status: { code: "onsale" },
-      },
-      amenities: {
-        activity: formData.amenities,
-        payment_method: [],
-        safety: [],
-        other: [],
-      },
-      musicGenre: type === "concert" ? formData.musicGenre : ["General"],
-    };
-
-    if (type === "concert") {
-      basePayload.artist.supporting = formData.supportingArtists;
-      basePayload.familyFriendly = formData.familyFriendly;
-    }
-    if (type === "festival") {
-      basePayload.durationDays = Number(formData.durationDays) || 0;
-      basePayload.stages = formData.stages;
-      basePayload.familyFriendly = formData.familyFriendly;
-    }
-    if (type === "generic") {
-      basePayload.category = formData.category;
-    }
-
-    createMutation.mutate(basePayload);
-  };
+  if (!isOpen) return null;
 
   return (
-    <div className="w-full max-w-full space-y-8 pb-20">
-      <Toaster position="top-center" />
+    <div className="fixed lg:pt-22 inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+      <div
+        className="relative w-full max-w-[440px] rounded-[2.5rem] p-10
+        bg-[#0A0A0B] border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.8)] 
+        text-[#F4F4F5] overflow-hidden"
+      >
+        {/* Subtle Background Glow */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#FF7A00]/10 blur-[100px] pointer-events-none" />
 
-      {/* Header */}
-      <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-white/[0.04] rounded-full transition-colors text-white"
-            >
-              <ArrowLeft size={24} />
-            </button>
-            <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
-              Create{" "}
-              <span className="text-[#FF7A00]">{formData.type || "Event"}</span>
-            </h1>
+        {/* Header */}
+        <div className="flex justify-between items-start mb-10">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
+              Secure Terminal
+            </p>
+            <h2 className="text-3xl font-black italic uppercase tracking-tighter leading-none">
+              Checkout
+            </h2>
+            <p className="text-xs font-bold text-gray-500 uppercase italic">
+              {name}
+            </p>
           </div>
-          <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00] ml-14" />
-        </div>
-        <button
-          onClick={handleSubmit}
-          disabled={createMutation.isLoading}
-          className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
-        >
-          <Save size={16} strokeWidth={3} />
-          {createMutation.isLoading ? "Publishing..." : "Publish Event"}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ── LEFT COLUMN ───────────────────────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Type selector */}
-          <SectionCard icon={Tag} title="Classification Type">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
-                Choose event type — extra fields will appear below
-              </p>
-              <CustomSelect
-                options={[
-                  { label: "Concert", value: "concert" },
-                  { label: "Festival", value: "festival" },
-                  { label: "Generic", value: "generic" },
-                ]}
-                value={formData.type}
-                onChange={(val) => set({ type: val })}
-                placeholder="Select Type"
-              />
-            </div>
-          </SectionCard>
-
-          {/* Core details */}
-          <SectionCard title="Transmission Details">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                  Event Title
-                </label>
-                <input
-                  type="text"
-                  value={formData.eventName}
-                  onChange={(e) => set({ eventName: e.target.value })}
-                  className={`w-full bg-[#121417] border ${
-                    error ? "border-red-500/50" : "border-white/[0.06]"
-                  } rounded-xl px-4 py-4 text-white focus:border-[#FF7A00]/50 outline-none transition-colors font-bold`}
-                  placeholder="e.g. WAREHOUSE PROJECT"
-                />
-                {error && (
-                  <p className="text-red-500 font-black tracking-widest uppercase text-[9px] mt-2">
-                    {error}
-                  </p>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                    Artist / Talent
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.artistName}
-                    onChange={(e) => set({ artistName: e.target.value })}
-                    className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
-                    placeholder="Main artist"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                    Venue Locale
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.venue}
-                    onChange={(e) => set({ venue: e.target.value })}
-                    className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
-                    placeholder="Location"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                  Description
-                </label>
-                <textarea
-                  rows="4"
-                  value={formData.description}
-                  onChange={(e) => set({ description: e.target.value })}
-                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors italic"
-                  placeholder="Event details..."
-                />
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Tickets */}
-          <SectionCard title="Event Tickets">
-            <div className="space-y-4">
-              {formData.tickets.map((ticket, idx) => (
-                <div
-                  key={idx}
-                  className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
-                >
-                  <div className="flex-1">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Ticket Name
-                    </label>
-                    <input
-                      value={ticket.name}
-                      onChange={(e) => {
-                        const updated = [...formData.tickets];
-                        updated[idx].name = e.target.value;
-                        set({ tickets: updated });
-                      }}
-                      className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
-                    />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Price (ETB)
-                    </label>
-                    <input
-                      value={ticket.price}
-                      onChange={(e) => {
-                        const updated = [...formData.tickets];
-                        updated[idx].price = e.target.value;
-                        set({ tickets: updated });
-                      }}
-                      className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
-                    />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Capacity
-                    </label>
-                    <input
-                      type="number"
-                      value={ticket.capacity}
-                      onChange={(e) => {
-                        const updated = [...formData.tickets];
-                        updated[idx].capacity = e.target.value;
-                        set({ tickets: updated });
-                      }}
-                      className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      set({
-                        tickets: formData.tickets.filter((_, i) => i !== idx),
-                      })
-                    }
-                    className="ml-2 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-
-              {/* New ticket row */}
-              <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
-                <div className="flex-1">
-                  <input
-                    value={newTicket.name}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, name: e.target.value })
-                    }
-                    className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
-                    placeholder="Ticket Name"
-                  />
-                </div>
-                <div className="w-24">
-                  <input
-                    value={newTicket.price}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, price: e.target.value })
-                    }
-                    className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
-                    placeholder="Price"
-                  />
-                </div>
-                <div className="w-24">
-                  <input
-                    type="number"
-                    value={newTicket.capacity}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, capacity: e.target.value })
-                    }
-                    className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                    placeholder="Cap"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (
-                      newTicket.name &&
-                      newTicket.price &&
-                      newTicket.capacity
-                    ) {
-                      set({ tickets: [...formData.tickets, { ...newTicket }] });
-                      setNewTicket({ name: "", price: "", capacity: "" });
-                    }
-                  }}
-                  className="ml-2 text-[#22c55e] border border-[#22c55e] rounded-full p-2"
-                >
-                  <Check size={18} />
-                </button>
-              </div>
-            </div>
-          </SectionCard>
-
-          {/* Policies */}
-          <SectionCard title="Event Policies">
-            <div className="space-y-4">
-              {formData.policies.map((policy, idx) => (
-                <div
-                  key={idx}
-                  className="bg-[#121417] p-5 rounded-xl border border-white/[0.06] space-y-3"
-                >
-                  <div className="flex justify-between items-start">
-                    <input
-                      value={policy.header}
-                      onChange={(e) => {
-                        const updated = [...formData.policies];
-                        updated[idx].header = e.target.value;
-                        set({ policies: updated });
-                      }}
-                      className="bg-transparent border-none text-white font-bold outline-none w-full uppercase text-xs"
-                      placeholder="Policy Header"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        set({
-                          policies: formData.policies.filter(
-                            (_, i) => i !== idx,
-                          ),
-                        })
-                      }
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                  <textarea
-                    value={policy.descriptions}
-                    onChange={(e) => {
-                      const updated = [...formData.policies];
-                      updated[idx].descriptions = e.target.value;
-                      set({ policies: updated });
-                    }}
-                    className="w-full bg-transparent border-none text-gray-400 text-[11px] outline-none italic resize-none"
-                    placeholder="Policy details..."
-                    rows={2}
-                  />
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() =>
-                  set({
-                    policies: [
-                      ...formData.policies,
-                      { header: "", descriptions: "" },
-                    ],
-                  })
-                }
-                className="w-full py-4 border border-dashed border-white/[0.1] rounded-xl text-gray-500 hover:text-[#FF7A00] hover:border-[#FF7A00] transition-all text-[10px] font-black uppercase tracking-widest"
-              >
-                + Add New Policy
-              </button>
-            </div>
-          </SectionCard>
-
-          {/* ── CONCERT-SPECIFIC ─────────────────────────────────────────── */}
-          {formData.type === "concert" && (
-            <SectionCard icon={Music} title="Concert Details" badge="Concert">
-              <PillMultiSelect
-                label="Music Genre"
-                options={[
-                  "Pop",
-                  "Rock",
-                  "Hip-Hop",
-                  "Electronic",
-                  "Jazz",
-                  "Afrobeats",
-                  "Gospel",
-                  "R&B",
-                  "Other",
-                ]}
-                value={formData.musicGenre}
-                onChange={(val) => set({ musicGenre: val })}
-              />
-              <ChipInput
-                label="Supporting Artists"
-                items={formData.supportingArtists}
-                onAdd={(v) =>
-                  set({ supportingArtists: [...formData.supportingArtists, v] })
-                }
-                onRemove={(i) =>
-                  set({
-                    supportingArtists: formData.supportingArtists.filter(
-                      (_, idx) => idx !== i,
-                    ),
-                  })
-                }
-                placeholder="e.g. Opening act name..."
-              />
-              <Toggle
-                label="Family Friendly"
-                value={formData.familyFriendly}
-                onChange={(v) => set({ familyFriendly: v })}
-              />
-            </SectionCard>
-          )}
-
-          {/* ── FESTIVAL-SPECIFIC ─────────────────────────────────────────── */}
-          {formData.type === "festival" && (
-            <SectionCard icon={Flag} title="Festival Details" badge="Festival">
-              <div>
-                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                  Duration (Days)
-                </label>
-                <input
-                  type="number"
-                  value={formData.durationDays}
-                  onChange={(e) => set({ durationDays: e.target.value })}
-                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-colors no-spinner"
-                  placeholder="e.g. 3"
-                />
-              </div>
-              <ChipInput
-                label="Stages"
-                items={formData.stages}
-                onAdd={(v) => set({ stages: [...formData.stages, v] })}
-                onRemove={(i) =>
-                  set({ stages: formData.stages.filter((_, idx) => idx !== i) })
-                }
-                placeholder="e.g. Main Stage, Pyramid..."
-              />
-              <Toggle
-                label="Family Friendly"
-                value={formData.familyFriendly}
-                onChange={(v) => set({ familyFriendly: v })}
-              />
-            </SectionCard>
-          )}
-
-          {/* ── GENERIC-SPECIFIC ─────────────────────────────────────────── */}
-          {formData.type === "generic" && (
-            <SectionCard icon={Zap} title="Event Category" badge="Generic">
-              <PillSelect
-                label="Category"
-                options={[
-                  "Sports",
-                  "Conference",
-                  "Expo",
-                  "Community",
-                  "Corporate",
-                  "Religious",
-                  "Exhibition",
-                  "Other",
-                ]}
-                value={formData.category}
-                onChange={(v) => set({ category: v })}
-              />
-            </SectionCard>
-          )}
+          <button
+            onClick={onClose}
+            className="p-2 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* ── SIDEBAR ───────────────────────────────────────────────────── */}
-        <div className="space-y-8">
-          {/* Schedule — MUI DateTimePicker */}
-          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm flex items-center gap-2">
-              <CalendarDays size={14} className="text-[#FF7A00]" /> Schedule
-            </h3>
-            <DatePickerPanel
-              value={formData.eventDate}
-              onChange={(val) => set({ eventDate: val })}
+        {/* Input Fields Container */}
+        <div className="space-y-6 mb-10">
+          {/* Phone Input */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+              Terminal Phone (Primary)
+            </label>
+            <input
+              type="tel"
+              placeholder="+251 ..."
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
+              transition-all rounded-2xl px-5 py-4 outline-none font-bold text-lg tracking-tight"
             />
           </div>
 
-          {/* Amenities */}
-          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
-            <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
-              Amenities
-            </h3>
-            <div className="space-y-3">
-              {formData.amenities.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between bg-[#121417] px-4 py-3 rounded-xl border border-white/[0.06] group"
-                >
-                  <span className="text-[10px] font-black uppercase text-gray-400 group-hover:text-white transition-colors">
-                    {item}
-                  </span>
-                  <Trash2
-                    size={14}
-                    className="text-gray-600 hover:text-red-500 cursor-pointer"
-                    onClick={() =>
-                      set({
-                        amenities: formData.amenities.filter(
-                          (_, idx) => idx !== i,
-                        ),
-                      })
-                    }
-                  />
-                </div>
-              ))}
-              <div className="relative pt-2">
-                <input
-                  className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-[10px] text-white outline-none focus:border-[#FF7A00]/50 font-bold uppercase transition-colors"
-                  placeholder="NEW AMENITY..."
-                  value={newAmenity}
-                  onChange={(e) => setNewAmenity(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && newAmenity.trim()) {
-                      set({
-                        amenities: [...formData.amenities, newAmenity.trim()],
-                      });
-                      setNewAmenity("");
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  className="absolute right-2 top-[13px] p-1.5 bg-[#FF7A00] text-black rounded-lg hover:bg-white transition-all shadow-lg"
-                  onClick={() => {
-                    if (newAmenity.trim()) {
-                      set({
-                        amenities: [...formData.amenities, newAmenity.trim()],
-                      });
-                      setNewAmenity("");
-                    }
-                  }}
-                >
-                  <Plus size={14} strokeWidth={4} />
-                </button>
+          {/* Quantity and Price Display */}
+          <div className="flex gap-4">
+            <div className="flex-1 space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+                Units
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) =>
+                  setQuantity(Math.max(1, Number(e.target.value)))
+                }
+                className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
+                rounded-2xl px-5 py-4 outline-none font-bold text-center no-spinner"
+              />
+            </div>
+            <div className="flex-[2] space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+                Unit Price
+              </label>
+              <div className="w-full bg-white/[0.01] border border-white/5 rounded-2xl px-5 py-4 font-black italic text-gray-400">
+                ${amount} ETB
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Flyer Archive */}
-          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
-            <h3 className="text-white font-bold uppercase tracking-tight text-sm">
-              Flyer Archive
-            </h3>
-            <div className="space-y-4">
-              {formData.pictures.map((file, index) => (
-                <div
-                  key={index}
-                  className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center"
-                >
-                  <div className="w-16 h-16 rounded-xl border border-white/5 overflow-hidden shrink-0 bg-black">
-                    {file.type?.startsWith("image/") ? (
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt="preview"
-                        className="w-full h-full object-cover opacity-80"
-                      />
-                    ) : (
-                      <span className="text-gray-500 text-xs flex items-center justify-center h-full">
-                        No Preview
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <p className="text-[10px] font-black uppercase text-gray-300 truncate">
-                      {file.name}
-                    </p>
-                    <p className="text-[9px] font-bold text-gray-600 uppercase italic">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                  <button
-                    onClick={() =>
-                      set({
-                        pictures: formData.pictures.filter(
-                          (_, i) => i !== index,
-                        ),
-                      })
-                    }
-                    className="p-2 text-red-500/60 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => posterInputRef.current?.click()}
-              className="w-full h-32 bg-[#121417] border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95 group"
-            >
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={posterInputRef}
-                multiple
-                onChange={(e) => {
-                  const files = Array.from(e.target.files);
-                  if (files.length)
-                    set({ pictures: [...formData.pictures, ...files] });
-                }}
-              />
-              <Plus
-                size={32}
-                strokeWidth={4}
-                className="group-hover:scale-110 transition-transform"
-              />
-              <p className="font-black text-[11px] uppercase tracking-[0.2em] italic">
-                Add Cover photo
-              </p>
-            </button>
-          </div>
-
-          <div className="p-6 bg-[#FF7A00]/5 border border-[#FF7A00]/10 rounded-3xl flex items-center gap-4">
-            <ShieldCheck size={24} className="text-[#FF7A00]" />
-            <div>
-              <p className="text-sm font-bold">Secure Booking</p>
-              <p className="text-xs text-gray-500">
-                Fast checkout and verified tickets
-              </p>
-            </div>
+        {/* Payment Methods Grid */}
+        <div className="space-y-3 mb-10">
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+            Select Gateway
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {paymentMethods.map((method) => (
+              <button
+                key={method.id}
+                onClick={() => setSelected(method.id)}
+                className={`group relative rounded-2xl py-4 px-2 text-[11px] font-black uppercase tracking-tighter italic border transition-all
+                ${
+                  selected === method.id
+                    ? "bg-[#FF7A00] border-[#FF7A00] text-black scale-[1.02]"
+                    : "bg-white/[0.02] border-white/5 hover:border-white/20 text-gray-400 hover:text-white"
+                }`}
+              >
+                {method.name}
+              </button>
+            ))}
           </div>
         </div>
+
+        {/* Final Execution Button */}
+        <div className="space-y-4">
+          <button
+            onClick={action}
+            className="group w-full py-5 bg-[#FF7A00] text-black font-black uppercase italic text-sm 
+            rounded-[1.2rem] flex items-center justify-center gap-3 hover:bg-white transition-all 
+            shadow-[0_10px_30px_rgba(255,122,0,0.15)] active:scale-95"
+          >
+            CONFIRM & PAY {totalAmount.toLocaleString()} ETB
+            <ChevronRight
+              size={18}
+              className="group-hover:translate-x-1 transition-transform"
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+export const MenuBar = ({ icon, header, path, onClick }) => {
+  const location = useLocation();
+  // Improved matching logic to handle root and nested paths correctly
+  const isActive = path
+    ? location.pathname.split("/")[1] === path.replace("/", "")
+    : false;
+
+  const content = (
+    <div className="flex flex-col items-center justify-center gap-1 group transition-all duration-300">
+      {/* Icon Container */}
+      <div
+        className={`transition-colors duration-300 ${
+          isActive ? "text-[#FF7800]" : "text-gray-400 group-hover:text-white"
+        }`}
+      >
+        {/* Clone the icon to apply sizing if it's a Lucide component */}
+        {React.cloneElement(icon, {
+          size: 20,
+          strokeWidth: isActive ? 2.5 : 2,
+          fill: isActive ? "currentColor" : "none", // Only if you want filled icons like the screenshot
+        })}
+      </div>
+
+      {/* Label */}
+      <span
+        className={`text-[9px] font-black uppercase tracking-[0.15em] transition-colors duration-300 ${
+          isActive
+            ? "text-[#FF7800]"
+            : "text-gray-500 group-hover:text-gray-300"
+        }`}
+      >
+        {header}
+      </span>
+    </div>
+  );
+
+  if (onClick) {
+    return (
+      <button onClick={onClick} className="outline-none focus:outline-none">
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link to={path} className="outline-none">
+      {content}
+    </Link>
+  );
+};
+export const WindowMenuBar = ({ icon, header, path }) => {
+  const location = useLocation();
+  const isActive = location.pathname.split("/")[1] == path.replace("/", "");
+  return (
+    <>
+      <Link
+        to={path}
+        className="flex  w-full justify-center items-center text-white space-x-3"
+      >
+        <span className={`${isActive && "text-[#FF7800]"} `}>{icon}</span>
+
+        <span className={`${isActive && "text-[#FF7800]"} text-center`}>
+          {header}
+        </span>
+      </Link>
+    </>
+  );
+};
+export const InfoBar = ({ icon, header, bg, des }) => {
+  const loading = !header || !des;
+  if (loading) {
+    return (
+      <div className="w-full lg:space-y-6 space-y-2">
+        <Skeleton name="blog-card" loading={true} />
+      </div>
+    );
+  }
+  return (
+    <div className="w-full lg:space-y-6 space-y-2">
+      <div
+        className={`${bg} h-14 w-14 lg:w-20 lg:h-20 rounded-full flex items-center justify-center shadow-md`}
+      >
+        {icon}
+      </div>
+      <div className="">
+        <h1 className="text-white font-semibold text-lg lg:text-xl ">
+          {header}
+        </h1>
+        <p className="text-[#A1A1A1] text-sm lg:text-lg leading-relaxed w-[90%]">
+          {des}
+        </p>
       </div>
     </div>
   );
 };
 
-export default AddEvent;
+export const RatingStars = () => {
+  // Simulate a loading prop or data presence check as needed
+  const loading = false; // Replace with actual loading logic if available
+  if (loading) {
+    return (
+      <div className="flex space-x-1 ">
+        <Skeleton name="blog-card" loading={true} />
+      </div>
+    );
+  }
+  return (
+    <div className="flex space-x-1 ">
+      {Array(5)
+        .fill()
+        .map((_, idx) => (
+          <div className="" key={idx}>
+            <span>
+              <Star fill="#FF7800" className="text-[#FF7800]" />
+            </span>
+          </div>
+        ))}
+    </div>
+  );
+};
+
+export const AccountMenu = ({ icon, header, path, action }) => {
+  const location = useLocation();
+  const isActive = location.pathname == path;
+  return (
+    <>
+      <Link
+        onClick={action}
+        to={path}
+        className={`flex px-4 py-2 w-[90%]  text-lg  ml-4 items-center  text-white space-x-3 rounded-md
+          
+          ${isActive && "bg-[#FF9D46]/20 "}`}
+      >
+        <span className={`${isActive && "font-semibold  text-[#FF8D28]"}`}>
+          {icon}
+        </span>
+
+        <span
+          className={`${
+            isActive && "font-semibold  text-[#FF8D28]"
+          } text-center`}
+        >
+          {header}
+        </span>
+      </Link>
+    </>
+  );
+};
+
+export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
+  const { API_URL, userProfile } = useService();
+  const { user } = eventService();
+  const queryClient = useQueryClient();
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+      queryClient.clear();
+      setIsOpen(false);
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
+
+  const allItems = [
+    {
+      icon: <CircleUser size={20} />,
+      label: "My Profile",
+      path: "/account",
+    },
+    {
+      icon: <Ticket size={20} />,
+      label: "My Tickets",
+      path: "/tickets_home",
+    },
+    {
+      icon: <CreditCard size={20} />,
+      label: "Payment Detail",
+      path: "/account/payment_detail",
+    },
+    {
+      icon: <Heart size={20} />,
+      label: "Wishlist",
+      path: "/account/favorites",
+    },
+    {
+      icon: <Settings size={20} />,
+      label: "Settings",
+      path: "/account/setting",
+    },
+  ];
+
+  // Navigation items shown when not logged in
+  const guestNavItems = [
+    {
+      icon: <MapPin size={20} />,
+      label: "Venues",
+      path: "/venues",
+    },
+    {
+      icon: <User size={20} />,
+      label: "Artists",
+      path: "/artists",
+    },
+    {
+      icon: <Search size={20} />,
+      label: "Explore",
+      path: "/event",
+    },
+  ];
+
+  const menuItems = !user
+    ? guestNavItems
+    : minimal
+    ? allItems.filter((item) => ["My Tickets", "Wishlist"].includes(item.label))
+    : allItems;
+
+  return (
+    <div
+      className={`h-full w-full flex flex-col bg-[#121417]/95 backdrop-blur-3xl transition-all ${
+        !minimal
+          ? "border-r border-white/10 shadow-[20px_0_50px_rgba(0,0,0,0.5)]"
+          : ""
+      }`}
+    >
+      {/* Header */}
+      {!minimal ? (
+        <div className="flex items-center justify-between px-8 py-7 border-b border-white/[0.04]">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-[#FF7A00] rounded-full" />
+            <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">
+              Access Panel
+            </h2>
+          </div>
+
+          <button
+            onClick={() => setIsOpen(false)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.03] border border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+          >
+            <X size={20} strokeWidth={3} />
+          </button>
+        </div>
+      ) : (
+        <div className="px-6 py-5 border-b border-white/[0.04] bg-white/[0.02]">
+          <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500">
+            Quick Access
+          </h3>
+        </div>
+      )}
+
+      {/* Profile Section */}
+      {!minimal && user && (
+        <div className="px-8 py-10 border-b border-white/[0.04] flex flex-col items-center text-center space-y-4 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-[#FF7A00]/[0.02] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+          <div className="relative">
+            <div className="absolute inset-0 bg-[#FF7A00]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            <img
+              src={userProfile?.user?.avatarUrl || "/Login.jpg"}
+              alt="Profile"
+              className="relative w-24 h-24 rounded-[32px] object-cover border-2 border-white/10 shadow-2xl group-hover:border-[#FF7A00]/50 transition-all duration-500"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-lg font-black uppercase italic tracking-tight text-white">
+              {userProfile?.user?.fullName || "Verified User"}
+            </h3>
+
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+              {userProfile?.user?.userId?.email}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Items */}
+      <div
+        className={`p-4 ${
+          !minimal ? "py-6 px-4 space-y-1.5" : "py-3 space-y-1"
+        } scrollbar-hide overflow-y-auto`}
+      >
+        {menuItems.map((item, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.05 }}
+          >
+            <Link
+              to={item.path}
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-4 px-5 py-4 rounded-[1.2rem] text-gray-400 hover:text-white hover:bg-white/[0.03] border border-transparent hover:border-white/[0.05] transition-all group"
+            >
+              <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.02] text-gray-500 group-hover:bg-[#FF7A00] group-hover:text-black transition-all duration-300">
+                {item.icon}
+              </div>
+
+              <span className="text-sm font-black uppercase italic tracking-tight">
+                {item.label}
+              </span>
+
+              <ChevronRight
+                size={14}
+                className="ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all"
+              />
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Logout / Login */}
+      {!minimal && (
+        <div className="px-6 pb-8 pt-4">
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.2rem] bg-red-500/5 text-red-500/70 border border-red-500/10 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 group font-black uppercase italic text-xs tracking-widest"
+            >
+              <LogOut size={16} strokeWidth={3} />
+              <span>Sign Out</span>
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <Link
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="w-full block text-center py-3 bg-[#FF7A00] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/sign_up"
+                onClick={() => setIsOpen(false)}
+                className="w-full block text-center py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-colors"
+              >
+                Create Account
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const NotificationMenu = ({ info }) => {
+  const [enabled, setEnabled] = useState(false);
+
+  return (
+    <div className="w-full flex items-center justify-between gap-6 py-5 px-2 group transition-all">
+      <p className="text-xs font-semibold text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors flex-1">
+        {info}
+      </p>
+
+      <button
+        type="button"
+        onClick={() => setEnabled(!enabled)}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+          enabled ? "bg-[#FF7A00]" : "bg-white/10"
+        }`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+            enabled ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+    </div>
+  );
+};
+
+export const Amenities = ({ header, icon: Icon, lists }) => {
+  return (
+    <>
+      <div className="space-y-4">
+        <div className="flex items-center text-white space-x-2">
+          <span>
+            <Icon className="flex w-5 h-5" />
+          </span>
+          <h1 className=" text-lg font-semibold">{header}</h1>
+        </div>
+
+        {/*LISTS */}
+
+        {lists.map((list, _) => (
+          <>
+            <div className="flex items-center text-white space-x-2">
+              <span>
+                <CheckCheck className="flex text-[#14AE5C] w-5 h-5" />
+              </span>
+              <h1 className=" text-lg font-light">{list}</h1>
+            </div>
+          </>
+        ))}
+      </div>
+    </>
+  );
+};
+
+export const EventPolices = ({ header, des }) => {
+  return (
+    <div className="flex items-start gap-3 ">
+      <CheckCheck className="w-5 h-5 text-[#14AE5C] mt-1 shrink-0" />
+
+      <div className="space-y-1">
+        <h2 className="text-white text-lg font-semibold">{header}</h2>
+        <p className=" w-[90%]  text-sm text-gray-400 leading-relaxed">{des}</p>
+      </div>
+    </div>
+  );
+};
+
+export const EditMenu = ({ header, options, placeholder }) => {
+  const [selected, setSelected] = useState(null);
+  return (
+    <>
+      <div className="w-full pl-4 h-full ">
+        <Listbox value={selected} onChange={setSelected}>
+          <div className="relative w-full space-y-2">
+            {/* Button */}
+            <p className="text-[#808080] font-semibold">{header}</p>
+
+            <Listbox.Button
+              className="
+                                relative w-full h-8 cursor-pointer
+                                rounded-xl  rounded-lg
+                                bg-[#202020] text-white px-4  py-7 text-md
+                                flex items-center justify-between outline-none
+                              "
+            >
+              <span>{selected ? selected.value : `${placeholder}`}</span>
+              <ChevronDown className="mr-3 text-gray-400 text-center w-6 h-6" />
+            </Listbox.Button>
+
+            {/* Options */}
+            <Listbox.Options
+              className="
+                                absolute z-10 mt-1 w-full
+                                rounded-md bg-[#222529]
+                                border border-gray-600/40
+                                shadow-lg focus:outline-none
+                              "
+            >
+              {options.map((option) => (
+                <Listbox.Option
+                  key={option.id}
+                  value={option}
+                  className={({ active }) =>
+                    `
+                                    cursor-pointer px-3 h-10
+                                    flex items-center text-sm
+                                    ${
+                                      active
+                                        ? "bg-orange-500 text-white"
+                                        : "text-gray-200"
+                                    }
+                                    `
+                  }
+                >
+                  {({ selected }) => (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="mr-8">
+                        {" "}
+                        {selected && { option }?.value}
+                      </span>
+                    </div>
+                  )}
+                </Listbox.Option>
+              ))}
+            </Listbox.Options>
+          </div>
+        </Listbox>
+      </div>
+    </>
+  );
+};
+
+export const EditMenuBar = () => {
+  const LocationOptions = [
+    { id: 1, label: 5, value: "5/5" },
+    { id: 2, label: 5, value: "4/5" },
+    { id: 3, label: 3, value: "3/5" },
+    { id: 4, label: 2, value: "2/5" },
+    { id: 4, label: 1, value: "1/5" },
+    { id: 4, label: 0, value: "0/5" },
+  ];
+
+  return (
+    <div className=" w-full h-full  flex flex-col justify-center items-center  bg-[#2A2C31] space-y-4   p-4">
+      {/*LOCATION */}
+      <EditMenu
+        header={"Location"}
+        options={LocationOptions}
+        placeholder={"Select location"}
+      />
+      {/*DATE */}
+      <EditMenu
+        header={"Date"}
+        options={LocationOptions}
+        placeholder={"All dates"}
+      />
+      {/*CATEGORY */}
+      <EditMenu
+        header={"Category"}
+        options={LocationOptions}
+        placeholder={"Select category"}
+      />
+
+      <div className="flex  justify-center mb-4 mt-6">
+        <button className="flex text-white  font-semibold bg-[#FF7800] px-8 py-2 rounded-md space-x-2 lg:cursor-pointer">
+          <Search />
+          <span>Search here</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export const NotificationSidebar = ({ setIsOpen }) => {
+  const {
+    notifications,
+    notificationIsError,
+    notificationError,
+    readNotification,
+  } = eventService();
+  const { titles } = useService();
+
+  const getIcon = (type) => {
+    switch (type) {
+      case "Booking":
+        return <Ticket size={20} />;
+      case "event":
+        return <Calendar size={20} />;
+      case "payment":
+        return <Zap size={20} />;
+      default:
+        return <MessageCircleMore size={20} />;
+    }
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col bg-[#121417] text-white">
+      {/* Header: High Contrast & Branded */}
+      <div className="flex justify-between items-center px-6 py-8 border-b border-white/[0.04]">
+        <div className="flex items-center gap-3">
+          <Bell className="text-[#FF7A00]" size={20} strokeWidth={3} />
+          <h2 className="text-xl font-black uppercase italic tracking-tighter">
+            Updates
+          </h2>
+          <span className="bg-[#FF7A00] text-black text-[10px] font-black px-2 py-0.5 rounded-full">
+            {notifications?.len}
+          </span>
+        </div>
+
+        <button
+          onClick={() => setIsOpen(false)}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.03] border border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+        >
+          <X size={20} strokeWidth={3} />
+        </button>
+      </div>
+
+      {/* Notifications List */}
+      <div className="overflow-y-auto custom-scrollbar flex-1">
+        {notifications?.len > 0 ? (
+          <div className="divide-y divide-white/[0.03]">
+            {notifications?.notifications?.map(
+              (note, index) =>
+                !note?.read && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    key={note?._id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      readNotification(note?._id);
+                      console.log(note?._id);
+                    }}
+                    className="group relative flex gap-4 p-6 hover:bg-white/[0.02] transition-colors cursor-pointer"
+                  >
+                    {/* Status Indicator Bar */}
+
+                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    {/* Icon Container */}
+                    <div className="shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-[#1C1F22] border border-white/[0.08] text-[#FF7A00] group-hover:bg-[#FF7A00] group-hover:text-black transition-all">
+                      {getIcon(note?.type)}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-semibold uppercase   text-sm tracking-tight leading-none">
+                          {titles[note?.type]}
+                        </h4>
+
+                        <span className="text-[9px] font-black uppercase text-gray-600 tracking-widest">
+                          {formatDistanceToNow(new Date(note?.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                        {note?.message}
+                      </p>
+                    </div>
+                  </motion.div>
+                ),
+            )}
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="h-full flex flex-col items-center justify-center p-12 text-center space-y-4">
+            <div className="w-16 h-16 rounded-3xl bg-[#1C1F22] flex items-center justify-center border border-white/[0.05]">
+              <Bell className="text-gray-800" size={32} />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-700">
+              No new alerts
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Action */}
+      <div className="p-6 border-t border-white/[0.04] bg-[#0D0F11]">
+        <button className="w-full py-4 bg-white/[0.03] border border-white/[0.08] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+          Mark all as read
+        </button>
+      </div>
+    </div>
+  );
+};
