@@ -2,10 +2,17 @@ import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
 import mongoose from "mongoose";
 class TicketService {
-  static create(transactionData) {
-    return new TicketModel.create(transactionData);
+  static async create(data, session) {
+    const [ticket] = await UserTicketModel.create([data], { session });
+    return ticket;
   }
-
+  static async decrementQuantity(ticketId, quantity, session) {
+    return await TicketModel.findByIdAndUpdate(
+      ticketId,
+      { $inc: { availableQuantity: -quantity } },
+      { new: true, session },
+    );
+  }
   static async findByIdAndUpdate(id, status) {
     return await UserTicketModel.findByIdAndUpdate(
       id,
@@ -29,13 +36,76 @@ class TicketService {
     return await UserTicketModel.find({
       userId,
       status: "paid",
-    }).populate({
-      path: "ticketId",
-      populate: {
-        path: "eventId",
-        model: "Event",
+    })
+      .populate({
+        path: "ticketId",
+        populate: {
+          path: "eventId",
+          model: "Event",
+        },
+      })
+      .lean();
+  }
+
+  static async findTickets(adminId) {
+    return await UserTicketModel.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [
+            {
+              $project: {
+                password: 0,
+                refreshTokens: 0,
+                __v: 0,
+              },
+            },
+          ],
+        },
       },
-    });
+
+      {
+        $lookup: {
+          from: "tickets",
+          localField: "ticketId",
+          foreignField: "_id",
+          as: "ticket",
+        },
+      },
+
+      {
+        $unwind: "$ticket",
+      },
+
+      // Join Event
+      {
+        $lookup: {
+          from: "events",
+          localField: "ticket.eventId",
+          foreignField: "_id",
+          as: "event",
+        },
+      },
+
+      {
+        $unwind: "$event",
+      },
+
+      {
+        $match: {
+          "event.adminId": new mongoose.Types.ObjectId(adminId),
+        },
+      },
+
+      {
+        $sort: {
+          purchasedAt: -1,
+        },
+      },
+    ]);
   }
 
   static async findById(ticketId) {
@@ -44,8 +114,13 @@ class TicketService {
       populate: {
         path: "eventId",
         model: "Event",
+        select: "name type locale dates pictures",
       },
     });
+  }
+
+  static async findTicketById(ticketId, session) {
+    return await TicketModel.findById(ticketId).session(session);
   }
 
   static async findByEventId(eventId) {

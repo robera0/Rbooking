@@ -9,7 +9,7 @@ import {
 } from "../controllers/admin.controller.js";
 import {
   get_dashboard_stats,
-  get_transaction_ledger,
+  getTransactionLedger,
   get_transaction_by_id,
   get_revenue_history,
   getEvents,
@@ -48,7 +48,7 @@ adminRouter.get(
   authenticateTokenMiddleware,
   get_dashboard_stats,
 );
-adminRouter.get("/analytics/transactions", get_transaction_ledger);
+adminRouter.get("/analytics/transactions", getTransactionLedger);
 adminRouter.get(
   "/analytics/transactions/:id",
   authenticateTokenMiddleware,

@@ -7,7 +7,10 @@ import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
+import QRCode from "qrcode";
+import "dotenv/config";
 
+const URL = process.env.VITE_API_URL;
 //ADD EVENTS
 
 const storage = multer.diskStorage({
@@ -121,7 +124,6 @@ export const addEvent = catchAsync(async (req, res, next) => {
   });
 });
 
-// controller
 export const createTickets = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   const { tickets } = req.body;
@@ -141,6 +143,7 @@ export const createTickets = catchAsync(async (req, res, next) => {
     tickets: createdTickets,
   });
 });
+
 export const getEvents = catchAsync(async (req, res, next) => {
   const { type, artist, date, venues, search } = req.query;
   const cacheKey = `event:list:${JSON.stringify(req.query)}`;
@@ -254,10 +257,35 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
   await redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents));
   res.status(200).json({ events: featuredEvent });
 });
-// FETCH WITH RESPECT TO ITS INDEX
+
+export const generateEventQR = catchAsync(async (req, res, next) => {
+  const { eventId, ticketId } = req.params;
+  const url = `${URL}/events/${eventId}/tickets/${ticketId}`;
+  if (!ticketId || ticketId === "null") {
+    return res.status(400).json({ message: "Ticket ID is required" });
+  }
+
+  const event = await EventService.findById(eventId);
+  if (!event) {
+    return res.status(404).json({ message: "Event not found" });
+  }
+
+  const qrCode = await QRCode.toDataURL(url);
+
+  return res.status(200).json({
+    success: true,
+    qrCode,
+  });
+});
+
+// FETCH WITH RESPECT TO ITS INDEX\
+
 export const fetchEventsId = catchAsync(async (req, res, next) => {
   const { eventId, ticketId } = req.params;
-  const cacheKey = `event:single:${eventId}`;
+
+  //
+  const cacheKey = `event:single:${eventId}:${ticketId}`;
+
   const cachedCombo = await redisClient.get(cacheKey);
   if (cachedCombo) {
     const decoded = JSON.parse(cachedCombo);
@@ -265,32 +293,35 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
       success: true,
       event: decoded.event,
       ticket: decoded.ticket,
+      tickets: decoded.tickets,
       source: "cache",
     });
   }
+
   if (!ticketId || ticketId === "undefined") {
     return res.status(400).json({ message: "Ticket ID is required" });
   }
 
-  // FIXED: Correct populate path for your nested schema
   const event = await EventService.findById(eventId);
   if (!event) {
     return res.status(404).json({ message: "Event not found" });
   }
 
-  const ticketInfo = await TicketModel.findOne({
-    _id: ticketId,
-    eventId: eventId,
-  });
-
+  const ticketInfo = await TicketModel.findOne({ _id: ticketId, eventId });
   if (!ticketInfo) {
     return res.status(404).json({ message: "Ticket not found for this event" });
   }
-  const payloadToCache = { event, ticket: ticketInfo };
+
+  const allTickets = await TicketModel.find({ eventId }).lean();
+
+  const payloadToCache = { event, ticket: ticketInfo, tickets: allTickets };
   await redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache));
+
   res.status(200).json({
-    event: event,
+    success: true,
+    event,
     ticket: ticketInfo,
+    tickets: allTickets,
   });
 });
 
