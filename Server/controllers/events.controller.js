@@ -4,6 +4,8 @@ import { TicketModel } from "../models/ticket.model.js";
 import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
+import mongoose from "mongoose";
+import { safeParse } from "../utils/safeParse.js";
 //ADD EVENTS
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -19,7 +21,8 @@ const storage = multer.diskStorage({
 });
 
 export const upload = multer({ storage });
-export const add_event = catchAsync(async (req, res, next) => {
+
+export const addEvent = catchAsync(async (req, res, next) => {
   let {
     type,
     name,
@@ -33,19 +36,34 @@ export const add_event = catchAsync(async (req, res, next) => {
     musicGenre,
     amenities,
     desc,
+    links,
+    stages,
+    durationDays,
+
+    category,
+
+    familyFriendly,
   } = req.body;
+  const userId = new mongoose.Types.ObjectId(req.user.id);
 
   const normalizedType = type?.toLowerCase();
 
   // Parse JSON fields
-  artist = JSON.parse(artist || "{}");
-  priceRanges = JSON.parse(priceRanges || "[]");
-  dates = JSON.parse(dates || "{}");
-  amenities = JSON.parse(amenities || "{}");
-  musicGenre = JSON.parse(musicGenre || "[]");
-  policies = JSON.parse(policies || "[]");
+  artist = safeParse(artist || "{}");
+  priceRanges = safeParse(priceRanges || "[]");
+  dates = safeParse(dates || "{}");
+  amenities = safeParse(amenities || "{}");
+  musicGenre = safeParse(musicGenre || "[]");
+  policies = safeParse(policies || "[]");
+  links = safeParse(links || "{}");
+  stages = safeParse(stages || "[]");
+  sales = safeParse(sales || "{}");
+  info = safeParse(info || "{}");
+  locale = safeParse(locale || "{}");
+  desc = desc;
+  category = safeParse(category || "[]");
+  familyFriendly = Boolean(familyFriendly === "true");
 
-  // Handle multiple images
   let pictures = [];
 
   if (req.files && req.files.length > 0) {
@@ -54,6 +72,7 @@ export const add_event = catchAsync(async (req, res, next) => {
 
   const events = {
     type: normalizedType,
+    adminId: userId,
     name,
     artist,
     locale,
@@ -66,8 +85,15 @@ export const add_event = catchAsync(async (req, res, next) => {
     amenities,
     pictures,
     desc,
-  };
+    links,
+    stages,
+    durationDays,
 
+    category,
+
+    familyFriendly,
+  };
+  events.pictures = pictures;
   const newEvent = await EventService.create(events);
   await clearEventsCache();
   res.status(200).json({
@@ -76,7 +102,7 @@ export const add_event = catchAsync(async (req, res, next) => {
     message: "event created successfully",
   });
 });
-export const get_events = catchAsync(async (req, res, next) => {
+export const getEvents = catchAsync(async (req, res, next) => {
   const { type, artist, date, venues, search } = req.query;
   const cacheKey = `event:list:${JSON.stringify(req.query)}`;
   //hit the cache
@@ -127,20 +153,20 @@ export const get_events = catchAsync(async (req, res, next) => {
     "date.start.localDate": -1,
   });
 
-  // Get tickets for each event
-  const eventsWithTickets = await Promise.all(
-    events?.map(async (event) => {
-      const tickets = await TicketModel.find({
-        eventId: event._id,
-      });
+  const eventIds = events.map((e) => e._id);
+  const allTickets = await TicketModel.find({ eventId: { $in: eventIds } });
+  // Group Tickets for an event
+  const ticketsByEvent = allTickets.reduce((acc, ticket) => {
+    const key = ticket?.eventId?.toString();
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(ticket);
+    return acc;
+  }, {});
 
-      return {
-        ...event.toObject(),
-        tickets: tickets,
-        ticketCount: tickets.length,
-      };
-    }),
-  );
+  const eventsWithTickets = events.map((event) => {
+    const tickets = ticketsByEvent[event._id.toString()] || [];
+    return { ...event.toObject(), tickets, ticketCount: tickets.length };
+  });
   await redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets));
 
   res.status(200).json({
@@ -150,7 +176,7 @@ export const get_events = catchAsync(async (req, res, next) => {
 });
 // FETCH EVENTS
 
-export const featured_events = catchAsync(async (req, res, next) => {
+export const featuredEvents = catchAsync(async (req, res, next) => {
   const limit = 4;
   const cacheKey = "events:featured";
   const cachedEvent = await redisClient.get(cacheKey);
@@ -163,25 +189,33 @@ export const featured_events = catchAsync(async (req, res, next) => {
   }
   console.log("Fetching from database...");
   const events = await EventService.find()
-    .sort({ "date.start": -1 })
+    .sort({ "date.start.dateTime": -1 })
     .limit(limit);
-  const featuredEvents = await Promise.all(
-    events?.map(async (event) => {
-      const tickets = await TicketModel.find({
-        eventId: event._id,
-      });
-      return {
-        ...event.toObject(),
-        tickets: tickets,
-        ticketCount: tickets.length,
-      };
-    }),
-  );
+
+  const eventIds = events.map((e) => e._id);
+
+  const allTickets = await TicketModel.find({ eventId: { $in: eventIds } });
+
+  const ticketsByEvent = allTickets.reduce((acc, ticket) => {
+    const key = ticket?.eventId?.toString();
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(ticket);
+    return acc;
+  }, {});
+  const featuredEvents = events?.map((event) => {
+    const tickets = ticketsByEvent[event._id.toString()] || [];
+    return {
+      ...event.toObject(),
+      tickets: tickets,
+      ticketCount: tickets.length,
+    };
+  });
+
   await redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents));
   res.status(200).json({ events: featuredEvents });
 });
 // FETCH WITH RESPECT TO ITS INDEX
-export const fetchEvents_id = catchAsync(async (req, res, next) => {
+export const fetchEventsId = catchAsync(async (req, res, next) => {
   const { eventId, ticketId } = req.params;
   const cacheKey = `event:single:${eventId}`;
   const cachedCombo = await redisClient.get(cacheKey);
@@ -220,7 +254,7 @@ export const fetchEvents_id = catchAsync(async (req, res, next) => {
   });
 });
 
-export const get_event_by_id = catchAsync(async (req, res, next) => {
+export const getEventById = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   const cacheKey = `event:single:${eventId}`;
   const cachedEvent = await redisClient.get(cacheKey);
@@ -237,7 +271,7 @@ export const get_event_by_id = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, event });
 });
 
-export const update_event = catchAsync(async (req, res, next) => {
+export const updateEvent = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   let {
     type,
@@ -252,20 +286,35 @@ export const update_event = catchAsync(async (req, res, next) => {
     musicGenre,
     amenities,
     desc,
-    existingPictures,
+    links,
+
+    // festival fields
+    stages,
+    durationDays,
+
+    // event fields
+    category,
+
+    // common
+    familyFriendly,
   } = req.body;
 
   const normalizedType = type?.toLowerCase();
 
   // Parse JSON fields
-  if (artist) artist = JSON.parse(artist);
-  if (priceRanges) priceRanges = JSON.parse(priceRanges);
-  if (dates) dates = JSON.parse(dates);
-  if (amenities) amenities = JSON.parse(amenities);
-  if (musicGenre) musicGenre = JSON.parse(musicGenre);
-  if (policies) policies = JSON.parse(policies);
-  if (existingPictures) existingPictures = JSON.parse(existingPictures);
-
+  if (artist) artist = safeParse(artist);
+  if (priceRanges) priceRanges = safeParse(priceRanges);
+  if (dates) dates = safeParse(dates);
+  if (amenities) amenities = safeParse(amenities);
+  if (musicGenre) musicGenre = safeParse(musicGenre);
+  if (policies) policies = safeParse(policies);
+  if (existingPictures) existingPictures = safeParse(existingPictures);
+  if (links) links = safeParse(links);
+  if (stages) stages = safeParse(stages);
+  if (rating) rating = safeParse(rating);
+  if (classifications) classifications = safeParse(classifications);
+  if (sales) sales = safeParse(sales);
+  if (existingPictures) existingPictures = safeParse(existingPictures);
   // Handle images
   let pictures = existingPictures || [];
   if (req.files && req.files.length > 0) {
@@ -287,6 +336,14 @@ export const update_event = catchAsync(async (req, res, next) => {
     amenities,
     pictures,
     desc,
+    links,
+
+    stages,
+    durationDays,
+
+    category,
+
+    familyFriendly,
   };
 
   // Remove undefined

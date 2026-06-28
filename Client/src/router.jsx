@@ -38,7 +38,8 @@ import { ProtectedRoute } from "./components/Reusable";
 import GoogleAuthCallback from "../user/GoogleAuthCallback";
 import RegistrationPage from "../admin/RegistrationPage";
 import CompleteProfile from "../user/CompleteProfile";
-import { DashboardApi } from "./../admin/api/dashboardApi";
+import { EventProvider } from "./Context/EventAdminContest";
+import { DashboardProvider } from "./Context/DashboardContext";
 const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
   animate: { opacity: 1, y: 0, scale: 1 },
@@ -136,9 +137,9 @@ export const router = createBrowserRouter([
             path: "home",
             element: (
               <PageWrapper>
-                <DashboardApi>
+                <DashboardProvider>
                   <Dashboard />
-                </DashboardApi>
+                </DashboardProvider>
               </PageWrapper>
             ),
           },
@@ -146,7 +147,9 @@ export const router = createBrowserRouter([
             path: "events",
             element: (
               <PageWrapper>
-                <EventMang />
+                <EventProvider>
+                  <EventMang />
+                </EventProvider>
               </PageWrapper>
             ),
           },

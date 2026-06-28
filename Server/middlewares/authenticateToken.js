@@ -7,7 +7,7 @@ dotenv.config();
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 export const authenticateTokenMiddleware = (req, res, next) => {
-  const token = req.cookies.access_token;
+  const token = req.cookies.accessToken;
   console.log("ACCESS_TOKEN_SECRET:", ACCESS_TOKEN_SECRET);
   console.log("Token from cookie:", token);
 

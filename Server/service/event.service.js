@@ -5,7 +5,7 @@ class EventService {
     return await Event.create(eventData);
   }
 
-  static async updateById(id, eventData) {
+  static async findByIdAndUpdate(id, eventData) {
     return await Event.findByIdAndUpdate(id, eventData, {
       new: true,
     });
@@ -29,11 +29,11 @@ class EventService {
     });
   }
   static find(query = {}) {
-    return Event.find(query);
+    return Event.find(query).lean();
   }
 
   static async findAll() {
-    return await Event.find();
+    return await Event.find().lean();
   }
 
   static async deleteById(id) {

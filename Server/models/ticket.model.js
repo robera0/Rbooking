@@ -21,4 +21,6 @@ const TicketSchema = new mongoose.Schema({
   },
 });
 
+TicketSchema.index({ eventId: 1, price: 1 });
+
 export const TicketModel = mongoose.model("Ticket", TicketSchema);
