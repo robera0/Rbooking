@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import {
   Star,
   CircleUser,
+  Ticket,
   LogOut,
   Settings,
   CreditCard,
@@ -971,6 +972,11 @@ export const AdminViewTicketSkeleton = () => {
               </div>
             ))}
           </div>
+        </Listbox>
+      </div>
+    </>
+  );
+};
 
           {/* Financials footer */}
           <div className="bg-[#151719] p-8 border-t border-white/[0.04] space-y-5">
@@ -991,8 +997,18 @@ export const AdminViewTicketSkeleton = () => {
               <Bone className="h-3 w-44" />
               <Bone className="h-4 w-20" />
             </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-700">
+              No new alerts
+            </p>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Footer Action */}
+      <div className="p-6 border-t border-white/[0.04] bg-[#0D0F11]">
+        <button className="w-full py-4 bg-white/[0.03] border border-white/[0.08] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+          Mark all as read
+        </button>
       </div>
 
       {/* Right column */}
