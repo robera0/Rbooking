@@ -32,7 +32,8 @@ export const get_dashboard_stats = catchAsync(async (req, res, next) => {
   });
 
   // 2. Events & Bookings
-  const totalEvents = await EventService.countDocuments({});
+  const totalEvents = await EventService.countDocuments({ adminId: userId });
+  console.log(totalEvents);
   const totalBookings = await UserTicketModel.countDocuments({
     status: "paid",
   });

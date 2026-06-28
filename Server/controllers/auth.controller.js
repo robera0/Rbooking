@@ -9,7 +9,7 @@ import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
 dotenv.config();
 
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+const refreshToken_SECRET = process.env.refreshToken_SECRET;
 
 /*export const register_admin = async (req, res) => {
   try {
@@ -108,36 +108,34 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 // REGISTER USER
 
 export const register = catchAsync(async (req, res, next) => {
-    const { username, email, password } = req.body;
+  const { username, email, password } = req.body;
 
-    const existingUser = await UserService.findByEmail(email)
+  const existingUser = await UserService.findByEmail(email);
 
-    if (existingUser)
-      next(new AppError(400, "Email already exists"));
+  if (existingUser) next(new AppError(400, "Email already exists"));
 
-    const hashedPassword = await hashPasswords(password);
+  const hashedPassword = await hashPasswords(password);
 
-    const newUser = UserService.create({
-      username,
-      email,
-      password: hashedPassword,
-      role: "user",
-    });
+  const newUser = UserService.create({
+    username,
+    email,
+    password: hashedPassword,
+    role: "user",
+  });
 
-    await UserService.save(newUser);
+  await UserService.save(newUser);
 
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      user: newUser,
-    });
-  }
-);
+  res.status(201).json({
+    success: true,
+    message: "User registered successfully",
+    user: newUser,
+  });
+});
 
 export const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await UserService.findByEmail({ email });
+  const user = await UserService.findByEmail(email);
 
   if (!user) next(new AppError(404, "User not found"));
   if (user.status === "banned") {
@@ -152,10 +150,10 @@ export const login = catchAsync(async (req, res) => {
     email: user.email,
     role: user.role,
   };
-
+  console.log(payload);
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
-  user.refreshTokens.push({ token: refresh_token });
+  user.refreshTokens.push({ token: refreshToken });
   await user.save();
 
   res
@@ -165,7 +163,7 @@ export const login = catchAsync(async (req, res) => {
       sameSite: "none",
       path: "/",
     })
-    .cookie("refresh_token", refreshToken, {
+    .cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
@@ -175,68 +173,65 @@ export const login = catchAsync(async (req, res) => {
     .json({ role: user.role, message: "Logged in successfully" });
 });
 
-export const refresh = catchAsync(async (req, res) => {
-    const { refresh_token } = req.body;
+export const refresh = catchAsync(async (req, res, next) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken)
+    return res.status(401).json({ message: "their is no refreshToken" });
 
-    if (!refresh_token)
-      return res.status(401).json({ message: "their is no refresh_token" });
+  jwt.verify(refreshToken, refreshToken_SECRET, async (error, decoded) => {
+    if (error) next(new AppError(error.message, 401));
+    const user = await UserModel.findById(decoded.id);
+    if (!user) return next(new AppError(404, "User not found"));
+    const tokenExists = user.refreshTokens.some(
+      (t) => t.token === refreshToken,
+    );
+    if (!tokenExists) {
+      return res.status(403).json({ message: "Token mismatch" });
+    }
+    const payload = {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+    };
 
-    jwt.verify(refresh_token, REFRESH_TOKEN_SECRET, async (error, decoded) => {
-      if (error) next(new AppError(error.message, 401));
-      const user = await UserModel.findById(decoded.id);
-      if (!user) {
-        next(new AppError(404, "User not found"));
-      }
-      const tokenExists = user.refreshTokens.some(
-        (t) => t.token === refresh_token,
-      );
-      if (!tokenExists) {
-        return res.status(403).json({ message: "Token mismatch" });
-      }
-      const payload = {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      };
-
-      const newAccessToken = generateAccessToken(payload);
-      res.json({ accessToken: newAccessToken });
-    });
+    const newAccessToken = generateAccessToken(payload);
+    res.json({ accessToken: newAccessToken });
+  });
 });
 
 export const logout = catchAsync(async (req, res) => {
-    const refresh_token = req.cookies.refresh_token;
-    console.log(refresh_token);
+  const refreshToken = req.cookies.refreshToken;
+  console.log(refreshToken);
 
-    if (!refresh_token) {
-      next(new AppError(400, "Refresh token is required"));
-    }
+  if (!refreshToken) {
+    next(new AppError(400, "Refresh token is required"));
+  }
 
-    const user = await UserService.findByRefreshToken(refresh_token);
+  const user = await UserService.findByRefreshToken(refreshToken);
 
-    if (!user) {
-      next(new AppError(404, "User not found or token invalid"));
-    }
+  if (!user) {
+    next(new AppError(404, "User not found or token invalid"));
+  }
 
-    user.refreshTokens = user.refreshTokens.filter(
-      (t) => t.token !== refresh_token,
-    );
+  user.refreshTokens = user.refreshTokens.filter(
+    (t) => t.token !== refreshToken,
+  );
 
-    await user.save();
+  await user.save();
 
-    res
-      .clearCookie("access_token", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        path: "/",
-      })
-      .clearCookie("refresh_token", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        path: "/",
-      })
-      .status(200)
-      .json({ message: "Logged out successfully" });
+  res
+    .clearCookie("access_token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      path: "/",
+    })
+    .clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      path: "/",
+    })
+    .status(200)
+    .json({ message: "Logged out successfully" });
 });

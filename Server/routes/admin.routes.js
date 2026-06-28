@@ -14,22 +14,34 @@ import {
   get_transaction_by_id,
   get_revenue_history,
 } from "../controllers/analytics.controller.js";
-
+import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 const adminRouter = express.Router();
 
-adminRouter.get("/admin_users", getAdminProfile);
-adminRouter.post("/users", addUser);
-adminRouter.put("/users/:userId", updateUser);
-adminRouter.post("/users/delete", deleteUsers);
-adminRouter.post("/users/suspend", suspendUsers);
+adminRouter.get("/admin_users", authenticateTokenMiddleware, getAdminProfile);
+adminRouter.post("/users", authenticateTokenMiddleware, addUser);
+adminRouter.put("/users/:userId", authenticateTokenMiddleware, updateUser);
+adminRouter.post("/users/delete", authenticateTokenMiddleware, deleteUsers);
+adminRouter.post("/users/suspend", authenticateTokenMiddleware, suspendUsers);
 
-adminRouter.post("/events/delete", deleteEvents);
+adminRouter.post("/events/delete", authenticateTokenMiddleware, deleteEvents);
 adminRouter.post("/events", addEvent);
 
 // Analytics
-adminRouter.get("/analytics/dashboard", get_dashboard_stats);
+adminRouter.get(
+  "/analytics/dashboard",
+  authenticateTokenMiddleware,
+  get_dashboard_stats,
+);
 adminRouter.get("/analytics/transactions", get_transaction_ledger);
-adminRouter.get("/analytics/transactions/:id", get_transaction_by_id);
-adminRouter.get("/analytics/revenue", get_revenue_history);
+adminRouter.get(
+  "/analytics/transactions/:id",
+  authenticateTokenMiddleware,
+  get_transaction_by_id,
+);
+adminRouter.get(
+  "/analytics/revenue",
+  authenticateTokenMiddleware,
+  get_revenue_history,
+);
 
 export default adminRouter;

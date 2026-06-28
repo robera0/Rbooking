@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "5002:5001"
+      - "5002:5002"
     env_file:
       - ./Server/.env
     depends_on:

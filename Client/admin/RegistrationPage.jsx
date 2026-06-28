@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -9,27 +9,221 @@ import {
   Eye,
   EyeOff,
   Check,
+  ChevronDown,
   AlertCircle,
   MapPin,
   FileText,
-  UploadCloud,
-  X,
   LayoutDashboard,
   Briefcase,
   FileBadge2,
-  Image as ImageIcon,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { Toaster, toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+
+const inputStyle = {
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  caretColor: "#FF7A00",
+  colorScheme: "dark",
+};
+
+const inputFocusStyle = { borderColor: "rgba(255,122,0,0.5)" };
+const inputBlurStyle = { borderColor: "rgba(255,255,255,0.08)" };
+
+const FieldInput = ({
+  icon: Icon,
+  type = "text",
+  name,
+  value,
+  onChange,
+  placeholder,
+  required,
+  className = "",
+  style = {},
+  children,
+}) => (
+  <div className="relative">
+    {Icon && (
+      <Icon
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+        style={{ color: "#c9a88a" }}
+      />
+    )}
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      className={`w-full ${
+        Icon ? "pl-11" : "pl-5"
+      } pr-5 py-4 rounded-2xl text-white text-sm outline-none transition-colors ${className}`}
+      style={{ ...inputStyle, ...style }}
+      onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+      onBlur={(e) => Object.assign(e.target.style, inputBlurStyle)}
+    />
+    {children}
+  </div>
+);
+
+const Label = ({ children }) => (
+  <label
+    className="block text-[10px] font-black uppercase tracking-[0.2em] mb-2"
+    style={{ color: "#c9a88a" }}
+  >
+    {children}
+  </label>
+);
+
+const SectionHeading = ({ icon: Icon, number, title }) => (
+  <div
+    className="flex items-center gap-3 pb-4 mb-2"
+    style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+  >
+    <div
+      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+      style={{
+        background: "rgba(255,122,0,0.15)",
+        border: "1px solid rgba(255,122,0,0.25)",
+      }}
+    >
+      <Icon className="w-4 h-4" style={{ color: "#FF7A00" }} />
+    </div>
+    <h2
+      className="text-sm font-black uppercase tracking-[0.15em]"
+      style={{ color: "rgba(255,255,255,0.85)" }}
+    >
+      {number}. {title}
+    </h2>
+  </div>
+);
+
+const CustomSelect = ({
+  icon: Icon,
+  value,
+  onChange,
+  options,
+  placeholder = "Select an option",
+}) => {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selected = options.find((opt) => opt.value === value);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      {Icon && (
+        <Icon
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none z-10"
+          style={{ color: "#c9a88a" }}
+        />
+      )}
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={`w-full ${
+          Icon ? "pl-11" : "pl-5"
+        } pr-11 py-4 rounded-2xl text-sm text-left transition-colors flex items-center justify-between`}
+        style={{
+          ...inputStyle,
+          borderColor: open ? "rgba(255,122,0,0.5)" : "rgba(255,255,255,0.08)",
+          color: selected ? "#fff" : "rgba(255,255,255,0.3)",
+        }}
+      >
+        <span className="truncate">
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDown
+          className="absolute right-4 w-4 h-4 transition-transform duration-200"
+          style={{
+            color: "#c9a88a",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute z-20 mt-2 w-full rounded-2xl overflow-hidden py-1.5 max-h-64 overflow-y-auto"
+            style={{
+              background: "#1a1b1e",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+            }}
+          >
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm flex items-center justify-between transition-colors"
+                  style={{
+                    color: isSelected ? "#FF7A00" : "rgba(255,255,255,0.8)",
+                    background: isSelected
+                      ? "rgba(255,122,0,0.08)"
+                      : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected)
+                      e.currentTarget.style.background =
+                        "rgba(255,255,255,0.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected)
+                      e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {isSelected && <Check className="w-4 h-4" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const calculatePasswordStrength = (pass) => {
+  if (!pass) return 0;
+  let strength = 0;
+  if (pass.length > 7) strength += 25;
+  if (pass.match(/[A-Z]/)) strength += 25;
+  if (pass.match(/[0-9]/)) strength += 25;
+  if (pass.match(/[^A-Za-z0-9]/)) strength += 25;
+  return strength;
+};
 
 const RegistrationPage = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const { API_URL } = useService();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -49,14 +243,6 @@ const RegistrationPage = () => {
     termsAccepted: false,
     privacyAccepted: false,
   });
-  {
-    /*  const [files, setFiles] = useState({
-    idDocument: null,
-    businessLicense: null,
-    companyLogo: null,
-  });
- */
-  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -66,49 +252,26 @@ const RegistrationPage = () => {
     }));
   };
 
-  {
-    /*  const handleFileDrop = (e, field) => {
-    e.preventDefault();
-    const droppedFile = e.dataTransfer?.files[0] || e.target.files[0];
-    if (droppedFile) {
-      setFiles((prev) => ({ ...prev, [field]: droppedFile }));
-    }
-  }; */
-  }
-
-  {
-    /*  const removeFile = (field) => {
-    setFiles((prev) => ({ ...prev, [field]: null }));
-  }; */
-  }
-
-  const calculatePasswordStrength = (pass) => {
-    if (!pass) return 0;
-    let strength = 0;
-    if (pass.length > 7) strength += 25;
-    if (pass.match(/[A-Z]/)) strength += 25;
-    if (pass.match(/[0-9]/)) strength += 25;
-    if (pass.match(/[^A-Za-z0-9]/)) strength += 25;
-    return strength;
-  };
-
   const passwordStrength = calculatePasswordStrength(formData.password);
+
+  const strengthColor = (idx) => {
+    const filled = passwordStrength > idx * 25;
+    if (!filled) return "rgba(255,255,255,0.08)";
+    if (passwordStrength <= 25) return "#ef4444";
+    if (passwordStrength <= 50) return "#f97316";
+    if (passwordStrength <= 75) return "#f97316";
+    return "#22c55e";
+  };
 
   const registerAdminMutation = useMutation({
     mutationFn: async (payload) => {
       const form = new FormData();
-
-      // Base fields
-      form.append("username", payload.email); // use email as username
+      form.append("username", payload.email);
       form.append("email", payload.email);
       form.append("password", payload.password);
-
-      // Personal info
       form.append("firstName", payload.firstName);
       form.append("lastName", payload.lastName);
       form.append("phone", payload.phone);
-
-      // Organization info
       form.append("organizationName", payload.organizationName);
       form.append("businessType", payload.businessType);
       form.append(
@@ -116,18 +279,12 @@ const RegistrationPage = () => {
         payload.businessRegistrationNumber,
       );
       form.append("taxId", payload.taxId);
-
-      // Address
       form.append("country", payload.country);
       form.append("city", payload.city);
       form.append("region", payload.region);
       form.append("streetAddress", payload.streetAddress);
-
-      // Admin specific
       form.append("adminRole", payload.adminRole || "event_manager");
       form.append("twoFactorEnabled", String(payload.twoFactorEnabled));
-
-      // Files (only if present)
 
       const res = await fetch(`${API_URL}/api/auth/signup/admin`, {
         method: "POST",
@@ -138,14 +295,10 @@ const RegistrationPage = () => {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to register admin");
       }
-
       return res.json();
     },
-
     onSuccess: () => {
       toast.success("Admin Registered Successfully!");
-
-      // Reset form
       setFormData({
         firstName: "",
         lastName: "",
@@ -165,12 +318,8 @@ const RegistrationPage = () => {
         termsAccepted: false,
         privacyAccepted: false,
       });
-
-      setTimeout(() => {
-        navigate("/admin/dashboard");
-      }, 2000);
+      setTimeout(() => navigate("/admin/dashboard"), 2000);
     },
-
     onError: (error) => {
       toast.error(`Registration failed: ${error.message}`);
     },
@@ -178,9 +327,6 @@ const RegistrationPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Log the entire formData object for debugging
-    console.log("Registration formData:", formData);
-    // Required fields validation
     if (
       !formData.email ||
       !formData.password ||
@@ -198,621 +344,593 @@ const RegistrationPage = () => {
     ) {
       return toast.error("Please fill all required fields");
     }
-
     if (formData.password !== formData.confirmPassword) {
       return toast.error("Passwords do not match");
     }
-
     registerAdminMutation.mutate({
-      email: formData.email,
-      password: formData.password,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phone: formData.phone,
-      organizationName: formData.organizationName,
-      businessType: formData.businessType,
-      businessRegistrationNumber: formData.businessRegistrationNumber,
-      taxId: formData.taxId,
-      country: formData.country,
-      city: formData.city,
-      region: formData.region,
-      streetAddress: formData.streetAddress,
-      adminRole: "event_manager", // default role, matches backend enum
-      twoFactorEnabled: formData.twoFactorEnabled,
+      ...formData,
+      adminRole: "event_manager",
     });
   };
-  // they should add image after the admin signed in
+
+  const selectStyle = {
+    ...inputStyle,
+    appearance: "none",
+    cursor: "pointer",
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 lg:p-8 font-sans text-slate-800">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-10"
+      style={{ background: "#0c0d0e" }}
+    >
+      <Toaster />
+
+      {/* Dot grid background */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #1f2023 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+          opacity: 0.5,
+        }}
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-4xl w-full bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-hidden"
+        className="relative z-10 w-full max-w-2xl flex flex-col gap-8"
       >
-        <div className="p-8 sm:p-12">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-900 mb-6 shadow-lg shadow-blue-900/20">
-              <LayoutDashboard className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-blue-950 mb-3">
-              Admin Registration
-            </h1>
-            <p className="text-slate-500 max-w-lg mx-auto text-sm md:text-base">
-              Create your admin account to manage events and tickets securely
-              and professionally.
-            </p>
+        {/* Header */}
+        <div className="flex flex-col gap-2">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2"
+            style={{
+              background: "rgba(255,122,0,0.15)",
+              border: "1px solid rgba(255,122,0,0.25)",
+            }}
+          >
+            <LayoutDashboard className="w-6 h-6" style={{ color: "#FF7A00" }} />
           </div>
+          <h1 className="text-2xl font-black text-white">Admin Registration</h1>
+          <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+            Create your admin account to manage events and tickets securely and
+            professionally.
+          </p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-12">
-            {/* SECTION 1 — Personal Information */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <User className="w-5 h-5 text-orange-500" />
-                <h2 className="text-lg font-semibold text-blue-950">
-                  1. Personal Information
-                </h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-10">
+          {/* SECTION 1 — Personal Information */}
+          <section className="flex flex-col gap-5">
+            <SectionHeading
+              icon={User}
+              number="1"
+              title="Personal Information"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <Label>First Name *</Label>
+                <FieldInput
+                  icon={User}
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="John"
+                  required
+                />
+              </div>
+              <div>
+                <Label>Last Name *</Label>
+                <FieldInput
+                  icon={User}
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Doe"
+                  required
+                />
+              </div>
+              <div>
+                <Label>Email Address *</Label>
+                <FieldInput
+                  icon={Mail}
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="john@example.com"
+                  required
+                />
+              </div>
+              <div>
+                <Label>Phone Number *</Label>
+                <FieldInput
+                  icon={Phone}
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="+1 (555) 000-0000"
+                  required
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    First Name <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                      placeholder="John"
-                    />
-                  </div>
+              {/* Password */}
+              <div>
+                <Label>Password *</Label>
+                <div className="relative">
+                  <Lock
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                    style={{ color: "#c9a88a" }}
+                  />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    required
+                    className="w-full pl-11 pr-12 py-4 rounded-2xl text-white text-sm outline-none transition-colors"
+                    style={inputStyle}
+                    onFocus={(e) =>
+                      Object.assign(e.target.style, inputFocusStyle)
+                    }
+                    onBlur={(e) =>
+                      Object.assign(e.target.style, inputBlurStyle)
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2"
+                    style={{ color: "rgba(255,255,255,0.3)" }}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Last Name <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                      placeholder="Doe"
-                    />
+                {formData.password && (
+                  <div className="mt-2 flex gap-1 h-1 rounded-full overflow-hidden">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="flex-1 rounded-full transition-all duration-300"
+                        style={{ background: strengthColor(i) }}
+                      />
+                    ))}
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                      placeholder="john@example.com"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                      placeholder="+1 (555) 000-0000"
-                    />
-                  </div>
-                </div>
+                )}
+              </div>
 
-                {/* Password Fields */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Password <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                  {/* Strength Indicator */}
-                  {formData.password && (
-                    <div className="mt-2 flex gap-1 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          passwordStrength > 0
-                            ? passwordStrength > 50
-                              ? "bg-orange-500"
-                              : "bg-red-500"
-                            : ""
-                        }`}
-                        style={{ width: "25%" }}
-                      ></div>
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          passwordStrength > 25
-                            ? passwordStrength > 50
-                              ? "bg-orange-500"
-                              : "bg-red-500"
-                            : ""
-                        }`}
-                        style={{ width: "25%" }}
-                      ></div>
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          passwordStrength > 50 ? "bg-orange-500" : ""
-                        }`}
-                        style={{ width: "25%" }}
-                      ></div>
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          passwordStrength > 75 ? "bg-green-500" : ""
-                        }`}
-                        style={{ width: "25%" }}
-                      ></div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Confirm Password <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      required
-                      className={`w-full pl-10 pr-12 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:ring-1 transition-all ${
+              {/* Confirm Password */}
+              <div>
+                <Label>Confirm Password *</Label>
+                <div className="relative">
+                  <Lock
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                    style={{ color: "#c9a88a" }}
+                  />
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    required
+                    className="w-full pl-11 pr-12 py-4 rounded-2xl text-white text-sm outline-none transition-colors"
+                    style={{
+                      ...inputStyle,
+                      borderColor:
                         formData.confirmPassword &&
                         formData.password !== formData.confirmPassword
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                          : "border-slate-200 focus:border-blue-900 focus:ring-blue-900"
-                      }`}
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                  {formData.confirmPassword &&
-                    formData.password !== formData.confirmPassword && (
-                      <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> Passwords do not
-                        match
-                      </p>
-                    )}
-                </div>
-              </div>
-            </section>
-
-            {/* SECTION 2 — Organization Information */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <Building2 className="w-5 h-5 text-orange-500" />
-                <h2 className="text-lg font-semibold text-blue-950">
-                  2. Organization Information
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Organization Name <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="text"
-                      name="organizationName"
-                      value={formData.organizationName}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                      placeholder="Acme Events LLC"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Business Type <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <select
-                      name="businessType"
-                      value={formData.businessType}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all appearance-none cursor-pointer"
-                    >
-                      <option value="" disabled>
-                        Select business type
-                      </option>
-                      <option value="event_manager">Event Manager</option>
-                      <option value="Venue Owner">Venue Owner</option>
-                      <option value="ticket_manager">Ticket Reseller</option>
-                      <option value="Festival Organizer">
-                        Festival Organizer
-                      </option>
-                      <option value="corporate_events">Corporate Events</option>
-                      <option value="Sports Organizer">Sports Organizer</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Business Registration Number
-                  </label>
-                  <div className="relative">
-                    <FileBadge2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="text"
-                      name="businessRegistrationNumber"
-                      value={formData.businessRegistrationNumber}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                      placeholder="Reg No."
-                    />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Optional for individual organizers
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Tax ID / VAT
-                  </label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="text"
-                      name="taxId"
-                      value={formData.taxId}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                      placeholder="Tax reference"
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* SECTION 3 — Address Information */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <MapPin className="w-5 h-5 text-orange-500" />
-                <h2 className="text-lg font-semibold text-blue-950">
-                  3. Address Information
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Country <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="country"
-                    value={formData.country}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all cursor-pointer"
+                          ? "rgba(239,68,68,0.5)"
+                          : "rgba(255,255,255,0.08)",
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor =
+                        formData.password !== formData.confirmPassword
+                          ? "rgba(239,68,68,0.7)"
+                          : "rgba(255,122,0,0.5)";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor =
+                        formData.confirmPassword &&
+                        formData.password !== formData.confirmPassword
+                          ? "rgba(239,68,68,0.5)"
+                          : "rgba(255,255,255,0.08)";
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2"
+                    style={{ color: "rgba(255,255,255,0.3)" }}
                   >
-                    <option value="" disabled>
-                      Select Country
-                    </option>
-                    <option value="US">United States</option>
-                    <option value="UK">United Kingdom</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                    <option value="GE">Germany</option>
-                    <option value="FR">France</option>
-                    <option value="KE">Kenya</option>
-                    <option value="ZA">South Africa</option>
-                  </select>
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Region / State <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="region"
-                    value={formData.region}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                    placeholder="region or Province"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    City <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                    placeholder="City name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Street Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="streetAddress"
-                    value={formData.streetAddress}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-900 focus:ring-1 focus:ring-blue-900 outline-none transition-all"
-                    placeholder="123 Organizer Street"
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* SECTION 4 — Verification Upload */}
-            {/*
-             <section className="space-y-6">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <UploadCloud className="w-5 h-5 text-orange-500" />
-                <h2 className="text-lg font-semibold text-blue-950">
-                  4. Verification Upload
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                  {
-                    id: "idDocument",
-                    label: "Government ID",
-                    icon: <FileBadge2 className="w-6 h-6" />,
-                  },
-                  {
-                    id: "businessLicense",
-                    label: "Business License",
-                    icon: <FileText className="w-6 h-6" />,
-                  },
-                  {
-                    id: "companyLogo",
-                    label: "Company Logo",
-                    icon: <ImageIcon className="w-6 h-6" />,
-                  },
-                ].map((item) => (
-                  <div key={item.id} className="relative group">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      {item.label}
-                    </label>
-                    <div
-                      className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all bg-slate-50
-                        ${
-                          files[item.id]
-                            ? "border-orange-400 bg-orange-50/50"
-                            : "border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 cursor-pointer"
-                        }`}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => handleFileDrop(e, item.id)}
+                {formData.confirmPassword &&
+                  formData.password !== formData.confirmPassword && (
+                    <p
+                      className="text-xs mt-1 flex items-center gap-1"
+                      style={{ color: "#f87171" }}
                     >
-                      <input
-                        type="file"
-                        onChange={(e) => handleFileDrop(e, item.id)}
-                        className="hidden"
-                        id={`file-${item.id}`}
-                        accept="image/*,.pdf"
-                      />
+                      <AlertCircle className="w-3 h-3" /> Passwords do not match
+                    </p>
+                  )}
+              </div>
+            </div>
+          </section>
 
-                      {!files[item.id] ? (
-                        <label
-                          htmlFor={`file-${item.id}`}
-                          className="cursor-pointer flex flex-col items-center"
-                        >
-                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-sm mb-3">
-                            {item.icon}
-                          </div>
-                          <span className="text-sm font-medium text-blue-900">
-                            Click or drag file
-                          </span>
-                          <span className="text-xs text-slate-400 mt-1">
-                            PDF, JPG, PNG (Max 5MB)
-                          </span>
-                        </label>
-                      ) : (
-                        <div className="flex flex-col items-center w-full">
-                          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-500 mb-3">
-                            <Check className="w-6 h-6" />
-                          </div>
-                          <span
-                            className="text-sm font-medium text-slate-800 truncate w-full px-2"
-                            title={files[item.id].name}
-                          >
-                            {files[item.id].name}
-                          </span>
-                          <span className="text-xs text-slate-500 mt-1">
-                            {(files[item.id].size / 1024 / 1024).toFixed(2)} MB
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeFile(item.id)}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors shadow-sm"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
+          {/* SECTION 2 — Organization Information */}
+          <section className="flex flex-col gap-5">
+            <SectionHeading
+              icon={Building2}
+              number="2"
+              title="Organization Information"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="md:col-span-2">
+                <Label>Organization Name *</Label>
+                <FieldInput
+                  icon={Building2}
+                  name="organizationName"
+                  value={formData.organizationName}
+                  onChange={handleChange}
+                  placeholder="Acme Events LLC"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label>Business Type *</Label>
+                <CustomSelect
+                  icon={Briefcase}
+                  value={formData.businessType}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, businessType: val }))
+                  }
+                  placeholder="Select business type"
+                  options={[
+                    { value: "event_manager", label: "Event Manager" },
+                    { value: "Venue Owner", label: "Venue Owner" },
+                    { value: "ticket_manager", label: "Ticket Reseller" },
+                    {
+                      value: "Festival Organizer",
+                      label: "Festival Organizer",
+                    },
+                    { value: "corporate_events", label: "Corporate Events" },
+                    { value: "Sports Organizer", label: "Sports Organizer" },
+                  ]}
+                />
+              </div>
+
+              <div>
+                <Label>Business Registration Number</Label>
+                <FieldInput
+                  icon={FileBadge2}
+                  name="businessRegistrationNumber"
+                  value={formData.businessRegistrationNumber}
+                  onChange={handleChange}
+                  placeholder="Reg No."
+                />
+                <p
+                  className="text-[11px] mt-1.5"
+                  style={{ color: "rgba(255,255,255,0.25)" }}
+                >
+                  Optional for individual organizers
+                </p>
+              </div>
+
+              <div>
+                <Label>Tax ID / VAT</Label>
+                <FieldInput
+                  icon={FileText}
+                  name="taxId"
+                  value={formData.taxId}
+                  onChange={handleChange}
+                  placeholder="Tax reference"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 3 — Address Information */}
+          <section className="flex flex-col gap-5">
+            <SectionHeading
+              icon={MapPin}
+              number="3"
+              title="Address Information"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <Label>Country *</Label>
+                <select
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-5 py-4 rounded-2xl text-white text-sm outline-none transition-colors"
+                  style={selectStyle}
+                  onFocus={(e) =>
+                    Object.assign(e.target.style, inputFocusStyle)
+                  }
+                  onBlur={(e) => Object.assign(e.target.style, inputBlurStyle)}
+                >
+                  <option value="" disabled style={{ background: "#1a1b1e" }}>
+                    Select Country
+                  </option>
+                  <option value="US" style={{ background: "#1a1b1e" }}>
+                    United States
+                  </option>
+                  <option value="UK" style={{ background: "#1a1b1e" }}>
+                    United Kingdom
+                  </option>
+                  <option value="CA" style={{ background: "#1a1b1e" }}>
+                    Canada
+                  </option>
+                  <option value="AU" style={{ background: "#1a1b1e" }}>
+                    Australia
+                  </option>
+                  <option value="GE" style={{ background: "#1a1b1e" }}>
+                    Germany
+                  </option>
+                  <option value="FR" style={{ background: "#1a1b1e" }}>
+                    France
+                  </option>
+                  <option value="KE" style={{ background: "#1a1b1e" }}>
+                    Kenya
+                  </option>
+                  <option value="ZA" style={{ background: "#1a1b1e" }}>
+                    South Africa
+                  </option>
+                  <option value="ET" style={{ background: "#1a1b1e" }}>
+                    Ethiopia
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <Label>Region / State *</Label>
+                <input
+                  type="text"
+                  name="region"
+                  value={formData.region}
+                  onChange={handleChange}
+                  required
+                  placeholder="Region or Province"
+                  className="w-full px-5 py-4 rounded-2xl text-white text-sm outline-none transition-colors"
+                  style={inputStyle}
+                  onFocus={(e) =>
+                    Object.assign(e.target.style, inputFocusStyle)
+                  }
+                  onBlur={(e) => Object.assign(e.target.style, inputBlurStyle)}
+                />
+              </div>
+
+              <div>
+                <Label>City *</Label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
+                  placeholder="City name"
+                  className="w-full px-5 py-4 rounded-2xl text-white text-sm outline-none transition-colors"
+                  style={inputStyle}
+                  onFocus={(e) =>
+                    Object.assign(e.target.style, inputFocusStyle)
+                  }
+                  onBlur={(e) => Object.assign(e.target.style, inputBlurStyle)}
+                />
+              </div>
+
+              <div>
+                <Label>Street Address *</Label>
+                <input
+                  type="text"
+                  name="streetAddress"
+                  value={formData.streetAddress}
+                  onChange={handleChange}
+                  required
+                  placeholder="123 Organizer Street"
+                  className="w-full px-5 py-4 rounded-2xl text-white text-sm outline-none transition-colors"
+                  style={inputStyle}
+                  onFocus={(e) =>
+                    Object.assign(e.target.style, inputFocusStyle)
+                  }
+                  onBlur={(e) => Object.assign(e.target.style, inputBlurStyle)}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 4 — Security & Agreement */}
+          <section
+            className="flex flex-col gap-5 p-6 rounded-2xl"
+            style={{
+              background: "rgba(255,122,0,0.04)",
+              border: "1px solid rgba(255,122,0,0.12)",
+            }}
+          >
+            {/* 2FA Toggle */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-white">
+                  Enable Two-Factor Authentication (2FA)
+                </p>
+                <p
+                  className="text-[12px] mt-0.5"
+                  style={{ color: "rgba(255,255,255,0.35)" }}
+                >
+                  Secure your admin account with an extra layer of protection.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input
+                  type="checkbox"
+                  name="twoFactorEnabled"
+                  checked={formData.twoFactorEnabled}
+                  onChange={handleChange}
+                  className="sr-only peer"
+                />
+                <div
+                  className="w-11 h-6 rounded-full relative transition-all peer-checked:bg-orange-500"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
+                >
+                  <div
+                    className="absolute top-[2px] left-[2px] w-5 h-5 rounded-full bg-white transition-transform peer-checked:translate-x-5"
+                    style={{
+                      transform: formData.twoFactorEnabled
+                        ? "translateX(20px)"
+                        : "translateX(0)",
+                      background: formData.twoFactorEnabled
+                        ? "#fff"
+                        : "rgba(255,255,255,0.7)",
+                    }}
+                  />
+                </div>
+              </label>
+            </div>
+
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }} />
+
+            {/* Checkboxes */}
+            <div className="flex flex-col gap-3">
+              {[
+                {
+                  name: "termsAccepted",
+                  checked: formData.termsAccepted,
+                  label: (
+                    <>
+                      I accept the{" "}
+                      <a
+                        href="#"
+                        style={{ color: "#FF7A00" }}
+                        className="font-bold hover:underline"
+                      >
+                        Terms & Conditions
+                      </a>{" "}
+                      for organizing events on this platform.{" "}
+                      <span style={{ color: "#f87171" }}>*</span>
+                    </>
+                  ),
+                },
+                {
+                  name: "privacyAccepted",
+                  checked: formData.privacyAccepted,
+                  label: (
+                    <>
+                      I agree to the{" "}
+                      <a
+                        href="#"
+                        style={{ color: "#FF7A00" }}
+                        className="font-bold hover:underline"
+                      >
+                        Privacy Policy
+                      </a>{" "}
+                      and data usage agreements.{" "}
+                      <span style={{ color: "#f87171" }}>*</span>
+                    </>
+                  ),
+                },
+              ].map((item) => (
+                <label
+                  key={item.name}
+                  className="flex items-start gap-3 cursor-pointer group"
+                >
+                  <div className="relative flex items-center mt-0.5 flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      name={item.name}
+                      checked={item.checked}
+                      onChange={handleChange}
+                      required
+                      className="peer sr-only"
+                    />
+                    <div
+                      className="w-5 h-5 rounded flex items-center justify-center transition-all"
+                      style={{
+                        background: item.checked
+                          ? "#FF7A00"
+                          : "rgba(255,255,255,0.05)",
+                        border: `1px solid ${
+                          item.checked ? "#FF7A00" : "rgba(255,255,255,0.15)"
+                        }`,
+                      }}
+                    >
+                      {item.checked && (
+                        <Check className="w-3 h-3 text-black" strokeWidth={3} />
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </section>
-            */}
-
-            {/* SECTION 5 — Security & Agreement */}
-            <section className="space-y-5 bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-blue-950">
-                    Enable Two-Factor Authentication (2FA)
-                  </h3>
-                  <p className="text-sm text-slate-500">
-                    Secure your admin account with an extra layer of protection.
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="twoFactorEnabled"
-                    checked={formData.twoFactorEnabled}
-                    onChange={handleChange}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
-                </label>
-              </div>
-
-              <hr className="border-slate-200" />
-
-              <div className="space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className="relative flex items-center mt-0.5">
-                    <input
-                      type="checkbox"
-                      name="termsAccepted"
-                      checked={formData.termsAccepted}
-                      onChange={handleChange}
-                      required
-                      className="peer sr-only"
-                    />
-                    <div className="w-5 h-5 border-2 border-slate-300 rounded peer-checked:bg-blue-900 peer-checked:border-blue-900 transition-colors"></div>
-                    <Check className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
-                  </div>
-                  <span className="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">
-                    I accept the{" "}
-                    <a
-                      href="#"
-                      className="font-medium text-orange-500 hover:text-orange-600"
-                    >
-                      Terms & Conditions
-                    </a>{" "}
-                    for organizing events on this platform.{" "}
-                    <span className="text-red-500">*</span>
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "rgba(255,255,255,0.5)" }}
+                  >
+                    {item.label}
                   </span>
                 </label>
-
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className="relative flex items-center mt-0.5">
-                    <input
-                      type="checkbox"
-                      name="privacyAccepted"
-                      checked={formData.privacyAccepted}
-                      onChange={handleChange}
-                      required
-                      className="peer sr-only"
-                    />
-                    <div className="w-5 h-5 border-2 border-slate-300 rounded peer-checked:bg-blue-900 peer-checked:border-blue-900 transition-colors"></div>
-                    <Check className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
-                  </div>
-                  <span className="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">
-                    I agree to the{" "}
-                    <a
-                      href="#"
-                      className="font-medium text-orange-500 hover:text-orange-600"
-                    >
-                      Privacy Policy
-                    </a>{" "}
-                    and data usage agreements.{" "}
-                    <span className="text-red-500">*</span>
-                  </span>
-                </label>
-              </div>
-            </section>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 pt-6">
-              <button
-                type="submit"
-                disabled={
-                  registerAdminMutation.isPending ||
-                  !formData.termsAccepted ||
-                  !formData.privacyAccepted ||
-                  formData.password !== formData.confirmPassword
-                }
-                className="w-full sm:w-auto flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium py-3.5 px-6 rounded-xl transition-colors shadow-lg shadow-orange-500/25 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
-              >
-                {registerAdminMutation.isPending ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  "Create Admin Account"
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/login")}
-                className="w-full sm:w-auto px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors"
-              >
-                Back to Login
-              </button>
+              ))}
             </div>
-          </form>
-        </div>
+          </section>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={
+                registerAdminMutation.isPending ||
+                !formData.termsAccepted ||
+                !formData.privacyAccepted ||
+                formData.password !== formData.confirmPassword
+              }
+              className="flex-1 py-4 rounded-2xl font-black text-base transition-all active:scale-[0.97] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: "#FF7A00",
+                color: "#000",
+                boxShadow: "0 4px 24px rgba(255,122,0,0.35)",
+              }}
+            >
+              {registerAdminMutation.isPending ? (
+                <div
+                  className="w-5 h-5 border-2 rounded-full animate-spin"
+                  style={{
+                    borderColor: "rgba(0,0,0,0.2)",
+                    borderTopColor: "#000",
+                  }}
+                />
+              ) : (
+                "Create Admin Account"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="sm:w-auto px-8 py-4 rounded-2xl font-black text-sm transition-all active:scale-[0.97]"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.5)",
+              }}
+            >
+              Back to Login
+            </button>
+          </div>
+        </form>
       </motion.div>
     </div>
   );

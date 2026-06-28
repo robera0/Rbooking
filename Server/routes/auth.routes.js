@@ -5,9 +5,13 @@ import {
   logout,
   register,
 } from "../controllers/auth.controller.js";
-import { user } from "../controllers/user.controller.js";
+
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
-import { updateUser, completeProfile } from "../controllers/user.controller.js";
+import {
+  updateUser,
+  completeProfile,
+  user,
+} from "../controllers/user.controller.js";
 import passport from "../config/googleAuth.js";
 import { generateAccessToken, generateRefreshToken } from "../service/token.js";
 import { UserModel } from "../models/user.model.js";
@@ -44,8 +48,14 @@ authRouter.get(
       const access_token = generateAccessToken(payload);
       const refresh_token = generateRefreshToken(payload);
       // Optionally, store refresh token in DB for session management
+      const MAX_REFRESH_TOKENS = 5;
       await UserModel.findByIdAndUpdate(user._id, {
-        $push: { refreshTokens: { token: refresh_token } },
+        $push: {
+          refreshTokens: {
+            $each: [{ token: refresh_token, createdAt: new Date() }],
+            $slice: -MAX_REFRESH_TOKENS, // keeps only the most recent N entries
+          },
+        },
       });
 
       res.cookie("access_token", access_token, {
@@ -67,7 +77,7 @@ authRouter.get(
     }
   },
 );
-
+authRouter.get("/user", authenticateTokenMiddleware, user);
 authRouter.post("/signup/user", register);
 //authRouter.post("/signup/admin", register_admin);
 authRouter.post("/login", login);

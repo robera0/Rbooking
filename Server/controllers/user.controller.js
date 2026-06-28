@@ -1,19 +1,15 @@
 import mongoose from "mongoose";
 import { UserModel } from "../models/user.model.js";
 import bcrypt from "bcrypt";
-<<<<<<< HEAD
-=======
-import { ProfileModel } from "../models/profile.model.js";
->>>>>>> origin/main
 import catchAsync from "../errors/catchAsync.js";
 import UserService from "../service/user.service.js";
 import ProfileService from "../service/profile.service.js";
 
-export const getProfile = catchAsync(async (req, res, next) => {
-  const user = req.user.id;
-  if (!user) return res.status(401).json({ message: "Unauthorized" });
+export const user = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-  const validUser = await UserService.findById(user);
+  const validUser = await UserService.findById(userId);
   res.json({ user: validUser });
 });
 
@@ -42,7 +38,7 @@ export const updateUser = catchAsync(async (req, res, next) => {
   });
 });
 export const completeProfile = catchAsync(async (req, res) => {
-  const { id } = req.user.id;
+  const id = req.user.id;
   const { fullName, phoneNumber, city, dateOfBirth } = req.body;
 
   const user = await UserModel.findById({ id });
