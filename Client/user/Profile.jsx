@@ -3,11 +3,6 @@ import {
   CircleCheckBig,
   Camera,
   User,
-  Mail,
-  Phone,
-  Globe,
-  Calendar,
-  MapPin,
   Lock,
   Loader2,
   Shield,
@@ -19,26 +14,17 @@ import {
 import { eventService } from "@/Context/ApiEvent";
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import L from "leaflet";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import toast, { Toaster } from "react-hot-toast";
 import { useState, useRef, useEffect } from "react";
 import { useService } from "@/Context/ServiceContext";
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-
-/* ─────────────────── tiny design tokens ─────────────────── */
+/* ─────────────────── design tokens ─────────────────── */
 const SURFACE = "bg-[#111214]";
 const BORDER = "border-[#1f2023]";
 const INPUT_BASE =
-  "w-full bg-[#18191c] border border-[#262729] hover:border-[#35373b] focus:border-[#FF7A00]/70 focus:ring-2 focus:ring-[#FF7A00]/10 text-[#f4f4f5] px-4 py-3 rounded-xl outline-none transition-all duration-200 placeholder:text-[#4b4d52] text-[13.5px] font-normal";
+  "w-full bg-[#18191c] border border-[#262729] hover:border-[#35373b] focus:border-[#FF7A00]/70 focus:ring-2 focus:ring-[#FF7A00]/10 text-[#f4f4f5] px-3.5 py-2.5 rounded-xl outline-none transition-all duration-200 placeholder:text-[#4b4d52] text-[13.5px] font-normal";
+const LABEL_BASE =
+  "block text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider mb-1.5";
 
 /* ─────────────────── SVG Completion Ring ─────────────────── */
 const CompletionRing = ({ progress, size = 96, stroke = 4 }) => {
@@ -72,101 +58,61 @@ const CompletionRing = ({ progress, size = 96, stroke = 4 }) => {
   );
 };
 
-/* ─────────────────── Floating Label Input ─────────────────── */
-const FloatingInput = ({
-  label,
-  name,
-  type = "text",
-  value,
-  onChange,
-  readOnly = false,
-  placeholder = " ",
-  suffix,
-}) => {
-  const [focused, setFocused] = useState(false);
-  const filled = value && value.length > 0;
-  const active = focused || filled;
+/* ─────────────────── Field (label above input) ─────────────────── */
+const Field = ({ label, children }) => (
+  <div>
+    <label className={LABEL_BASE}>{label}</label>
+    {children}
+  </div>
+);
 
-  return (
-    <div className="relative">
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        readOnly={readOnly}
-        placeholder={active ? placeholder : ""}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className={`${INPUT_BASE} pt-5 pb-2.5 ${
-          readOnly ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-        style={{ colorScheme: "dark" }}
-      />
-      <label
-        className="absolute left-4 pointer-events-none transition-all duration-200 origin-left"
-        style={{
-          top: active ? "8px" : "50%",
-          transform: active
-            ? "translateY(0) scale(0.75)"
-            : "translateY(-50%) scale(1)",
-          color: focused ? "#FF7A00" : "#4b4d52",
-          fontSize: "13.5px",
-          fontWeight: 500,
-        }}
-      >
-        {label}
-      </label>
-      {suffix && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-          {suffix}
-        </div>
-      )}
-    </div>
-  );
-};
+/* ─────────────────── StyledInput ─────────────────── */
+const StyledInput = ({
+  readOnly = false,
+  suffix,
+  className = "",
+  ...props
+}) => (
+  <div className="relative">
+    <input
+      {...props}
+      readOnly={readOnly}
+      className={`${INPUT_BASE} ${
+        readOnly ? "opacity-50 cursor-not-allowed" : ""
+      } ${suffix ? "pr-16" : ""} ${className}`}
+      style={{ colorScheme: "dark" }}
+    />
+    {suffix && (
+      <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+        {suffix}
+      </div>
+    )}
+  </div>
+);
 
 /* ─────────────────── Password input with show/hide ─────────────────── */
 const PasswordInput = ({ label, name, value, onChange }) => {
   const [show, setShow] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const filled = value && value.length > 0;
-  const active = focused || filled;
-
   return (
-    <div className="relative">
-      <input
-        type={show ? "text" : "password"}
-        name={name}
-        value={value}
-        onChange={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        placeholder=""
-        className={`${INPUT_BASE} pt-5 pb-2.5 pr-12`}
-      />
-      <label
-        className="absolute left-4 pointer-events-none transition-all duration-200 origin-left"
-        style={{
-          top: active ? "8px" : "50%",
-          transform: active
-            ? "translateY(0) scale(0.75)"
-            : "translateY(-50%) scale(1)",
-          color: focused ? "#FF7A00" : "#4b4d52",
-          fontSize: "13.5px",
-          fontWeight: 500,
-        }}
-      >
-        {label}
-      </label>
-      <button
-        type="button"
-        onClick={() => setShow((s) => !s)}
-        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#4b4d52] hover:text-[#9ca3af] transition-colors"
-      >
-        {show ? <EyeOff size={16} /> : <Eye size={16} />}
-      </button>
-    </div>
+    <Field label={label}>
+      <div className="relative">
+        <input
+          type={show ? "text" : "password"}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder="••••••••"
+          className={`${INPUT_BASE} pr-12`}
+        />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#4b4d52] hover:text-[#9ca3af] transition-colors"
+        >
+          {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      </div>
+    </Field>
   );
 };
 
@@ -185,9 +131,7 @@ const StrengthMeter = ({ password }) => {
   const score = getStrength(password);
   const labels = ["", "Weak", "Fair", "Good", "Strong"];
   const colors = ["#262729", "#ef4444", "#f59e0b", "#3b82f6", "#22c55e"];
-
   if (!password) return null;
-
   return (
     <div className="mt-2 space-y-1.5">
       <div className="flex gap-1">
@@ -251,7 +195,6 @@ const Profile = () => {
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
-  const [newPassword, setNewPassword] = useState("");
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -261,11 +204,12 @@ const Profile = () => {
     Gender: "",
     address: "",
   });
+  const [savedFormData, setSavedFormData] = useState(null);
 
   useEffect(() => {
     if (userProfile?.user) {
-      setFormData({
-        fullName: userProfile?.user?.fullName || "",
+      const initial = {
+        fullName: userProfile.user.fullName || "",
         nationality: userProfile.user.nationality || "",
         phone: userProfile.user.phone || "",
         dateOfBirth: userProfile.user.dateOfBirth
@@ -273,7 +217,9 @@ const Profile = () => {
           : "",
         Gender: userProfile.user.Gender || "",
         address: userProfile.user.address || "",
-      });
+      };
+      setFormData(initial);
+      setSavedFormData(initial);
     }
   }, [userProfile]);
 
@@ -281,6 +227,7 @@ const Profile = () => {
     email: "",
     currentPass: "",
     password: "",
+    confirmPassword: "",
   });
 
   const handleChange = (e) => {
@@ -291,17 +238,21 @@ const Profile = () => {
   const handleCredentials = (e) => {
     const { name, value } = e.target;
     setCredentials((p) => ({ ...p, [name]: value }));
-    if (name === "password") setNewPassword(value);
   };
 
-  /* ── mutations ── */
+  const handleCancel = () => {
+    if (savedFormData) setFormData(savedFormData);
+    setPreview(null);
+    setSelectedFile(null);
+  };
+
   const updateUser = async () => {
     const id = toast.loading("Saving profile…");
     try {
       const data = new FormData();
       Object.entries(formData).forEach(([k, v]) => data.append(k, v));
       if (selectedFile) data.append("avatarUrl", selectedFile);
-      await axios.put(`${API_URL}/api/auth/user_profile`, data, {
+      await axios.put(`${API_URL}/api/auth/profile`, data, {
         withCredentials: true,
       });
       toast.success("Profile saved", { id });
@@ -311,12 +262,22 @@ const Profile = () => {
   };
 
   const updateCredentials = async () => {
+    if (credentials.password !== credentials.confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
     const id = toast.loading("Updating password…");
     try {
       await axios.put(`${API_URL}/api/auth/user`, credentials, {
         withCredentials: true,
       });
       toast.success("Password updated", { id });
+      setCredentials({
+        email: "",
+        currentPass: "",
+        password: "",
+        confirmPassword: "",
+      });
     } catch {
       toast.error("Could not update password", { id });
     }
@@ -327,6 +288,7 @@ const Profile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       setPreview(null);
+      setSelectedFile(null);
     },
   });
 
@@ -345,7 +307,6 @@ const Profile = () => {
   const userName = userProfile?.user?.fullName || "Your Name";
   const userEmail = userProfile?.user?.userId?.email || "";
 
-  /* ---- nav tabs ---- */
   const navTabs = [
     { key: "profile", label: "Profile", icon: User },
     { key: "security", label: "Security", icon: Shield },
@@ -368,7 +329,7 @@ const Profile = () => {
         }}
       />
 
-      {/* ── subtle dot grid bg ── */}
+      {/* dot grid */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -379,24 +340,23 @@ const Profile = () => {
         }}
       />
 
-      {/* ── top border accent ── */}
+      {/* top accent line */}
       <div className="fixed top-0 left-0 right-0 h-px z-50">
         <div className="h-full w-full bg-gradient-to-r from-[#FF7A00]/60 via-[#FF7A00]/10 to-transparent" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-5 lg:px-8 pt-10 pb-24">
-        {/* ════════ PROFILE HERO HEADER ════════ */}
+        {/* ════════ HERO HEADER ════════ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className={`relative rounded-2xl ${SURFACE} border ${BORDER} p-6 mb-6 overflow-hidden`}
+          className={`relative rounded-2xl ${SURFACE} border ${BORDER} p-6 overflow-hidden`}
         >
-          {/* faint gradient wash */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#FF7A00]/[0.04] via-transparent to-transparent pointer-events-none" />
 
           <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            {/* ── Avatar + ring ── */}
+            {/* Avatar */}
             <div className="relative shrink-0">
               <CompletionRing progress={COMPLETION} size={88} stroke={3.5} />
               <div className="absolute inset-0 flex items-center justify-center">
@@ -429,7 +389,7 @@ const Profile = () => {
               />
             </div>
 
-            {/* ── user meta ── */}
+            {/* Meta */}
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-semibold text-[#f4f4f5] truncate">
                 {userName}
@@ -437,8 +397,6 @@ const Profile = () => {
               <p className="text-[13px] text-[#6b7280] mt-0.5 truncate">
                 {userEmail}
               </p>
-
-              {/* verification badges */}
               <div className="flex flex-wrap gap-2 mt-3">
                 {[
                   { label: "Email verified", ok: true },
@@ -464,7 +422,7 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* ── completion text ── */}
+            {/* Completion */}
             <div className="text-right shrink-0">
               <p className="text-[11px] text-[#6b7280] font-medium">
                 Profile complete
@@ -477,9 +435,11 @@ const Profile = () => {
           </div>
         </motion.div>
 
-        {/* ════════ BODY: sidebar + content ════════ */}
+        <div className="mt-8" />
+
+        {/* ════════ BODY ════════ */}
         <div className="flex flex-col lg:flex-row gap-5">
-          {/* ── SIDEBAR NAV ── */}
+          {/* Sidebar */}
           <motion.nav
             initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
@@ -500,7 +460,7 @@ const Profile = () => {
             ))}
           </motion.nav>
 
-          {/* ── CONTENT PANEL ── */}
+          {/* Content */}
           <div className="flex-1 min-w-0">
             <AnimatePresence mode="wait">
               {/* ══ PROFILE TAB ══ */}
@@ -523,77 +483,85 @@ const Profile = () => {
                       e.preventDefault();
                       profileMutation.mutate();
                     }}
-                    className="space-y-4"
+                    className="space-y-5"
                   >
-                    {/* row 1: name + email */}
+                    {/* row 1 */}
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <FloatingInput
-                        label="Full Name"
-                        name="fullName"
-                        value={formData?.fullName}
-                        onChange={handleChange}
-                      />
-                      <FloatingInput
-                        label="Email Address"
-                        name="email"
-                        type="email"
-                        value={userEmail}
-                        readOnly
-                        suffix={
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[#262729] text-[#6b7280]">
-                            Locked
-                          </span>
-                        }
-                      />
+                      <Field label="Full Name">
+                        <StyledInput
+                          name="fullName"
+                          type="text"
+                          value={formData.fullName}
+                          onChange={handleChange}
+                          placeholder="Your full name"
+                        />
+                      </Field>
+                      <Field label="Email Address">
+                        <StyledInput
+                          name="email"
+                          type="email"
+                          value={userEmail}
+                          readOnly
+                          suffix={
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[#262729] text-[#6b7280]">
+                              Locked
+                            </span>
+                          }
+                        />
+                      </Field>
                     </div>
 
-                    {/* row 2: phone + nationality */}
+                    {/* row 2 */}
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <FloatingInput
-                        label="Phone Number"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                      />
-                      <FloatingInput
-                        label="Nationality"
-                        name="nationality"
-                        value={formData.nationality}
-                        onChange={handleChange}
-                      />
+                      <Field label="Phone Number">
+                        <StyledInput
+                          name="phone"
+                          type="tel"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          placeholder="+251 9xx xxx xxxx"
+                        />
+                      </Field>
+                      <Field label="Nationality">
+                        <StyledInput
+                          name="nationality"
+                          value={formData.nationality}
+                          onChange={handleChange}
+                          placeholder="e.g. Ethiopian"
+                        />
+                      </Field>
                     </div>
 
-                    {/* row 3: DOB + gender */}
+                    {/* row 3 */}
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <FloatingInput
-                        label="Date of Birth"
-                        name="dateOfBirth"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={handleChange}
-                      />
+                      <Field label="Date of Birth">
+                        <StyledInput
+                          name="dateOfBirth"
+                          type="date"
+                          value={formData.dateOfBirth}
+                          onChange={handleChange}
+                        />
+                      </Field>
 
-                      {/* gender radio */}
+                      {/* Gender */}
                       <div>
-                        <p className="text-[11px] font-medium text-[#6b7280] mb-3">
-                          Gender
-                        </p>
-                        <div className="flex gap-3">
+                        <label className={LABEL_BASE}>Gender</label>
+                        <div className="flex gap-3 mt-0.5">
                           {["Male", "Female"].map((g) => {
                             const val = g.toLowerCase();
                             const checked = formData.Gender === val;
                             return (
                               <label
                                 key={g}
-                                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border cursor-pointer transition-all text-[13px] font-medium ${
-                                  checked
-                                    ? "border-[#FF7A00]/50 bg-[#FF7A00]/08 text-[#FF7A00]"
-                                    : "border-[#262729] bg-[#18191c] text-[#6b7280] hover:border-[#35373b]"
-                                }`}
+                                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border cursor-pointer transition-all text-[13px] font-medium flex-1 justify-center"
                                 style={{
+                                  borderColor: checked
+                                    ? "rgba(255,122,0,0.5)"
+                                    : "#262729",
                                   background: checked
                                     ? "rgba(255,122,0,0.06)"
-                                    : "",
+                                    : "#18191c",
+                                  color: checked ? "#FF7A00" : "#6b7280",
                                 }}
                               >
                                 <input
@@ -605,11 +573,12 @@ const Profile = () => {
                                   className="sr-only"
                                 />
                                 <div
-                                  className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
-                                    checked
-                                      ? "border-[#FF7A00]"
-                                      : "border-[#4b4d52]"
-                                  }`}
+                                  className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0"
+                                  style={{
+                                    borderColor: checked
+                                      ? "#FF7A00"
+                                      : "#4b4d52",
+                                  }}
                                 >
                                   {checked && (
                                     <div className="w-1.5 h-1.5 rounded-full bg-[#FF7A00]" />
@@ -624,24 +593,22 @@ const Profile = () => {
                     </div>
 
                     {/* address */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-medium text-[#6b7280]">
-                        Address
-                      </label>
+                    <Field label="Address">
                       <textarea
                         name="address"
                         rows={2}
                         value={formData.address}
                         onChange={handleChange}
-                        placeholder="Your address"
+                        placeholder="Street, city, region"
                         className={`${INPUT_BASE} resize-none`}
                       />
-                    </div>
+                    </Field>
 
-                    {/* save row */}
-                    <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#1f2023]">
+                    {/* actions */}
+                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f2023]">
                       <button
                         type="button"
+                        onClick={handleCancel}
                         className="text-[13px] font-medium text-[#6b7280] hover:text-[#f4f4f5] transition-colors px-4 py-2 rounded-lg hover:bg-[#18191c]"
                       >
                         Cancel
@@ -673,7 +640,7 @@ const Profile = () => {
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className="space-y-4"
                 >
-                  {/* ─ Update Email ─ */}
+                  {/* Email */}
                   <div
                     className={`rounded-2xl ${SURFACE} border ${BORDER} p-7`}
                   >
@@ -682,13 +649,15 @@ const Profile = () => {
                       description="Change the email associated with your account."
                     />
                     <form className="space-y-4">
-                      <FloatingInput
-                        label="New Email Address"
-                        name="email"
-                        type="email"
-                        value={credentials.email}
-                        onChange={handleCredentials}
-                      />
+                      <Field label="New Email Address">
+                        <StyledInput
+                          name="email"
+                          type="email"
+                          value={credentials.email}
+                          onChange={handleCredentials}
+                          placeholder="new@email.com"
+                        />
+                      </Field>
 
                       <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#18191c] border border-[#262729]">
                         <AlertCircle
@@ -715,7 +684,7 @@ const Profile = () => {
                     </form>
                   </div>
 
-                  {/* ─ Update Password ─ */}
+                  {/* Password */}
                   <div
                     className={`rounded-2xl ${SURFACE} border ${BORDER} p-7`}
                   >
@@ -750,7 +719,7 @@ const Profile = () => {
                       <PasswordInput
                         label="Confirm New Password"
                         name="confirmPassword"
-                        value={credentials.confirmPassword || ""}
+                        value={credentials.confirmPassword}
                         onChange={handleCredentials}
                       />
 

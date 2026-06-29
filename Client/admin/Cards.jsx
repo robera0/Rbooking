@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
+import { renderTableSkeleton } from "./../src/components/Reusable";
 import { useAdminEventService } from "@/Context/EventAdminContest";
 export const Cards = ({
   header,
@@ -187,7 +188,8 @@ export const EventTable = ({ search = "", filter = "" }) => {
   const filteredEvents = events?.filter((ev) => {
     const matchesSearch =
       ev?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      ev.locale?.toLowerCase().includes(search.toLowerCase());
+      ev?.locale?.toLowerCase().includes(search.toLowerCase()) ||
+      ev?.links?.venues?.name?.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filter
       ? ev.type?.toLowerCase() === filter.toLowerCase()
       : true;
@@ -281,7 +283,7 @@ export const EventTable = ({ search = "", filter = "" }) => {
                 </p>
               </td>
               <td className="px-6 py-4 text-center font-bold">
-                {item?.locale || "N/A"}
+                {item?.links?.venues?.name || item?.locale || "N/A"}
               </td>
               <td className="px-6 py-4 text-center font-bold text-gray-400">
                 {item?.dates?.start?.localDate || "N/A"}
@@ -315,28 +317,34 @@ export const EventTable = ({ search = "", filter = "" }) => {
 export const TicketTable = ({ search = "", filter = "" }) => {
   const navigate = useNavigate();
   const { API_URL } = useService();
+  const [selected, setSelected] = useState([]);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["adminTransactions"],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/admin/analytics/transactions`);
+      const res = await fetch(
+        `${API_URL}/api/auth/admin/analytics/transactions`,
+        { method: "GET", credentials: "include" },
+      );
       if (!res.ok) throw new Error("Failed to load transactions");
-      const json = await res.json();
-      return json.transactions || [];
+      const data = await res.json();
+      return data.transactions || [];
     },
   });
 
   const filteredTransactions = transactions.filter((txn) => {
+    const userObj = txn.user?.[0];
     const custName = (
-      txn.userId?.fullName ||
-      txn.userId?.username ||
+      userObj?.fullName ||
+      userObj?.username ||
       "Guest"
     ).toLowerCase();
-    const idKey = (txn._id || "").toLowerCase();
+    const idKey = (txn.orderNo || txn._id || "").toLowerCase();
 
     const matchesSearch =
       custName.includes(search.toLowerCase()) ||
       idKey.includes(search.toLowerCase());
+
     const matchesFilter = filter
       ? txn.status?.toLowerCase() === filter.toLowerCase()
       : true;
@@ -344,79 +352,187 @@ export const TicketTable = ({ search = "", filter = "" }) => {
     return matchesSearch && matchesFilter;
   });
 
+  const handleSelect = (id) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelected(filteredTransactions.map((txn) => txn._id));
+    } else {
+      setSelected([]);
+    }
+  };
+
+  const allSelected =
+    filteredTransactions.length > 0 &&
+    filteredTransactions.every((txn) => selected.includes(txn._id));
+
+  const statusStyles = {
+    pending: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
+    completed: "bg-green-500/10 text-green-400 border border-green-500/20",
+    failed: "bg-red-500/10 text-red-400 border border-red-500/20",
+    cancelled: "bg-gray-500/10 text-gray-400 border border-gray-500/20",
+  };
+
   return (
     <table className="w-full table-fixed text-sm text-left">
       <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
         <tr>
           <th className="px-6 py-4 w-12 text-center">
-            <input type="checkbox" className="w-4 h-4 accent-[#FF7A00]" />
+            <input
+              type="checkbox"
+              className="w-4 h-4 accent-[#FF7A00] cursor-pointer"
+              checked={allSelected}
+              onChange={handleSelectAll}
+            />
           </th>
-          <th className="px-6 py-4 w-[150px] text-white font-bold uppercase tracking-wider text-[10px]">
+          <th className="px-6 py-4 w-[190px] text-white font-bold uppercase tracking-wider text-[10px]">
             Order ID
           </th>
           <th className="px-6 py-4 w-[180px] text-white font-bold uppercase tracking-wider text-[10px]">
             Customer
           </th>
-          <th className="px-6 py-4 w-[200px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+          <th className="px-6 py-4 w-[160px] text-white font-bold uppercase tracking-wider text-[10px]">
+            Event
+          </th>
+          <th className="px-6 py-4 w-[130px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
             Ticket Level
           </th>
-          <th className="px-6 py-4 w-[140px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+          <th className="px-6 py-4 w-[120px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
             Date
           </th>
-          <th className="px-6 py-4 w-[120px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+          <th className="px-6 py-4 w-[110px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
             Total
           </th>
-          <th className="px-6 py-4 w-[160px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+          <th className="px-6 py-4 w-[120px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+            Status
+          </th>
+          <th className="px-6 py-4 w-[100px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
             Action
           </th>
         </tr>
       </thead>
       <tbody className="text-gray-300 font-medium">
-        {isLoading && (
+        {isLoading && renderTableSkeleton()}
+        {!isLoading && filteredTransactions.length === 0 && (
           <tr>
-            <td colSpan="7" className="text-center py-8">
-              Fetching orders...
+            <td
+              colSpan={9}
+              className="px-6 py-12 text-center text-gray-500 text-sm"
+            >
+              No transactions found.
             </td>
           </tr>
         )}
-        {filteredTransactions.map((txn, idx) => (
-          <tr
-            key={txn._id || idx}
-            className="bg-transparent hover:bg-white/[0.02] border-b border-white/[0.04] transition-colors"
-          >
-            <td className="px-6 py-4 text-center">
-              <input type="checkbox" className="w-4 h-4 accent-[#FF7A00]" />
-            </td>
-            <td className="px-6 py-4 font-black tracking-widest text-[#FF7A00]">
-              #{txn._id?.slice(-8).toUpperCase()}
-            </td>
-            <td className="px-6 py-4 font-bold text-white">
-              {txn.userId?.fullName || txn.userId?.username || "Guest"}
-            </td>
-            <td className="px-6 py-4 text-center font-bold">
-              {txn.ticketId?.type || "General"}
-            </td>
-            <td className="px-6 py-4 text-center font-bold text-gray-400">
-              {new Date(txn.purchasedAt).toLocaleDateString()}
-            </td>
-            <td className="px-6 py-4 text-center font-black text-white">
-              {txn.totalAmount} ETB
-            </td>
-            <td className="px-6 py-4 text-center">
-              <button
-                onClick={() => navigate(`/admin/orders/${txn._id}`)}
-                className="text-gray-400 hover:text-white font-black uppercase text-[10px] tracking-widest transition-colors"
-              >
-                View
-              </button>
-            </td>
-          </tr>
-        ))}
+        {filteredTransactions.map((txn, idx) => {
+          const userObj = txn.user?.[0];
+          const ticket = txn.ticket;
+          const event = txn.event;
+          const status = txn.status?.toLowerCase() || "pending";
+          const isSelected = selected.includes(txn._id);
+
+          return (
+            <tr
+              key={txn._id || idx}
+              className={`border-b border-white/[0.04] transition-colors ${
+                isSelected
+                  ? "bg-[#FF7A00]/[0.04] border-l-2 border-l-[#FF7A00]"
+                  : "bg-transparent hover:bg-white/[0.02]"
+              }`}
+            >
+              {/* Checkbox */}
+              <td className="px-6 py-4 text-center">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-[#FF7A00] cursor-pointer"
+                  checked={isSelected}
+                  onChange={() => handleSelect(txn._id)}
+                />
+              </td>
+
+              {/* Order ID */}
+              <td className="px-6 py-4">
+                <span className="font-black tracking-widest text-[#FF7A00] text-[10px] whitespace-nowrap">
+                  #{txn.orderNo || txn._id?.slice(-8).toUpperCase()}
+                </span>
+              </td>
+
+              {/* Customer */}
+              <td className="px-6 py-4">
+                <p className="font-bold text-white truncate">
+                  {userObj?.fullName || userObj?.username || "Guest"}
+                </p>
+                <p className="text-[11px] text-gray-500 truncate">
+                  {userObj?.email || ""}
+                </p>
+              </td>
+
+              {/* Event */}
+              <td className="px-6 py-4">
+                <p className="font-bold text-white truncate">
+                  {event?.name || "—"}
+                </p>
+                <p className="text-[11px] text-gray-500 truncate">
+                  {event?.artist?.name || ""}
+                </p>
+              </td>
+
+              {/* Ticket Level */}
+              <td className="px-6 py-4 text-center">
+                <span className="font-bold text-white">
+                  {ticket?.name || "General"}
+                </span>
+                <p className="text-[11px] text-gray-500">
+                  qty: {txn.quantity ?? 1}
+                </p>
+              </td>
+
+              {/* Date */}
+              <td className="px-6 py-4 text-center font-bold text-gray-400 text-[11px]">
+                {txn.purchasedAt
+                  ? new Date(txn.purchasedAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "—"}
+              </td>
+
+              {/* Total */}
+              <td className="px-6 py-4 text-center font-black text-white">
+                {txn.totalAmount?.toLocaleString()} ETB
+              </td>
+
+              {/* Status */}
+              <td className="px-6 py-4 text-center">
+                <span
+                  className={`inline-block px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    statusStyles[status] || statusStyles.pending
+                  }`}
+                >
+                  {txn.status}
+                </span>
+              </td>
+
+              {/* Action */}
+              <td className="px-6 py-4 text-center">
+                <button
+                  onClick={() => navigate(`/admin/orders/${txn._id}`)}
+                  className="text-gray-400 hover:text-[#FF7A00] font-black uppercase text-[10px] tracking-widest transition-colors"
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
 };
-
 export const UserTable = ({ onEdit, search = "", filter = "" }) => {
   const [selected, setSelected] = useState([]);
   const { API_URL } = useService();

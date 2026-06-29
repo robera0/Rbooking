@@ -110,7 +110,7 @@ const AdminAccount = () => {
     const data = new FormData();
     Object.entries(formData).forEach(([k, v]) => data.append(k, v));
     if (selectedFile) data.append("avatarUrl", selectedFile);
-    await axios.put(`${API_URL}/api/auth/user_profile`, data, {
+    await axios.put(`${API_URL}/api/auth/profile`, data, {
       withCredentials: true,
     });
   };

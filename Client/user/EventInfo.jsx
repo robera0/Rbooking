@@ -27,7 +27,6 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import toast, { Toaster } from "react-hot-toast";
-import { ProtectedRoute } from "@/components/Reusable";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
@@ -35,7 +34,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
-/* ─── tiny helpers*/
+/* ─── tiny helpers */
 const Orb = ({ className }) => (
   <div
     className={`absolute rounded-full blur-[120px] pointer-events-none ${className}`}
@@ -72,13 +71,15 @@ const StatBadge = ({ icon: Icon, label, value }) => (
 
 const EventInfo = () => {
   const { eventId, ticketId } = useParams();
-  const { setEditMenuActive, setCheckoutOpen, checkoutOpen } = useService();
+  const { setEditMenuActive, setCheckoutOpen, API_URL, checkoutOpen } =
+    useService();
   const {
     fetchEventById,
     usererror,
     userIsLoading,
     user,
-    get_comment,
+    comments,
+    commentsIsLoading,
     useComment,
     addLikeComment,
   } = eventService();
@@ -91,7 +92,6 @@ const EventInfo = () => {
   const [commentText, setCommentText] = useState("");
   const [rating, setRating] = useState("");
   const [imgIdx, setImgIdx] = useState(0);
-  const [selectedTicket, setSelectedTicket] = useState(null);
   const galleryRef = useRef(null);
 
   const heroRef = useRef(null);
@@ -105,25 +105,18 @@ const EventInfo = () => {
     queryFn: () => fetchEventById(eventId, ticketId),
   });
 
-  const {
-    data: comments,
-    isLoading: commentsIsLoading,
-    isError: commentError,
-  } = useQuery({
-    queryKey: ["comment", eventId],
-    queryFn: get_comment,
-    enabled: !!eventId,
-    retry: 1,
-  });
-
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
-
-  // Scroll to top when eventId changes
+  const allTickets = event_id?.tickets || [];
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [eventId]);
+
+  // Also reset image index when ticket changes
+  useEffect(() => {
+    setImgIdx(0);
+  }, [ticketId]);
 
   const handlePostComment = () => {
     if (!user) {
@@ -139,7 +132,6 @@ const EventInfo = () => {
           setCommentText("");
           setRating("");
         },
-
         onError: (error) => {
           toast.error(
             error.response?.data?.message || "Failed to post comment",
@@ -152,7 +144,6 @@ const EventInfo = () => {
   const handlePayment = async () => {
     const loadingToast = toast.loading("Confirming transaction...");
     try {
-      // Simulate API payment call
       await new Promise((resolve) => setTimeout(resolve, 2000));
       toast.success("Payment Successful! Access granted.", {
         id: loadingToast,
@@ -163,7 +154,7 @@ const EventInfo = () => {
     }
   };
 
-  /* ── ticket-type colour theme (mirrors Ticket.jsx palette) ── */
+  /* ── ticket-type colour theme ── */
   const ticketThemes = {
     standard: {
       bandGradient:
@@ -171,7 +162,7 @@ const EventInfo = () => {
       ctaGradient:
         "linear-gradient(135deg, #FF7A00 0%, #FF9D00 50%, #FF7A00 100%)",
       accentColor: "#FF7A00",
-      label: "Early Bird",
+      label: "Standard",
     },
     regular: {
       bandGradient:
@@ -189,7 +180,6 @@ const EventInfo = () => {
       accentColor: "#60A5FA",
       label: "VIP",
     },
-
     vvip: {
       bandGradient:
         "linear-gradient(120deg, #6B7280 0%, #9CA3AF 60%, #D1D5DB 100%)",
@@ -198,7 +188,6 @@ const EventInfo = () => {
       accentColor: "#9CA3AF",
       label: "VVIP",
     },
-
     soldout: {
       bandGradient:
         "linear-gradient(120deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%)",
@@ -208,22 +197,21 @@ const EventInfo = () => {
     },
   };
 
-  const isSoldOut = event?.tickets?.length === 0;
-
-  const baseActiveTicket = selectedTicket || event?.priceRanges?.[0] || ticket;
-  const activeTicket = baseActiveTicket
+  const isSoldOut = allTickets.length === 0;
+  // Active ticket is now driven purely by the URL ticketId via the fetched ticket
+  const activeTicket = ticket
     ? {
-        ...baseActiveTicket,
-        price: baseActiveTicket.price ?? baseActiveTicket.min ?? 0,
-        type: baseActiveTicket.type ?? "standard",
+        ...ticket,
+        price: ticket.price ?? 0,
+        type: ticket.name?.toLowerCase() ?? "standard",
       }
     : null;
 
   const ticketType = isSoldOut
     ? "soldout"
-    : (activeTicket?.type || "standard").toLowerCase().trim() || "standard";
+    : (activeTicket?.type || "standard").toLowerCase().trim();
 
-  const theme = ticketThemes[ticketType] ?? ticketThemes.default;
+  const theme = ticketThemes[ticketType] ?? ticketThemes.standard;
 
   const prevImg = () => setImgIdx((i) => (i === 0 ? images.length - 1 : i - 1));
   const nextImg = () => setImgIdx((i) => (i === images.length - 1 ? 0 : i + 1));
@@ -273,7 +261,6 @@ const EventInfo = () => {
 
       {/* ── CINEMATIC HERO ── */}
       <div className="relative w-full h-[75vh] min-h-[520px] overflow-hidden">
-        {/* bg image with parallax */}
         <motion.div
           ref={heroRef}
           style={{ scale: heroScale }}
@@ -281,19 +268,17 @@ const EventInfo = () => {
         >
           {images[0] ? (
             <img
-              src={images[0]}
+              src={`${API_URL}/${images[0]}`}
               alt={event?.name}
               className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[#111] to-[#1c1210]" />
           )}
-          {/* layered dark gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#080809] via-[#080809]/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#080809]/80 via-transparent to-transparent" />
         </motion.div>
 
-        {/* scan-lines overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -302,12 +287,10 @@ const EventInfo = () => {
           }}
         />
 
-        {/* hero content */}
         <motion.div
           style={{ opacity: heroOpacity }}
           className="absolute inset-0 flex flex-col justify-end px-6 lg:px-14 pb-14"
         >
-          {/* hash */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -320,8 +303,7 @@ const EventInfo = () => {
             </span>
           </motion.div>
 
-          {/* glitch title */}
-          <h1 className="text-5xl md:text-7xl lg:text-7itxl font-black uppercase italic tracking-tighter leading-none max-w-5xl mb-8 perspective-1000">
+          <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-none max-w-5xl mb-8 perspective-1000">
             {titleChars.map((char, i) => (
               <GlitchChar
                 key={i}
@@ -331,7 +313,6 @@ const EventInfo = () => {
             ))}
           </h1>
 
-          {/* stat badges */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -363,7 +344,6 @@ const EventInfo = () => {
           </motion.div>
         </motion.div>
 
-        {/* vertical progress line (decorative) */}
         <div className="absolute right-10 top-0 bottom-0 w-[1px] bg-white/[0.04] hidden lg:block">
           <motion.div
             initial={{ scaleY: 0 }}
@@ -389,9 +369,7 @@ const EventInfo = () => {
               width="100%"
               height="100%"
               frameBorder="0"
-              style={{
-                border: 0,
-              }}
+              style={{ border: 0 }}
               src={`https://www.google.com/maps?q=${event?.links?.venues?.name}&output=embed`}
             />
             <div className="absolute inset-0 pointer-events-none border-b border-[#FF7A00]/20" />
@@ -421,7 +399,6 @@ const EventInfo = () => {
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="relative group">
-                  {/* label */}
                   <div className="flex items-center gap-3 mb-5">
                     <div className="w-5 h-[2px] bg-[#FF7A00]" />
                     <span className="text-[9px] font-black uppercase tracking-[0.45em] text-gray-500">
@@ -429,12 +406,11 @@ const EventInfo = () => {
                     </span>
                   </div>
 
-                  {/* main image */}
                   <div className="relative aspect-video overflow-hidden rounded-[2rem] border border-white/[0.06]">
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={imgIdx}
-                        src={images[imgIdx]}
+                        src={`${API_URL}/${images[imgIdx]}`}
                         alt={`Event ${imgIdx + 1}`}
                         initial={{ opacity: 0, scale: 1.06 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -443,9 +419,7 @@ const EventInfo = () => {
                         className="w-full h-full object-cover"
                       />
                     </AnimatePresence>
-                    {/* overlay strip */}
                     <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#080809]/80 to-transparent" />
-                    {/* counter */}
                     <div className="absolute bottom-4 left-5 flex items-center gap-2">
                       <Zap size={10} className="text-[#FF7A00]" />
                       <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">
@@ -453,7 +427,6 @@ const EventInfo = () => {
                       </span>
                     </div>
 
-                    {/* arrows */}
                     {images.length > 1 && (
                       <>
                         <button
@@ -472,7 +445,6 @@ const EventInfo = () => {
                     )}
                   </div>
 
-                  {/* thumbnail strip */}
                   {images.length > 1 && (
                     <div
                       ref={galleryRef}
@@ -489,7 +461,7 @@ const EventInfo = () => {
                           }`}
                         >
                           <img
-                            src={img}
+                            src={`${API_URL}/${img}`}
                             className="w-full h-full object-cover"
                             alt=""
                           />
@@ -528,7 +500,6 @@ const EventInfo = () => {
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               className="space-y-8"
             >
-              {/* section header */}
               <div className="flex items-center gap-4">
                 <div className="h-[1px] flex-1 bg-gradient-to-r from-[#FF7A00]/30 to-transparent" />
                 <span className="text-[9px] font-black uppercase tracking-[0.45em] text-gray-600">
@@ -537,7 +508,6 @@ const EventInfo = () => {
                 <div className="h-[1px] flex-1 bg-gradient-to-l from-[#FF7A00]/30 to-transparent" />
               </div>
 
-              {/* input row */}
               <motion.div
                 whileFocusWithin={{ borderColor: "rgba(255,122,0,0.5)" }}
                 className="flex items-center gap-3 bg-white/[0.025] border border-white/[0.06] rounded-2xl px-4 py-3 transition-all"
@@ -549,7 +519,6 @@ const EventInfo = () => {
                   placeholder="Leave a comment..."
                   className="flex-1 bg-transparent outline-none border-none text-[11px] font-bold uppercase tracking-wide placeholder:text-gray-700 text-white"
                 />
-
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
@@ -560,10 +529,8 @@ const EventInfo = () => {
                 </motion.button>
               </motion.div>
 
-              {/* comment feed or skeleton loader */}
               <div className="space-y-6">
                 {commentsIsLoading ? (
-                  // Skeleton loader for comments
                   <SkeletonTheme baseColor="#27272a" highlightColor="#3f3f46">
                     <div className="space-y-6">
                       {Array.from({ length: 3 }).map((_, i) => (
@@ -572,41 +539,25 @@ const EventInfo = () => {
                           className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4 sm:p-5"
                         >
                           <div className="flex items-start gap-3 sm:gap-4">
-                            {/* PROFILE IMAGE SKELETON */}
                             <div className="flex-shrink-0">
-                              {/* circle={true} outputs a perfect border-radius circle */}
-                              <Skeleton
-                                circle
-                                width={48}
-                                height={48}
-                                className="sm:w-12 sm:h-12"
-                              />
+                              <Skeleton circle width={48} height={48} />
                             </div>
-
-                            {/* COMMENT CONTENT SKELETON */}
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                                 <div>
-                                  {/* Replaces user name line */}
                                   <Skeleton
                                     width={96}
                                     height={16}
                                     className="mb-1"
                                   />
-                                  {/* Replaces time-stamp line */}
                                   <Skeleton width={64} height={12} />
                                 </div>
-                                {/* Replaces star rating badge */}
                                 <Skeleton width={40} height={16} />
                               </div>
-
-                              {/* Replaces the main text block comment (2 lines) */}
                               <div className="space-y-2">
                                 <Skeleton width="100%" height={12} />
                                 <Skeleton width="66%" height={12} />
                               </div>
-
-                              {/* Replaces action buttons (Like / Reply) */}
                               <div className="flex items-center gap-4 mt-4">
                                 <Skeleton width={40} height={12} />
                                 <Skeleton width={40} height={12} />
@@ -628,20 +579,17 @@ const EventInfo = () => {
                       className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
                     >
                       <div className="flex items-start gap-3 sm:gap-4">
-                        {/* PROFILE IMAGE */}
                         <div className="flex-shrink-0">
                           <img
                             src={
-                              c?.userProfile?.avatarUrl ||
-                              "https://ui-avatars.com/api/?name=User"
+                              `${API_URL}/${c?.userProfile?.avatarUrl}` ||
+                              c?.userProfile?.avatarUrl
                             }
                             alt={c?.userProfile?.fullName}
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
                           />
                         </div>
-                        {/* COMMENT CONTENT */}
                         <div className="flex-1 min-w-0">
-                          {/* HEADER */}
                           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                             <div>
                               <h4 className="text-sm sm:text-base font-semibold text-white truncate">
@@ -651,23 +599,18 @@ const EventInfo = () => {
                                 {moment(c.createdAt).fromNow()}
                               </p>
                             </div>
-                            {/* OPTIONAL RATING */}
                             {c?.rating > 0 && (
                               <div className="flex items-center gap-1 text-[#FF7A00] text-xs font-bold">
                                 ⭐ {c.rating}
                               </div>
                             )}
                           </div>
-                          {/* COMMENT */}
                           <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
                             {c?.text}
                           </p>
-                          {/* ACTIONS */}
                           <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
                             <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                              }}
+                              onClick={(e) => e.preventDefault()}
                               className="hover:text-white transition-colors"
                             >
                               Like
@@ -704,7 +647,7 @@ const EventInfo = () => {
                     "linear-gradient(160deg, #141416 0%, #0e0e10 100%)",
                 }}
               >
-                {/* ── TICKET TOP BAND — colour driven by ticket type ── */}
+                {/* ── TICKET TOP BAND ── */}
                 <motion.div
                   key={ticketType}
                   initial={{ opacity: 0.8 }}
@@ -713,7 +656,6 @@ const EventInfo = () => {
                   className="relative px-8 pt-8 pb-6 overflow-hidden"
                   style={{ background: theme?.bandGradient }}
                 >
-                  {/* decorative circles */}
                   <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10" />
                   <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-black/10" />
 
@@ -757,16 +699,12 @@ const EventInfo = () => {
                 {/* ── TEAR LINE ── */}
                 <div className="relative flex items-center">
                   <div className="w-5 h-5 rounded-full -ml-2.5 bg-[#080809] shrink-0" />
-                  <div
-                    className="flex-1 border-t-2 border-dashed border-white/[0.07]"
-                    style={{ backgroundImage: "none" }}
-                  />
+                  <div className="flex-1 border-t-2 border-dashed border-white/[0.07]" />
                   <div className="w-5 h-5 rounded-full -mr-2.5 bg-[#080809] shrink-0" />
                 </div>
 
                 {/* ── TICKET BODY ── */}
                 <div className="px-8 py-7 space-y-6">
-                  {/* ticket type + price */}
                   <div className="flex items-end justify-between">
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -780,7 +718,7 @@ const EventInfo = () => {
                           Ticket Type
                         </p>
                         <p className="text-lg font-black uppercase tracking-tight">
-                          {activeTicket?.type || "standard"}
+                          {activeTicket?.name || "Standard"}
                         </p>
                       </motion.div>
                     </AnimatePresence>
@@ -799,20 +737,19 @@ const EventInfo = () => {
                         </p>
                         <div className="flex items-baseline gap-1">
                           <span className="text-4xl font-black tracking-tighter">
-                            ${activeTicket?.price}
+                            {activeTicket?.price}
                           </span>
                           <span
                             className="text-[10px] font-black uppercase"
                             style={{ color: theme?.accentColor }}
                           >
-                            USD
+                            ETB
                           </span>
                         </div>
                       </motion.div>
                     </AnimatePresence>
                   </div>
 
-                  {/* info rows */}
                   <div className="space-y-3">
                     {[
                       {
@@ -834,6 +771,10 @@ const EventInfo = () => {
                               "HH:mm:ss",
                             ).format("h:mm A")
                           : "Check venue",
+                      },
+                      {
+                        label: "Available",
+                        value: activeTicket?.availableQuantity ?? "—",
                       },
                     ].map(({ label, value }) => (
                       <div
@@ -866,7 +807,6 @@ const EventInfo = () => {
                     }`}
                     style={{ background: theme?.ctaGradient }}
                   >
-                    {/* shimmer */}
                     {!isSoldOut && (
                       <motion.div
                         animate={{ x: ["-100%", "200%"] }}
@@ -891,7 +831,6 @@ const EventInfo = () => {
                     )}
                   </motion.button>
 
-                  {/* trust row */}
                   <div className="flex justify-around pt-1">
                     {[
                       { Icon: ShieldCheck, label: "Secure" },
@@ -919,7 +858,6 @@ const EventInfo = () => {
                     <div className="w-5 h-5 rounded-full -mr-2.5 bg-[#080809] shrink-0" />
                   </div>
                   <div className="px-8 py-5 flex items-center justify-between">
-                    {/* barcode visual — tinted by ticket type */}
                     <div className="flex items-end gap-[2px] h-10">
                       {Array.from({ length: 28 }).map((_, i) => (
                         <div
@@ -939,14 +877,14 @@ const EventInfo = () => {
                         Paysso
                       </p>
                       <p className="text-[9px] font-black text-gray-500 tracking-widest">
-                        #{eventId?.slice(-8)?.toUpperCase()}
+                        #{ticketId?.slice(-8)?.toUpperCase()}
                       </p>
                     </div>
                   </div>
                 </div>
               </motion.div>
 
-              {/* View Ticket Types button & Dropdown container */}
+              {/* ── TICKET TYPE DROPDOWN ── */}
               <div className="relative">
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
@@ -973,11 +911,9 @@ const EventInfo = () => {
                   </motion.span>
                 </motion.button>
 
-                {/* Dropdown Menu */}
                 <AnimatePresence>
                   {showTicketDropdown && (
                     <>
-                      {/* invisible closer backdrop */}
                       <div
                         className="fixed inset-0 z-10"
                         onClick={() => setShowTicketDropdown(false)}
@@ -989,30 +925,26 @@ const EventInfo = () => {
                         transition={{ duration: 0.2, ease: "easeOut" }}
                         className="absolute top-full left-0 right-0 mt-3 z-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1a1c1e]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                       >
-                        {(event?.priceRanges || []).map((t) => {
+                        {allTickets.map((t) => {
                           const typeKey =
-                            t.type?.toLowerCase()?.trim() || "standard";
+                            t.name?.toLowerCase()?.trim() || "standard";
                           const tTheme =
                             ticketThemes[typeKey] || ticketThemes.standard;
-                          console.log(t);
-                          const getIcon = (type) => {
-                            if (type.includes("vip")) return "👑";
-                            if (type.includes("early")) return "🐦";
-                            if (type.includes("regular")) return "🎟️";
-                            return "🎫";
-                          };
+                          const isActive = t._id === ticketId;
 
                           return (
                             <motion.button
-                              key={t.type}
+                              key={t._id}
                               whileHover={{
                                 backgroundColor: "rgba(255,255,255,0.03)",
                               }}
                               onClick={() => {
-                                setSelectedTicket(t);
+                                navigate(`/events/${eventId}/tickets/${t._id}`);
                                 setShowTicketDropdown(false);
                               }}
-                              className="w-full px-5 py-4 flex items-center justify-between border-b border-white/[0.04] last:border-0 group transition-colors"
+                              className={`w-full px-5 py-4 flex items-center justify-between border-b border-white/[0.04] last:border-0 group transition-colors ${
+                                isActive ? "bg-white/[0.04]" : ""
+                              }`}
                             >
                               <div className="flex items-center gap-3">
                                 <span
@@ -1021,16 +953,24 @@ const EventInfo = () => {
                                     backgroundColor: tTheme?.accentColor,
                                   }}
                                 />
+
                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-white transition-colors">
-                                  {t?.type}
+                                  {t?.name}
                                 </span>
+
+                                {isActive && (
+                                  <span className="text-[8px] font-black text-[#FF7A00] uppercase tracking-widest">
+                                    ← Selected
+                                  </span>
+                                )}
                               </div>
+
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-bold text-white">
-                                  ${t?.min}
+                                  {t?.price} ETB
                                 </span>
-                                <span className="text-sm opacity-50 group-hover:opacity-100 transition-opacity">
-                                  {getIcon(typeKey)}
+                                <span className="text-[10px] text-gray-600">
+                                  ({t?.availableQuantity} left)
                                 </span>
                               </div>
                             </motion.button>
@@ -1056,7 +996,7 @@ const EventInfo = () => {
                   </span>
                 </div>
                 <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
-                  Ref: {eventId?.slice(-8)?.toUpperCase()}
+                  Ref: {ticketId?.slice(-8)?.toUpperCase()}
                 </span>
               </motion.div>
             </div>
@@ -1120,6 +1060,7 @@ const EventInfo = () => {
             onClose={() => setCheckoutOpen(false)}
             amount={activeTicket?.price}
             name={event?.name}
+            ticketId={ticketId}
             action={handlePayment}
           />
         )}

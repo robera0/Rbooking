@@ -11,7 +11,7 @@ dotenv.config();
 
 const refreshToken_SECRET = process.env.refreshToken_SECRET;
 
-/*export const register_admin = async (req, res) => {
+export const registerAdmin = async (req, res) => {
   try {
     let {
       username,
@@ -104,7 +104,7 @@ const refreshToken_SECRET = process.env.refreshToken_SECRET;
     });
   }
 };
-*/
+
 // REGISTER USER
 
 const isProduction = process.env.NODE_ENV === "production";

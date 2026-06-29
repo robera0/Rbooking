@@ -6,6 +6,10 @@ const TicketSchema = new mongoose.Schema({
     ref: "Event",
     required: true,
   },
+  name: {
+    type: String, // ← "VIP", "Standard", "Early Bird" etc
+    required: true,
+  },
   totalQuantity: {
     type: Number,
     required: true,

@@ -286,7 +286,7 @@ const RegistrationPage = () => {
       form.append("adminRole", payload.adminRole || "event_manager");
       form.append("twoFactorEnabled", String(payload.twoFactorEnabled));
 
-      const res = await fetch(`${API_URL}/api/auth/signup/admin`, {
+      const res = await fetch(`${API_URL}/api/auth/admin/signup`, {
         method: "POST",
         body: form,
       });

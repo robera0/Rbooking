@@ -13,6 +13,9 @@ class AdminProfileService {
     return await AdminProfile.findById(id);
   }
 
+  static async findOne(id) {
+    return await AdminProfile.findOne({ userId: id }).populate("userId").exec();
+  }
   static async findByPhoneNumber(phoneNumber) {
     return AdminProfile.findOne({ phoneNumber });
   }

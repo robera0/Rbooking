@@ -1,5 +1,5 @@
 [] add a schema of  a review about the app
-[] send the total amount ticket to the tickets route
+[f] send the total amount ticket to the tickets route
 [] download the qr code
 
 //TODAY 
@@ -12,10 +12,17 @@
 [f] the ticket class
 [f] add the classes in the controller of the events
 [f] test if the schema is using the index
-[] add custom  datePicket in the add event 
-[] edit the design of the add event so it can handle all categories also in the event.controller
-
-[f] create a eventservice and edit the deletevent in admincontroller
+[f] add custom  datePicket in the add event 
+[f] edit the design of the add event so it can handle all categories also in the event.controller
+[] make the admin registration work 
+[] make the ticket controller send all the ticket
+[] change the url of ticket based on type
+[] cache the tickets instead of the ids only
+[] add qr generator controller for events
+[f] make sure to remove the info
+[f] post an event too
+[f] when user post event the cap should go to the ticket schema so it can show the available number of tickets 
+[f] edit the routes to update the admin profile
 // WHEN THE APP IS PUBLISHED 
 
 [] add the calendar and put all the event there is on that like a poster

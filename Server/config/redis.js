@@ -44,13 +44,10 @@ export const clearWishListCache = async (userId) => {
   }
 };
 
-export const clearTicketCache = async (id) => {
+export const clearTicketCache = async (userId) => {
   try {
-    const keys = await redisClient.keys(`user:ticket:list:${id}`);
-
-    if (keys.length > 0) {
-      await redisClient.del(keys);
-    }
+    if (!userId) return;
+    await redisClient.del(`user:ticket:list:${userId}`);
   } catch (err) {
     console.error("Failed to clear ticket cache:", err);
   }

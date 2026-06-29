@@ -2,7 +2,8 @@ import { ProfileModel } from "../models/profile.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import multer from "multer";
 import catchAsync from "../errors/catchAsync.js";
-
+import AdminProfileService from "../service/adminProfile.service.js";
+import ProfileService from "../service/profile.service.js";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -19,13 +20,9 @@ export const getProfile = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
   let profile;
   if (req.user.role === "admin") {
-    profile = await AdminProfile.findOne({ userId: userId })
-      .populate("userId")
-      .exec();
+    profile = await AdminProfileService.findOne(userId);
   } else {
-    profile = await ProfileModel.findOne({ userId: userId })
-      .populate("userId")
-      .exec();
+    profile = await ProfileService.findOne(userId);
   }
   res.status(200).json({ user: profile });
 });

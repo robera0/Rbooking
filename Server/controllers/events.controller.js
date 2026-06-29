@@ -6,7 +6,13 @@ import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
 import { safeParse } from "../utils/safeParse.js";
+import fs from "fs";
+import QRCode from "qrcode";
+import "dotenv/config";
+
+const URL = process.env.VITE_API_URL;
 //ADD EVENTS
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -28,7 +34,6 @@ export const addEvent = catchAsync(async (req, res, next) => {
     name,
     artist,
     locale,
-    info,
     policies,
     priceRanges,
     dates,
@@ -39,10 +44,9 @@ export const addEvent = catchAsync(async (req, res, next) => {
     links,
     stages,
     durationDays,
-
     category,
-
     familyFriendly,
+    capacity,
   } = req.body;
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
@@ -56,10 +60,11 @@ export const addEvent = catchAsync(async (req, res, next) => {
   musicGenre = safeParse(musicGenre || "[]");
   policies = safeParse(policies || "[]");
   links = safeParse(links || "{}");
+  console.log("parsed links:", JSON.stringify(links)); // ← add this temporarily
   stages = safeParse(stages || "[]");
   sales = safeParse(sales || "{}");
-  info = safeParse(info || "{}");
-  locale = safeParse(locale || "{}");
+  capacity = Number(capacity) || 0;
+  locale = locale || "";
   desc = desc;
   category = safeParse(category || "[]");
   familyFriendly = Boolean(familyFriendly === "true");
@@ -75,8 +80,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
     adminId: userId,
     name,
     artist,
-    locale,
-    info,
+    locale: typeof locale === "string" ? locale : "",
     policies,
     priceRanges,
     dates,
@@ -93,8 +97,25 @@ export const addEvent = catchAsync(async (req, res, next) => {
 
     familyFriendly,
   };
-  events.pictures = pictures;
-  const newEvent = await EventService.create(events);
+
+  const ticket = {};
+  let newEvent;
+
+  try {
+    newEvent = await EventService.create(events);
+    await ticket;
+  } catch (err) {
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file) => {
+        fs.unlink(file.path, (unlinkErr) => {
+          if (unlinkErr)
+            console.error("Failed to delete file:", file.path, unlinkErr);
+        });
+      });
+    }
+    return next(err);
+  }
+
   await clearEventsCache();
   res.status(200).json({
     success: true,
@@ -102,6 +123,27 @@ export const addEvent = catchAsync(async (req, res, next) => {
     message: "event created successfully",
   });
 });
+
+export const createTickets = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const { tickets } = req.body;
+
+  const createdTickets = await TicketModel.insertMany(
+    tickets.map((t) => ({
+      eventId,
+      name: t.name,
+      price: Number(t.price),
+      totalQuantity: Number(t.capacity),
+      availableQuantity: Number(t.capacity),
+    })),
+  );
+
+  res.status(201).json({
+    success: true,
+    tickets: createdTickets,
+  });
+});
+
 export const getEvents = catchAsync(async (req, res, next) => {
   const { type, artist, date, venues, search } = req.query;
   const cacheKey = `event:list:${JSON.stringify(req.query)}`;
@@ -165,7 +207,8 @@ export const getEvents = catchAsync(async (req, res, next) => {
 
   const eventsWithTickets = events.map((event) => {
     const tickets = ticketsByEvent[event._id.toString()] || [];
-    return { ...event.toObject(), tickets, ticketCount: tickets.length };
+
+    return { ...event, tickets, ticketCount: tickets.length };
   });
   await redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets));
 
@@ -202,22 +245,47 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
     acc[key].push(ticket);
     return acc;
   }, {});
-  const featuredEvents = events?.map((event) => {
+  const featuredEvent = events?.map((event) => {
     const tickets = ticketsByEvent[event._id.toString()] || [];
     return {
-      ...event.toObject(),
+      ...event,
       tickets: tickets,
       ticketCount: tickets.length,
     };
   });
 
   await redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents));
-  res.status(200).json({ events: featuredEvents });
+  res.status(200).json({ events: featuredEvent });
 });
-// FETCH WITH RESPECT TO ITS INDEX
+
+export const generateEventQR = catchAsync(async (req, res, next) => {
+  const { eventId, ticketId } = req.params;
+  const url = `${URL}/events/${eventId}/tickets/${ticketId}`;
+  if (!ticketId || ticketId === "null") {
+    return res.status(400).json({ message: "Ticket ID is required" });
+  }
+
+  const event = await EventService.findById(eventId);
+  if (!event) {
+    return res.status(404).json({ message: "Event not found" });
+  }
+
+  const qrCode = await QRCode.toDataURL(url);
+
+  return res.status(200).json({
+    success: true,
+    qrCode,
+  });
+});
+
+// FETCH WITH RESPECT TO ITS INDEX\
+
 export const fetchEventsId = catchAsync(async (req, res, next) => {
   const { eventId, ticketId } = req.params;
-  const cacheKey = `event:single:${eventId}`;
+
+  //
+  const cacheKey = `event:single:${eventId}:${ticketId}`;
+
   const cachedCombo = await redisClient.get(cacheKey);
   if (cachedCombo) {
     const decoded = JSON.parse(cachedCombo);
@@ -225,32 +293,35 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
       success: true,
       event: decoded.event,
       ticket: decoded.ticket,
+      tickets: decoded.tickets,
       source: "cache",
     });
   }
+
   if (!ticketId || ticketId === "undefined") {
     return res.status(400).json({ message: "Ticket ID is required" });
   }
 
-  // FIXED: Correct populate path for your nested schema
   const event = await EventService.findById(eventId);
   if (!event) {
     return res.status(404).json({ message: "Event not found" });
   }
 
-  const ticketInfo = await TicketModel.findOne({
-    _id: ticketId,
-    eventId: eventId,
-  });
-
+  const ticketInfo = await TicketModel.findOne({ _id: ticketId, eventId });
   if (!ticketInfo) {
     return res.status(404).json({ message: "Ticket not found for this event" });
   }
-  const payloadToCache = { event, ticket: ticketInfo };
+
+  const allTickets = await TicketModel.find({ eventId }).lean();
+
+  const payloadToCache = { event, ticket: ticketInfo, tickets: allTickets };
   await redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache));
+
   res.status(200).json({
-    event: event,
+    success: true,
+    event,
     ticket: ticketInfo,
+    tickets: allTickets,
   });
 });
 
@@ -287,7 +358,9 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     amenities,
     desc,
     links,
+    existingPictures,
 
+    classifications,
     // festival fields
     stages,
     durationDays,
@@ -311,7 +384,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   if (existingPictures) existingPictures = safeParse(existingPictures);
   if (links) links = safeParse(links);
   if (stages) stages = safeParse(stages);
-  if (rating) rating = safeParse(rating);
+
   if (classifications) classifications = safeParse(classifications);
   if (sales) sales = safeParse(sales);
   if (existingPictures) existingPictures = safeParse(existingPictures);

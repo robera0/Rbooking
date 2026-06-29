@@ -3,6 +3,7 @@ import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
 import UserService from "../service/user.service.js";
 import catchAsync from "../errors/catchAsync.js";
+import TicketService from "../service/ticket.service.js";
 import mongoose from "mongoose";
 // Utility function to get dates
 const getDateRanges = () => {
@@ -95,32 +96,19 @@ export const getEvents = catchAsync(async (req, res, next) => {
   const events = await EventService.find({ adminId: userId });
   res.status(200).json({ success: true, events: events });
 });
-export const get_transaction_ledger = catchAsync(async (req, res, next) => {
-  const transactions = await UserTicketModel.find()
-    .populate("userId", "username email fullName")
-    .populate("ticketId", "type price")
-    .sort({ purchasedAt: -1 });
 
-  const formattedTransactions = transactions.map((item) => ({
-    ...item.toObject(),
-    commissionAmount: item.status === "paid" ? item.totalAmount * 0.1 : 0,
-  }));
+export const getTransactionLedger = catchAsync(async (req, res, next) => {
+  const adminId = new mongoose.Types.ObjectId(req.user.id);
 
-  res.status(200).json({ success: true, transactions: formattedTransactions });
+  const transactions = await TicketService.findTickets(adminId);
+
+  res.status(200).json({ success: true, transactions: transactions });
 });
 
 export const get_transaction_by_id = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const transaction = await UserTicketModel.findById(id)
-    .populate("userId", "username email fullName role")
-    .populate({
-      path: "ticketId",
-      populate: {
-        path: "eventId",
-        model: "Event",
-        select: "name type locale dates pictures",
-      },
-    });
+
+  const transaction = await TicketService.findById(id);
 
   if (!transaction) {
     return res
@@ -134,7 +122,7 @@ export const get_transaction_by_id = catchAsync(async (req, res) => {
       transaction.status === "paid" ? transaction.totalAmount * 0.1 : 0,
   };
 
-  res.status(200).json({ success: true, transaction: formattedTransaction });
+  res.status(200).json({ success: true, transaction: transaction });
 });
 
 export const get_revenue_history = catchAsync(async (req, res, next) => {

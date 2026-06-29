@@ -660,10 +660,12 @@ const AddEvent = () => {
     eventName: "",
     artistName: "",
     venue: "",
+    locale: "",
     description: "",
     eventDate: "",
     tickets: [],
     policies: [],
+    links: {},
     amenities: [],
     pictures: [],
     musicGenre: [],
@@ -692,12 +694,14 @@ const AddEvent = () => {
       const form = new FormData();
       form.append("type", payload.type);
       form.append("name", payload.name);
-      form.append("locale", payload.locale);
+      form.append("links", JSON.stringify(payload.links));
       form.append("desc", payload.desc);
+      form.append("local", payload.locale);
       form.append("artist", JSON.stringify(payload.artist));
       form.append("priceRanges", JSON.stringify(payload.priceRanges));
       form.append("policies", JSON.stringify(payload.policies));
       form.append("dates", JSON.stringify(payload.dates));
+
       form.append("amenities", JSON.stringify(payload.amenities));
       form.append("musicGenre", JSON.stringify(payload.musicGenre));
       if (payload.familyFriendly !== undefined)
@@ -716,7 +720,9 @@ const AddEvent = () => {
       if (!res.ok) throw new Error("Failed to create event");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const eventId = data?.events?._id;
+      createTicketsMutation.mutate({ eventId, tickets: formData.tickets });
       toast.success("Event Published Successfully!", {
         duration: 2000,
         style: {
@@ -731,7 +737,40 @@ const AddEvent = () => {
     onError: (err) => toast.error(`Error: ${err.message}`),
   });
 
+  // 2. Tickets mutation
+
+  const createTicketsMutation = useMutation({
+    mutationFn: async ({ eventId, tickets }) => {
+      const res = await fetch(
+        `${API_URL}/api/auth/admin/events/${eventId}/tickets`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tickets }),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to create tickets");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Event Published Successfully!", {
+        duration: 2000,
+        style: {
+          background: "#1C1F22",
+          color: "#fff",
+          border: "1px solid #FF7A00",
+        },
+      });
+      setFormData(EMPTY_FORM);
+      setTimeout(() => navigate("/admin/events"), 2000);
+    },
+    onError: (err) => toast.error(`Tickets error: ${err.message}`),
+  });
+
   const handleSubmit = () => {
+    if (!formData.eventName) return setError("Event Name is required");
+    if (!formData.venue.name) return setError("Venue name is required");
     if (!formData.eventName)
       return setError("Event Name is required to publish");
     setError("");
@@ -742,7 +781,21 @@ const AddEvent = () => {
       type,
       name: formData.eventName,
       artist: { name: formData.artistName },
-      locale: formData.venue,
+      locale: "ETH",
+      links: {
+        self: {
+          href: `/events/${formData.eventName
+            .toLowerCase()
+            .replace(/\s+/g, "-")}`,
+        },
+        attractions: [],
+        venues: {
+          name: formData.venue.name,
+          city: formData.venue.city,
+          address: formData.venue.address,
+          pictures: [],
+        },
+      },
       policies: formData.policies,
       priceRanges: formData.tickets.map((t) => ({
         type: t.name,
@@ -860,30 +913,72 @@ const AddEvent = () => {
                   </p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                    Artist / Talent
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.artistName}
-                    onChange={(e) => set({ artistName: e.target.value })}
-                    className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
-                    placeholder="Main artist"
-                  />
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                      Artist / Talent
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.artistName}
+                      onChange={(e) => set({ artistName: e.target.value })}
+                      className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
+                      placeholder="Main artist"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                      Venue Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.venue.name}
+                      onChange={(e) =>
+                        set({
+                          venue: { ...formData.venue, name: e.target.value },
+                        })
+                      }
+                      className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
+                      placeholder="e.g. The Venue Warehouse"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
-                    Venue Locale
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.venue}
-                    onChange={(e) => set({ venue: e.target.value })}
-                    className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
-                    placeholder="Location"
-                  />
+
+                {/* City + Address as their own row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.venue.city}
+                      onChange={(e) =>
+                        set({
+                          venue: { ...formData.venue, city: e.target.value },
+                        })
+                      }
+                      className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
+                      placeholder="e.g. Addis Ababa"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.venue.address}
+                      onChange={(e) =>
+                        set({
+                          venue: { ...formData.venue, address: e.target.value },
+                        })
+                      }
+                      className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
+                      placeholder="e.g. Welo Sefer"
+                    />
+                  </div>
                 </div>
               </div>
               <div>

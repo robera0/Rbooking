@@ -3,6 +3,7 @@ import {
   getTickets,
   getTicketsInfo,
   updateTicketStatus,
+  purchaseTicket,
 } from "../controllers/ticket.controller.js";
 import dotenv from "dotenv";
 import axios from "axios";
@@ -20,7 +21,13 @@ ticketRouter.get(
   authenticateTokenMiddleware,
   getTicketsInfo,
 );
+
 ticketRouter.post("/tickets_home", authenticateTokenMiddleware, createPayment);
+ticketRouter.post(
+  "/ticket/:ticketId/purchase",
+  authenticateTokenMiddleware,
+  purchaseTicket,
+);
 ticketRouter.patch("/ticket/:ticketId/status", updateTicketStatus);
 
 ticketRouter.get("/ticket/chapa-webhook", async (req, res) => {

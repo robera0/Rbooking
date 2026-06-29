@@ -29,7 +29,7 @@ const Wishlist = () => {
   const { mutation: wishlistMutation } = useWishlistMutation();
   const [selected, setSelected] = useState(options[0]);
   const [hasAlerted, setHasAlerted] = useState(false);
-
+  const { API_URL } = useService();
   const { events, wishlist, wishlistLoading, wishlistIsError } = eventService();
 
   useEffect(() => {
@@ -226,7 +226,7 @@ const Wishlist = () => {
                     className="relative w-full md:w-80 h-64 md:h-auto shrink-0 overflow-hidden block"
                   >
                     <img
-                      src={w?.pictures?.[0] || "/Login.jpg"}
+                      src={`${API_URL}/${w?.pictures?.[0]}` || "/Login.jpg"}
                       alt={w?.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />

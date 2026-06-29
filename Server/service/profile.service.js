@@ -1,12 +1,9 @@
 import { ProfileModel } from "../models/profile.model.js";
 class ProfileService {
   static create(userData) {
-    return new ProfileModel(userData);
+    return new ProfileModel.create(userData);
   }
 
-  static async save(obj) {
-    await obj.save();
-  }
   static async findOneAndUpdate(user, data) {
     return await ProfileModel.findOneAndUpdate(
       { userId: user },
@@ -21,6 +18,12 @@ class ProfileService {
   }
   static async findByUserId(userId) {
     return ProfileModel.findOne({ userId }).populate("userId");
+  }
+
+  static async findOne(userId) {
+    return await ProfileModel.findOne({ userId: userId })
+      .populate("userId")
+      .exec();
   }
 
   static async findById(id) {

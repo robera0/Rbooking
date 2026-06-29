@@ -23,6 +23,13 @@ import {
   MessageCircleMore,
   MapPin,
   User,
+  Crown,
+  Users,
+  Sparkles,
+  XCircle,
+  Ticket,
+  Award,
+  Gem,
 } from "lucide-react";
 import { useState } from "react";
 import { Skeleton } from "boneyard-js/react";
@@ -32,7 +39,7 @@ import { useService } from "@/Context/ServiceContext";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import axios from "axios";
+import "react-loading-skeleton/dist/skeleton.css";
 import { useQueryClient } from "@tanstack/react-query";
 export const ProtectedRoute = ({ children }) => {
   const { usererror, user } = eventService(); // remove userIsLoading
@@ -849,6 +856,345 @@ export const NotificationSidebar = ({ setIsOpen }) => {
           Mark all as read
         </button>
       </div>
+    </div>
+  );
+};
+
+// TicketTableSkeleton
+
+const ROW_VARIANTS = [
+  { name: "w-24", email: "w-36", value: "w-14", badge: "w-20" },
+  { name: "w-20", email: "w-40", value: "w-10", badge: "w-16" },
+  { name: "w-28", email: "w-32", value: "w-16", badge: "w-24" },
+  { name: "w-24", email: "w-44", value: "w-12", badge: "w-20" },
+  { name: "w-22", email: "w-36", value: "w-14", badge: "w-18" },
+];
+
+export const renderTableSkeleton = (rowCount = 5) => {
+  return Array.from({ length: rowCount }).map((_, i) => {
+    const variant = ROW_VARIANTS[i % ROW_VARIANTS.length];
+
+    return (
+      <tr
+        key={i}
+        className="border-b border-zinc-200 dark:border-zinc-800 animate-pulse"
+      >
+        {/* Column 1: User Profile */}
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 flex-shrink-0 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+            <div className="space-y-2">
+              <div
+                className={`h-4 ${variant.name} rounded bg-zinc-200 dark:bg-zinc-800`}
+              />
+              <div className="h-3 w-10 rounded bg-zinc-200 dark:bg-zinc-800" />
+            </div>
+          </div>
+        </td>
+
+        {/* Column 2: Email */}
+        <td className="px-6 py-4">
+          <div className="space-y-2">
+            <div
+              className={`h-4 ${variant.email} rounded bg-zinc-200 dark:bg-zinc-800`}
+            />
+            <div className="h-3 w-24 rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+        </td>
+
+        {/* Column 3: Status */}
+        <td className="px-6 py-4">
+          <div className="flex items-center justify-center gap-2">
+            <div className="h-2 w-2 flex-shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+            <div className="h-3.5 w-16 rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+        </td>
+
+        {/* Column 4: Value */}
+        <td className="px-6 py-4">
+          <div
+            className={`h-[18px] ${variant.value} mx-auto rounded bg-zinc-200 dark:bg-zinc-800`}
+          />
+        </td>
+
+        {/* Column 5: Team Avatars */}
+        <td className="px-6 py-4">
+          <div className="flex items-center justify-center">
+            <div className="flex -space-x-1.5">
+              <div className="h-5 w-5 rounded-full border border-white bg-zinc-200 dark:border-zinc-900 dark:bg-zinc-800" />
+              <div className="h-5 w-5 rounded-full border border-white bg-zinc-200 dark:border-zinc-900 dark:bg-zinc-800" />
+              <div className="h-5 w-5 rounded-full border border-white bg-zinc-200 dark:border-zinc-900 dark:bg-zinc-800" />
+            </div>
+          </div>
+        </td>
+
+        {/* Column 6: Badge */}
+        <td className="px-6 py-4">
+          <div
+            className={`h-[26px] ${variant.badge} mx-auto rounded-full bg-zinc-200/60 dark:bg-zinc-800/60`}
+          />
+        </td>
+
+        {/* Column 7: Actions */}
+        <td className="px-6 py-4">
+          <div className="flex items-center justify-center gap-2">
+            <div className="h-7 w-7 rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-7 w-7 rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+        </td>
+      </tr>
+    );
+  });
+};
+
+// AdminViewTicketSkeleton.jsx
+export const AdminViewTicketSkeleton = () => {
+  const Bone = ({ className }) => (
+    <div className={`bg-white/[0.06] rounded-lg animate-pulse ${className}`} />
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Left — Transaction Record */}
+      <div className="lg:col-span-2 space-y-8">
+        <div className="rounded-[2rem] bg-[#1C1F22] border border-white/[0.04] overflow-hidden shadow-2xl">
+          {/* Card header */}
+          <div className="px-8 py-6 border-b border-white/[0.04]">
+            <Bone className="h-5 w-48" />
+          </div>
+
+          {/* Detail grid */}
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Bone className="h-3 w-24" />
+                <Bone className="h-4 w-40" />
+              </div>
+            ))}
+          </div>
+        </Listbox>
+      </div>
+    </>
+  );
+};
+
+          {/* Financials footer */}
+          <div className="bg-[#151719] p-8 border-t border-white/[0.04] space-y-5">
+            <div className="flex justify-between items-center">
+              <Bone className="h-4 w-40" />
+              <Bone className="h-4 w-20" />
+            </div>
+            <div className="flex justify-between items-center">
+              <Bone className="h-4 w-20" />
+              <Bone className="h-4 w-10" />
+            </div>
+            <div className="w-full border-t border-dashed border-white/[0.08]" />
+            <div className="flex justify-between items-center">
+              <Bone className="h-5 w-32" />
+              <Bone className="h-8 w-28" />
+            </div>
+            <div className="flex justify-between items-center">
+              <Bone className="h-3 w-44" />
+              <Bone className="h-4 w-20" />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-700">
+              No new alerts
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Action */}
+      <div className="p-6 border-t border-white/[0.04] bg-[#0D0F11]">
+        <button className="w-full py-4 bg-white/[0.03] border border-white/[0.08] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+          Mark all as read
+        </button>
+      </div>
+
+      {/* Right column */}
+      <div className="space-y-8">
+        {/* Customer card */}
+        <div className="rounded-[2rem] bg-[#1C1F22] border border-white/[0.04] p-6 shadow-xl space-y-4">
+          <Bone className="h-3 w-32" />
+          <Bone className="h-5 w-40" />
+          <Bone className="h-4 w-48" />
+        </div>
+
+        {/* Event card */}
+        <div className="rounded-[2rem] bg-[#1C1F22] border border-white/[0.04] p-6 shadow-xl space-y-4">
+          <Bone className="h-3 w-36" />
+          <Bone className="h-32 w-full rounded-xl" />
+          <Bone className="h-5 w-36" />
+          <Bone className="h-3 w-24" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const ticketThemes = {
+  standard: {
+    bandGradient:
+      "linear-gradient(120deg, #FF7A00 0%, #FF9D00 60%, #FFC347 100%)",
+    ctaGradient:
+      "linear-gradient(135deg, #FF7A00 0%, #FF9D00 50%, #FF7A00 100%)",
+    accentColor: "#FF7A00",
+    label: "Standard",
+    bgColor: "bg-orange-50",
+    borderColor: "border-orange-200",
+    textColor: "text-orange-800",
+    labelBg: "bg-orange-100",
+    icon: Users,
+    iconColor: "text-orange-600",
+    shadowColor: "rgba(255,122,0,0.20)",
+    statusColor: "text-orange-800 bg-orange-100 border-orange-300",
+  },
+  regular: {
+    bandGradient:
+      "linear-gradient(120deg, #EAB308 0%, #FACC15 60%, #FDE047 100%)",
+    ctaGradient:
+      "linear-gradient(135deg, #EAB308 0%, #FACC15 50%, #EAB308 100%)",
+    accentColor: "#FACC15",
+    label: "Regular",
+    bgColor: "bg-yellow-50",
+    borderColor: "border-yellow-200",
+    textColor: "text-yellow-800",
+    labelBg: "bg-yellow-100",
+    icon: Star,
+    iconColor: "text-yellow-600",
+    shadowColor: "rgba(234,179,8,0.20)",
+    statusColor: "text-yellow-800 bg-yellow-100 border-yellow-300",
+  },
+  vip: {
+    bandGradient:
+      "linear-gradient(120deg, #FF6B00 0%, #FF8C00 60%, #FFB347 100%)",
+    ctaGradient:
+      "linear-gradient(135deg, #FF6B00 0%, #FF8C00 50%, #FF6B00 100%)",
+    accentColor: "#FF8C00",
+    label: "VIP",
+    bgColor: "bg-amber-50",
+    borderColor: "border-amber-300",
+    textColor: "text-amber-900",
+    labelBg: "bg-amber-100",
+    icon: Crown,
+    iconColor: "text-amber-600",
+    shadowColor: "rgba(255,107,0,0.25)",
+    statusColor: "text-amber-800 bg-amber-100 border-amber-300",
+  },
+  vvip: {
+    bandGradient:
+      "linear-gradient(120deg, #CC5500 0%, #E67E22 60%, #F39C12 100%)",
+    ctaGradient:
+      "linear-gradient(135deg, #CC5500 0%, #E67E22 50%, #CC5500 100%)",
+    accentColor: "#E67E22",
+    label: "VVIP",
+    bgColor: "bg-orange-100",
+    borderColor: "border-orange-400",
+    textColor: "text-orange-900",
+    labelBg: "bg-orange-200",
+    icon: Sparkles,
+    iconColor: "text-orange-700",
+    shadowColor: "rgba(204,85,0,0.25)",
+    statusColor: "text-orange-800 bg-orange-100 border-orange-300",
+  },
+  premium: {
+    bandGradient:
+      "linear-gradient(120deg, #9333EA 0%, #A855F7 60%, #C084FC 100%)",
+    ctaGradient:
+      "linear-gradient(135deg, #9333EA 0%, #A855F7 50%, #9333EA 100%)",
+    accentColor: "#A855F7",
+    label: "Premium",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-300",
+    textColor: "text-purple-900",
+    labelBg: "bg-purple-100",
+    icon: Gem,
+    iconColor: "text-purple-600",
+    shadowColor: "rgba(147,51,234,0.20)",
+    statusColor: "text-purple-800 bg-purple-100 border-purple-300",
+  },
+  soldout: {
+    bandGradient:
+      "linear-gradient(120deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%)",
+    ctaGradient: "linear-gradient(135deg, #444 0%, #333 50%, #222 100%)",
+    accentColor: "#EF4444",
+    label: "SOLD OUT",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-300",
+    textColor: "text-red-800",
+    labelBg: "bg-red-100",
+    icon: XCircle,
+    iconColor: "text-red-600",
+    shadowColor: "rgba(220,38,38,0.20)",
+    statusColor: "text-red-800 bg-red-100 border-red-300",
+  },
+};
+
+// Helper function to get theme by ticket type
+export const getTicketTheme = (ticketName) => {
+  if (!ticketName) return ticketThemes.standard;
+
+  const type = ticketName.toLowerCase();
+
+  // Check if it's a valid theme key
+  if (ticketThemes[type]) {
+    return ticketThemes[type];
+  }
+
+  // Check if it contains certain keywords
+  if (type.includes("vip") || type.includes("vvip")) {
+    return type.includes("vvip") ? ticketThemes.vvip : ticketThemes.vip;
+  }
+  if (type.includes("premium")) {
+    return ticketThemes.premium;
+  }
+  if (type.includes("regular")) {
+    return ticketThemes.regular;
+  }
+  if (type.includes("sold") || type.includes("out")) {
+    return ticketThemes.soldout;
+  }
+
+  return ticketThemes.standard;
+};
+
+// Helper function to get theme by event type
+export const getEventTheme = (eventType) => {
+  const type = eventType?.toLowerCase() || "";
+
+  if (type.includes("concert") || type.includes("music")) {
+    return ticketThemes.vip;
+  }
+  if (type.includes("sports") || type.includes("game")) {
+    return ticketThemes.regular;
+  }
+  if (type.includes("conference") || type.includes("business")) {
+    return ticketThemes.premium;
+  }
+  if (type.includes("festival") || type.includes("party")) {
+    return ticketThemes.vvip;
+  }
+
+  return ticketThemes.standard;
+};
+
+// Reusable ticket components
+export const TicketTypeIcon = ({ type, size = 16, className = "" }) => {
+  const theme = getTicketTheme(type);
+  const IconComponent = theme.icon;
+  return (
+    <IconComponent size={size} className={`${theme.iconColor} ${className}`} />
+  );
+};
+
+export const TicketThemeBadge = ({ type, className = "" }) => {
+  const theme = getTicketTheme(type);
+  return (
+    <div
+      className={`${theme.labelBg} ${theme.textColor} text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-sm flex items-center justify-center gap-2 ${className}`}
+    >
+      <TicketTypeIcon type={type} size={14} />
+      {theme.label}
     </div>
   );
 };
