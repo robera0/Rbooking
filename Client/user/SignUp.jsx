@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { Toaster, toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ const SignUp = () => {
       setTimeout(() => navigate("/login"), 1500);
     },
     onError: (error) => {
-      toast.error(error.message || "Something went wrong");
+      toast.error(getFriendlyErrorMessage(error));
     },
   });
 

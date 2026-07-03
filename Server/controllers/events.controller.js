@@ -47,12 +47,14 @@ export const addEvent = catchAsync(async (req, res, next) => {
     category,
     familyFriendly,
     capacity,
+    status,
   } = req.body;
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
+  // Normalize type
   const normalizedType = type?.toLowerCase();
 
-  // Parse JSON fields
+  // Parse JSON fields safely
   artist = safeParse(artist || "{}");
   priceRanges = safeParse(priceRanges || "[]");
   dates = safeParse(dates || "{}");
@@ -60,23 +62,33 @@ export const addEvent = catchAsync(async (req, res, next) => {
   musicGenre = safeParse(musicGenre || "[]");
   policies = safeParse(policies || "[]");
   links = safeParse(links || "{}");
-  console.log("parsed links:", JSON.stringify(links)); // ← add this temporarily
   stages = safeParse(stages || "[]");
   sales = safeParse(sales || "{}");
+
+  // Category should be a string, not an array. If an array is provided, take the first element.
+  if (Array.isArray(category)) {
+    category = category[0] || "";
+  }
+
+  // Ensure required venue name is present
+  if (!links.venues) {
+    links.venues = {};
+  }
+  if (!links.venues.name) {
+    return res.status(400).json({ success: false, message: "Venue name (links.venues.name) is required" });
+  }
+
   capacity = Number(capacity) || 0;
-  locale = locale || "";
-  desc = desc;
-  category = safeParse(category || "[]");
   familyFriendly = Boolean(familyFriendly === "true");
 
   let pictures = [];
-
   if (req.files && req.files.length > 0) {
     pictures = req.files.map((file) => `uploads/${file.filename}`);
   }
 
   const events = {
     type: normalizedType,
+    status,
     adminId: userId,
     name,
     artist,
@@ -92,24 +104,19 @@ export const addEvent = catchAsync(async (req, res, next) => {
     links,
     stages,
     durationDays,
-
     category,
-
     familyFriendly,
   };
 
-  const ticket = {};
   let newEvent;
-
   try {
     newEvent = await EventService.create(events);
-    await ticket;
   } catch (err) {
+    // Cleanup uploaded files on error
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
         fs.unlink(file.path, (unlinkErr) => {
-          if (unlinkErr)
-            console.error("Failed to delete file:", file.path, unlinkErr);
+          if (unlinkErr) console.error("Failed to delete file:", file.path, unlinkErr);
         });
       });
     }
@@ -117,11 +124,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
   }
 
   await clearEventsCache();
-  res.status(200).json({
-    success: true,
-    event: newEvent,
-    message: "event created successfully",
-  });
+  res.status(200).json({ success: true, event: newEvent, message: "event created successfully" });
 });
 
 export const createTickets = catchAsync(async (req, res, next) => {
@@ -327,6 +330,7 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
 
 export const getEventById = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
+
   const cacheKey = `event:single:${eventId}`;
   const cachedEvent = await redisClient.get(cacheKey);
   if (cachedEvent) {
@@ -344,8 +348,11 @@ export const getEventById = catchAsync(async (req, res, next) => {
 
 export const updateEvent = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
+
+  console.log(eventId);
   let {
     type,
+    status,
     name,
     artist,
     locale,
@@ -397,6 +404,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
 
   const updateData = {
     type: normalizedType,
+    status: status,
     name,
     artist,
     locale,

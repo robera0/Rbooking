@@ -39,7 +39,7 @@ const SideBar = ({ action }) => {
             Pay<span className="text-[#FF7A00]">SSo</span>
           </h1>
         </div>
-        <div className="space-y-2 px-4 flex-1">
+        <div className="space-y-6 px-4 flex-1">
           {/*Dashboard */}
           <SideMenu
             path="/admin/home"
@@ -58,13 +58,14 @@ const SideBar = ({ action }) => {
             name="Ticket Management"
             icon={<Ticket size={20} />}
           />
-          {/*user Mang */}
+          {/* 
+        
           <SideMenu
             path="/admin/users"
             name="User Management"
             icon={<CreditCard size={20} />}
           />
-          {/*Payment */}
+         
           <SideMenu
             path="/admin/payment"
             name="Earnings & Finance"
@@ -75,6 +76,9 @@ const SideBar = ({ action }) => {
             name="Reports"
             icon={<ChartNoAxesColumnIncreasing size={20} />}
           />
+          
+          */}
+
           <div className="pt-6 pb-2 pl-4">
             <h1 className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em]">
               Account Settings
@@ -89,7 +93,7 @@ const SideBar = ({ action }) => {
           {/*Setting */}
           <SideMenu
             path="/admin/setting"
-            name="Preferences"
+            name="Setting"
             icon={<Settings size={20} />}
           />
         </div>

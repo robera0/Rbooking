@@ -18,6 +18,7 @@ import { useNavigate, useParams, useLoaderData } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Toaster, toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { StaticDateTimePicker } from "@mui/x-date-pickers/StaticDateTimePicker";
@@ -279,7 +280,7 @@ const EditEvent = () => {
 
       formData.newPictures.forEach((img) => form.append("pictures", img));
 
-      const res = await fetch(`${API_URL}/api/events/${eventId}`, {
+      const res = await fetch(`${API_URL}/api/admin/events/${eventId}`, {
         method: "PUT",
         credentials: "include",
         body: form,
@@ -300,7 +301,7 @@ const EditEvent = () => {
       queryClient.invalidateQueries(["events"]);
       setTimeout(() => navigate("/admin/events"), 2000);
     },
-    onError: (err) => toast.error(`Error: ${err.message}`),
+    onError: (err) => toast.error(getFriendlyErrorMessage(err)),
   });
 
   const handleSubmit = () => {

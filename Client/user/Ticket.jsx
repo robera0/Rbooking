@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { eventService } from "../src/Context/ApiEvent";
 import toast, { Toaster } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import moment from "moment";
 
 /* ── ticket-type colour themes (identical to EventInfo) ── */
@@ -101,7 +102,7 @@ const TicketHome = () => {
   const [filter, setFilter] = useState("all");
 
   if (ticketIsError && !isLoggedIn && !hasAlerted) {
-    toast.error(ticketsError?.message || "Login required", { duration: 3000 });
+    toast.error(getFriendlyErrorMessage(ticketsError), { duration: 3000 });
     setHasAlerted(true);
   }
 

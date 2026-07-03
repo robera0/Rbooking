@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Toaster, toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { CustomSelect } from "./Cards";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { StaticDateTimePicker } from "@mui/x-date-pickers/StaticDateTimePicker";
@@ -34,14 +35,8 @@ const orangeTheme = createTheme({
       dark: "#CC6200",
       contrastText: "#000000",
     },
-    background: {
-      default: "#121417",
-      paper: "#1C1F22",
-    },
-    text: {
-      primary: "#FFFFFF",
-      secondary: "#9CA3AF",
-    },
+    background: { default: "#121417", paper: "#1C1F22" },
+    text: { primary: "#FFFFFF", secondary: "#9CA3AF" },
   },
   components: {
     MuiPickersToolbar: {
@@ -49,8 +44,6 @@ const orangeTheme = createTheme({
         root: {
           color: "#FF7A00",
           borderRadius: "16px 16px 0 0",
-          borderWidth: "1px",
-          borderColor: "rgba(255,122,0,0.2)",
           border: "1px solid rgba(255,122,0,0.2)",
           backgroundColor: "#1C1F22",
         },
@@ -63,9 +56,8 @@ const orangeTheme = createTheme({
           borderRadius: "16px",
           border: "1px solid rgba(255,122,0,0.15)",
         },
-        contentWrapper: {
-          backgroundColor: "#1C1F22",
-        },
+        contentWrapper: { backgroundColor: "#1C1F22" },
+        actionBar: { display: "none" },
       },
     },
     MuiDateCalendar: {
@@ -80,11 +72,7 @@ const orangeTheme = createTheme({
     },
     MuiPickersCalendarHeader: {
       styleOverrides: {
-        root: {
-          color: "#FF7A00",
-          paddingLeft: "16px",
-          paddingRight: "16px",
-        },
+        root: { color: "#FF7A00", paddingLeft: "16px", paddingRight: "16px" },
         label: {
           color: "#FF7A00",
           fontWeight: 900,
@@ -92,18 +80,14 @@ const orangeTheme = createTheme({
           letterSpacing: "0.1em",
           fontSize: "0.75rem",
         },
-        switchViewButton: {
-          color: "#FF7A00",
-        },
+        switchViewButton: { color: "#FF7A00" },
       },
     },
     MuiPickersArrowSwitcher: {
       styleOverrides: {
         button: {
           color: "#FF7A00",
-          "&:hover": {
-            backgroundColor: "rgba(255,122,0,0.1)",
-          },
+          "&:hover": { backgroundColor: "rgba(255,122,0,0.1)" },
         },
       },
     },
@@ -139,12 +123,8 @@ const orangeTheme = createTheme({
             backgroundColor: "#FF7A00 !important",
             color: "#000000 !important",
             fontWeight: 900,
-            "&:hover": {
-              backgroundColor: "#FF9A40 !important",
-            },
-            "&:focus": {
-              backgroundColor: "#FF7A00 !important",
-            },
+            "&:hover": { backgroundColor: "#FF9A40 !important" },
+            "&:focus": { backgroundColor: "#FF7A00 !important" },
           },
           "&.MuiPickersDay-today": {
             border: "1.5px solid #FF7A00",
@@ -155,9 +135,7 @@ const orangeTheme = createTheme({
               color: "#000 !important",
             },
           },
-          "&.Mui-disabled": {
-            color: "#374151",
-          },
+          "&.Mui-disabled": { color: "#374151" },
         },
       },
     },
@@ -167,37 +145,22 @@ const orangeTheme = createTheme({
           backgroundColor: "#121417",
           border: "1px solid rgba(255,122,0,0.1)",
         },
-        clock: {
-          backgroundColor: "#121417",
-        },
-        pin: {
-          backgroundColor: "#FF7A00",
-        },
+        clock: { backgroundColor: "#121417" },
+        pin: { backgroundColor: "#FF7A00" },
         amButton: {
           color: "#9CA3AF",
-          "&.Mui-selected": {
-            backgroundColor: "#FF7A00",
-            color: "#000",
-          },
+          "&.Mui-selected": { backgroundColor: "#FF7A00", color: "#000" },
         },
         pmButton: {
           color: "#9CA3AF",
-          "&.Mui-selected": {
-            backgroundColor: "#FF7A00",
-            color: "#000",
-          },
+          "&.Mui-selected": { backgroundColor: "#FF7A00", color: "#000" },
         },
       },
     },
     MuiClockPointer: {
       styleOverrides: {
-        root: {
-          backgroundColor: "#FF7A00",
-        },
-        thumb: {
-          backgroundColor: "#FF7A00",
-          border: "2px solid #FF7A00",
-        },
+        root: { backgroundColor: "#FF7A00" },
+        thumb: { backgroundColor: "#FF7A00", border: "2px solid #FF7A00" },
       },
     },
     MuiClockNumber: {
@@ -214,21 +177,10 @@ const orangeTheme = createTheme({
         },
       },
     },
-    MuiTimeClock: {
-      styleOverrides: {
-        root: {
-          backgroundColor: "#1C1F22",
-        },
-      },
-    },
+    MuiTimeClock: { styleOverrides: { root: { backgroundColor: "#1C1F22" } } },
     MuiPickersToolbarText: {
       styleOverrides: {
-        root: {
-          color: "#9CA3AF",
-          "&.Mui-selected": {
-            color: "#FF7A00",
-          },
-        },
+        root: { color: "#9CA3AF", "&.Mui-selected": { color: "#FF7A00" } },
       },
     },
     MuiTab: {
@@ -240,17 +192,13 @@ const orangeTheme = createTheme({
           letterSpacing: "0.08em",
           fontSize: "0.6rem",
           minHeight: "40px",
-          "&.Mui-selected": {
-            color: "#FF7A00",
-          },
+          "&.Mui-selected": { color: "#FF7A00" },
         },
       },
     },
     MuiTabs: {
       styleOverrides: {
-        indicator: {
-          backgroundColor: "#FF7A00",
-        },
+        indicator: { backgroundColor: "#FF7A00" },
         root: {
           backgroundColor: "#121417",
           borderBottom: "1px solid rgba(255,255,255,0.04)",
@@ -268,9 +216,7 @@ const orangeTheme = createTheme({
             backgroundColor: "#FF7A00",
             color: "#000000",
             fontWeight: 900,
-            "&:hover": {
-              backgroundColor: "#FF9A40",
-            },
+            "&:hover": { backgroundColor: "#FF9A40" },
           },
           "&:hover": {
             backgroundColor: "rgba(255,122,0,0.15)",
@@ -302,26 +248,39 @@ const orangeTheme = createTheme({
       styleOverrides: {
         root: {
           color: "#FF7A00",
-          "&:hover": {
-            backgroundColor: "rgba(255,122,0,0.1)",
-          },
-        },
-      },
-    },
-    MuiPickersLayout: {
-      styleOverrides: {
-        actionBar: {
-          display: "none", // hide default OK/Cancel buttons
+          "&:hover": { backgroundColor: "rgba(255,122,0,0.1)" },
         },
       },
     },
   },
 });
 
+// ─── Field hint / error line (reused everywhere instead of copy-pasting) ───
+const FieldHint = ({ error, hint }) => (
+  <p
+    className={`font-black tracking-widest uppercase text-[9px] mt-1.5 ${
+      error ? "text-red-500" : "text-gray-600"
+    }`}
+  >
+    {error || hint}
+  </p>
+);
+
+// ─── Validation rules for required fields, checked live on blur ───────────
+const REQUIRED_RULES = {
+  eventName: (formData) =>
+    !formData.eventName.trim() ? "Event name is required to publish" : "",
+  venueName: (formData) =>
+    !formData.venue.name.trim() ? "Venue name is required to publish" : "",
+  pictures: (formData) =>
+    !formData.pictures.length
+      ? "At least one photo is required to publish"
+      : "",
+};
+
 // ─── Date Picker Panel ─────────────────────────────────────────────────────
 const DatePickerPanel = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
-  // Internal draft value so clock/calendar can freely update their own view
   const [draft, setDraft] = useState(value ? dayjs(value) : dayjs());
   const confirmed = value ? dayjs(value) : null;
 
@@ -329,16 +288,13 @@ const DatePickerPanel = ({ value, onChange }) => {
     onChange(draft.format("YYYY-MM-DDTHH:mm"));
     setOpen(false);
   };
-
   const handleOpen = () => {
-    // Reset draft to current confirmed value (or now) each time panel opens
     setDraft(value ? dayjs(value) : dayjs());
     setOpen(true);
   };
 
   return (
     <div>
-      {/* Trigger Button */}
       <button
         type="button"
         onClick={open ? handleConfirm : handleOpen}
@@ -357,29 +313,21 @@ const DatePickerPanel = ({ value, onChange }) => {
         </span>
       </button>
 
-      {/* Inline calendar + clock panel */}
       {open && (
         <div className="mt-3 rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ThemeProvider theme={orangeTheme}>
               <StaticDateTimePicker
                 value={draft}
-                onChange={(newVal) => {
-                  if (newVal) setDraft(newVal);
-                }}
+                onChange={(newVal) => newVal && setDraft(newVal)}
                 disablePast
                 ampm={false}
                 slotProps={{
-                  // Replace action bar with our own confirm button above
                   actionBar: { actions: [] },
-                  toolbar: {
-                    toolbarFormat: "ddd DD MMM",
-                    hidden: false,
-                  },
+                  toolbar: { toolbarFormat: "ddd DD MMM", hidden: false },
                 }}
                 sx={{
                   width: "100%",
-                  // Calendar grid must have auto height so all rows show
                   "& .MuiDateCalendar-root": {
                     width: "100%",
                     height: "auto",
@@ -389,13 +337,8 @@ const DatePickerPanel = ({ value, onChange }) => {
                     height: "auto",
                     minHeight: "200px",
                   },
-                  "& .MuiDayCalendar-weekContainer": {
-                    margin: "2px 0",
-                  },
-                  // Clock face sizing
-                  "& .MuiTimeClock-root": {
-                    width: "100%",
-                  },
+                  "& .MuiDayCalendar-weekContainer": { margin: "2px 0" },
+                  "& .MuiTimeClock-root": { width: "100%" },
                   "& .MuiClock-root": {
                     width: "220px",
                     height: "220px",
@@ -409,16 +352,12 @@ const DatePickerPanel = ({ value, onChange }) => {
                     width: "100%",
                     backgroundColor: "#1C1F22",
                   },
-                  // Hide empty action bar space
-                  "& .MuiPickersLayout-actionBar": {
-                    display: "none",
-                  },
+                  "& .MuiPickersLayout-actionBar": { display: "none" },
                 }}
               />
             </ThemeProvider>
           </LocalizationProvider>
 
-          {/* Custom confirm row */}
           <div
             style={{
               display: "flex",
@@ -482,7 +421,6 @@ const DatePickerPanel = ({ value, onChange }) => {
         </div>
       )}
 
-      {/* Display confirmed date below trigger when closed */}
       {!open && confirmed && (
         <div className="mt-2 flex items-center gap-2 px-4">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FF7A00]" />
@@ -554,7 +492,6 @@ const ChipInput = ({ label, items, onAdd, onRemove, placeholder }) => {
   );
 };
 
-// ─── Pill selector (single) ────────────────────────────────────────────────
 const PillSelect = ({ label, options, value, onChange }) => (
   <div>
     <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
@@ -579,14 +516,11 @@ const PillSelect = ({ label, options, value, onChange }) => (
   </div>
 );
 
-// ─── Pill selector (multi) ─────────────────────────────────────────────────
 const PillMultiSelect = ({ label, options, value, onChange }) => {
-  const toggle = (opt) => {
-    const next = value.includes(opt)
-      ? value.filter((x) => x !== opt)
-      : [...value, opt];
-    onChange(next);
-  };
+  const toggle = (opt) =>
+    onChange(
+      value.includes(opt) ? value.filter((x) => x !== opt) : [...value, opt],
+    );
   return (
     <div>
       <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
@@ -612,7 +546,6 @@ const PillMultiSelect = ({ label, options, value, onChange }) => {
   );
 };
 
-// ─── Toggle ────────────────────────────────────────────────────────────────
 const Toggle = ({ label, value, onChange }) => (
   <div className="flex items-center justify-between pt-5 border-t border-white/[0.04] mt-2">
     <span className="text-[11px] text-gray-400 font-black uppercase tracking-widest">
@@ -653,13 +586,12 @@ const SectionCard = ({ icon: Icon, title, badge, children }) => (
 const AddEvent = () => {
   const navigate = useNavigate();
   const { API_URL } = useService();
-  const queryClient = useQueryClient();
 
   const EMPTY_FORM = {
     type: "",
     eventName: "",
     artistName: "",
-    venue: "",
+    venue: { name: "", city: "", address: "" },
     locale: "",
     description: "",
     eventDate: "",
@@ -674,6 +606,7 @@ const AddEvent = () => {
     durationDays: "",
     stages: [],
     category: "",
+    status: "draft",
   };
 
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -685,100 +618,117 @@ const AddEvent = () => {
     capacity: "",
   });
   const [newAmenity, setNewAmenity] = useState("");
-  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const posterInputRef = useRef(null);
+  const timerRef = useRef(null);
+  const draftIdRef = useRef(null);
 
-  const createMutation = useMutation({
-    mutationFn: async (payload) => {
-      const form = new FormData();
-      form.append("type", payload.type);
-      form.append("name", payload.name);
-      form.append("links", JSON.stringify(payload.links));
-      form.append("desc", payload.desc);
-      form.append("local", payload.locale);
-      form.append("artist", JSON.stringify(payload.artist));
-      form.append("priceRanges", JSON.stringify(payload.priceRanges));
-      form.append("policies", JSON.stringify(payload.policies));
-      form.append("dates", JSON.stringify(payload.dates));
+  const validate = (field, dataOverride) => {
+    const data = dataOverride || formData;
+    const msg = REQUIRED_RULES[field]?.(data) || "";
+    setFieldErrors((prev) => ({ ...prev, [field]: msg }));
+    return msg;
+  };
 
-      form.append("amenities", JSON.stringify(payload.amenities));
-      form.append("musicGenre", JSON.stringify(payload.musicGenre));
-      if (payload.familyFriendly !== undefined)
-        form.append("familyFriendly", payload.familyFriendly);
-      if (payload.durationDays !== undefined)
-        form.append("durationDays", payload.durationDays);
-      if (payload.stages) form.append("stages", JSON.stringify(payload.stages));
-      if (payload.category) form.append("category", payload.category);
-      formData.pictures.forEach((img) => form.append("pictures", img));
+  const validateAll = () => {
+    const next = {};
+    Object.keys(REQUIRED_RULES).forEach((field) => {
+      next[field] = REQUIRED_RULES[field](formData);
+    });
+    setFieldErrors(next);
+    return Object.values(next).every((msg) => !msg);
+  };
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(saveDraft, 3000);
+  };
+
+  const readErrorMessage = async (res, fallback) => {
+    try {
+      const data = await res.json();
+      return data?.message || data?.error || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const shouldCreateFreshDraft = (res, message) => {
+    if (res?.status === 404) return true;
+    return /not found/i.test(message || "");
+  };
+
+  const saveDraft = async () => {
+    try {
+      if (draftIdRef.current) {
+        const res = await fetch(
+          `${API_URL}/api/auth/admin/events/${draftIdRef.current}`,
+          {
+            method: "PATCH",
+            credentials: "include",
+            body: buildFormData(buildPayload("draft")),
+          },
+        );
+        if (!res.ok) {
+          const message = await readErrorMessage(res, "Failed to update draft");
+          if (shouldCreateFreshDraft(res, message)) {
+            draftIdRef.current = null;
+          } else {
+            throw new Error(message);
+          }
+        } else {
+          return res.json();
+        }
+      }
 
       const res = await fetch(`${API_URL}/api/auth/admin/addEvents`, {
         method: "POST",
         credentials: "include",
-        body: form,
+        body: buildFormData(buildPayload("draft")),
       });
-      if (!res.ok) throw new Error("Failed to create event");
-      return res.json();
-    },
-    onSuccess: (data) => {
-      const eventId = data?.events?._id;
-      createTicketsMutation.mutate({ eventId, tickets: formData.tickets });
-      toast.success("Event Published Successfully!", {
-        duration: 2000,
-        style: {
-          background: "#1C1F22",
-          color: "#fff",
-          border: "1px solid #FF7A00",
-        },
-      });
-      setFormData(EMPTY_FORM);
-      setTimeout(() => navigate("/admin/events"), 2000);
-    },
-    onError: (err) => toast.error(`Error: ${err.message}`),
-  });
+      if (!res.ok) {
+        throw new Error(await readErrorMessage(res, "Failed to create draft"));
+      }
+      const data = await res.json();
+      draftIdRef.current = data?.event?._id;
+      return data;
+    } catch (err) {
+      console.error("Draft save error:", err);
+      toast.error(getFriendlyErrorMessage(err));
+      return null;
+    }
+  };
 
-  // 2. Tickets mutation
+  const buildFormData = (data) => {
+    const form = new FormData();
+    form.append("type", data.type);
+    form.append("name", data.name);
+    form.append("links", JSON.stringify(data.links));
+    form.append("desc", data.desc);
+    form.append("locale", data.locale);
+    form.append("artist", JSON.stringify(data.artist));
+    form.append("priceRanges", JSON.stringify(data.priceRanges));
+    form.append("policies", JSON.stringify(data.policies));
+    form.append("dates", JSON.stringify(data.dates));
+    if (data.status) form.append("status", data.status);
+    form.append("amenities", JSON.stringify(data.amenities));
+    form.append("musicGenre", JSON.stringify(data.musicGenre));
+    if (data.familyFriendly !== undefined)
+      form.append("familyFriendly", data.familyFriendly);
+    if (data.durationDays !== undefined)
+      form.append("durationDays", data.durationDays);
+    if (data.stages) form.append("stages", JSON.stringify(data.stages));
+    if (data.category) form.append("category", data.category);
+    (data.pictures || []).forEach((img) => form.append("pictures", img));
+    return form;
+  };
 
-  const createTicketsMutation = useMutation({
-    mutationFn: async ({ eventId, tickets }) => {
-      const res = await fetch(
-        `${API_URL}/api/auth/admin/events/${eventId}/tickets`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tickets }),
-        },
-      );
-      if (!res.ok) throw new Error("Failed to create tickets");
-      return res.json();
-    },
-    onSuccess: () => {
-      toast.success("Event Published Successfully!", {
-        duration: 2000,
-        style: {
-          background: "#1C1F22",
-          color: "#fff",
-          border: "1px solid #FF7A00",
-        },
-      });
-      setFormData(EMPTY_FORM);
-      setTimeout(() => navigate("/admin/events"), 2000);
-    },
-    onError: (err) => toast.error(`Tickets error: ${err.message}`),
-  });
-
-  const handleSubmit = () => {
-    if (!formData.eventName) return setError("Event Name is required");
-    if (!formData.venue.name) return setError("Venue name is required");
-    if (!formData.eventName)
-      return setError("Event Name is required to publish");
-    setError("");
-
+  const buildPayload = (status) => {
     const type = formData.type.toLowerCase();
-
     const basePayload = {
-      type,
+      type: "generic",
       name: formData.eventName,
       artist: { name: formData.artistName },
       locale: "ETH",
@@ -790,9 +740,9 @@ const AddEvent = () => {
         },
         attractions: [],
         venues: {
-          name: formData.venue.name,
-          city: formData.venue.city,
-          address: formData.venue.address,
+          name: formData.venue?.name || "",
+          city: formData.venue?.city || "",
+          address: formData.venue?.address || "",
           pictures: [],
         },
       },
@@ -803,6 +753,7 @@ const AddEvent = () => {
         min: Number(t.price),
         max: Number(t.price),
       })),
+      pictures: formData.pictures,
       desc: formData.description,
       dates: {
         start: {
@@ -831,18 +782,95 @@ const AddEvent = () => {
       basePayload.stages = formData.stages;
       basePayload.familyFriendly = formData.familyFriendly;
     }
-    if (type === "generic") {
-      basePayload.category = formData.category;
-    }
+    if (type === "generic") basePayload.category = formData.category;
 
-    createMutation.mutate(basePayload);
+    return { ...basePayload, status };
+  };
+
+  // Publishes into the SAME draft id if one exists, only POSTs fresh if none yet.
+  const publishMutation = useMutation({
+    mutationFn: async (payload) => {
+      if (draftIdRef.current) {
+        const res = await fetch(
+          `${API_URL}/api/auth/admin/events/${draftIdRef.current}`,
+          {
+            method: "PATCH",
+            credentials: "include",
+            body: buildFormData(payload),
+          },
+        );
+        if (!res.ok) {
+          const message = await readErrorMessage(
+            res,
+            "Failed to publish event",
+          );
+          if (shouldCreateFreshDraft(res, message)) {
+            draftIdRef.current = null;
+          } else {
+            throw new Error(message);
+          }
+        } else {
+          return res.json();
+        }
+      }
+      const res = await fetch(`${API_URL}/api/auth/admin/addEvents`, {
+        method: "POST",
+        credentials: "include",
+        body: buildFormData(payload),
+      });
+      if (!res.ok) {
+        throw new Error(await readErrorMessage(res, "Failed to create event"));
+      }
+      const data = await res.json();
+      draftIdRef.current = data?.event?._id || data?.events?._id || null;
+      return data;
+    },
+    onSuccess: () => {
+      createTicketsMutation.mutate({
+        eventId: draftIdRef.current,
+        tickets: formData.tickets,
+      });
+      toast.success("Event Published Successfully!", {
+        duration: 2000,
+        style: {
+          background: "#1C1F22",
+          color: "#fff",
+          border: "1px solid #FF7A00",
+        },
+      });
+      setFormData(EMPTY_FORM);
+      draftIdRef.current = null;
+      setTimeout(() => navigate("/admin/events"), 2000);
+    },
+    onError: (err) => toast.error(getFriendlyErrorMessage(err)),
+  });
+
+  const createTicketsMutation = useMutation({
+    mutationFn: async ({ eventId, tickets }) => {
+      const res = await fetch(
+        `${API_URL}/api/auth/admin/events/${eventId}/tickets`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tickets }),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to create tickets");
+      return res.json();
+    },
+    onError: (err) => toast.error(getFriendlyErrorMessage(err)),
+  });
+
+  const handleSubmit = () => {
+    if (!validateAll()) return;
+    publishMutation.mutate(buildPayload("published"));
   };
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
       <Toaster position="top-center" />
 
-      {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
@@ -861,18 +889,16 @@ const AddEvent = () => {
         </div>
         <button
           onClick={handleSubmit}
-          disabled={createMutation.isLoading}
+          disabled={publishMutation.isLoading}
           className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
         >
           <Save size={16} strokeWidth={3} />
-          {createMutation.isLoading ? "Publishing..." : "Publish Event"}
+          {publishMutation.isLoading ? "Publishing..." : "Publish Event"}
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ── LEFT COLUMN ───────────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Type selector */}
           <SectionCard icon={Tag} title="Classification Type">
             <div className="flex items-center justify-between">
               <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
@@ -885,13 +911,12 @@ const AddEvent = () => {
                   { label: "Generic", value: "generic" },
                 ]}
                 value={formData.type}
-                onChange={(val) => set({ type: val })}
+                onChange={(val) => handleChange("type", val)}
                 placeholder="Select Type"
               />
             </div>
           </SectionCard>
 
-          {/* Core details */}
           <SectionCard title="Transmission Details">
             <div className="space-y-4">
               <div>
@@ -901,17 +926,19 @@ const AddEvent = () => {
                 <input
                   type="text"
                   value={formData.eventName}
-                  onChange={(e) => set({ eventName: e.target.value })}
+                  onChange={(e) => handleChange("eventName", e.target.value)}
+                  onBlur={() => validate("eventName")}
                   className={`w-full bg-[#121417] border ${
-                    error ? "border-red-500/50" : "border-white/[0.06]"
+                    fieldErrors.eventName
+                      ? "border-red-500/50"
+                      : "border-white/[0.06]"
                   } rounded-xl px-4 py-4 text-white focus:border-[#FF7A00]/50 outline-none transition-colors font-bold`}
                   placeholder="e.g. WAREHOUSE PROJECT"
                 />
-                {error && (
-                  <p className="text-red-500 font-black tracking-widest uppercase text-[9px] mt-2">
-                    {error}
-                  </p>
-                )}
+                <FieldHint
+                  error={fieldErrors.eventName}
+                  hint="Required to publish this event"
+                />
               </div>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -922,7 +949,9 @@ const AddEvent = () => {
                     <input
                       type="text"
                       value={formData.artistName}
-                      onChange={(e) => set({ artistName: e.target.value })}
+                      onChange={(e) =>
+                        handleChange("artistName", e.target.value)
+                      }
                       className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
                       placeholder="Main artist"
                     />
@@ -935,17 +964,26 @@ const AddEvent = () => {
                       type="text"
                       value={formData.venue.name}
                       onChange={(e) =>
-                        set({
-                          venue: { ...formData.venue, name: e.target.value },
+                        handleChange("venue", {
+                          ...formData.venue,
+                          name: e.target.value,
                         })
                       }
-                      className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
+                      onBlur={() => validate("venueName")}
+                      className={`w-full bg-[#121417] border ${
+                        fieldErrors.venueName
+                          ? "border-red-500/50"
+                          : "border-white/[0.06]"
+                      } rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors`}
                       placeholder="e.g. The Venue Warehouse"
+                    />
+                    <FieldHint
+                      error={fieldErrors.venueName}
+                      hint="Required to publish"
                     />
                   </div>
                 </div>
 
-                {/* City + Address as their own row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">
@@ -955,8 +993,9 @@ const AddEvent = () => {
                       type="text"
                       value={formData.venue.city}
                       onChange={(e) =>
-                        set({
-                          venue: { ...formData.venue, city: e.target.value },
+                        handleChange("venue", {
+                          ...formData.venue,
+                          city: e.target.value,
                         })
                       }
                       className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
@@ -971,8 +1010,9 @@ const AddEvent = () => {
                       type="text"
                       value={formData.venue.address}
                       onChange={(e) =>
-                        set({
-                          venue: { ...formData.venue, address: e.target.value },
+                        handleChange("venue", {
+                          ...formData.venue,
+                          address: e.target.value,
                         })
                       }
                       className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors"
@@ -988,7 +1028,7 @@ const AddEvent = () => {
                 <textarea
                   rows="4"
                   value={formData.description}
-                  onChange={(e) => set({ description: e.target.value })}
+                  onChange={(e) => handleChange("description", e.target.value)}
                   className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white focus:border-[#FF7A00]/50 outline-none transition-colors italic"
                   placeholder="Event details..."
                 />
@@ -996,7 +1036,6 @@ const AddEvent = () => {
             </div>
           </SectionCard>
 
-          {/* Tickets */}
           <SectionCard title="Event Tickets">
             <div className="space-y-4">
               {formData.tickets.map((ticket, idx) => (
@@ -1013,7 +1052,7 @@ const AddEvent = () => {
                       onChange={(e) => {
                         const updated = [...formData.tickets];
                         updated[idx].name = e.target.value;
-                        set({ tickets: updated });
+                        handleChange("tickets", updated);
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
                     />
@@ -1027,7 +1066,7 @@ const AddEvent = () => {
                       onChange={(e) => {
                         const updated = [...formData.tickets];
                         updated[idx].price = e.target.value;
-                        set({ tickets: updated });
+                        handleChange("tickets", updated);
                       }}
                       className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
                     />
@@ -1042,7 +1081,7 @@ const AddEvent = () => {
                       onChange={(e) => {
                         const updated = [...formData.tickets];
                         updated[idx].capacity = e.target.value;
-                        set({ tickets: updated });
+                        handleChange("tickets", updated);
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
@@ -1061,7 +1100,6 @@ const AddEvent = () => {
                 </div>
               ))}
 
-              {/* New ticket row */}
               <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
                 <div className="flex-1">
                   <input
@@ -1114,7 +1152,6 @@ const AddEvent = () => {
             </div>
           </SectionCard>
 
-          {/* Policies */}
           <SectionCard title="Event Policies">
             <div className="space-y-4">
               {formData.policies.map((policy, idx) => (
@@ -1128,7 +1165,7 @@ const AddEvent = () => {
                       onChange={(e) => {
                         const updated = [...formData.policies];
                         updated[idx].header = e.target.value;
-                        set({ policies: updated });
+                        handleChange("policies", updated);
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase text-xs"
                       placeholder="Policy Header"
@@ -1152,7 +1189,7 @@ const AddEvent = () => {
                     onChange={(e) => {
                       const updated = [...formData.policies];
                       updated[idx].descriptions = e.target.value;
-                      set({ policies: updated });
+                      handleChange("policies", updated);
                     }}
                     className="w-full bg-transparent border-none text-gray-400 text-[11px] outline-none italic resize-none"
                     placeholder="Policy details..."
@@ -1177,7 +1214,6 @@ const AddEvent = () => {
             </div>
           </SectionCard>
 
-          {/* ── CONCERT-SPECIFIC ─────────────────────────────────────────── */}
           {formData.type === "concert" && (
             <SectionCard icon={Music} title="Concert Details" badge="Concert">
               <PillMultiSelect
@@ -1194,7 +1230,7 @@ const AddEvent = () => {
                   "Other",
                 ]}
                 value={formData.musicGenre}
-                onChange={(val) => set({ musicGenre: val })}
+                onChange={(val) => handleChange("musicGenre", val)}
               />
               <ChipInput
                 label="Supporting Artists"
@@ -1214,12 +1250,11 @@ const AddEvent = () => {
               <Toggle
                 label="Family Friendly"
                 value={formData.familyFriendly}
-                onChange={(v) => set({ familyFriendly: v })}
+                onChange={(v) => handleChange("familyFriendly", v)}
               />
             </SectionCard>
           )}
 
-          {/* ── FESTIVAL-SPECIFIC ─────────────────────────────────────────── */}
           {formData.type === "festival" && (
             <SectionCard icon={Flag} title="Festival Details" badge="Festival">
               <div>
@@ -1229,7 +1264,7 @@ const AddEvent = () => {
                 <input
                   type="number"
                   value={formData.durationDays}
-                  onChange={(e) => set({ durationDays: e.target.value })}
+                  onChange={(e) => handleChange("durationDays", e.target.value)}
                   className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-colors no-spinner"
                   placeholder="e.g. 3"
                 />
@@ -1246,12 +1281,11 @@ const AddEvent = () => {
               <Toggle
                 label="Family Friendly"
                 value={formData.familyFriendly}
-                onChange={(v) => set({ familyFriendly: v })}
+                onChange={(v) => handleChange("familyFriendly", v)}
               />
             </SectionCard>
           )}
 
-          {/* ── GENERIC-SPECIFIC ─────────────────────────────────────────── */}
           {formData.type === "generic" && (
             <SectionCard icon={Zap} title="Event Category" badge="Generic">
               <PillSelect
@@ -1267,26 +1301,23 @@ const AddEvent = () => {
                   "Other",
                 ]}
                 value={formData.category}
-                onChange={(v) => set({ category: v })}
+                onChange={(v) => handleChange("category", v)}
               />
             </SectionCard>
           )}
         </div>
 
-        {/* ── SIDEBAR ───────────────────────────────────────────────────── */}
         <div className="space-y-8">
-          {/* Schedule — MUI DateTimePicker */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
             <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm flex items-center gap-2">
               <CalendarDays size={14} className="text-[#FF7A00]" /> Schedule
             </h3>
             <DatePickerPanel
               value={formData.eventDate}
-              onChange={(val) => set({ eventDate: val })}
+              onChange={(val) => handleChange("eventDate", val)}
             />
           </div>
 
-          {/* Amenities */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
             <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
               Amenities
@@ -1346,7 +1377,6 @@ const AddEvent = () => {
             </div>
           </div>
 
-          {/* Flyer Archive */}
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem] space-y-6">
             <h3 className="text-white font-bold uppercase tracking-tight text-sm">
               Flyer Archive
@@ -1379,13 +1409,16 @@ const AddEvent = () => {
                     </p>
                   </div>
                   <button
-                    onClick={() =>
-                      set({
-                        pictures: formData.pictures.filter(
-                          (_, i) => i !== index,
-                        ),
-                      })
-                    }
+                    onClick={() => {
+                      const nextPictures = formData.pictures.filter(
+                        (_, i) => i !== index,
+                      );
+                      set({ pictures: nextPictures });
+                      validate("pictures", {
+                        ...formData,
+                        pictures: nextPictures,
+                      });
+                    }}
                     className="p-2 text-red-500/60 hover:text-red-500 transition-colors"
                   >
                     <Trash2 size={16} />
@@ -1397,7 +1430,11 @@ const AddEvent = () => {
             <button
               type="button"
               onClick={() => posterInputRef.current?.click()}
-              className="w-full h-32 bg-[#121417] border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95 group"
+              className={`w-full h-32 bg-[#121417] border border-dashed ${
+                fieldErrors.pictures
+                  ? "border-red-500/60"
+                  : "border-white/[0.2]"
+              } hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95 group`}
             >
               <input
                 type="file"
@@ -1407,8 +1444,14 @@ const AddEvent = () => {
                 multiple
                 onChange={(e) => {
                   const files = Array.from(e.target.files);
-                  if (files.length)
-                    set({ pictures: [...formData.pictures, ...files] });
+                  if (files.length) {
+                    const nextPictures = [...formData.pictures, ...files];
+                    handleChange("pictures", nextPictures);
+                    validate("pictures", {
+                      ...formData,
+                      pictures: nextPictures,
+                    });
+                  }
                 }}
               />
               <Plus
@@ -1420,6 +1463,10 @@ const AddEvent = () => {
                 Add Cover photo
               </p>
             </button>
+            <FieldHint
+              error={fieldErrors.pictures}
+              hint="At least one photo required to publish"
+            />
           </div>
 
           <div className="p-6 bg-[#FF7A00]/5 border border-[#FF7A00]/10 rounded-3xl flex items-center gap-4">
