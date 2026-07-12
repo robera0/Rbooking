@@ -31,7 +31,7 @@ const Dashboard = () => {
     <div className="w-full max-w-full space-y-8">
       {/* Header */}
       <div className="space-y-2 mb-8">
-        <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
+        <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none">
           Admin <span className="text-[#FF7A00]">Dashboard</span>
         </h1>
         <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />

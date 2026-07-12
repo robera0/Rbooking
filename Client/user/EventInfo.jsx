@@ -28,6 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import toast, { Toaster } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
 import { Navigate, useLocation } from "react-router-dom";
@@ -133,9 +134,7 @@ const EventInfo = () => {
           setRating("");
         },
         onError: (error) => {
-          toast.error(
-            error.response?.data?.message || "Failed to post comment",
-          );
+          toast.error(getFriendlyErrorMessage(error));
         },
       },
     );

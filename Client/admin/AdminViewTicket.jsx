@@ -366,7 +366,7 @@ const AdminViewTicket = () => {
               Order not found
             </p>
             <p className="text-sm" style={{ color: "rgba(249,115,22,0.55)" }}>
-              {error?.message}
+              {getFriendlyErrorMessage(error)}
             </p>
           </div>
         )}

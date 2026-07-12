@@ -15,14 +15,20 @@
 [f] add custom  datePicket in the add event 
 [f] edit the design of the add event so it can handle all categories also in the event.controller
 [] make the admin registration work 
-[] make the ticket controller send all the ticket
-[] change the url of ticket based on type
-[] cache the tickets instead of the ids only
-[] add qr generator controller for events
+[f] make the ticket controller send all the ticket
+[f] change the url of ticket based on type
+[f] cache the tickets instead of the ids only
+[f] add qr generator controller for events
+//
 [f] make sure to remove the info
 [f] post an event too
 [f] when user post event the cap should go to the ticket schema so it can show the available number of tickets 
 [f] edit the routes to update the admin profile
+[] make the drop down of the admin side work with path
+[] instead of posting everytime they can keep it on draft and post it every time just changing the pictures and price
+[] make sure the error should be user friendly
+[] make sure it save when they leave the site using useBlocker and when they exit the browser using beforeunload
+[] still creating event  every 3 second instead of updating it
 // WHEN THE APP IS PUBLISHED 
 
 [] add the calendar and put all the event there is on that like a poster
@@ -45,3 +51,9 @@ src/
 │   │
 │   └── ticket/
 │       └── ticketApi.js         → buyTicket, getUserTickets, cancelTicket
+
+
+
+
+
+When saveDraft sends a PATCH with status: "draft", what three things does the backend need to handle that the existing POST controller doesn't?

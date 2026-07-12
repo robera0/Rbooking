@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { Toaster, toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
 const inputStyle = {
   background: "rgba(255,255,255,0.05)",
@@ -321,7 +322,7 @@ const RegistrationPage = () => {
       setTimeout(() => navigate("/admin/dashboard"), 2000);
     },
     onError: (error) => {
-      toast.error(`Registration failed: ${error.message}`);
+      toast.error(getFriendlyErrorMessage(error));
     },
   });
 

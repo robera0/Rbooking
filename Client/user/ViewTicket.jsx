@@ -129,7 +129,9 @@ const ViewTicket = () => {
             <p className="text-[14px] font-medium text-[#f4f4f5] mb-1">
               Ticket not found
             </p>
-            <p className="text-[12px] text-[#6b7280]">{error?.message}</p>
+            <p className="text-[12px] text-[#6b7280]">
+              {getFriendlyErrorMessage(error)}
+            </p>
           </div>
         )}
 
@@ -160,7 +162,9 @@ const ViewTicket = () => {
                 <div className="relative h-36 md:h-48 overflow-hidden">
                   <img
                     src={
-                      event?.pictures?.[0] || event?.pictures?.[1] || "/Login.jpg"
+                      event?.pictures?.[0] ||
+                      event?.pictures?.[1] ||
+                      "/Login.jpg"
                     }
                     alt={event?.name}
                     className="w-full h-full object-cover"
@@ -232,10 +236,10 @@ const ViewTicket = () => {
               >
                 {/* Top-Left Cutout (Top for desktop, Left for mobile) */}
                 <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#0c0d0e]" />
-                
+
                 {/* Right Cutout (Mobile) */}
                 <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#0c0d0e] md:hidden" />
-                
+
                 {/* Bottom Cutout (Desktop) */}
                 <div className="absolute bottom-0 left-0 -translate-x-1/2 translate-y-1/2 w-4 h-4 rounded-full bg-[#0c0d0e] hidden md:block" />
               </div>

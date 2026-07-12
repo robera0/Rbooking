@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast, { Toaster } from "react-hot-toast";
 import { useState, useRef, useEffect } from "react";
 import { useService } from "@/Context/ServiceContext";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
 /* ─────────────────── design tokens ─────────────────── */
 const SURFACE = "bg-[#111214]";
@@ -256,8 +257,8 @@ const Profile = () => {
         withCredentials: true,
       });
       toast.success("Profile saved", { id });
-    } catch {
-      toast.error("Could not save profile", { id });
+    } catch (error) {
+      toast.error(getFriendlyErrorMessage(error), { id });
     }
   };
 
@@ -278,8 +279,8 @@ const Profile = () => {
         password: "",
         confirmPassword: "",
       });
-    } catch {
-      toast.error("Could not update password", { id });
+    } catch (error) {
+      toast.error(getFriendlyErrorMessage(error), { id });
     }
   };
 

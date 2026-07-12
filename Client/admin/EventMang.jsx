@@ -20,7 +20,7 @@ const EventMang = () => {
         </div>
         <button
           onClick={() => navigate("/admin/events/add")}
-          className="mt-4 md:mt-0 px-6 py-3 bg-[#FF7A00] text-white hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2"
+          className="mt-4 md:mt-0 px-6 py-3 bg-[#FF7A00] text-white hover:bg-white hover:text-[#FF7A00] text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2"
         >
           <Plus size={16} strokeWidth={3} />
           Create Event

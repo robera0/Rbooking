@@ -2,20 +2,25 @@ import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
-  Shield,
   Key,
   Activity,
-  Bell,
   Globe,
   LogOut,
   ChevronRight,
   CheckCircle2,
-  AlertCircle,
   Clock,
   Smartphone,
   Lock,
   Eye,
   EyeOff,
+  Building2,
+  Briefcase,
+  Link,
+  UserCircle,
+  Mail,
+  Phone,
+  MapPin,
+  Flag,
 } from "lucide-react";
 import { CustomSelect } from "./Cards";
 import { eventService } from "@/Context/ApiEvent";
@@ -23,6 +28,49 @@ import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast, { Toaster } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+
+// ─── Reusable icon-prefixed input ───
+function IconInput({ icon: Icon, ...props }) {
+  return (
+    <div className="relative">
+      <Icon
+        size={14}
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none"
+      />
+      <input
+        {...props}
+        className={`w-full bg-[#121417] border border-white/[0.06] rounded-xl pl-10 pr-5 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all placeholder:text-gray-700 ${
+          props.className ?? ""
+        }`}
+      />
+    </div>
+  );
+}
+
+// ─── Section header with orange left bar ───
+function SectionLabel({ label }) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+      <div className="w-1 h-4 rounded-full bg-[#FF7A00]" />
+      <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ─── Field wrapper ───
+function FieldWrap({ label, children, full = false }) {
+  return (
+    <div className={`space-y-2 ${full ? "md:col-span-2" : ""}`}>
+      <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
 
 const AdminAccount = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -35,11 +83,8 @@ const AdminAccount = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
 
-  // 2FA toggle states
   const [hardwareKey, setHardwareKey] = useState(true);
   const [biometric, setBiometric] = useState(false);
-
-  // System preferences state
   const [language, setLanguage] = useState("en");
   const [timezone, setTimezone] = useState("eat");
   const [emergencyBroadcasts, setEmergencyBroadcasts] = useState(true);
@@ -52,20 +97,28 @@ const AdminAccount = () => {
     dateOfBirth: "",
     Gender: "",
     address: "",
+    // org / extra fields
+    organizationName: "",
+    role: "",
+    website: "",
+    country: "",
   });
 
   useEffect(() => {
     if (userProfile?.user) {
+      const u = userProfile.user;
       setFormData({
-        firstName: userProfile?.user?.firstName || "",
-        lastName: userProfile?.user?.lastName || "",
-        nationality: userProfile.user.nationality || "",
-        phone: userProfile.user.phone || "",
-        dateOfBirth: userProfile.user.dateOfBirth
-          ? userProfile.user.dateOfBirth.split("T")[0]
-          : "",
-        Gender: userProfile.user.Gender || "",
-        address: userProfile.user.address || "",
+        firstName: u.firstName || "",
+        lastName: u.lastName || "",
+        nationality: u.nationality || "",
+        phone: u.phone || "",
+        dateOfBirth: u.dateOfBirth ? u.dateOfBirth.split("T")[0] : "",
+        Gender: u.Gender || "",
+        address: u.address || "",
+        organizationName: u.organizationName || "",
+        role: u.role || "",
+        website: u.website || "",
+        country: u.country || "",
       });
     }
   }, [userProfile]);
@@ -76,7 +129,6 @@ const AdminAccount = () => {
     password: "",
   });
 
-  // Keep credentials email in sync with userProfile
   useEffect(() => {
     if (userProfile?.user?.userId?.email) {
       setCredentials((prev) => ({
@@ -105,7 +157,27 @@ const AdminAccount = () => {
     reader.readAsDataURL(file);
   };
 
-  /* ── mutations ── */
+  const handleDiscard = () => {
+    if (userProfile?.user) {
+      const u = userProfile.user;
+      setFormData({
+        firstName: u.firstName || "",
+        lastName: u.lastName || "",
+        nationality: u.nationality || "",
+        phone: u.phone || "",
+        dateOfBirth: u.dateOfBirth ? u.dateOfBirth.split("T")[0] : "",
+        Gender: u.Gender || "",
+        address: u.address || "",
+        organizationName: u.organizationName || "",
+        role: u.role || "",
+        website: u.website || "",
+        country: u.country || "",
+      });
+    }
+    setPreview(null);
+    setSelectedFile(null);
+  };
+
   const updateUser = async () => {
     const data = new FormData();
     Object.entries(formData).forEach(([k, v]) => data.append(k, v));
@@ -127,35 +199,29 @@ const AdminAccount = () => {
 
   const profileMutation = useMutation({
     mutationFn: updateUser,
-    onMutate: () => {
-      toast.loading("Saving profile…", { id: "profile" });
-    },
+    onMutate: () => toast.loading("Saving profile…", { id: "profile" }),
     onSuccess: () => {
       toast.success("Profile saved", { id: "profile" });
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       setPreview(null);
       setSelectedFile(null);
     },
-    onError: () => {
-      toast.error("Could not save profile", { id: "profile" });
-    },
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err), { id: "profile" }),
   });
 
   const credentialsMutation = useMutation({
     mutationFn: updateCredentials,
-    onMutate: () => {
-      toast.loading("Updating password…", { id: "credentials" });
-    },
+    onMutate: () => toast.loading("Updating password…", { id: "credentials" }),
     onSuccess: () => {
       toast.success("Password updated", { id: "credentials" });
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       setCredentials((prev) => ({ ...prev, currentPass: "", password: "" }));
     },
-    onError: (err) => {
-      toast.error(err?.message || "Could not update password", {
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err), {
         id: "credentials",
-      });
-    },
+      }),
   });
 
   const handleLogout = async () => {
@@ -177,8 +243,13 @@ const AdminAccount = () => {
     ? `${API_URL}/${userProfile.user.avatarUrl}`
     : "/Login.jpg";
 
-  const userName = userProfile?.user?.firstName || "Your Name";
+  const userName =
+    [userProfile?.user?.firstName, userProfile?.user?.lastName]
+      .filter(Boolean)
+      .join(" ") || "Your Name";
   const userEmail = userProfile?.user?.userId?.email || "";
+  const userOrg = formData.organizationName || "—";
+  const userRole = formData.role || "Admin";
 
   const auditLogs = [
     {
@@ -212,43 +283,53 @@ const AdminAccount = () => {
     },
   };
 
+  const passwordStrength = (() => {
+    let s = 0;
+    if (credentials.password.length >= 8) s++;
+    if (/[A-Z]/.test(credentials.password)) s++;
+    if (/[0-9]/.test(credentials.password)) s++;
+    if (/[^A-Za-z0-9]/.test(credentials.password)) s++;
+    return s;
+  })();
+
+  const strengthLabel =
+    ["", "Weak", "Fair", "Good", "Strong"][passwordStrength] || "";
+
   return (
     <div className="w-full max-w-full space-y-10 pb-20">
       <Toaster position="top-right" />
 
-      {/* Header Section */}
+      {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-8 border-b border-white/[0.04] pb-8">
-        <div className="">
-          <h1 className="text-3xl md:text-5xl text-[#FF7A00] font- uppercase tracking-tighter leading-none  ">
-            Admin Credentials
-          </h1>
-        </div>
-
+        <h1 className="text-3xl md:text-5xl text-white uppercase tracking-tighter leading-none">
+          Admin Infos
+        </h1>
         <div className="flex items-center gap-4 mt-6 md:mt-0">
           <div className="text-right hidden md:block">
             <p className="text-white font-black text-xs uppercase tracking-widest">
-              {userProfile?.firstName}
+              {userName}
             </p>
             <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
-              {userProfile?.email}
+              {userEmail}
             </p>
           </div>
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-orange-700 p-[2px]">
             <div className="w-full h-full rounded-2xl bg-[#1C1F22] flex justify-center items-center font-black text-2xl text-white">
-              S
+              {userName?.[0]?.toUpperCase() || "A"}
             </div>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Navigation Sidebar */}
-        <div className="lg:col-span-3 space-y-2">
+        {/* ── Sidebar ── */}
+        <div className="lg:col-span-3 flex flex-col gap-2">
+          {/* Nav items */}
           {[
             { id: "profile", label: "My Profile", icon: User },
             { id: "security", label: "Security & Password", icon: Key },
             { id: "activity", label: "Activity History", icon: Activity },
-            { id: "system", label: "App Preferences", icon: Globe },
+            /* { id: "system", label: "App Preferences", icon: Globe },*/
           ].map((item) => (
             <button
               key={item.id}
@@ -279,18 +360,55 @@ const AdminAccount = () => {
             </button>
           ))}
 
-          <div className="pt-10">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300 font-black text-[10px] uppercase tracking-widest"
-            >
-              <LogOut size={18} />
-              Logout
-            </button>
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300 font-black text-[10px] uppercase tracking-widest mt-1"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
+
+          {/* User card */}
+          <div className="mt-4 bg-[#1C1F22] border border-white/[0.04] rounded-2xl p-5 flex flex-col items-center gap-3">
+            <div className="relative">
+              <img
+                src={avatarSrc}
+                alt="Avatar"
+                className="w-16 h-16 rounded-2xl object-cover border-2 border-white/10 cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              />
+              {/* Online dot */}
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#1C1F22] flex items-center justify-center">
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+            <div className="text-center">
+              <p className="text-white font-black text-sm">{userName}</p>
+              <p className="text-[#FF7A00] font-black text-[10px] uppercase tracking-widest mt-0.5">
+                {userOrg}
+              </p>
+              <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
+                {userRole}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+              <CheckCircle2 size={10} className="text-green-500" />
+              <span className="text-green-500 font-black text-[9px] uppercase tracking-widest">
+                Verified
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Content Area */}
+        {/* ── Content ── */}
         <div className="lg:col-span-9">
           <AnimatePresence mode="wait">
             {/* ── PROFILE TAB ── */}
@@ -301,153 +419,148 @@ const AdminAccount = () => {
                 initial="hidden"
                 animate="visible"
                 exit="hidden"
-                className="space-y-8"
               >
-                <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
-                  <div className="absolute -right-20 -top-20 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity duration-700">
-                    <User size={300} />
+                <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-8 md:p-10 shadow-2xl space-y-10">
+                  {/* Card header */}
+                  <div className="flex items-start justify-between border-b border-white/[0.04] pb-6">
+                    <div>
+                      <h2 className="text-2xl  text-white uppercase  tracking-tighter">
+                        Profile <span className="text-[#FF7A00]">Details</span>
+                      </h2>
+                    </div>
+                    {/* 
+                       <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
+                      <CheckCircle2 size={11} className="text-green-500" />
+                      <span className="text-green-500 font-black text-[9px] uppercase tracking-widest">
+                        Trust Index: High (Verified)
+                      </span>
+                    </div>*/}
                   </div>
 
-                  <div className="relative z-10 space-y-10">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2">
-                        <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
-                          Profile{" "}
-                          <span className="text-[#FF7A00]">Details</span>
-                        </h2>
-                        <div className="flex items-center gap-2 px-3 py-1 bg-[#5EC750]/10 border border-[#5EC750]/20 rounded-full w-fit">
-                          <CheckCircle2 size={12} className="text-[#5EC750]" />
-                          <span className="text-[#5EC750] font-black text-[9px] uppercase tracking-widest">
-                            Trust Index: High (Verified)
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Avatar upload */}
-                      <div
-                        className="relative cursor-pointer group/avatar"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <img
-                          src={avatarSrc}
-                          alt="Avatar"
-                          className="w-20 h-20 rounded-2xl object-cover border-2 border-white/10"
-                        />
-                        <div className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-white font-black text-[9px] uppercase tracking-widest">
-                            Change
-                          </span>
-                        </div>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleFileChange}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          Legal Full Name
-                        </label>
-                        <input
-                          name="fullName"
-                          value={`${formData.firstName} ${" "} ${
-                            formData.lastName
-                          }`}
+                  {/* ORGANIZATION */}
+                  <div>
+                    <SectionLabel label="Organization" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <FieldWrap label="Organization Name">
+                        <IconInput
+                          icon={Building2}
+                          name="organizationName"
+                          value={formData.organizationName}
                           onChange={handleChange}
-                          className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all"
+                          placeholder="e.g. RBooking Events"
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          Contact Email
-                        </label>
-                        <input
-                          className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none cursor-not-allowed opacity-60"
+                      </FieldWrap>
+                      <FieldWrap label="Role / Position">
+                        <IconInput
+                          icon={Briefcase}
+                          name="role"
+                          value={formData.role}
+                          onChange={handleChange}
+                          placeholder="e.g. Master Admin"
+                        />
+                      </FieldWrap>
+                      <FieldWrap label="Website" full>
+                        <IconInput
+                          icon={Link}
+                          name="website"
+                          value={formData.website}
+                          onChange={handleChange}
+                          placeholder="e.g. rbooking.com"
+                        />
+                      </FieldWrap>
+                    </div>
+                  </div>
+
+                  {/* CONTACT */}
+                  <div>
+                    <SectionLabel label="Contact" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <FieldWrap label="Full Name">
+                        <IconInput
+                          icon={UserCircle}
+                          name="firstName"
+                          value={`${formData.firstName} ${formData.lastName}`.trim()}
+                          onChange={(e) => {
+                            const parts = e.target.value.split(" ");
+                            setFormData((p) => ({
+                              ...p,
+                              firstName: parts[0] || "",
+                              lastName: parts.slice(1).join(" ") || "",
+                            }));
+                          }}
+                          placeholder="First Last"
+                        />
+                      </FieldWrap>
+                      <FieldWrap label="Email Address">
+                        <IconInput
+                          icon={Mail}
+                          value={userEmail}
                           disabled
-                          value={userEmail || userProfile?.user?.userId?.email}
-                          readOnly
+                          className="opacity-50 cursor-not-allowed"
+                          placeholder="—"
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          Phone
-                        </label>
-                        <input
+                      </FieldWrap>
+                      <FieldWrap label="Phone Number" full>
+                        <IconInput
+                          icon={Phone}
                           name="phone"
                           value={formData.phone}
                           onChange={handleChange}
-                          placeholder="Enter phone number"
-                          className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all"
+                          placeholder="+251 9XX XXX XXXX"
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          Date of Birth
-                        </label>
-                        <input
-                          type="date"
-                          name="dateOfBirth"
-                          value={formData.dateOfBirth}
-                          onChange={handleChange}
-                          className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          Nationality
-                        </label>
-                        <input
-                          name="nationality"
-                          value={formData.nationality}
-                          onChange={handleChange}
-                          placeholder="Enter nationality"
-                          className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          Gender
-                        </label>
-                        <select
-                          name="Gender"
-                          value={formData.Gender}
-                          onChange={handleChange}
-                          className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all appearance-none cursor-pointer"
-                        >
-                          <option value="">Select gender</option>
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Other">Other</option>
-                          <option value="Prefer not to say">
-                            Prefer not to say
-                          </option>
-                        </select>
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          Address
-                        </label>
-                        <input
+                      </FieldWrap>
+                    </div>
+                  </div>
+
+                  {/* LOCATION */}
+                  <div>
+                    <SectionLabel label="Location" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <FieldWrap label="Address" full>
+                        <IconInput
+                          icon={MapPin}
                           name="address"
                           value={formData.address}
                           onChange={handleChange}
-                          placeholder="Enter address"
-                          className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all"
+                          placeholder="Street, City"
                         />
-                      </div>
+                      </FieldWrap>
+                      <FieldWrap label="Country">
+                        <IconInput
+                          icon={Flag}
+                          name="country"
+                          value={formData.country}
+                          onChange={handleChange}
+                          placeholder="e.g. Ethiopia"
+                        />
+                      </FieldWrap>
+                      <FieldWrap label="Nationality">
+                        <IconInput
+                          icon={Flag}
+                          name="nationality"
+                          value={formData.nationality}
+                          onChange={handleChange}
+                          placeholder="e.g. Ethiopian"
+                        />
+                      </FieldWrap>
                     </div>
+                  </div>
 
+                  {/* Actions */}
+                  <div className="flex items-center gap-4 pt-2 border-t border-white/[0.04]">
                     <button
                       onClick={() => profileMutation.mutate()}
                       disabled={profileMutation.isPending}
-                      className="px-10 py-4 bg-white text-black font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-[#FF7A00] transition-all active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-10 py-4 bg-[#FF7A00] text-black font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-orange-400 transition-all active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {profileMutation.isPending ? "Saving…" : "Save Changes"}
+                    </button>
+                    <button
+                      onClick={handleDiscard}
+                      disabled={profileMutation.isPending}
+                      className="px-10 py-4 bg-transparent border border-white/[0.08] text-gray-400 hover:text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all active:scale-95"
+                    >
+                      Discard
                     </button>
                   </div>
                 </div>
@@ -464,21 +577,19 @@ const AdminAccount = () => {
                 exit="hidden"
                 className="space-y-8"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="">
                   {/* Password Change */}
-                  <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2.5rem] p-8 space-y-8">
+                  <div className="bg-[#1C1F22] w-full border border-white/[0.04] rounded-[2.5rem] p-8 space-y-8">
                     <div className="flex items-center gap-4 text-white">
                       <Lock className="text-[#FF7A00]" size={24} />
-                      <h2 className="text-xl font-black uppercase tracking-tighter italic">
+                      <h2 className="text-xl  uppercase tracking-tighter ">
                         Change <span className="text-[#FF7A00]">Password</span>
                       </h2>
                     </div>
 
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          Current Key
-                        </label>
+                        <SectionLabel label="current password" />
                         <div className="relative">
                           <input
                             type={showCurrentPassword ? "text" : "password"}
@@ -503,10 +614,9 @@ const AdminAccount = () => {
                           </button>
                         </div>
                       </div>
+
                       <div className="space-y-2 pt-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                          New Authentication Key
-                        </label>
+                        <SectionLabel label="New Password" />
                         <div className="relative">
                           <input
                             type={showNewPassword ? "text" : "password"}
@@ -529,54 +639,28 @@ const AdminAccount = () => {
                           </button>
                         </div>
 
-                        {/* Password strength indicator */}
                         {credentials.password.length > 0 && (
                           <div className="space-y-1 pt-1">
                             <div className="flex gap-1">
-                              {[1, 2, 3, 4].map((level) => {
-                                const strength = (() => {
-                                  let s = 0;
-                                  if (credentials.password.length >= 8) s++;
-                                  if (/[A-Z]/.test(credentials.password)) s++;
-                                  if (/[0-9]/.test(credentials.password)) s++;
-                                  if (/[^A-Za-z0-9]/.test(credentials.password))
-                                    s++;
-                                  return s;
-                                })();
-                                return (
-                                  <div
-                                    key={level}
-                                    className={`h-1 flex-1 rounded-full transition-all ${
-                                      level <= strength
-                                        ? strength <= 1
-                                          ? "bg-red-500"
-                                          : strength === 2
-                                          ? "bg-yellow-500"
-                                          : strength === 3
-                                          ? "bg-blue-500"
-                                          : "bg-[#5EC750]"
-                                        : "bg-white/10"
-                                    }`}
-                                  />
-                                );
-                              })}
+                              {[1, 2, 3, 4].map((level) => (
+                                <div
+                                  key={level}
+                                  className={`h-1 flex-1 rounded-full transition-all ${
+                                    level <= passwordStrength
+                                      ? passwordStrength <= 1
+                                        ? "bg-red-500"
+                                        : passwordStrength === 2
+                                        ? "bg-yellow-500"
+                                        : passwordStrength === 3
+                                        ? "bg-blue-500"
+                                        : "bg-green-500"
+                                      : "bg-white/10"
+                                  }`}
+                                />
+                              ))}
                             </div>
                             <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">
-                              {(() => {
-                                let s = 0;
-                                if (credentials.password.length >= 8) s++;
-                                if (/[A-Z]/.test(credentials.password)) s++;
-                                if (/[0-9]/.test(credentials.password)) s++;
-                                if (/[^A-Za-z0-9]/.test(credentials.password))
-                                  s++;
-                                return s <= 1
-                                  ? "Weak"
-                                  : s === 2
-                                  ? "Fair"
-                                  : s === 3
-                                  ? "Good"
-                                  : "Strong";
-                              })()}
+                              {strengthLabel}
                             </p>
                           </div>
                         )}
@@ -598,70 +682,62 @@ const AdminAccount = () => {
                     </button>
                   </div>
 
-                  {/* Multi-Factor */}
-                  <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2.5rem] p-8 space-y-8">
+                  {/* 2FA */}
+
+                  {/*
+                              <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2.5rem] p-8 space-y-8">
                     <div className="flex items-center gap-4 text-white">
                       <Smartphone className="text-blue-500" size={24} />
                       <h2 className="text-xl font-black uppercase tracking-tighter italic">
                         Two-Factor <span className="text-blue-500">Auth</span>
                       </h2>
                     </div>
-
                     <p className="text-gray-500 text-xs font-bold leading-relaxed uppercase tracking-widest">
                       Secure your account access with biometric or hardware
                       verification.
                     </p>
-
                     <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl space-y-4">
-                      {/* Hardware Key Toggle */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-white font-black text-[10px] uppercase tracking-widest">
-                          Hardware-Key Access
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setHardwareKey(!hardwareKey)}
-                          className={`w-12 h-6 rounded-full p-1 relative transition-all duration-300 ${
-                            hardwareKey
-                              ? "bg-blue-500/20 border border-blue-500/30"
-                              : "bg-white/5 border border-white/10"
-                          }`}
+                      {[
+                        {
+                          label: "Hardware-Key Access",
+                          val: hardwareKey,
+                          set: setHardwareKey,
+                        },
+                        {
+                          label: "Biometric Login",
+                          val: biometric,
+                          set: setBiometric,
+                        },
+                      ].map(({ label, val, set }) => (
+                        <div
+                          key={label}
+                          className="flex items-center justify-between"
                         >
-                          <div
-                            className={`w-4 h-4 rounded-full transition-all duration-300 ${
-                              hardwareKey
-                                ? "bg-blue-500 translate-x-6"
-                                : "bg-gray-600 translate-x-0"
+                          <span ctlassName="text-white font-black text-[10px] uppercase tracking-widest">
+                            {label}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => set(!val)}
+                            className={`w-12 h-6 rounded-full p-1 relative transition-all duration-300 ${
+                              val
+                                ? "bg-blue-500/20 border border-blue-500/30"
+                                : "bg-white/5 border border-white/10"
                             }`}
-                          />
-                        </button>
-                      </div>
-
-                      {/* Biometric Toggle */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-white font-black text-[10px] uppercase tracking-widest">
-                          Biometric Login
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setBiometric(!biometric)}
-                          className={`w-12 h-6 rounded-full p-1 relative transition-all duration-300 ${
-                            biometric
-                              ? "bg-blue-500/20 border border-blue-500/30"
-                              : "bg-white/5 border border-white/10"
-                          }`}
-                        >
-                          <div
-                            className={`w-4 h-4 rounded-full transition-all duration-300 ${
-                              biometric
-                                ? "bg-blue-500 translate-x-6"
-                                : "bg-gray-600 translate-x-0"
-                            }`}
-                          />
-                        </button>
-                      </div>
+                          >
+                            <div
+                              className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                                val
+                                  ? "bg-blue-500 translate-x-6"
+                                  : "bg-gray-600 translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
+                    */}
                 </div>
               </motion.div>
             )}
@@ -677,7 +753,7 @@ const AdminAccount = () => {
                 className="bg-[#1C1F22] border border-white/[0.04] rounded-[2.5rem] p-8"
               >
                 <div className="flex items-center justify-between mb-10 border-b border-white/[0.04] pb-6">
-                  <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
+                  <h2 className="text-2xl  text-white uppercase  tracking-tighter">
                     Recent <span className="text-[#FF7A00]">Activity</span>{" "}
                     History
                   </h2>
@@ -685,12 +761,11 @@ const AdminAccount = () => {
                     Real-time Feedback
                   </div>
                 </div>
-
                 <div className="space-y-4">
                   {auditLogs.map((log, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:border-white/[0.1] transition-all group"
+                      className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:border-white/[0.1] transition-all"
                     >
                       <div className="flex items-center gap-6">
                         <div className="w-12 h-12 rounded-xl bg-[#121417] flex justify-center items-center text-[#FF7A00]">
@@ -705,8 +780,8 @@ const AdminAccount = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-1 bg-[#5EC750]/5 text-[#5EC750] rounded-lg">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#5EC750] animate-pulse" />
+                      <div className="flex items-center gap-2 px-3 py-1 bg-green-500/5 text-green-500 rounded-lg">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                         <span className="text-[9px] font-black uppercase tracking-widest">
                           {log.status}
                         </span>
@@ -718,7 +793,8 @@ const AdminAccount = () => {
             )}
 
             {/* ── SYSTEM / PREFERENCES TAB ── */}
-            {activeTab === "system" && (
+            {/*
+                     {activeTab === "system" && (
               <motion.div
                 key="system"
                 variants={containers}
@@ -805,6 +881,7 @@ const AdminAccount = () => {
                 </div>
               </motion.div>
             )}
+               */}
           </AnimatePresence>
         </div>
       </div>

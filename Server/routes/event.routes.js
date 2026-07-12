@@ -14,7 +14,16 @@ const eventRouter = express.Router();
 eventRouter.get("/events", getEvents);
 eventRouter.get("/featuredEvents", featuredEvents);
 eventRouter.get("/events/:eventId", getEventById);
-eventRouter.put("/events/:eventId", upload.array("pictures", 10), updateEvent);
+eventRouter.put(
+  "/admin/events/:eventId",
+  upload.array("pictures", 10),
+  updateEvent,
+); // make sure to add authmiddleware  to it
+eventRouter.patch(
+  "/auth/admin/events/:eventId",
+  upload.array("pictures", 10),
+  updateEvent,
+);
 eventRouter.get("/events/:eventId/tickets/:ticketId", fetchEventsId);
 eventRouter.get("/events/:eventId/tickets/:ticketId/qr", generateEventQR);
 
