@@ -26,7 +26,7 @@ import {
 } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import { eventService } from "@/Context/ApiEvent";
@@ -70,6 +70,179 @@ const StatBadge = ({ icon: Icon, label, value }) => (
   </motion.div>
 );
 
+const StarRating = ({ rating, onRate, size = 20 }) => {
+  const [hoverVal, setHoverVal] = useState(0);
+  const display = hoverVal || rating;
+
+  return (
+    <div
+      className="flex items-center gap-1"
+      onMouseLeave={() => setHoverVal(0)}
+    >
+      {[1, 2, 3, 4, 5].map((star) => {
+        const filled = star <= display;
+        return (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onRate(star)}
+            onMouseEnter={() => setHoverVal(star)}
+            className="p-0.5 transition-transform hover:scale-110 active:scale-95"
+            aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+          >
+            <Star
+              size={size}
+              strokeWidth={1.75}
+              className="transition-colors duration-150"
+              fill={filled ? "#FF7A00" : "transparent"}
+              stroke={filled ? "#FF7A00" : "#4b4b52"}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ─── Full skeleton screen matching the actual page layout */
+const SkeletonLoadingScreen = () => (
+  <div className="min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-x-hidden">
+    <SkeletonTheme baseColor="#1e2023" highlightColor="#2a2d31">
+      {/* Top ribbon */}
+      <div className="h-[2px] w-full bg-white/[0.03]" />
+
+      {/* Hero skeleton */}
+      <div className="relative w-full h-[75vh] min-h-[520px] overflow-hidden">
+        <Skeleton height="100%" style={{ display: "block" }} />
+        {/* Simulated title + badges overlay */}
+        <div className="absolute bottom-14 left-6 lg:left-14 space-y-5">
+          {/* ID badge */}
+          <Skeleton width={160} height={12} />
+          {/* Title lines */}
+          <Skeleton width="55vw" height={52} style={{ maxWidth: 560 }} />
+          <Skeleton width="35vw" height={52} style={{ maxWidth: 360 }} />
+          {/* Stat badges row */}
+          <div className="flex gap-3 mt-2">
+            <Skeleton width={150} height={46} borderRadius={16} />
+            <Skeleton width={150} height={46} borderRadius={16} />
+            <Skeleton width={120} height={46} borderRadius={16} />
+          </div>
+        </div>
+      </div>
+
+      {/* Main content skeleton */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-14 pt-16 pb-28">
+        <div className="grid lg:grid-cols-12 gap-14">
+          {/* Left column */}
+          <div className="order-2 lg:order-1 lg:col-span-7 space-y-16">
+            {/* Gallery skeleton */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Skeleton width={20} height={2} />
+                <Skeleton width={60} height={10} />
+              </div>
+              <Skeleton
+                height={340}
+                borderRadius={24}
+                style={{ display: "block" }}
+              />
+              <div className="flex gap-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} width={80} height={56} borderRadius={12} />
+                ))}
+              </div>
+            </div>
+
+            {/* Description skeleton */}
+            <div className="pl-8 space-y-3">
+              <Skeleton width={120} height={10} />
+              <Skeleton height={22} />
+              <Skeleton height={22} width="90%" />
+              <Skeleton height={22} width="80%" />
+            </div>
+
+            {/* Comments skeleton */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <Skeleton height={1} style={{ flex: 1 }} />
+                <Skeleton width={100} height={10} />
+                <Skeleton height={1} style={{ flex: 1 }} />
+              </div>
+              {/* Write review box */}
+              <Skeleton
+                height={100}
+                borderRadius={16}
+                style={{ display: "block" }}
+              />
+              {/* Comment cards */}
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4 sm:p-5"
+                >
+                  <div className="flex items-start gap-4">
+                    <Skeleton circle width={48} height={48} />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton width={110} height={14} />
+                      <Skeleton width={70} height={10} />
+                      <Skeleton height={12} />
+                      <Skeleton height={12} width="75%" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right column — ticket card skeleton */}
+          <aside className="order-1 lg:order-2 lg:col-span-5">
+            <div className="space-y-5">
+              {/* Ticket stub skeleton */}
+              <Skeleton
+                height={480}
+                borderRadius={24}
+                style={{ display: "block" }}
+              />
+              {/* Dropdown button skeleton */}
+              <Skeleton
+                height={54}
+                borderRadius={16}
+                style={{ display: "block" }}
+              />
+              {/* Live badge skeleton */}
+              <Skeleton
+                height={44}
+                borderRadius={16}
+                style={{ display: "block" }}
+              />
+            </div>
+          </aside>
+        </div>
+
+        {/* Policies skeleton */}
+        <div className="mt-24 pt-16 border-t border-white/[0.05] space-y-8">
+          <div className="flex items-center gap-3">
+            <Skeleton width={18} height={18} circle />
+            <Skeleton width={180} height={18} />
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="p-6 rounded-2xl border border-white/[0.05] bg-white/[0.02] space-y-3"
+              >
+                <Skeleton width={100} height={12} />
+                <Skeleton height={11} />
+                <Skeleton height={11} width="85%" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </SkeletonTheme>
+  </div>
+);
+
 const EventInfo = () => {
   const { eventId, ticketId } = useParams();
   const { setEditMenuActive, setCheckoutOpen, API_URL, checkoutOpen } =
@@ -91,8 +264,9 @@ const EventInfo = () => {
   const [showMap, setShowMap] = useState(false);
   const [showTicketDropdown, setShowTicketDropdown] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [rating, setRating] = useState("");
+  const [rating, setRating] = useState(0);
   const [imgIdx, setImgIdx] = useState(0);
+  const [displayedCommentsCount, setDisplayedCommentsCount] = useState(4);
   const galleryRef = useRef(null);
 
   const heroRef = useRef(null);
@@ -110,14 +284,10 @@ const EventInfo = () => {
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
   const allTickets = event_id?.tickets || [];
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [eventId]);
-
-  // Also reset image index when ticket changes
-  useEffect(() => {
-    setImgIdx(0);
-  }, [ticketId]);
 
   const handlePostComment = () => {
     if (!user) {
@@ -131,7 +301,7 @@ const EventInfo = () => {
         onSuccess: () => {
           toast.success("Comment posted successfully!");
           setCommentText("");
-          setRating("");
+          setRating(0);
         },
         onError: (error) => {
           toast.error(getFriendlyErrorMessage(error));
@@ -197,7 +367,6 @@ const EventInfo = () => {
   };
 
   const isSoldOut = allTickets.length === 0;
-  // Active ticket is now driven purely by the URL ticketId via the fetched ticket
   const activeTicket = ticket
     ? {
         ...ticket,
@@ -215,32 +384,12 @@ const EventInfo = () => {
   const prevImg = () => setImgIdx((i) => (i === 0 ? images.length - 1 : i - 1));
   const nextImg = () => setImgIdx((i) => (i === images.length - 1 ? 0 : i + 1));
 
-  if (isLoading)
-    return (
-      <div className="min-h-screen bg-[#080809] flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-          className="w-10 h-10 rounded-full border-2 border-[#FF7A00] border-t-transparent"
-        />
-      </div>
-    );
+  if (isLoading) return <SkeletonLoadingScreen />;
 
   const titleChars = (event?.name || "").split("");
 
   return (
     <div className="min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-x-hidden">
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: "#111",
-            color: "#fff",
-            border: "1px solid rgba(255,122,0,0.3)",
-          },
-        }}
-      />
-
       {/* ── AMBIENT ORBS ── */}
       <Orb className="w-[600px] h-[600px] top-[-200px] left-[-200px] bg-[#FF7A00]/[0.07]" />
       <Orb className="w-[500px] h-[500px] top-[30%] right-[-150px] bg-purple-600/[0.05]" />
@@ -268,11 +417,19 @@ const EventInfo = () => {
           {images[0] ? (
             <img
               src={`${API_URL}/${images[0]}`}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/Login.jpg";
+              }}
               alt={event?.name}
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#111] to-[#1c1210]" />
+            <img
+              src="/Login.jpg"
+              alt={event?.name}
+              className="w-full h-full object-cover"
+            />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#080809] via-[#080809]/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#080809]/80 via-transparent to-transparent" />
@@ -302,7 +459,14 @@ const EventInfo = () => {
             </span>
           </motion.div>
 
-          <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-none max-w-5xl mb-8 perspective-1000">
+          {/* 
+            FIXED: Responsive title sizing
+            - Mobile:  text-3xl  (30px) — was text-5xl, too large and overflowed
+            - sm:      text-4xl  (36px)
+            - md:      text-5xl  (48px)
+            - lg+:     text-6xl  (60px) — was text-7xl, pulled back one step
+          */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase italic tracking-tighter leading-none max-w-5xl mb-8 perspective-1000">
             {titleChars.map((char, i) => (
               <GlitchChar
                 key={i}
@@ -315,7 +479,11 @@ const EventInfo = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              delay: 0.8,
+              duration: 0.7,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="flex flex-wrap gap-3"
           >
             <StatBadge
@@ -388,7 +556,7 @@ const EventInfo = () => {
       <main className="max-w-7xl mx-auto px-6 lg:px-14 pt-16 pb-28 relative">
         <div className="grid lg:grid-cols-12 gap-14 xl:gap-20">
           {/* ── LEFT COLUMN ── */}
-          <div className="lg:col-span-7 space-y-20">
+          <div className="order-2 lg:order-1 lg:col-span-7 space-y-20">
             {/* IMAGE CAROUSEL */}
             {images.length > 0 && (
               <motion.section
@@ -461,6 +629,10 @@ const EventInfo = () => {
                         >
                           <img
                             src={`${API_URL}/${img}`}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "/Login.jpg";
+                            }}
                             className="w-full h-full object-cover"
                             alt=""
                           />
@@ -507,30 +679,43 @@ const EventInfo = () => {
                 <div className="h-[1px] flex-1 bg-gradient-to-l from-[#FF7A00]/30 to-transparent" />
               </div>
 
-              <motion.div
-                whileFocusWithin={{ borderColor: "rgba(255,122,0,0.5)" }}
-                className="flex items-center gap-3 bg-white/[0.025] border border-white/[0.06] rounded-2xl px-4 py-3 transition-all"
-              >
-                <input
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
-                  placeholder="Leave a comment..."
-                  className="flex-1 bg-transparent outline-none border-none text-[11px] font-bold uppercase tracking-wide placeholder:text-gray-700 text-white"
-                />
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handlePostComment}
-                  className="h-10 w-10 bg-[#FF7A00] rounded-xl flex items-center justify-center shrink-0 hover:bg-amber-400 transition-colors"
-                >
-                  <Send size={15} className="text-black" />
-                </motion.button>
-              </motion.div>
+              {/* WRITE A REVIEW */}
+              <div className="rounded-2xl border border-white/[0.06] bg-[#16181b] p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-[0.35em] text-gray-500">
+                    Your Rating
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <StarRating rating={rating} onRate={setRating} />
+                    {rating > 0 && (
+                      <span className="text-[10px] font-bold text-gray-500 w-6 text-right">
+                        {rating}/5
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 focus-within:border-[#FF7A00]/40 transition-colors">
+                  <input
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
+                    placeholder="Leave a comment..."
+                    className="flex-1 bg-transparent outline-none border-none text-[11px] font-bold uppercase tracking-wide placeholder:text-gray-700 text-white"
+                  />
+                  <button
+                    onClick={handlePostComment}
+                    disabled={isPending}
+                    className="h-10 w-10 bg-[#FF7A00] rounded-xl flex items-center justify-center shrink-0 hover:bg-amber-400 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    <Send size={15} className="text-black" />
+                  </button>
+                </div>
+              </div>
 
               <div className="space-y-6">
                 {commentsIsLoading ? (
-                  <SkeletonTheme baseColor="#27272a" highlightColor="#3f3f46">
+                  <SkeletonTheme baseColor="#1e2023" highlightColor="#2a2d31">
                     <div className="space-y-6">
                       {Array.from({ length: 3 }).map((_, i) => (
                         <div
@@ -541,26 +726,11 @@ const EventInfo = () => {
                             <div className="flex-shrink-0">
                               <Skeleton circle width={48} height={48} />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                <div>
-                                  <Skeleton
-                                    width={96}
-                                    height={16}
-                                    className="mb-1"
-                                  />
-                                  <Skeleton width={64} height={12} />
-                                </div>
-                                <Skeleton width={40} height={16} />
-                              </div>
-                              <div className="space-y-2">
-                                <Skeleton width="100%" height={12} />
-                                <Skeleton width="66%" height={12} />
-                              </div>
-                              <div className="flex items-center gap-4 mt-4">
-                                <Skeleton width={40} height={12} />
-                                <Skeleton width={40} height={12} />
-                              </div>
+                            <div className="flex-1 min-w-0 space-y-2">
+                              <Skeleton width={96} height={16} />
+                              <Skeleton width={64} height={12} />
+                              <Skeleton width="100%" height={12} />
+                              <Skeleton width="66%" height={12} />
                             </div>
                           </div>
                         </div>
@@ -568,69 +738,120 @@ const EventInfo = () => {
                     </div>
                   </SkeletonTheme>
                 ) : (
-                  comments?.comments?.map((c, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 15 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.06 }}
-                      className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
-                    >
-                      <div className="flex items-start gap-3 sm:gap-4">
-                        <div className="flex-shrink-0">
-                          <img
-                            src={
-                              `${API_URL}/${c?.userProfile?.avatarUrl}` ||
-                              c?.userProfile?.avatarUrl
-                            }
-                            alt={c?.userProfile?.fullName}
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <div>
-                              <h4 className="text-sm sm:text-base font-semibold text-white truncate">
-                                {c?.userProfile?.fullName}
-                              </h4>
-                              <p className="text-[10px] sm:text-xs text-gray-500">
-                                {moment(c.createdAt).fromNow()}
-                              </p>
-                            </div>
-                            {c?.rating > 0 && (
-                              <div className="flex items-center gap-1 text-[#FF7A00] text-xs font-bold">
-                                ⭐ {c.rating}
+                  <>
+                    <motion.div className="space-y-6">
+                      {comments?.comments
+                        ?.slice(0, displayedCommentsCount)
+                        .map((c, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 15 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: i * 0.06 }}
+                            className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
+                          >
+                            <div className="flex items-start gap-3 sm:gap-4">
+                              <div className="flex-shrink-0">
+                                <img
+                                  src={
+                                    `${API_URL}/${c?.userProfile?.avatarUrl}` ||
+                                    c?.userProfile?.avatarUrl
+                                  }
+                                  alt={c?.userProfile?.fullName}
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
+                                />
                               </div>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
-                            {c?.text}
-                          </p>
-                          <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
-                            <button
-                              onClick={(e) => e.preventDefault()}
-                              className="hover:text-white transition-colors"
-                            >
-                              Like
-                            </button>
-                            <button className="hover:text-white transition-colors">
-                              Reply
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                  <div>
+                                    <h4 className="text-sm sm:text-base font-semibold text-white truncate">
+                                      {c?.userProfile?.fullName}
+                                    </h4>
+                                    <p className="text-[10px] sm:text-xs text-gray-500">
+                                      {moment(c.createdAt).fromNow()}
+                                    </p>
+                                  </div>
+                                  {c?.rating > 0 && (
+                                    <div className="flex items-center gap-0.5">
+                                      {[1, 2, 3, 4, 5].map((s) => (
+                                        <Star
+                                          key={s}
+                                          size={11}
+                                          fill={
+                                            s <= c.rating
+                                              ? "#FF7A00"
+                                              : "transparent"
+                                          }
+                                          stroke={
+                                            s <= c.rating
+                                              ? "#FF7A00"
+                                              : "#4b4b52"
+                                          }
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
+                                  {c?.text}
+                                </p>
+                                <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
+                                  <button
+                                    onClick={(e) => e.preventDefault()}
+                                    className="hover:text-white transition-colors"
+                                  >
+                                    Like
+                                  </button>
+                                  <button className="hover:text-white transition-colors">
+                                    Reply
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
                     </motion.div>
-                  ))
+
+                    {/* Show More / Show Less */}
+                    <div className="flex gap-3 justify-center mt-8 flex-wrap">
+                      {comments?.comments?.length > displayedCommentsCount && (
+                        <motion.button
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          onClick={() =>
+                            setDisplayedCommentsCount((prev) =>
+                              Math.min(prev + 4, comments.comments.length),
+                            )
+                          }
+                          className="px-6 py-2 rounded-lg border border-[#FF7A00]/40 bg-white/[0.02] hover:bg-white/[0.04] text-[#FF7A00] font-semibold uppercase text-[10px] tracking-wider transition-all duration-300 hover:border-[#FF7A00]/80"
+                        >
+                          Show More
+                        </motion.button>
+                      )}
+                      {displayedCommentsCount > 4 && (
+                        <motion.button
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          onClick={() => setDisplayedCommentsCount(4)}
+                          className="px-6 py-2 rounded-lg border border-gray-500/40 bg-white/[0.02] hover:bg-white/[0.04] text-gray-400 font-semibold uppercase text-[10px] tracking-wider transition-all duration-300 hover:border-gray-500/80"
+                        >
+                          Show Less
+                        </motion.button>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </motion.section>
           </div>
 
           {/* ── RIGHT COLUMN — TICKET CARD ── */}
-          <aside className="lg:col-span-5">
+          <aside className="order-1 lg:order-2 lg:col-span-5">
             <div className="lg:sticky lg:top-24 space-y-5">
-              {/* ── PHYSICAL TICKET STUB ── */}
+              {/* PHYSICAL TICKET STUB */}
               <motion.div
                 layout
                 initial={{ opacity: 0, y: 60 }}
@@ -646,7 +867,7 @@ const EventInfo = () => {
                     "linear-gradient(160deg, #141416 0%, #0e0e10 100%)",
                 }}
               >
-                {/* ── TICKET TOP BAND ── */}
+                {/* TICKET TOP BAND */}
                 <motion.div
                   key={ticketType}
                   initial={{ opacity: 0.8 }}
@@ -695,14 +916,14 @@ const EventInfo = () => {
                   </div>
                 </motion.div>
 
-                {/* ── TEAR LINE ── */}
+                {/* TEAR LINE */}
                 <div className="relative flex items-center">
                   <div className="w-5 h-5 rounded-full -ml-2.5 bg-[#080809] shrink-0" />
                   <div className="flex-1 border-t-2 border-dashed border-white/[0.07]" />
                   <div className="w-5 h-5 rounded-full -mr-2.5 bg-[#080809] shrink-0" />
                 </div>
 
-                {/* ── TICKET BODY ── */}
+                {/* TICKET BODY */}
                 <div className="px-8 py-7 space-y-6">
                   <div className="flex items-end justify-between">
                     <AnimatePresence mode="wait">
@@ -849,7 +1070,7 @@ const EventInfo = () => {
                   </div>
                 </div>
 
-                {/* ── BARCODE STUB ── */}
+                {/* BARCODE STUB */}
                 <div className="relative">
                   <div className="relative flex items-center">
                     <div className="w-5 h-5 rounded-full -ml-2.5 bg-[#080809] shrink-0" />
@@ -883,7 +1104,7 @@ const EventInfo = () => {
                 </div>
               </motion.div>
 
-              {/* ── TICKET TYPE DROPDOWN ── */}
+              {/* TICKET TYPE DROPDOWN */}
               <div className="relative">
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
@@ -952,18 +1173,15 @@ const EventInfo = () => {
                                     backgroundColor: tTheme?.accentColor,
                                   }}
                                 />
-
                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-white transition-colors">
                                   {t?.name}
                                 </span>
-
                                 {isActive && (
                                   <span className="text-[8px] font-black text-[#FF7A00] uppercase tracking-widest">
                                     ← Selected
                                   </span>
                                 )}
                               </div>
-
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-bold text-white">
                                   {t?.price} ETB
@@ -981,7 +1199,7 @@ const EventInfo = () => {
                 </AnimatePresence>
               </div>
 
-              {/* live badge */}
+              {/* LIVE BADGE */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

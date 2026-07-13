@@ -24,16 +24,17 @@
 [f] post an event too
 [f] when user post event the cap should go to the ticket schema so it can show the available number of tickets 
 [f] edit the routes to update the admin profile
-[] make the drop down of the admin side work with path
-[] instead of posting everytime they can keep it on draft and post it every time just changing the pictures and price
-[] make sure the error should be user friendly
+[f] make the drop down of the admin side work with path
+[f] instead of posting everytime they can keep it on draft and post it every time just changing the pictures and price
+[f] make sure the error should be user friendly
+[] add comment rating and show the ratings of the event
 [] make sure it save when they leave the site using useBlocker and when they exit the browser using beforeunload
-[] still creating event  every 3 second instead of updating it
+[f] still creating event  every 3 second instead of updating it
 // WHEN THE APP IS PUBLISHED 
 
 [] add the calendar and put all the event there is on that like a poster
 
-// so i add index to the ticket and to eventModel so it can index them with type
+
 
 
 src/
@@ -51,9 +52,3 @@ src/
 │   │
 │   └── ticket/
 │       └── ticketApi.js         → buyTicket, getUserTickets, cancelTicket
-
-
-
-
-
-When saveDraft sends a PATCH with status: "draft", what three things does the backend need to handle that the existing POST controller doesn't?

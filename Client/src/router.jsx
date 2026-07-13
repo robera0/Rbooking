@@ -40,6 +40,7 @@ import RegistrationPage from "../admin/RegistrationPage";
 import CompleteProfile from "../user/CompleteProfile";
 import { EventProvider } from "./Context/EventAdminContest";
 import { DashboardProvider } from "./Context/DashboardContext";
+import AdminSetting from "../admin/Setting";
 const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
   animate: { opacity: 1, y: 0, scale: 1 },
@@ -239,7 +240,7 @@ export const router = createBrowserRouter([
             path: "setting",
             element: (
               <PageWrapper>
-                <Setting />
+                <AdminSetting />
               </PageWrapper>
             ),
           },

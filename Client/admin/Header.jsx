@@ -8,34 +8,66 @@ import {
 import { useState } from "react";
 import { SearchInput } from "./Cards";
 import { AnimatePresence, motion } from "framer-motion";
-
+import { eventService } from "@/Context/ApiEvent";
+import { useNavigate } from "react-router-dom";
 // Single dropdown item
-export const Dropdown = ({ name, icon, isDanger }) => {
+export const Dropdown = ({ name, icon, isDanger, path }) => {
+  const navigate = useNavigate();
   return (
-    <button className={`group w-full px-4 py-3 flex items-center justify-start text-sm transition-colors border-b border-white/[0.04] space-x-3 cursor-pointer ${isDanger ? 'hover:bg-red-500/10' : 'hover:bg-white/[0.04]'}`}>
-      <div className={`${isDanger ? 'text-red-400 group-hover:text-red-500' : 'text-gray-400 group-hover:text-[#FF7A00]'}`}>{icon}</div>
-      <h1 className={`font-bold ${isDanger ? 'text-red-400 group-hover:text-red-500' : 'text-gray-300 group-hover:text-white'}`}>{name}</h1>
+    <button
+      onClick={() => navigate(path)}
+      className={`group w-full px-4 py-3 flex items-center justify-start text-sm transition-colors border-b border-white/[0.04] space-x-3 cursor-pointer ${
+        isDanger ? "hover:bg-red-500/10" : "hover:bg-white/[0.04]"
+      }`}
+    >
+      <div
+        className={`${
+          isDanger
+            ? "text-red-400 group-hover:text-red-500"
+            : "text-gray-400 group-hover:text-[#FF7A00]"
+        }`}
+      >
+        {icon}
+      </div>
+      <h1
+        className={`font-bold ${
+          isDanger
+            ? "text-red-400 group-hover:text-red-500"
+            : "text-gray-300 group-hover:text-white"
+        }`}
+      >
+        {name}
+      </h1>
     </button>
   );
 };
 
 const Header = () => {
   const [drop, setDrop] = useState(false);
+  const { userProfile } = eventService();
+  const userName =
+    [userProfile?.user?.firstName, userProfile?.user?.lastName]
+      .filter(Boolean)
+      .join(" ") || "Your Name";
+  const userEmail = userProfile?.user?.userId?.email || "";
 
+  const userRole = userProfile?.role || "Admin";
   return (
     <div className="w-full h-20 bg-[#121417]/95 backdrop-blur-md flex items-center justify-between px-6 md:px-10 sticky top-0 z-40 border-b border-white/[0.06]">
       {/* Search bar */}
       <div className="flex-1 max-w-xl pr-6">
-        <SearchInput
-          placeholder="Search bookings, salons..."
-        />
+        <SearchInput placeholder="Search bookings, salons..." />
       </div>
 
       {/* Right side: notifications, language, profile */}
       <div className="flex items-center space-x-6 md:space-x-8">
         {/* Notification */}
         <button className="relative p-2 text-gray-400 hover:text-white transition-colors group">
-          <Bell strokeWidth={2.5} size={22} className="group-hover:text-[#FF7A00]" />
+          <Bell
+            strokeWidth={2.5}
+            size={22}
+            className="group-hover:text-[#FF7A00]"
+          />
           <div className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center bg-[#FF7A00] rounded-full shadow-lg shadow-[#FF7A00]/40">
             <p className="font-bold text-black text-[9px] leading-none">12</p>
           </div>
@@ -61,12 +93,22 @@ const Header = () => {
 
             {/* Name */}
             <div className="hidden md:flex flex-col items-start bg-transparent text-left">
-              <span className="text-white text-sm font-bold leading-tight">Velvet Admin</span>
-              <span className="text-[#FF7A00] text-[10px] font-black uppercase tracking-widest leading-tight">Master</span>
+              <span className="text-white text-sm font-bold leading-tight">
+                {userName || "Admin User"}
+              </span>
+              <span className="text-[#FF7A00] text-[10px] font-black uppercase tracking-widest leading-tight">
+                {userRole}
+              </span>
             </div>
 
             {/* Chevron */}
-            <ChevronDown strokeWidth={2.5} size={16} className={`text-gray-400 transition-transform ${drop ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              strokeWidth={2.5}
+              size={16}
+              className={`text-gray-400 transition-transform ${
+                drop ? "rotate-180" : ""
+              }`}
+            />
           </button>
 
           {/* Dropdown menu */}
@@ -80,9 +122,20 @@ const Header = () => {
                 transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
                 className="absolute top-full right-0 mt-3 w-56 bg-[#1C1F22] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 origin-top-right"
               >
-                <Dropdown icon={<UserRoundCog size={18} strokeWidth={2.5} />} name="Manage Account" />
-                <Dropdown icon={<KeyRound size={18} strokeWidth={2.5} />} name="Security Settings" />
-                <Dropdown icon={<RotateCcw size={18} strokeWidth={2.5} />} name="Activity Log" />
+                <Dropdown
+                  icon={<UserRoundCog size={18} strokeWidth={2.5} />}
+                  name="Manage Account"
+                  path="/admin/profile"
+                />
+                <Dropdown
+                  icon={<KeyRound size={18} strokeWidth={2.5} />}
+                  name="Security Settings"
+                  path="/admin/setting"
+                />
+                <Dropdown
+                  icon={<RotateCcw size={18} strokeWidth={2.5} />}
+                  name="Activity Log"
+                />
               </motion.div>
             )}
           </AnimatePresence>

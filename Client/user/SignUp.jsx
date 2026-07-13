@@ -10,7 +10,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { Toaster, toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
@@ -101,7 +101,7 @@ const SignUp = () => {
   if (!roleSelection) {
     return (
       <div className="w-full flex flex-col items-center pt-8 px-6">
-        <Toaster />
+
         <div className="text-white w-full flex flex-col items-center justify-center mb-10">
           <h1 className="text-2xl font-semibold mb-2">Join Paysso</h1>
           <p className="text-[#808080] text-center text-sm">
@@ -159,7 +159,7 @@ const SignUp = () => {
   // If user is selected, show the User Registration Form
   return (
     <>
-      <Toaster />
+
       <div className="text-white w-full h-[98px] flex flex-col items-center justify-center pt-8 relative">
         <button
           onClick={() => setRoleSelection(null)}

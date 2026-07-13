@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { EyeOff, Eye, Loader2, ArrowRight } from "lucide-react";
 import { useService } from "@/Context/ServiceContext";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 
 const LoginUser = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const LoginUser = () => {
       if (data.message === "Logged in successfully") {
         setIsLoggedIn(true);
         queryClient.invalidateQueries({ queryKey: ["user"] });
+        toast.success("Logged in successfully");
         if (data.role == "admin") return navigate("/dashboard");
         navigate(from, { replace: true });
       }

@@ -28,7 +28,7 @@ adminRouter.put("/users/:userId", authenticateTokenMiddleware, updateUser);
 adminRouter.post("/users/delete", authenticateTokenMiddleware, deleteUsers);
 adminRouter.post("/users/suspend", authenticateTokenMiddleware, suspendUsers);
 
-adminRouter.post("/events/delete", authenticateTokenMiddleware, deleteEvents);
+adminRouter.delete("/events/delete", authenticateTokenMiddleware, deleteEvents);
 adminRouter.post(
   "/addEvents",
   authenticateTokenMiddleware,

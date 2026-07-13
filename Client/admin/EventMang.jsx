@@ -1,4 +1,4 @@
-import { Plus, Funnel, Search as SearchIcon } from "lucide-react";
+import { Plus, Funnel } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EventTable, SearchInput, CustomSelect } from "./Cards";
 import { useState } from "react";

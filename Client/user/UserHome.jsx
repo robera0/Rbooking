@@ -26,7 +26,7 @@ import {
 } from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -208,13 +208,6 @@ const UserHome = () => {
         className="relative w-full px-6 lg:px-10 pt-10 lg:pt-20 pb-24 flex flex-col lg:flex-row items-center gap-12 max-w-[1380px] mx-auto z-10"
       >
         <div className="w-full lg:w-1/2 space-y-6">
-          <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-[#FF7A00] text-[8px] font-black uppercase tracking-[0.3em]">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF7A00] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#FF7A00]"></span>
-            </span>
-            Live in your city
-          </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl  tracking-tighter leading-[0.85] uppercase ">
             DON'T JUST <br /> WATCH. <br />{" "}
             <span className="text-[#FF7A00]">BE THERE.</span>

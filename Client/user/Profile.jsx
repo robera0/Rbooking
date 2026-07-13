@@ -14,18 +14,18 @@ import {
 import { eventService } from "@/Context/ApiEvent";
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useState, useRef, useEffect } from "react";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
 /* ─────────────────── design tokens ─────────────────── */
-const SURFACE = "bg-[#111214]";
-const BORDER = "border-[#1f2023]";
+const SURFACE = "bg-[var(--color-surface)]";
+const BORDER = "border-[color:var(--color-muted-border)]";
 const INPUT_BASE =
-  "w-full bg-[#18191c] border border-[#262729] hover:border-[#35373b] focus:border-[#FF7A00]/70 focus:ring-2 focus:ring-[#FF7A00]/10 text-[#f4f4f5] px-3.5 py-2.5 rounded-xl outline-none transition-all duration-200 placeholder:text-[#4b4d52] text-[13.5px] font-normal";
+  "w-full bg-[var(--color-surface-elevated)] border border-[color:var(--color-muted-border)] hover:border-[color:var(--color-muted-border)] focus:border-[color:var(--color-brand)]/70 focus:ring-2 focus:ring-[color:var(--color-brand)]/10 text-[var(--color-text-primary)] px-3.5 py-2.5 rounded-xl outline-none transition-all duration-200 placeholder:text-[color:var(--color-text-secondary)] text-[13.5px] font-normal";
 const LABEL_BASE =
-  "block text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider mb-1.5";
+  "block text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5";
 
 /* ─────────────────── SVG Completion Ring ─────────────────── */
 const CompletionRing = ({ progress, size = 96, stroke = 4 }) => {
@@ -316,20 +316,8 @@ const Profile = () => {
   return (
     <div
       className="min-h-screen text-[#f4f4f5] antialiased"
-      style={{ background: "#0c0d0e" }}
+      style={{ background: "var(--color-deep-bg)" }}
     >
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: "#18191c",
-            color: "#f4f4f5",
-            border: "1px solid #262729",
-            fontSize: "13px",
-          },
-        }}
-      />
-
       {/* dot grid */}
       <div
         className="fixed inset-0 pointer-events-none"
@@ -346,7 +334,7 @@ const Profile = () => {
         <div className="h-full w-full bg-gradient-to-r from-[#FF7A00]/60 via-[#FF7A00]/10 to-transparent" />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-5 lg:px-8 pt-10 pb-24">
+      <div className="relative z-10 max-w-5xl mx-auto px-5 lg:px-8 pt-8 pb-8 md:pb-10 mb-0">
         {/* ════════ HERO HEADER ════════ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -18,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
 import { renderTableSkeleton } from "./../src/components/Reusable";
 import { useAdminEventService } from "@/Context/EventAdminContest";
+import { Toaster } from "react-hot-toast";
 export const Cards = ({
   header,
   num,
@@ -28,14 +29,15 @@ export const Cards = ({
   daily_diff,
   border,
 }) => {
+  
   const loading = !header || !num;
   if (loading) {
     return (
-      <div className="w-full h-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl animate-pulse min-h-[160px]"></div>
+      <div className="w-full h-full app-surface border border-white/[0.04] rounded-[2rem] p-6 shadow-xl animate-pulse min-h-[160px]"></div>
     );
   }
   return (
-    <div className="w-full min-w-[240px] flex-1 bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl hover:shadow-[#FF7A00]/5 hover:border-white/[0.1] transition-all duration-300 group">
+    <div className="w-full min-w-[240px] flex-1 app-surface border border-white/[0.04] rounded-[2rem] p-6 shadow-xl hover:shadow-[#FF7A00]/5 hover:border-white/[0.1] transition-all duration-300 group">
       <div className="flex justify-between items-start mb-4">
         <div className="space-y-1">
           <h3 className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -57,14 +59,14 @@ export const Cards = ({
       <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/[0.04]">
         <div
           className={
-            percent_change?.includes("-") ? "text-red-500" : "text-[#5EC750]"
+            percent_change?.includes("-") ? "text-red-500" : "app-success"
           }
         >
           {bottomIcon}
         </div>
         <p
           className={`text-[10px] font-black tracking-widest ${
-            percent_change?.includes("-") ? "text-red-500" : "text-[#5EC750]"
+            percent_change?.includes("-") ? "text-red-500" : "app-success"
           }`}
         >
           {percent_change}
@@ -97,7 +99,7 @@ export const SearchInput = ({
         />
       </button>
       <input
-        className={`w-full ${h} pl-12 md:pl-14 pr-6 bg-[#1A1D20] text-white font-bold text-xs md:text-sm rounded-[1.5rem] md:rounded-full border border-white/[0.06] focus:border-[#FF7A00]/50 outline-none transition-all placeholder:text-gray-600`}
+        className={`w-full ${h} pl-12 md:pl-14 pr-6 bg-[var(--color-surface-elevated)] text-white font-bold text-xs md:text-sm rounded-[1.5rem] md:rounded-full border border-white/[0.06] focus:border-[#FF7A00]/50 outline-none transition-all placeholder:text-gray-600`}
         placeholder={placeholder}
         type="text"
         value={value}
@@ -170,21 +172,25 @@ export const EventTable = ({ search = "", filter = "" }) => {
     useAdminEventService();
   const navigate = useNavigate();
 
-  const handleSelect = (id) => {
-    if (selected.includes(id)) {
-      setSelected(selected?.filter((item) => item !== id));
+  const getRowKey = (ev, idx) => ev?._id || `row-${idx}`;
+
+  const handleSelect = (key) => {
+    if (!key) return;
+    if (selected.includes(key)) {
+      setSelected(selected.filter((item) => item !== key));
     } else {
-      setSelected([...selected, id]);
+      setSelected([...selected, key]);
     }
   };
 
   const handleSelectAll = (e) => {
     if (e?.target?.checked) {
-      setSelected(filteredEvents?.map((ev) => ev?._id));
+      setSelected(filteredEvents?.map((ev, idx) => getRowKey(ev, idx)));
     } else {
       setSelected([]);
     }
   };
+
   const filteredEvents = events?.filter((ev) => {
     const matchesSearch =
       ev?.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -195,6 +201,12 @@ export const EventTable = ({ search = "", filter = "" }) => {
       : true;
     return matchesSearch && matchesFilter;
   });
+
+  const allSelected =
+    (filteredEvents?.length ?? 0) > 0 &&
+    filteredEvents.every((ev, idx) => selected.includes(getRowKey(ev, idx)));
+
+  const someSelected = selected.length > 0 && !allSelected;
 
   return (
     <div className="w-full">
@@ -222,11 +234,11 @@ export const EventTable = ({ search = "", filter = "" }) => {
               <input
                 type="checkbox"
                 className="w-4 h-4 accent-[#FF7A00] cursor-pointer"
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSelected;
+                }}
                 onChange={handleSelectAll}
-                checked={
-                  selected.length === filteredEvents?.length &&
-                  filteredEvents?.length > 0
-                }
               />
             </th>
             <th className="px-6 py-4 w-[200px] text-white font-bold uppercase tracking-wider text-[10px]">
@@ -257,57 +269,81 @@ export const EventTable = ({ search = "", filter = "" }) => {
               </td>
             </tr>
           )}
-          {filteredEvents?.map((item, idx) => (
-            <tr
-              key={item?._id || idx}
-              className={`border-b border-white/[0.04] transition-colors ${
-                selected.includes(item?._id)
-                  ? "bg-red-500/[0.05] border-l-2 border-l-red-500"
-                  : "bg-transparent hover:bg-white/[0.02]"
-              }`}
-            >
-              <td className="px-6 py-4 text-center">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 accent-[#FF7A00] cursor-pointer"
-                  checked={selected.includes(item?._id)}
-                  onChange={() => handleSelect(item?._id)}
-                />
-              </td>
-              <td className="px-6 py-4 border-gray-300">
-                <h1 className="text-sm text-white font-bold truncate w-40">
-                  {item?.name}
-                </h1>
-                <p className="text-[10px] text-[#FF7A00] uppercase tracking-widest mt-1">
-                  {item?.type || "Concert"}
-                </p>
-              </td>
-              <td className="px-6 py-4 text-center font-bold">
-                {item?.links?.venues?.name || item?.locale || "N/A"}
-              </td>
-              <td className="px-6 py-4 text-center font-bold text-gray-400">
-                {item?.dates?.start?.localDate || "N/A"}
-              </td>
-              <td className="px-6 py-4 text-center">
-                <div className="w-full h-8 flex justify-center items-center bg-[#5EC750]/10 border border-[#5EC750]/20 rounded-md">
-                  <h1 className="text-[#5EC750] font-black text-[10px] uppercase tracking-widest">
-                    Active
-                  </h1>
+          {!isLoading && !filteredEvents?.length && (
+            <tr>
+              <td colSpan="7" className="px-6 py-10">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.02] py-10 text-center">
+                  <p className="text-sm font-semibold text-white">
+                    No event created.
+                  </p>
+                  <p className="mt-2 text-sm text-gray-400">
+                    Create your first event to get started.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/admin/events/add")}
+                    className="mt-4 rounded-full app-brand-bg px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white"
+                  >
+                    Create Event
+                  </button>
                 </div>
               </td>
-              <td className="px-6 py-4 text-center font-black text-white">
-                {item?.ticketCount || 0}
-              </td>
-              <td className="px-6 py-4 text-center">
-                <button
-                  onClick={() => navigate(`/admin/events/${item?._id}`)}
-                  className="text-gray-400 hover:text-[#FF7A00] font-black uppercase text-[10px] tracking-widest transition-colors"
-                >
-                  Manage
-                </button>
-              </td>
             </tr>
-          ))}
+          )}
+          {filteredEvents?.map((item, idx) => {
+            const rowKey = getRowKey(item, idx);
+            return (
+              <tr
+                key={rowKey}
+                className={`border-b border-white/[0.04] transition-colors ${
+                  selected.includes(rowKey)
+                    ? "bg-red-500/[0.05] border-l-2 border-l-red-500"
+                    : "bg-transparent hover:bg-white/[0.02]"
+                }`}
+              >
+                <td className="px-6 py-4 text-center">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-[#FF7A00] cursor-pointer"
+                    checked={selected.includes(rowKey)}
+                    onChange={() => handleSelect(rowKey)}
+                  />
+                </td>
+                <td className="px-6 py-4 border-gray-300">
+                  <h1 className="text-sm text-white font-bold truncate w-40">
+                    {item?.name}
+                  </h1>
+                  <p className="text-[10px] text-[#FF7A00] uppercase tracking-widest mt-1">
+                    {item?.type || "Concert"}
+                  </p>
+                </td>
+                <td className="px-6 py-4 text-center font-bold">
+                  {item?.links?.venues?.name || item?.locale || "N/A"}
+                </td>
+                <td className="px-6 py-4 text-center font-bold text-gray-400">
+                  {item?.dates?.start?.localDate || "N/A"}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="w-full h-8 flex justify-center items-center app-success-soft app-success-border rounded-md border">
+                    <h1 className="app-success font-black text-[10px] uppercase tracking-widest">
+                      Active
+                    </h1>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-center font-black text-white">
+                  {item?.ticketCount || 0}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <button
+                    onClick={() => navigate(`/admin/events/${item?._id}`)}
+                    className="text-gray-400 hover:text-[#FF7A00] font-black uppercase text-[10px] tracking-widest transition-colors"
+                  >
+                    Manage
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -352,15 +388,18 @@ export const TicketTable = ({ search = "", filter = "" }) => {
     return matchesSearch && matchesFilter;
   });
 
-  const handleSelect = (id) => {
+  const getRowKey = (txn, idx) => txn._id || `row-${idx}`;
+
+  const handleSelect = (key) => {
+    if (!key) return;
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key],
     );
   };
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelected(filteredTransactions.map((txn) => txn._id));
+      setSelected(filteredTransactions.map((txn, idx) => getRowKey(txn, idx)));
     } else {
       setSelected([]);
     }
@@ -368,7 +407,11 @@ export const TicketTable = ({ search = "", filter = "" }) => {
 
   const allSelected =
     filteredTransactions.length > 0 &&
-    filteredTransactions.every((txn) => selected.includes(txn._id));
+    filteredTransactions.every((txn, idx) =>
+      selected.includes(getRowKey(txn, idx)),
+    );
+
+  const someSelected = selected.length > 0 && !allSelected;
 
   const statusStyles = {
     pending: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
@@ -386,6 +429,9 @@ export const TicketTable = ({ search = "", filter = "" }) => {
               type="checkbox"
               className="w-4 h-4 accent-[#FF7A00] cursor-pointer"
               checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = someSelected;
+              }}
               onChange={handleSelectAll}
             />
           </th>
@@ -428,15 +474,16 @@ export const TicketTable = ({ search = "", filter = "" }) => {
           </tr>
         )}
         {filteredTransactions.map((txn, idx) => {
+          const rowKey = getRowKey(txn, idx);
           const userObj = txn.user?.[0];
           const ticket = txn.ticket;
           const event = txn.event;
           const status = txn.status?.toLowerCase() || "pending";
-          const isSelected = selected.includes(txn._id);
+          const isSelected = selected.includes(rowKey);
 
           return (
             <tr
-              key={txn._id || idx}
+              key={rowKey}
               className={`border-b border-white/[0.04] transition-colors ${
                 isSelected
                   ? "bg-[#FF7A00]/[0.04] border-l-2 border-l-[#FF7A00]"
@@ -449,7 +496,7 @@ export const TicketTable = ({ search = "", filter = "" }) => {
                   type="checkbox"
                   className="w-4 h-4 accent-[#FF7A00] cursor-pointer"
                   checked={isSelected}
-                  onChange={() => handleSelect(txn._id)}
+                  onChange={() => handleSelect(rowKey)}
                 />
               </td>
 
