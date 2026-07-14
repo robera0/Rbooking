@@ -27,7 +27,6 @@ import {
   Users,
   Sparkles,
   XCircle,
-  Ticket,
   Award,
   Gem,
 } from "lucide-react";
@@ -691,10 +690,7 @@ export const EditMenu = ({ header, options, placeholder }) => {
                 >
                   {({ selected }) => (
                     <div className="flex items-center justify-between w-full">
-                      <span className="mr-8">
-                        {" "}
-                        {selected && { option }?.value}
-                      </span>
+                      <span className="mr-8">{option.value}</span>
                     </div>
                   )}
                 </Listbox.Option>
@@ -780,7 +776,7 @@ export const NotificationSidebar = ({ setIsOpen }) => {
             Updates
           </h2>
           <span className="bg-[#FF7A00] text-black text-[10px] font-black px-2 py-0.5 rounded-full">
-            {notifications?.len}
+            {notifications?.length}
           </span>
         </div>
 
@@ -794,7 +790,7 @@ export const NotificationSidebar = ({ setIsOpen }) => {
 
       {/* Notifications List */}
       <div className="overflow-y-auto custom-scrollbar flex-1">
-        {notifications?.len > 0 ? (
+        {notifications?.length > 0 ? (
           <div className="divide-y divide-white/[0.03]">
             {notifications?.notifications?.map(
               (note, index) =>
@@ -959,7 +955,7 @@ export const AdminViewTicketSkeleton = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* Left — Transaction Record */}
+      {/* Left — Transaction Record (spans 2 columns) */}
       <div className="lg:col-span-2 space-y-8">
         <div className="rounded-[2rem] bg-[#1C1F22] border border-white/[0.04] overflow-hidden shadow-2xl">
           {/* Card header */}
@@ -976,11 +972,6 @@ export const AdminViewTicketSkeleton = () => {
               </div>
             ))}
           </div>
-        </Listbox>
-      </div>
-    </>
-  );
-};
 
           {/* Financials footer */}
           <div className="bg-[#151719] p-8 border-t border-white/[0.04] space-y-5">
@@ -1001,18 +992,8 @@ export const AdminViewTicketSkeleton = () => {
               <Bone className="h-3 w-44" />
               <Bone className="h-4 w-20" />
             </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-700">
-              No new alerts
-            </p>
           </div>
-        )}
-      </div>
-
-      {/* Footer Action */}
-      <div className="p-6 border-t border-white/[0.04] bg-[#0D0F11]">
-        <button className="w-full py-4 bg-white/[0.03] border border-white/[0.08] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-white hover:bg-white/10 transition-all">
-          Mark all as read
-        </button>
+        </div>
       </div>
 
       {/* Right column */}
