@@ -22,7 +22,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
-
+import { Link } from "react-router-dom";
 const inputStyle = {
   background: "rgba(255,255,255,0.05)",
   border: "1px solid rgba(255,255,255,0.08)",
@@ -365,7 +365,6 @@ const RegistrationPage = () => {
       className="min-h-screen flex items-center justify-center px-4 py-10"
       style={{ background: "#0c0d0e" }}
     >
-
       {/* Dot grid background */}
       <div
         className="fixed inset-0 pointer-events-none"
@@ -615,8 +614,8 @@ const RegistrationPage = () => {
                   ]}
                 />
               </div>
-
-              <div>
+              {/* 
+           <div>
                 <Label>Business Registration Number</Label>
                 <FieldInput
                   icon={FileBadge2}
@@ -643,6 +642,7 @@ const RegistrationPage = () => {
                   placeholder="Tax reference"
                 />
               </div>
+  */}
             </div>
           </section>
 
@@ -817,13 +817,14 @@ const RegistrationPage = () => {
                   label: (
                     <>
                       I accept the{" "}
-                      <a
-                        href="#"
+                      <Link
+                        to="/termsAndConditions"
+                        onClick={(e) => e.stopPropagation()}
                         style={{ color: "#FF7A00" }}
                         className="font-bold hover:underline"
                       >
                         Terms & Conditions
-                      </a>{" "}
+                      </Link>{" "}
                       for organizing events on this platform.{" "}
                       <span style={{ color: "#f87171" }}>*</span>
                     </>
@@ -837,6 +838,7 @@ const RegistrationPage = () => {
                       I agree to the{" "}
                       <a
                         href="#"
+                        onClick={(e) => e.stopPropagation()}
                         style={{ color: "#FF7A00" }}
                         className="font-bold hover:underline"
                       >

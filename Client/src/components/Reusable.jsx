@@ -1082,22 +1082,7 @@ export const ticketThemes = {
     shadowColor: "rgba(204,85,0,0.25)",
     statusColor: "text-orange-800 bg-orange-100 border-orange-300",
   },
-  premium: {
-    bandGradient:
-      "linear-gradient(120deg, #9333EA 0%, #A855F7 60%, #C084FC 100%)",
-    ctaGradient:
-      "linear-gradient(135deg, #9333EA 0%, #A855F7 50%, #9333EA 100%)",
-    accentColor: "#A855F7",
-    label: "Premium",
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-300",
-    textColor: "text-purple-900",
-    labelBg: "bg-purple-100",
-    icon: Gem,
-    iconColor: "text-purple-600",
-    shadowColor: "rgba(147,51,234,0.20)",
-    statusColor: "text-purple-800 bg-purple-100 border-purple-300",
-  },
+
   soldout: {
     bandGradient:
       "linear-gradient(120deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%)",

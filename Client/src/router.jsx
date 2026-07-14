@@ -41,6 +41,7 @@ import CompleteProfile from "../user/CompleteProfile";
 import { EventProvider } from "./Context/EventAdminContest";
 import { DashboardProvider } from "./Context/DashboardContext";
 import AdminSetting from "../admin/Setting";
+import TermsAndConditions from "../admin/TermsAndConditions";
 const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
   animate: { opacity: 1, y: 0, scale: 1 },
@@ -130,6 +131,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "termsAndConditions",
+        element: (
+          <PageWrapper>
+            <TermsAndConditions />
+          </PageWrapper>
+        ),
+      },
+      {
         path: "admin",
         element: <Home />,
         children: [
@@ -154,6 +163,7 @@ export const router = createBrowserRouter([
               </PageWrapper>
             ),
           },
+
           {
             path: "events/add",
             element: (
