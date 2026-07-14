@@ -483,7 +483,11 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
           <div className="relative">
             <div className="absolute inset-0 bg-[#FF7A00]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             <img
-              src={userProfile?.user?.avatarUrl || "/Login.jpg"}
+              src={userProfile?.user?.avatarUrl || "/defaultAvater.jpg"}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/defaultAvater.jpg";
+              }}
               alt="Profile"
               className="relative w-24 h-24 rounded-[32px] object-cover border-2 border-white/10 shadow-2xl group-hover:border-[#FF7A00]/50 transition-all duration-500"
             />

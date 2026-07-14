@@ -17,7 +17,7 @@ import {
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { useService } from "@/Context/ServiceContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 const Events = () => {
   const {
@@ -94,7 +94,7 @@ const Events = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#121417] text-white overflow-hidden pb-32">
-      <Toaster position="top-center" />
+
 
       <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-[#FF7A00]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
       <div className="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-white/[0.02] blur-[140px] rounded-full pointer-events-none -z-10" />

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { CustomSelect } from "./Cards";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
@@ -695,8 +695,7 @@ const AddEvent = () => {
       draftIdRef.current = data?.event?._id;
       return data;
     } catch (err) {
-      console.error("Draft save error:", err);
-      toast.error(getFriendlyErrorMessage(err));
+      console.error("Draft save error:", err); 
       return null;
     }
   };

@@ -7,7 +7,7 @@ const TicketSchema = new mongoose.Schema({
     required: true,
   },
   name: {
-    type: String, // ← "VIP", "Standard", "Early Bird" etc
+    type: String, 
     required: true,
   },
   totalQuantity: {

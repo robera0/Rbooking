@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
@@ -257,7 +257,6 @@ const RegistrationPage = () => {
       className="min-h-screen flex items-center justify-center px-4 py-10"
       style={{ background: "#0c0d0e" }}
     >
-      <Toaster />
 
       {/* Dot grid background */}
       <div

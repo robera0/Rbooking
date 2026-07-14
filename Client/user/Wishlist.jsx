@@ -11,7 +11,6 @@ import {
   Trash2,
   ArrowRight,
 } from "lucide-react";
-import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 import { eventService } from "../src/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
@@ -105,7 +104,7 @@ const Wishlist = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12 lg:py-20">
-      <Toaster position="top-center" />
+
 
       {/* ── HEADER ── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 px-4">

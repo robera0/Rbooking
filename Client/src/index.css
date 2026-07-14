@@ -19,6 +19,40 @@
   .font-popins {
     font-family: "Poppins", sans-serif;
   }
+
+  .app-surface {
+    background-color: var(--color-surface);
+  }
+  .app-surface-elevated {
+    background-color: var(--color-surface-elevated);
+  }
+  .app-border {
+    border-color: var(--color-muted-border);
+  }
+  .app-text-primary {
+    color: var(--color-text-primary);
+  }
+  .app-text-secondary {
+    color: var(--color-text-secondary);
+  }
+  .app-brand {
+    color: var(--color-brand);
+  }
+  .app-brand-bg {
+    background-color: var(--color-brand);
+  }
+  .app-brand-soft {
+    background-color: var(--color-brand-soft);
+  }
+  .app-success {
+    color: var(--color-success);
+  }
+  .app-success-soft {
+    background-color: var(--color-success-soft);
+  }
+  .app-success-border {
+    border-color: var(--color-success-border);
+  }
 }
 
 .file-input {
@@ -149,6 +183,21 @@ input.no-spinner[type="number"] {
 }
 
 :root {
+  /* ── App brand / surface tokens ── */
+  --color-brand: #ff7a00;
+  --color-brand-soft: rgba(255, 122, 0, 0.12);
+  --color-surface: #1c1f22;
+  --color-surface-elevated: #1a1d20;
+  --color-surface-input: #1a1d20;
+  --color-deep-bg: #121417;
+  --color-success: #5ec750;
+  --color-success-soft: rgba(94, 199, 80, 0.1);
+  --color-success-border: rgba(94, 199, 80, 0.2);
+  --color-danger: #ef4444;
+  --color-text-primary: #f4f4f5;
+  --color-text-secondary: #6b7280;
+  --color-muted-border: rgba(255, 255, 255, 0.06);
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

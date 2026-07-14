@@ -9,8 +9,6 @@ import {
   CircleUser,
   House,
   Ticket,
-  Search,
-  MapPin,
   User,
 } from "lucide-react";
 
@@ -21,14 +19,13 @@ import {
 } from "../src/components/Reusable";
 
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-
 import { useService } from "../src/Context/ServiceContext";
-
 import { Link, useLocation, Outlet } from "react-router-dom";
 import { eventService } from "@/Context/ApiEvent";
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+
 const Main = () => {
   const {
     isAccountActive,
@@ -57,7 +54,6 @@ const Main = () => {
         method: "POST",
         credentials: "include",
       });
-
       queryClient.clear();
       window.location.href = "/login";
     } catch (error) {
@@ -69,6 +65,18 @@ const Main = () => {
   const openMenu = useCallback((minimal = false) => {
     setIsMinimalMenu(minimal);
     setActiveOverlay("menu");
+  }, []);
+
+  const openNotification = useCallback(() => {
+    setActiveOverlay("notification");
+  }, []);
+
+  const closeOverlay = useCallback(() => {
+    setActiveOverlay(null);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   const DropdownItem = ({ icon, label, path }) => (
@@ -89,48 +97,48 @@ const Main = () => {
     </Link>
   );
 
-  const openNotification = useCallback(() => {
-    setActiveOverlay("notification");
-  }, []);
-
-  const closeOverlay = useCallback(() => {
-    setActiveOverlay(null);
-  }, []);
-
   /* ESC KEY SUPPORT */
-
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === "Escape") {
-        closeOverlay();
-      }
+      if (e.key === "Escape") closeOverlay();
     };
-
     window.addEventListener("keydown", handleEsc);
-
     return () => window.removeEventListener("keydown", handleEsc);
   }, [closeOverlay]);
 
   /* ---------------- FOOTER DATA ---------------- */
-
   const currentYear = new Date().getFullYear();
+
+  const profileImageSrc = useMemo(
+    () => userProfile?.pictures?.[0] || "/defaultAvater.jpg",
+    [userProfile?.pictures],
+  );
 
   const footerSections = useMemo(
     () => [
       {
         title: "Discover",
-        links: ["Events", "Venues", "Artists", "Festivals"],
+        links: [
+          { label: "Events", path: "/event" },
+          { label: "Venues", path: "/venues" },
+          { label: "Artists", path: "/artists" },
+          { label: "Festivals", path: "/event?type=festival" },
+        ],
       },
       {
         title: "Company",
-        links: ["Our Story", "Careers", "Press"],
+        links: [
+          { label: "Our Story", path: "/about" },
+          { label: "Careers", path: "/careers" },
+          { label: "Press", path: "/press" },
+        ],
       },
       {
         title: "Support",
         links: [
-          { label: "Help Center" },
-          { label: "Contact Us" },
-          { label: "Terms" },
+          { label: "Help Center", path: "/help" },
+          { label: "Contact Us", path: "/contact" },
+          { label: "Terms", path: "/terms" },
         ],
       },
     ],
@@ -141,19 +149,21 @@ const Main = () => {
     <LayoutGroup>
       <div className="relative min-h-screen w-full bg-[#121417] text-white flex flex-col overflow-x-hidden">
         {/* ================= HEADER ================= */}
-
         <header className="sticky top-0 z-[80] border-b border-white/[0.04] bg-[#121417]/90 backdrop-blur-xl">
           <div className="max-w-[1536px] mx-auto flex items-center justify-between px-6 py-3 lg:px-12">
             {/* Logo */}
-
-            <Link to="/" className="group">
-              <h1 className="text-2xl lg:text-3xl font-black italic uppercase tracking-tight group-hover:text-[#FF7A00] transition">
+            <Link to="/" className="group flex items-center gap-3">
+              <img
+                src="/P_logo.png"
+                alt="Paysso logo"
+                className="h-8 w-8 object-contain"
+              />
+              <span className="hidden sm:inline text-2xl lg:text-3xl font-black italic uppercase tracking-tight group-hover:text-[#FF7A00] transition">
                 Paysso
-              </h1>
+              </span>
             </Link>
 
             {/* Desktop Nav */}
-
             <nav className="hidden md:flex gap-10">
               {[
                 { label: "Explore", path: "/event" },
@@ -184,7 +194,6 @@ const Main = () => {
             </nav>
 
             {/* Actions */}
-
             <div className="flex items-center gap-6">
               {/* Notification */}
               {user && (
@@ -193,7 +202,6 @@ const Main = () => {
                   className="relative text-gray-500 hover:text-[#FF7A00] transition"
                 >
                   <Bell size={20} />
-
                   <span
                     className={`absolute top-1 right-1 w-2 h-2 bg-[#FF7A00] ${
                       notifications?.len > 0 ? "animate-ping" : "hidden"
@@ -208,7 +216,7 @@ const Main = () => {
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
               >
-                {/* Mobile Menu Trigger (Hamburger) */}
+                {/* Mobile Menu Trigger */}
                 <button
                   onClick={() => openMenu(false)}
                   className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.03] border border-white/10 text-gray-400"
@@ -216,14 +224,18 @@ const Main = () => {
                   <Menu size={22} />
                 </button>
 
-                {/* Profile Link (Avatar) - On desktop moves to Profile Page, on mobile shows full menu */}
+                {/* Profile Avatar */}
                 <Link
                   to="/account"
                   className="w-10 h-10 rounded-full overflow-hidden border border-white/10 hover:border-[#FF7A00] transition-colors bg-white/[0.02]"
                 >
                   <img
-                    src={userProfile?.pictures?.[0] || "/userdefault.webp"}
+                    src={profileImageSrc}
                     alt="Profile"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/Login.jpg";
+                    }}
                     className="w-full h-full object-cover"
                   />
                 </Link>
@@ -301,38 +313,50 @@ const Main = () => {
         </header>
 
         {/* ================= CONTENT ================= */}
-
         <main className="flex-1 flex flex-col">
           <div className="flex-1 pb-20 md:pb-0">
             <Outlet />
           </div>
 
           {/* ================= FOOTER ================= */}
-
           <footer className="border-t border-white/[0.04] bg-[#0D0F11] py-20">
             <div className="max-w-[1536px] mx-auto px-6 lg:px-12 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-16">
+              {/* Brand */}
               <div className="col-span-2 space-y-6">
-                <h2 className="text-3xl font-black italic uppercase">Paysso</h2>
-
+                <Link
+                  to="/"
+                  onClick={scrollToTop}
+                  className="group flex items-center gap-3 w-fit"
+                >
+                  <img
+                    src="/P_logo.png"
+                    alt="Paysso logo"
+                    className="h-10 w-10 object-contain"
+                  />
+                  <span className="hidden sm:inline text-3xl font-black italic uppercase tracking-tight group-hover:text-[#FF7A00] transition">
+                    Paysso
+                  </span>
+                </Link>
                 <p className="text-gray-500 text-sm max-w-sm">
-                  The high-performance ticketing engine for live entertainment.
+                  The high performance ticketing engine for live entertainment.
                 </p>
               </div>
 
+              {/* Footer Link Sections — FIXED */}
               {footerSections.map((s) => (
                 <div key={s.title} className="space-y-4">
                   <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-gray-400">
                     {s.title}
                   </h4>
-
                   <div className="flex flex-col gap-3">
                     {s.links.map((l) => (
                       <Link
-                        key={typeof l === "string" ? l : l.label}
-                        to="#"
-                        className="text-[13px] font-bold text-gray-700 hover:text-[#FF7A00]"
+                        key={l.label}
+                        to={l.path}
+                        onClick={scrollToTop}
+                        className="text-[13px] font-bold text-gray-700 hover:text-[#FF7A00] transition-colors"
                       >
-                        {typeof l === "string" ? l : l.label}
+                        {l.label}
                       </Link>
                     ))}
                   </div>
@@ -340,25 +364,34 @@ const Main = () => {
               ))}
             </div>
 
+            {/* Bottom Bar */}
             <div className="max-w-[1536px] mx-auto px-6 lg:px-12 mt-16 pt-6 border-t border-white/[0.02] flex justify-between text-[10px] uppercase tracking-[0.2em] text-gray-600">
               <span>© {currentYear} Paysso</span>
-
               <div className="flex gap-6">
-                <Link to="#">Privacy</Link>
-
-                <Link to="#">Legal</Link>
+                <Link
+                  to="/privacy"
+                  onClick={scrollToTop}
+                  className="hover:text-[#FF7A00] transition-colors"
+                >
+                  Privacy
+                </Link>
+                <Link
+                  to="/legal"
+                  onClick={scrollToTop}
+                  className="hover:text-[#FF7A00] transition-colors"
+                >
+                  Legal
+                </Link>
               </div>
             </div>
           </footer>
         </main>
 
         {/* ================= OVERLAYS ================= */}
-
         <AnimatePresence>
           {activeOverlay && (
             <div className="fixed inset-0 z-[100]">
-              {/* Background */}
-
+              {/* Backdrop */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -368,7 +401,6 @@ const Main = () => {
               />
 
               {/* MENU */}
-
               {activeOverlay === "menu" && (
                 <motion.div
                   initial={
@@ -384,11 +416,7 @@ const Main = () => {
                       ? { opacity: 0, scale: 0.9, y: -20 }
                       : { x: "-100%" }
                   }
-                  transition={{
-                    type: "spring",
-                    damping: 30,
-                    stiffness: 300,
-                  }}
+                  transition={{ type: "spring", damping: 30, stiffness: 300 }}
                   className={
                     isMinimalMenu
                       ? "absolute top-20 right-6 w-72 bg-[#121417]/95 backdrop-blur-3xl border border-white/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden"
@@ -403,23 +431,13 @@ const Main = () => {
               )}
 
               {/* NOTIFICATION */}
-
               {activeOverlay === "notification" && (
                 <motion.div
                   initial={{ x: "100%" }}
                   animate={{ x: 0 }}
                   exit={{ x: "100%" }}
-                  transition={{
-                    type: "spring",
-                    damping: 30,
-                    stiffness: 200,
-                  }}
-                  className="absolute top-0 right-0 
-                             w-full 
-                             sm:w-[420px] 
-                             lg:w-[480px] 
-                             h-full 
-                             bg-[#121417]"
+                  transition={{ type: "spring", damping: 30, stiffness: 200 }}
+                  className="absolute top-0 right-0 w-full sm:w-[420px] lg:w-[480px] h-full bg-[#121417]"
                 >
                   <NotificationSidebar setIsOpen={closeOverlay} />
                 </motion.div>
@@ -429,7 +447,6 @@ const Main = () => {
         </AnimatePresence>
 
         {/* ================= MOBILE NAV ================= */}
-
         <AnimatePresence>
           {!isAccountActive && (
             <motion.div

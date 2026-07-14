@@ -16,7 +16,7 @@ import {
 import { CustomSelect } from "./Cards";
 import { useNavigate, useParams, useLoaderData } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
@@ -381,7 +381,6 @@ const EditEvent = () => {
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
-      <Toaster position="top-center" />
 
       {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">

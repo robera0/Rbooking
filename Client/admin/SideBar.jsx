@@ -91,11 +91,12 @@ const SideBar = ({ action }) => {
             icon={<UsersRound size={20} />}
           />
           {/*Setting */}
-          <SideMenu
+          {/* 
+              <SideMenu
             path="/admin/setting"
             name="Setting"
             icon={<Settings size={20} />}
-          />
+          />*/}
         </div>
         <div className="px-4 pb-8 mt-auto border-t border-white/[0.04] pt-4">
           {/*Logout */}

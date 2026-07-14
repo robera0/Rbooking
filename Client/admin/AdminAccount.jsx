@@ -26,7 +26,7 @@ import { CustomSelect } from "./Cards";
 import { eventService } from "@/Context/ApiEvent";
 import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 
@@ -82,12 +82,6 @@ const AdminAccount = () => {
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
-
-  const [hardwareKey, setHardwareKey] = useState(true);
-  const [biometric, setBiometric] = useState(false);
-  const [language, setLanguage] = useState("en");
-  const [timezone, setTimezone] = useState("eat");
-  const [emergencyBroadcasts, setEmergencyBroadcasts] = useState(true);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -297,28 +291,12 @@ const AdminAccount = () => {
 
   return (
     <div className="w-full max-w-full space-y-10 pb-20">
-      <Toaster position="top-right" />
 
       {/* Header */}
-      <div className="flex flex-wrap justify-between items-end mb-8 border-b border-white/[0.04] pb-8">
+      <div className=" items-end mb-8 border-b border-white/[0.04] pb-8">
         <h1 className="text-3xl md:text-5xl text-white uppercase tracking-tighter leading-none">
           Admin Infos
         </h1>
-        <div className="flex items-center gap-4 mt-6 md:mt-0">
-          <div className="text-right hidden md:block">
-            <p className="text-white font-black text-xs uppercase tracking-widest">
-              {userName}
-            </p>
-            <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
-              {userEmail}
-            </p>
-          </div>
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-orange-700 p-[2px]">
-            <div className="w-full h-full rounded-2xl bg-[#1C1F22] flex justify-center items-center font-black text-2xl text-white">
-              {userName?.[0]?.toUpperCase() || "A"}
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -390,8 +368,11 @@ const AdminAccount = () => {
                 onChange={handleFileChange}
               />
             </div>
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <p className="text-white font-black text-sm">{userName}</p>
+              <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
+                {userEmail}
+              </p>
               <p className="text-[#FF7A00] font-black text-[10px] uppercase tracking-widest mt-0.5">
                 {userOrg}
               </p>

@@ -10,7 +10,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { eventService } from "../src/Context/ApiEvent";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import moment from "moment";
@@ -127,16 +127,7 @@ const TicketHome = () => {
 
   return (
     <div className="relative min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-x-hidden">
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: "#111",
-            color: "#fff",
-            border: "1px solid rgba(255,122,0,0.3)",
-          },
-        }}
-      />
+
 
       {/* ambient orbs */}
       <div className="absolute w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none top-[-150px] left-[-150px] bg-[#FF7A00]/[0.07]" />
