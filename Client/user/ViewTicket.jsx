@@ -15,6 +15,8 @@ import {
   Loader2,
 } from "lucide-react";
 import moment from "moment";
+import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+import { useService } from "@/Context/ServiceContext";
 
 /* ─── design tokens ─── */
 const SURFACE = "bg-[#111214]";
@@ -55,6 +57,7 @@ const ViewTicket = () => {
   const { ticketId } = useParams();
   const navigate = useNavigate();
   const { fetchTicketById } = eventService();
+  const { API_URL } = useService();
 
   const {
     data: ticketsinfo,
@@ -246,13 +249,14 @@ const ViewTicket = () => {
 
               {/* Right Section (QR + Footer) */}
               <div className="flex flex-col md:w-72 bg-[#0f1011] shrink-0">
-                {/* ── QR section ── */}
+                {/* QR section */}
                 <div className="px-6 py-6 flex flex-col items-center justify-center flex-1 gap-4">
                   <div className="p-4 rounded-2xl bg-white inline-block shadow-lg">
                     <img
-                      src="/qr-code.png"
+                      src={`${API_URL}/api/events/${event?._id}/tickets/${tkt?._id}/qr`}
                       className="w-28 h-28"
                       alt="Entry QR Code"
+                      onError={(e) => { e.target.src = "/qr-code.png"; }}
                     />
                   </div>
                   <div className="text-center">
@@ -285,6 +289,7 @@ const ViewTicket = () => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
+              onClick={() => window.print()}
               className="mt-4 w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-[13px] font-semibold text-black bg-[#FF7A00] hover:bg-[#ff8f1f] transition-colors"
             >
               <Download size={15} />

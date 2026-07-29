@@ -225,7 +225,7 @@ const Wishlist = () => {
                     className="relative w-full md:w-80 h-64 md:h-auto shrink-0 overflow-hidden block"
                   >
                     <img
-                      src={`${API_URL}/${w?.pictures?.[0]}` || "/Login.jpg"}
+                      src={w?.pictures?.[0] || "/Login.jpg"}
                       alt={w?.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />

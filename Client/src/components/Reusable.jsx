@@ -33,7 +33,7 @@ import {
 import { useState } from "react";
 import { Skeleton } from "boneyard-js/react";
 import { eventService } from "@/Context/ApiEvent";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useService } from "@/Context/ServiceContext";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
@@ -86,11 +86,16 @@ export default function CheckoutModal({
   onClose,
   amount = 400,
   name,
-  action,
+  ticketId,
 }) {
   const [phone, setPhone] = useState("");
   const [selected, setSelected] = useState(null);
-  const { quantity, setQuantity } = useService();
+  const [isLoading, setIsLoading] = useState(false);
+  const [quantityStr, setQuantityStr] = useState("1");
+  const { setQuantity, API_URL } = useService();
+  const navigate = useNavigate();
+
+  const quantity = Math.max(1, parseInt(quantityStr) || 1);
 
   const paymentMethods = [
     { id: "telebirr", name: "Telebirr" },
@@ -101,12 +106,53 @@ export default function CheckoutModal({
 
   const totalAmount = amount * quantity;
 
+  const handleConfirmAndPay = async () => {
+    if (!selected) {
+      import("react-hot-toast").then(({ default: toast }) =>
+        toast.error("Please select a payment method"),
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/auth/ticket/${ticketId}/purchase`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantity }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Purchase failed");
+
+      // Navigate to verify page; pass orderNo so user knows what to enter
+      navigate(`/tickets_home/verify/${data.userTicket._id}`, {
+        state: {
+          orderNo: data.userTicket.orderNo,
+          eventName: name,
+          totalAmount,
+          quantity,
+        },
+      });
+      onClose();
+    } catch (error) {
+      import("react-hot-toast").then(({ default: toast }) =>
+        toast.error(error.message || "Purchase failed. Please try again."),
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed lg:pt-22 inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
       <div
-        className="relative w-full max-w-[440px] rounded-[2.5rem] p-10
+        className="relative w-full max-w-[440px] rounded-[2.5rem] p-10 -mt-16
         bg-[#0A0A0B] border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.8)] 
         text-[#F4F4F5] overflow-hidden"
       >
@@ -116,9 +162,6 @@ export default function CheckoutModal({
         {/* Header */}
         <div className="flex justify-between items-start mb-10">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
-              Secure Terminal
-            </p>
             <h2 className="text-3xl font-black italic uppercase tracking-tighter leading-none">
               Checkout
             </h2>
@@ -139,7 +182,7 @@ export default function CheckoutModal({
           {/* Phone Input */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-              Terminal Phone (Primary)
+              Phone Number
             </label>
             <input
               type="tel"
@@ -155,25 +198,36 @@ export default function CheckoutModal({
           <div className="flex gap-4">
             <div className="flex-1 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                Units
+                How Many Tickets
               </label>
               <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) =>
-                  setQuantity(Math.max(1, Number(e.target.value)))
-                }
+                type="text"
+                inputMode="numeric"
+                value={quantityStr}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // allow empty string while typing, digits only
+                  if (val === "" || /^[0-9]+$/.test(val)) {
+                    setQuantityStr(val);
+                    setQuantity(Math.max(1, parseInt(val) || 1));
+                  }
+                }}
+                onBlur={() => {
+                  // normalize on blur so it never stays blank
+                  const clamped = Math.max(1, parseInt(quantityStr) || 1);
+                  setQuantityStr(String(clamped));
+                  setQuantity(clamped);
+                }}
                 className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
                 rounded-2xl px-5 py-4 outline-none font-bold text-center no-spinner"
               />
             </div>
             <div className="flex-[2] space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                Unit Price
+                Price
               </label>
               <div className="w-full bg-white/[0.01] border border-white/5 rounded-2xl px-5 py-4 font-black italic text-gray-400">
-                ${amount} ETB
+                {amount} ETB
               </div>
             </div>
           </div>
@@ -205,16 +259,26 @@ export default function CheckoutModal({
         {/* Final Execution Button */}
         <div className="space-y-4">
           <button
-            onClick={action}
+            onClick={handleConfirmAndPay}
+            disabled={isLoading}
             className="group w-full py-5 bg-[#FF7A00] text-black font-black uppercase italic text-sm 
             rounded-[1.2rem] flex items-center justify-center gap-3 hover:bg-white transition-all 
-            shadow-[0_10px_30px_rgba(255,122,0,0.15)] active:scale-95"
+            shadow-[0_10px_30px_rgba(255,122,0,0.15)] active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            CONFIRM & PAY {totalAmount.toLocaleString()} ETB
-            <ChevronRight
-              size={18}
-              className="group-hover:translate-x-1 transition-transform"
-            />
+            {isLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                <span>Processing...</span>
+              </>
+            ) : (
+              <>
+                CONFIRM &amp; PAY {totalAmount.toLocaleString()} ETB
+                <ChevronRight
+                  size={18}
+                  className="group-hover:translate-x-1 transition-transform"
+                />
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -1082,7 +1146,22 @@ export const ticketThemes = {
     shadowColor: "rgba(204,85,0,0.25)",
     statusColor: "text-orange-800 bg-orange-100 border-orange-300",
   },
-
+  premium: {
+    bandGradient:
+      "linear-gradient(120deg, #9333EA 0%, #A855F7 60%, #C084FC 100%)",
+    ctaGradient:
+      "linear-gradient(135deg, #9333EA 0%, #A855F7 50%, #9333EA 100%)",
+    accentColor: "#A855F7",
+    label: "Premium",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-300",
+    textColor: "text-purple-900",
+    labelBg: "bg-purple-100",
+    icon: Gem,
+    iconColor: "text-purple-600",
+    shadowColor: "rgba(147,51,234,0.20)",
+    statusColor: "text-purple-800 bg-purple-100 border-purple-300",
+  },
   soldout: {
     bandGradient:
       "linear-gradient(120deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%)",

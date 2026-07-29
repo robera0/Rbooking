@@ -11,40 +11,21 @@ const TransactionSchema = new mongoose.Schema({
     ref: "Event",
     required: true,
   },
-  tx_ref: {
-    type: String,
+  ticket: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "UserTicket",
     required: true,
   },
-  amount: {
-    type: Number,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ["pending", "success", "failed"],
-    default: "pending",
-  },
+
+  isVerified: { type: Boolean, default: false },
   createdAt: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
   updatedAt: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
-});
-
-// Virtual for id
-TransactionSchema.virtual("id").get(function () {
-  return this._id.toHexString();
-});
-
-TransactionSchema.set("toJSON", {
-  virtuals: true,
-});
-
-TransactionSchema.set("toObject", {
-  virtuals: true,
 });
 
 const Transaction = mongoose.model("Transaction", TransactionSchema);

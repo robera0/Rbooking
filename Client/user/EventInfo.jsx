@@ -310,18 +310,6 @@ const EventInfo = () => {
     );
   };
 
-  const handlePayment = async () => {
-    const loadingToast = toast.loading("Confirming transaction...");
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success("Payment Successful! Access granted.", {
-        id: loadingToast,
-      });
-      setCheckoutOpen(false);
-    } catch (error) {
-      toast.error("Payment failed. Please try again.", { id: loadingToast });
-    }
-  };
 
   /* ── ticket-type colour theme ── */
   const ticketThemes = {
@@ -1278,7 +1266,6 @@ const EventInfo = () => {
             amount={activeTicket?.price}
             name={event?.name}
             ticketId={ticketId}
-            action={handlePayment}
           />
         )}
       </AnimatePresence>

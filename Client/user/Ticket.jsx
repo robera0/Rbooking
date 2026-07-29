@@ -107,22 +107,16 @@ const TicketHome = () => {
   }
 
   const allTickets = tickets?.events ? tickets?.events : [];
-  console.log("the tickets are", allTickets);
   const filtered =
     filter === "all"
       ? allTickets
-      : allTickets.filter(
-          (t) => t.ticketId?.eventId?.dates?.status?.code === filter,
-        );
+      : allTickets.filter((t) => t.status === filter);
 
   const counts = {
     all: allTickets?.length,
-    onsale: allTickets?.filter(
-      (t) => t.ticketId?.eventId?.dates?.status?.code === "onsale",
-    ).length,
-    upcoming: allTickets.filter(
-      (t) => t.ticketId?.eventId?.dates?.status?.code === "upcoming",
-    ).length,
+    paid: allTickets?.filter((t) => t.status === "paid").length,
+    pending: allTickets?.filter((t) => t.status === "pending").length,
+    cancelled: allTickets?.filter((t) => t.status === "cancelled").length,
   };
 
   return (
@@ -180,16 +174,22 @@ const TicketHome = () => {
               onClick={() => setFilter("all")}
             />
             <FilterTab
-              label="On Sale"
-              active={filter === "onsale"}
-              count={counts.onsale}
-              onClick={() => setFilter("onsale")}
+              label="Paid"
+              active={filter === "paid"}
+              count={counts.paid}
+              onClick={() => setFilter("paid")}
             />
             <FilterTab
-              label="Upcoming"
-              active={filter === "upcoming"}
-              count={counts.upcoming}
-              onClick={() => setFilter("upcoming")}
+              label="Pending"
+              active={filter === "pending"}
+              count={counts.pending}
+              onClick={() => setFilter("pending")}
+            />
+            <FilterTab
+              label="Cancelled"
+              active={filter === "cancelled"}
+              count={counts.cancelled}
+              onClick={() => setFilter("cancelled")}
             />
           </motion.div>
         )}
@@ -359,13 +359,13 @@ const TicketHome = () => {
                         </p>
                         <div className="flex items-baseline gap-1">
                           <span className="text-2xl font-black tracking-tighter">
-                            ${ticketId?.price || "0"}
+                            {ticketId?.price || "0"}
                           </span>
                           <span
                             className="text-[9px] font-black uppercase"
                             style={{ color: theme.accentColor }}
                           >
-                            USD
+                            {event?.priceRanges?.[0]?.currency || "ETB"}
                           </span>
                         </div>
                       </div>

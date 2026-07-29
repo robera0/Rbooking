@@ -2,49 +2,56 @@ import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
 import redisClient, { clearTicketCache } from "../config/redis.js";
 import TicketService from "../service/ticket.service.js";
+import { TicketModel } from "../models/ticket.model.js";
+import { UserTicketModel } from "../models/userTicket.model.js";
+import Transaction from "../models/transaction.model.js";
 import { nanoid } from "nanoid";
 
 export const purchaseTicket = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
     const userId = req.user.id;
     const { ticketId } = req.params;
-    const { quantity = 1 } = req.body;
+    const { quantity } = req.body;
 
     if (!ticketId)
       return res.status(400).json({ message: "Ticket ID required" });
     if (!quantity || quantity <= 0)
       return res.status(400).json({ message: "Invalid quantity" });
 
-    const ticket = await TicketService.findTicketById(ticketId, session);
-    if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+    // Atomically check availability AND decrement in one operation.
+    // $inc is atomic in MongoDB — no replica-set session needed.
+    const ticket = await TicketModel.findOneAndUpdate(
+      { _id: ticketId, availableQuantity: { $gte: quantity } },
+      { $inc: { availableQuantity: -quantity } },
+      { new: true },
+    );
 
-    if (ticket.availableQuantity < quantity)
+    if (!ticket) {
+      // Either the ticket doesn't exist or there aren't enough seats
+      const exists = await TicketModel.exists({ _id: ticketId });
+      if (!exists) return res.status(404).json({ message: "Ticket not found" });
       return res.status(400).json({ message: "Not enough tickets available" });
+    }
 
     const orderNo = `ORD-${nanoid(10)}`;
     const totalAmount = ticket.price * quantity;
 
-    const userTicket = await TicketService.create(
-      { userId, ticketId, orderNo, quantity, totalAmount, status: "pending" },
-      session,
-    );
-
-    await TicketService.decrementQuantity(ticketId, quantity, session);
-
-    await session.commitTransaction();
-    session.endSession();
+    const userTicket = await UserTicketModel.create({
+      userId,
+      ticketId,
+      orderNo,
+      quantity,
+      totalAmount,
+      status: "pending",
+    });
 
     await clearTicketCache(userId);
 
     res.status(201).json({ success: true, userTicket });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    console.error("purchaseTicket error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -125,5 +132,74 @@ export const updateTicketStatus = async (req, res) => {
     res.status(200).json({ success: true, ticket });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * POST /api/auth/ticket/:userTicketId/verify
+ * User submits their orderNo code to verify and confirm their ticket.
+ * - Validates ownership + code match
+ * - Updates status to "paid"
+ * - Creates a Transaction record with isVerified: true
+ */
+export const verifyTicket = async (req, res) => {
+  try {
+    const { userTicketId } = req.params;
+    const { orderNo } = req.body;
+    const userId = req.user.id;
+
+    if (!orderNo)
+      return res.status(400).json({ message: "Verification code is required" });
+
+    // Fetch the UserTicket and populate ticket tier (to get eventId)
+    const userTicket = await UserTicketModel.findById(userTicketId).populate({
+      path: "ticketId",
+      select: "eventId name price",
+    });
+
+    if (!userTicket)
+      return res.status(404).json({ message: "Ticket not found" });
+
+    if (userTicket.userId.toString() !== userId)
+      return res.status(403).json({ message: "Unauthorized" });
+
+    if (userTicket.orderNo !== orderNo)
+      return res.status(400).json({ message: "Invalid verification code" });
+
+    if (userTicket.status === "paid")
+      return res.status(400).json({ message: "This ticket has already been verified" });
+
+    if (userTicket.status === "cancelled")
+      return res.status(400).json({ message: "This ticket was cancelled" });
+
+    // Mark ticket as paid
+    const updatedTicket = await UserTicketModel.findByIdAndUpdate(
+      userTicketId,
+      { status: "paid" },
+      { new: true },
+    ).populate({
+      path: "ticketId",
+      populate: { path: "eventId", model: "Event", select: "name type locale dates pictures" },
+    });
+
+    // Create the verified Transaction record
+    await Transaction.create({
+      user: userId,
+      event: userTicket.ticketId.eventId,
+      ticket: userTicketId,
+      isVerified: true,
+    });
+
+  
+    await clearTicketCache(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Ticket verified successfully!",
+      userTicket: updatedTicket,
+    });
+  } catch (error) {
+    console.error("verifyTicket error:", error.message);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

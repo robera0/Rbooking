@@ -1,5 +1,6 @@
 import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
+import Transaction from "../models/transaction.model.js";
 import mongoose from "mongoose";
 class TicketService {
   static async create(data, session) {

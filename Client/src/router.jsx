@@ -15,6 +15,7 @@ import AccountPage from "../user/AccountPage";
 import Ticket from "../user/Ticket";
 import Account from "../user/Account";
 import ViewTicket from "../user/ViewTicket";
+import VerifyTicket from "../user/VerifyTicket";
 import Wishlist from "../user/Wishlist";
 import Profile from "../user/Profile";
 import Setting from "../user/Setting";
@@ -332,6 +333,14 @@ export const router = createBrowserRouter([
                   </PageWrapper>
                 ),
               },
+              {
+                path: "verify/:userTicketId",
+                element: (
+                  <PageWrapper>
+                    <VerifyTicket />
+                  </PageWrapper>
+                ),
+              },
             ],
           },
           {
@@ -374,7 +383,6 @@ export const router = createBrowserRouter([
       },
       // Redirects
       { path: "dashboard", element: <Navigate to="/admin/home" replace /> },
-      { path: "admin/login", element: <Navigate to="/admin/login" replace /> },
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },

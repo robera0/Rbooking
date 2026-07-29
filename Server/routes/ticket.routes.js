@@ -4,6 +4,7 @@ import {
   getTicketsInfo,
   updateTicketStatus,
   purchaseTicket,
+  verifyTicket,
 } from "../controllers/ticket.controller.js";
 import dotenv from "dotenv";
 import axios from "axios";
@@ -27,6 +28,11 @@ ticketRouter.post(
   "/ticket/:ticketId/purchase",
   authenticateTokenMiddleware,
   purchaseTicket,
+);
+ticketRouter.post(
+  "/ticket/:userTicketId/verify",
+  authenticateTokenMiddleware,
+  verifyTicket,
 );
 ticketRouter.patch("/ticket/:ticketId/status", updateTicketStatus);
 

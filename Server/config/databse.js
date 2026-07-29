@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 dotenv.config();
-const MONGO_URL = process.env.NEW_MONGO;
+const MONGO_URL = process.env.NEW_MONGO || process.env.LOCAL_MONGO;
 console.log("MONGO_URI:", MONGO_URL);
 
 const connectDB = async () => {

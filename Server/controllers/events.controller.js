@@ -51,10 +51,8 @@ export const addEvent = catchAsync(async (req, res, next) => {
   } = req.body;
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
-  // Normalize type
   const normalizedType = type?.toLowerCase();
 
-  // Parse JSON fields safely
   artist = safeParse(artist || "{}");
   priceRanges = safeParse(priceRanges || "[]");
   dates = safeParse(dates || "{}");
@@ -65,17 +63,17 @@ export const addEvent = catchAsync(async (req, res, next) => {
   stages = safeParse(stages || "[]");
   sales = safeParse(sales || "{}");
 
-  // Category should be a string, not an array. If an array is provided, take the first element.
   if (Array.isArray(category)) {
     category = category[0] || "";
   }
 
-  // Ensure required venue name is present
   if (!links.venues) {
     links.venues = {};
   }
   if (!links.venues.name) {
-    return res.status(400).json({ success: false, message: "Venue name (links.venues.name) is required" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Venue name  is required" });
   }
 
   capacity = Number(capacity) || 0;
@@ -116,7 +114,8 @@ export const addEvent = catchAsync(async (req, res, next) => {
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
         fs.unlink(file.path, (unlinkErr) => {
-          if (unlinkErr) console.error("Failed to delete file:", file.path, unlinkErr);
+          if (unlinkErr)
+            console.error("Failed to delete file:", file.path, unlinkErr);
         });
       });
     }
@@ -124,14 +123,20 @@ export const addEvent = catchAsync(async (req, res, next) => {
   }
 
   await clearEventsCache();
-  res.status(200).json({ success: true, event: newEvent, message: "event created successfully" });
+  res
+    .status(200)
+    .json({
+      success: true,
+      event: newEvent,
+      message: "event created successfully",
+    });
 });
 
 export const createTickets = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   const { tickets } = req.body;
 
-  const createdTickets = await TicketModel.insertMany(
+  const createdNewTickets = await TicketModel.insertMany(
     tickets.map((t) => ({
       eventId,
       name: t.name,
@@ -143,7 +148,7 @@ export const createTickets = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     success: true,
-    tickets: createdTickets,
+    tickets: createdNewTickets,
   });
 });
 
