@@ -46,6 +46,10 @@ class UserService {
     return UserModel.findOne({ phoneNumber });
   }
 
+  static async findByRefreshToken(token) {
+    return UserModel.findOne({ "refreshTokens.token": token });
+  }
+
   static async deleteUsers(userIds) {
     return UserModel.deleteMany({
       _id: { $in: userIds },

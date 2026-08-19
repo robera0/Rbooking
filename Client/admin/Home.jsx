@@ -1,8 +1,25 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import SideBar from "./SideBar";
 import Header from "./Header";
+import { eventService } from "../src/Context/ApiEvent";
 
 const Home = () => {
+  const { user, usererror } = eventService();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // If there's an auth error or the user is loaded but NOT an admin, redirect.
+    if (usererror || (user && user.role !== "admin")) {
+      navigate("/");
+    }
+  }, [user, usererror, navigate]);
+
+  // Optionally show a blank screen or a loader while validating user
+  if (!user && !usererror) {
+    return <div className="h-screen bg-[#121417]" />;
+  }
+
   return (
     <div className="flex h-screen bg-[#121417] text-white selection:bg-[#FF7A00]/20 font-onest overflow-hidden">
       {/* Sidebar */}

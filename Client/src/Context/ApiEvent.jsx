@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import { useService } from "./ServiceContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { fetchWithAuth, axiosWithAuth } from "../lib/fetchWithAuth";
 
 const ApiContext = createContext();
 
@@ -58,7 +59,7 @@ export const ApiProvider = ({ children }) => {
 
   // GET LOGGED USERS
   const fetchLoggedInUser = async () => {
-    const res = await fetch(`${API_URL}/api/auth/user`, {
+    const res = await fetchWithAuth(`${API_URL}/api/auth/user`, {
       method: "GET",
       credentials: "include",
     });
@@ -89,7 +90,7 @@ export const ApiProvider = ({ children }) => {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/tickets_home`, {
+      const res = await fetchWithAuth(`${API_URL}/api/auth/tickets_home`, {
         method: "GET",
         credentials: "include",
       });
@@ -117,7 +118,7 @@ export const ApiProvider = ({ children }) => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/notifications`, {
+      const res = await fetchWithAuth(`${API_URL}/api/auth/notifications`, {
         method: "GET",
         credentials: "include",
       });
@@ -146,7 +147,7 @@ export const ApiProvider = ({ children }) => {
 
   const patchReadNotification = async (notId) => {
     try {
-      const res = await axios.patch(
+      const res = await axiosWithAuth.patch(
         `${API_URL}/api/auth/notifications/read`,
         { notId },
         { withCredentials: true },
@@ -195,7 +196,7 @@ export const ApiProvider = ({ children }) => {
   //POST COMMENT
   const sendComment = async (comment, eventId) => {
     try {
-      const res = await axios.post(
+      const res = await axiosWithAuth.post(
         `${API_URL}/api/auth/events/${eventId}/comments`,
         { text: comment },
         { withCredentials: true },
@@ -231,7 +232,7 @@ export const ApiProvider = ({ children }) => {
 
   const likeComment = async (commentId) => {
     try {
-      const res = await axios.post(
+      const res = await axiosWithAuth.post(
         `${API_URL}/api/auth/comments/${commentId}/like`,
         { commentId },
         { withCredentials: true },
@@ -265,7 +266,7 @@ export const ApiProvider = ({ children }) => {
   };
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
-    const res = await fetch(`${API_URL}/api/auth/tickets_home/${ticketId}`, {
+    const res = await fetchWithAuth(`${API_URL}/api/auth/tickets_home/${ticketId}`, {
       method: "GET",
       credentials: "include",
     });
@@ -275,7 +276,7 @@ export const ApiProvider = ({ children }) => {
 
   const fetchEventById = async (eventid, ticketId) => {
     try {
-      const res = await fetch(
+      const res = await fetchWithAuth(
         `${API_URL}/api/events/${eventid}/tickets/${ticketId}`,
         {
           method: "GET",
@@ -299,7 +300,7 @@ export const ApiProvider = ({ children }) => {
   // GET WISHLIST
   const fetchWishlist = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/wishlist`, {
+      const res = await fetchWithAuth(`${API_URL}/api/auth/wishlist`, {
         method: "GET",
         credentials: "include",
       });
@@ -327,7 +328,7 @@ export const ApiProvider = ({ children }) => {
   // GET USERPROFILE
   const fetchUser = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
+      const response = await fetchWithAuth(`${API_URL}/api/auth/profile`, {
         method: "GET",
         credentials: "include",
       });

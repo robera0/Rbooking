@@ -52,3 +52,38 @@ src/
 │   │
 │   └── ticket/
 │       └── ticketApi.js         → buyTicket, getUserTickets, cancelTicket
+
+
+
+
+
+
+
+
+//
+
+
+
+
+1. User clicks "Get Tickets"
+   └─> Checkout modal opens
+
+2. Selects payment method → "CONFIRM & PAY"
+   └─> POST /api/auth/ticket/:ticketId/purchase
+       → UserTicket created (status: "pending")
+       → orderNo generated (e.g. ORD-xV3kFj2qAm)
+       → Redirects to /tickets_home/verify/:userTicketId
+
+3. VerifyTicket page loads
+   └─> Shows the orderNo prominently with a copy button
+   └─> User types their code in the input field
+   └─> Clicks "Verify & Confirm Ticket"
+       → POST /api/auth/ticket/:userTicketId/verify { orderNo }
+       → Validates ownership + code match
+       → UserTicket.status = "paid"
+       → Transaction created { isVerified: true }
+       → Cache cleared
+
+4. Success screen
+   └─> Animated ticket card shows PAID & VERIFIED
+   └─> "View My Tickets" button

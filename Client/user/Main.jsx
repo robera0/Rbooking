@@ -48,6 +48,12 @@ const Main = () => {
   const [isHovered, setIsHovered] = useState(false);
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    if (user && user.role === "admin") {
+      navigate("/admin/home");
+    }
+  }, [user, navigate]);
+
   const handleLogout = async () => {
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
