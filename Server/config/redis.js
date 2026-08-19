@@ -4,6 +4,9 @@ import Redis from "ioredis";
 
 const REDIS_URL = process.env.REDIS_URL;
 
+// Key prefix to avoid collisions with other apps (e.g. Payso Bingo) sharing the same Redis URL
+export const REDIS_PREFIX = "paysso:";
+
 const redisClient = new Redis(REDIS_URL);
 console.log("REDIS_URL:", REDIS_URL);
 redisClient.on("connect", () =>
@@ -13,7 +16,7 @@ redisClient.on("error", (err) => console.error("Redis Client Error", err));
 export default redisClient;
 export const clearEventsCache = async () => {
   try {
-    const keys = await redisClient.keys("events:*");
+    const keys = await redisClient.keys(`${REDIS_PREFIX}events:*`);
 
     if (keys.length > 0) {
       await redisClient.del(keys);
@@ -27,7 +30,7 @@ export const clearSingleEventCache = async (eventId) => {
   try {
     if (!eventId) return;
 
-    await redisClient.del(`event:single:${eventId}`);
+    await redisClient.del(`${REDIS_PREFIX}event:single:${eventId}`);
   } catch (err) {
     console.error(`Failed to clear single event cache for ID ${eventId}:`, err);
   }
@@ -37,7 +40,7 @@ export const clearWishListCache = async (userId) => {
   try {
     if (!userId) return;
 
-    const cacheKey = `user:wishlist:${userId}`;
+    const cacheKey = `${REDIS_PREFIX}user:wishlist:${userId}`;
     await redisClient.unlink(cacheKey);
   } catch (err) {
     console.error("Failed to clear wishlist cache:", err);
@@ -47,7 +50,7 @@ export const clearWishListCache = async (userId) => {
 export const clearTicketCache = async (userId) => {
   try {
     if (!userId) return;
-    await redisClient.del(`user:ticket:list:${userId}`);
+    await redisClient.del(`${REDIS_PREFIX}user:ticket:list:${userId}`);
   } catch (err) {
     console.error("Failed to clear ticket cache:", err);
   }

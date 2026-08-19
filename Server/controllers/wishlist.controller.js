@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import redisClient, { clearWishListCache } from "../config/redis.js";
+import redisClient, { clearWishListCache, REDIS_PREFIX } from "../config/redis.js";
 import whishListService from "../service/wishlist.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
@@ -9,7 +9,7 @@ import AppError from "../errors/AppError.js";
 export const getWishlist = catchAsync(async (req, res) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
-  const cacheKey = `user:wishlist:${userId}`;
+  const cacheKey = `${REDIS_PREFIX}user:wishlist:${userId}`;
   const cachedWishlist = await redisClient.smembers(cacheKey);
   if (cachedWishlist && cachedWishlist.length > 0) {
     const populatedItems = await whishListService.findOne(userId);

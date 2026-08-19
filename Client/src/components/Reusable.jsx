@@ -29,6 +29,7 @@ import {
   XCircle,
   Award,
   Gem,
+  Copy,
 } from "lucide-react";
 import { useState } from "react";
 import { Skeleton } from "boneyard-js/react";
@@ -93,7 +94,6 @@ export default function CheckoutModal({
   ticketId,
 }) {
   const [phone, setPhone] = useState("");
-  const [selected, setSelected] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [quantityStr, setQuantityStr] = useState("1");
   const { setQuantity, API_URL } = useService();
@@ -101,23 +101,25 @@ export default function CheckoutModal({
 
   const quantity = Math.max(1, parseInt(quantityStr) || 1);
 
-  const paymentMethods = [
-    { id: "telebirr", name: "Telebirr" },
-    { id: "cbe", name: "CBE Birr" },
-    { id: "boa", name: "Abyssinia" },
-    { id: "awash", name: "Awash" },
-  ];
+  const TELEBIRR_NUMBER = "0912345678"; // Telebirr payment number
 
   const totalAmount = amount * quantity;
 
-  const handleConfirmAndPay = async () => {
-    if (!selected) {
-      import("react-hot-toast").then(({ default: toast }) =>
-        toast.error("Please select a payment method"),
-      );
-      return;
+  const copyNumberToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(TELEBIRR_NUMBER);
+    } catch {
+      // fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = TELEBIRR_NUMBER;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
     }
+  };
 
+  const handleConfirmAndPay = async () => {
     setIsLoading(true);
     try {
       const res = await fetch(
@@ -126,13 +128,23 @@ export default function CheckoutModal({
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quantity }),
+          body: JSON.stringify({ quantity, phone }),
         },
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Purchase failed");
 
-      // Navigate to verify page; pass orderNo so user knows what to enter
+      // Copy Telebirr number to clipboard
+      await copyNumberToClipboard();
+
+      // Show success toast
+      const { default: toast } = await import("react-hot-toast");
+      toast.success(
+        "Your ticket is successfully held! Telebirr number copied to clipboard.",
+        { duration: 4000 },
+      );
+
+      // Navigate to verify page
       navigate(`/tickets_home/verify/${data.userTicket._id}`, {
         state: {
           orderNo: data.userTicket.orderNo,
@@ -202,7 +214,7 @@ export default function CheckoutModal({
           <div className="flex gap-4">
             <div className="flex-1 space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-                How Many Tickets
+                Tickets
               </label>
               <input
                 type="text"
@@ -237,27 +249,35 @@ export default function CheckoutModal({
           </div>
         </div>
 
-        {/* Payment Methods Grid */}
+        {/* Telebirr Payment Number */}
         <div className="space-y-3 mb-10">
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-            Select Gateway
+            Pay via Telebirr
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            {paymentMethods.map((method) => (
-              <button
-                key={method.id}
-                onClick={() => setSelected(method.id)}
-                className={`group relative rounded-2xl py-4 px-2 text-[11px] font-black uppercase tracking-tighter italic border transition-all
-                ${
-                  selected === method.id
-                    ? "bg-[#FF7A00] border-[#FF7A00] text-black scale-[1.02]"
-                    : "bg-white/[0.02] border-white/5 hover:border-white/20 text-gray-400 hover:text-white"
-                }`}
-              >
-                {method.name}
-              </button>
-            ))}
+          <div
+            onClick={copyNumberToClipboard}
+            className="group relative rounded-2xl py-5 px-6 border border-[#FF7A00]/30 bg-[#FF7A00]/[0.06] cursor-pointer hover:bg-[#FF7A00]/[0.12] transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
+                  Telebirr Number
+                </p>
+                <p className="text-2xl font-black tracking-wider text-white font-mono">
+                  {TELEBIRR_NUMBER}
+                </p>
+              </div>
+              <div className="flex flex-col items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                <Copy size={18} className="text-[#FF7A00]" />
+                <span className="text-[7px] font-black uppercase tracking-wider text-gray-500">
+                  Tap to copy
+                </span>
+              </div>
+            </div>
           </div>
+          <p className="text-[10px] text-gray-600 text-center">
+            Send <span className="text-[#FF7A00] font-bold">{totalAmount.toLocaleString()} ETB</span> to this number, then verify your receipt
+          </p>
         </div>
 
         {/* Final Execution Button */}
@@ -276,7 +296,7 @@ export default function CheckoutModal({
               </>
             ) : (
               <>
-                CONFIRM &amp; PAY {totalAmount.toLocaleString()} ETB
+                CONFIRM & PAY {totalAmount.toLocaleString()} ETB
                 <ChevronRight
                   size={18}
                   className="group-hover:translate-x-1 transition-transform"

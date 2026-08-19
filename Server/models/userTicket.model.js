@@ -34,8 +34,18 @@ const UserTicketSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "paid", "cancelled"],
+      enum: ["pending", "paid", "expired"],
       default: "pending",
+    },
+
+    phone: {
+      type: String,
+      default: "",
+    },
+
+    receiptUrl: {
+      type: String,
+      default: "",
     },
 
     purchasedAt: {

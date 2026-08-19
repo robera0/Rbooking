@@ -761,23 +761,28 @@ const EventInfo = () => {
                                     </p>
                                   </div>
                                   {c?.rating > 0 && (
-                                    <div className="flex items-center gap-0.5">
-                                      {[1, 2, 3, 4, 5].map((s) => (
-                                        <Star
-                                          key={s}
-                                          size={11}
-                                          fill={
-                                            s <= c.rating
-                                              ? "#FF7A00"
-                                              : "transparent"
-                                          }
-                                          stroke={
-                                            s <= c.rating
-                                              ? "#FF7A00"
-                                              : "#4b4b52"
-                                          }
-                                        />
-                                      ))}
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="flex items-center gap-0.5">
+                                        {[1, 2, 3, 4, 5].map((s) => (
+                                          <Star
+                                            key={s}
+                                            size={11}
+                                            fill={
+                                              s <= c.rating
+                                                ? "#FF7A00"
+                                                : "transparent"
+                                            }
+                                            stroke={
+                                              s <= c.rating
+                                                ? "#FF7A00"
+                                                : "#4b4b52"
+                                            }
+                                          />
+                                        ))}
+                                      </div>
+                                      <span className="text-[10px] font-bold text-gray-500">
+                                        {c.rating}/5
+                                      </span>
                                     </div>
                                   )}
                                 </div>

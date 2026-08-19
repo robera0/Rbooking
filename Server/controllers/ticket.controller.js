@@ -1,6 +1,6 @@
 import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
-import redisClient, { clearTicketCache } from "../config/redis.js";
+import redisClient, { clearTicketCache, REDIS_PREFIX } from "../config/redis.js";
 import TicketService from "../service/ticket.service.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
@@ -13,7 +13,7 @@ export const purchaseTicket = async (req, res) => {
 
     const userId = req.user.id;
     const { ticketId } = req.params;
-    const { quantity } = req.body;
+    const { quantity, phone } = req.body;
 
     if (!ticketId)
       return res.status(400).json({ message: "Ticket ID required" });
@@ -44,6 +44,7 @@ export const purchaseTicket = async (req, res) => {
       orderNo,
       quantity,
       totalAmount,
+      phone: phone || "",
       status: "pending",
     });
 
@@ -59,7 +60,7 @@ export const purchaseTicket = async (req, res) => {
 export const getTickets = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
-    const cacheKey = `user:ticket:list:${userId}`;
+    const cacheKey = `${REDIS_PREFIX}user:ticket:list:${userId}`;
 
     const cachedRaw = await redisClient.get(cacheKey);
     if (cachedRaw) {
@@ -89,7 +90,7 @@ export const getTickets = async (req, res) => {
 export const getTicketsInfo = async (req, res) => {
   try {
     const { ticketId } = req.params;
-    const cacheKey = `user:ticket:info:${ticketId}`; // fixed key (no JSON.stringify needed)
+    const cacheKey = `${REDIS_PREFIX}user:ticket:info:${ticketId}`;
 
     const cachedRaw = await redisClient.get(cacheKey);
     if (cachedRaw) {
@@ -126,7 +127,7 @@ export const updateTicketStatus = async (req, res) => {
 
     await Promise.all([
       clearTicketCache(ticket.userId),
-      redisClient.del(`user:ticket:info:${id}`),
+      redisClient.del(`${REDIS_PREFIX}user:ticket:info:${id}`),
     ]);
 
     res.status(200).json({ success: true, ticket });
@@ -145,11 +146,17 @@ export const updateTicketStatus = async (req, res) => {
 export const verifyTicket = async (req, res) => {
   try {
     const { userTicketId } = req.params;
-    const { orderNo } = req.body;
+    const { receiptUrl } = req.body;
+
     const userId = req.user.id;
 
-    if (!orderNo)
-      return res.status(400).json({ message: "Verification code is required" });
+    if (!receiptUrl || !receiptUrl.trim())
+      return res.status(400).json({ message: "Receipt link is required" });
+
+    // Basic validation: ensure it looks like a valid Telebirr receipt URL
+    if (!receiptUrl.includes("ethiotelecom") && !receiptUrl.startsWith("http")) {
+      return res.status(400).json({ message: "The link is not correct" });
+    }
 
     // Fetch the UserTicket and populate ticket tier (to get eventId)
     const userTicket = await UserTicketModel.findById(userTicketId).populate({
@@ -163,11 +170,10 @@ export const verifyTicket = async (req, res) => {
     if (userTicket.userId.toString() !== userId)
       return res.status(403).json({ message: "Unauthorized" });
 
-    if (userTicket.orderNo !== orderNo)
-      return res.status(400).json({ message: "Invalid verification code" });
-
     if (userTicket.status === "paid")
-      return res.status(400).json({ message: "This ticket has already been verified" });
+      return res
+        .status(400)
+        .json({ message: "This ticket has already been verified" });
 
     if (userTicket.status === "cancelled")
       return res.status(400).json({ message: "This ticket was cancelled" });
@@ -175,11 +181,15 @@ export const verifyTicket = async (req, res) => {
     // Mark ticket as paid
     const updatedTicket = await UserTicketModel.findByIdAndUpdate(
       userTicketId,
-      { status: "paid" },
+      { status: "paid", receiptUrl },
       { new: true },
     ).populate({
       path: "ticketId",
-      populate: { path: "eventId", model: "Event", select: "name type locale dates pictures" },
+      populate: {
+        path: "eventId",
+        model: "Event",
+        select: "name type locale dates pictures",
+      },
     });
 
     // Create the verified Transaction record
@@ -190,7 +200,6 @@ export const verifyTicket = async (req, res) => {
       isVerified: true,
     });
 
-  
     await clearTicketCache(userId);
 
     res.status(200).json({

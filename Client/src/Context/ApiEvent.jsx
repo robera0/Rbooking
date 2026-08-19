@@ -271,6 +271,9 @@ export const ApiProvider = ({ children }) => {
       credentials: "include",
     });
     const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || `Request failed with status ${res.status}`);
+    }
     return data;
   };
 

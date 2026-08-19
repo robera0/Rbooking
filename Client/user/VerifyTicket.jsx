@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useService } from "@/Context/ServiceContext";
 import toast from "react-hot-toast";
-
+import { useVerify } from "@/Context/api/userVerify";
 /* ── Ambient orb decoration ── */
 const Orb = ({ className }) => (
   <div
@@ -74,53 +74,44 @@ const VerifyTicket = () => {
   const { API_URL } = useService();
 
   // Pull data passed from the CheckoutModal via router state
-  const { orderNo, eventName, totalAmount, quantity } =
-    location.state || {};
+  const { orderNo, eventName, totalAmount, quantity } = location.state || {};
 
-  const [code, setCode] = useState(orderNo || "");
-  const [showCode, setShowCode] = useState(false);
+  const [verifyLink, setVerifyLink] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("idle"); // idle | success | error
   const [errorMsg, setErrorMsg] = useState("");
   const [confirmedTicket, setConfirmedTicket] = useState(null);
-
-  const handleCopyCode = () => {
-    if (orderNo) {
-      navigator.clipboard.writeText(orderNo);
-      toast.success("Order code copied!");
-    }
-  };
+  const {
+    mutate: verifyDate,
+    isPending,
+    isSuccess,
+    isError,
+    reset: resetVerify,
+  } = useVerify();
 
   const handleVerify = async () => {
-    if (!code.trim()) {
-      toast.error("Please enter your verification code");
-      return;
-    }
-
+    if (!verifyLink.trim() || isPending) return;
     setIsLoading(true);
     setErrorMsg("");
-    try {
-      const res = await fetch(
-        `${API_URL}/api/auth/ticket/${userTicketId}/verify`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderNo: code.trim() }),
+    verifyDate(
+      { userTicketId, receiptUrl: verifyLink },
+      {
+        onSuccess: (data) => {
+          setConfirmedTicket(data?.userTicket || null);
+          setStatus("success");
+          setIsLoading(false);
         },
-      );
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Verification failed");
-
-      setConfirmedTicket(data.userTicket);
-      setStatus("success");
-    } catch (err) {
-      setErrorMsg(err.message || "Something went wrong");
-      setStatus("error");
-    } finally {
-      setIsLoading(false);
-    }
+        onError: (err) => {
+          const serverMsg = err?.response?.data?.message;
+          setErrorMsg(
+            serverMsg || "The link is not correct. Please check and try again.",
+          );
+          setStatus("error");
+          setIsLoading(false);
+        },
+      },
+    );
   };
 
   /* ────────────── SUCCESS STATE ────────────── */
@@ -145,7 +136,12 @@ const VerifyTicket = () => {
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 250, damping: 18, delay: 0.1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 250,
+                  damping: 18,
+                  delay: 0.1,
+                }}
                 className="absolute inset-0 flex items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30"
               >
                 <CheckCircle size={44} className="text-emerald-400" />
@@ -174,15 +170,22 @@ const VerifyTicket = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              delay: 0.45,
+              duration: 0.6,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl"
-            style={{ background: "linear-gradient(160deg, #141416 0%, #0e0e10 100%)" }}
+            style={{
+              background: "linear-gradient(160deg, #141416 0%, #0e0e10 100%)",
+            }}
           >
             {/* Green band */}
             <div
               className="relative px-8 pt-7 pb-6 overflow-hidden"
               style={{
-                background: "linear-gradient(120deg, #10B981 0%, #34D399 60%, #6EE7B7 100%)",
+                background:
+                  "linear-gradient(120deg, #10B981 0%, #34D399 60%, #6EE7B7 100%)",
               }}
             >
               <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10" />
@@ -215,10 +218,17 @@ const VerifyTicket = () => {
                   label: "Order No",
                   value: confirmedTicket?.orderNo || orderNo || "—",
                 },
-                { label: "Qty", value: confirmedTicket?.quantity ?? quantity ?? "—" },
+                {
+                  label: "Qty",
+                  value: confirmedTicket?.quantity ?? quantity ?? "—",
+                },
                 {
                   label: "Amount Paid",
-                  value: `${(confirmedTicket?.totalAmount ?? totalAmount ?? 0).toLocaleString()} ETB`,
+                  value: `${(
+                    confirmedTicket?.totalAmount ??
+                    totalAmount ??
+                    0
+                  ).toLocaleString()} ETB`,
                 },
                 { label: "Status", value: "✓ PAID & VERIFIED" },
               ].map(({ label, value }) => (
@@ -336,12 +346,9 @@ const VerifyTicket = () => {
             </span>
           </motion.div>
 
-          <h1 className="text-4xl font-black italic uppercase tracking-tighter">
+          <h1 className="text-3xl  uppercase tracking-tighter">
             Verify Ticket
           </h1>
-          <p className="text-sm text-gray-500 max-w-xs mx-auto leading-relaxed">
-            Enter the verification code from your order to confirm your ticket
-          </p>
         </div>
 
         {/* Order code hint card */}
@@ -357,19 +364,11 @@ const VerifyTicket = () => {
             </p>
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
-                <p className="text-[11px] text-gray-500 mb-1 font-semibold">
-                  Copy this code and paste it below
-                </p>
                 <p className="text-lg font-black tracking-widest text-white font-mono">
-                  {orderNo}
+                  Copy the url that you get from telebirr after you pay and
+                  verify below !
                 </p>
               </div>
-              <button
-                onClick={handleCopyCode}
-                className="p-3 rounded-xl bg-[#FF7A00]/10 border border-[#FF7A00]/20 text-[#FF7A00] hover:bg-[#FF7A00] hover:text-black transition-all active:scale-95"
-              >
-                <Copy size={16} />
-              </button>
             </div>
           </motion.div>
         )}
@@ -384,15 +383,14 @@ const VerifyTicket = () => {
           {/* Input field */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-              Verification Code
+              Telebirr Url
             </label>
             <div className="relative">
               <input
-                type={showCode ? "text" : "password"}
-                placeholder="e.g. ORD-XXXXXXXXXX"
-                value={code}
+                placeholder="e.g. https://transactioninfo.ethiotelecom.et/receipt/XXXXX)"
+                value={verifyLink}
                 onChange={(e) => {
-                  setCode(e.target.value);
+                  setVerifyLink(e.target.value);
                   if (status === "error") setStatus("idle");
                 }}
                 onKeyDown={(e) => e.key === "Enter" && handleVerify()}
@@ -400,15 +398,8 @@ const VerifyTicket = () => {
                   status === "error"
                     ? "border-red-500/50 focus:border-red-500"
                     : "border-white/10 focus:border-[#FF7A00]"
-                } transition-all rounded-2xl px-5 py-4 pr-12 outline-none font-mono font-bold text-base tracking-widest`}
+                } transition-all rounded-2xl px-5 py-4 pr-12 outline-none focus-none font-mono font-bold text-base text-sm tracking-widest`}
               />
-              <button
-                type="button"
-                onClick={() => setShowCode((v) => !v)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 transition-colors"
-              >
-                {showCode ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
             </div>
 
             {/* Error message */}
@@ -446,26 +437,28 @@ const VerifyTicket = () => {
             whileHover={!isLoading ? { scale: 1.02 } : {}}
             whileTap={!isLoading ? { scale: 0.97 } : {}}
             onClick={handleVerify}
-            disabled={isLoading}
+            disabled={isPending || isSuccess || isLoading}
             className="relative w-full py-5 rounded-2xl flex items-center justify-center gap-3 overflow-hidden font-black uppercase text-sm tracking-widest text-black disabled:opacity-70 disabled:cursor-not-allowed"
             style={{
-              background: "linear-gradient(135deg, #FF7A00 0%, #FF9D00 50%, #FF7A00 100%)",
+              background:
+                "linear-gradient(135deg, #FF7A00 0%, #FF9D00 50%, #FF7A00 100%)",
             }}
           >
             {/* Shimmer */}
-            {!isLoading && (
-              <motion.div
-                animate={{ x: ["-100%", "200%"] }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 2.5,
-                  ease: "easeInOut",
-                  repeatDelay: 1,
-                }}
-                className="absolute inset-0 w-1/3 bg-white/20 skew-x-[-20deg] pointer-events-none"
-              />
-            )}
-            {isLoading ? (
+            {!isPending ||
+              (isLoading && (
+                <motion.div
+                  animate={{ x: ["-100%", "200%"] }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2.5,
+                    ease: "easeInOut",
+                    repeatDelay: 1,
+                  }}
+                  className="absolute inset-0 w-1/2 bg-white/20 skew-x-[-20deg] pointer-events-none"
+                />
+              ))}
+            {isLoading || isPending ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
                 <span>Verifying...</span>
