@@ -13,7 +13,9 @@ redisClient.on("connect", () =>
   console.log("Redis Connected Successfully  via ioredis"),
 );
 redisClient.on("error", (err) => console.error("Redis Client Error", err));
+redisClient.on("reconnect", () => console.log("Redis Reconnected"));
 export default redisClient;
+
 export const clearEventsCache = async () => {
   try {
     const keys = await redisClient.keys(`${REDIS_PREFIX}events:*`);

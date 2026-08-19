@@ -266,6 +266,23 @@ input.no-spinner[type="number"] {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ── iOS Safari: prevent auto-zoom on input focus ── */
+/* Safari zooms in when font-size < 16px on inputs    */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+@media (min-width: 768px) {
+  /* On desktop/tablet, allow smaller font sizes again */
+  input,
+  select,
+  textarea {
+    font-size: inherit !important;
+  }
+}
+
 /* Hide native scrollbars globally (keeps scrolling) */
 html,
 body {

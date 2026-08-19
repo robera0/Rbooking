@@ -27,7 +27,8 @@
 [f] make the drop down of the admin side work with path
 [f] instead of posting everytime they can keep it on draft and post it every time just changing the pictures and price
 [f] make sure the error should be user friendly
-[] add comment rating and show the ratings of the event
+[f] add comment rating and show the ratings of the event
+[] make the verification work properly  and home in the verify ticekt route to the prevous route they came from
 [] make sure it save when they leave the site using useBlocker and when they exit the browser using beforeunload
 [f] still creating event  every 3 second instead of updating it
 // WHEN THE APP IS PUBLISHED 
