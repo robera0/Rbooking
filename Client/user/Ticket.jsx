@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Ticket,
   ShieldCheck,
@@ -6,6 +6,8 @@ import {
   Zap,
   MoveRight,
   ArrowRight,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,7 +16,7 @@ import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import moment from "moment";
-
+import { useMemo } from "react";
 /* ── ticket-type colour themes (identical to EventInfo) ── */
 const ticketThemes = {
   vip: {
@@ -68,6 +70,53 @@ const TearLine = () => (
   </div>
 );
 
+/* ── CountdownTimer ── */
+const CountdownTimer = ({ expiresAt }) => {
+  const calcRemaining = useCallback(() => {
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    if (diff <= 0) return { h: 0, m: 0, s: 0, total: 0 };
+    return {
+      h: Math.floor(diff / 3600000),
+      m: Math.floor((diff % 3600000) / 60000),
+      s: Math.floor((diff % 60000) / 1000),
+      total: diff,
+    };
+  }, [expiresAt]);
+
+  const [remaining, setRemaining] = useState(calcRemaining);
+
+  useEffect(() => {
+    const id = setInterval(() => setRemaining(calcRemaining()), 1000);
+    return () => clearInterval(id);
+  }, [calcRemaining]);
+
+  if (remaining.total <= 0) {
+    return (
+      <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">
+        Expired
+      </span>
+    );
+  }
+
+  // Color shifts: >6h = yellow, >1h = orange, <1h = red
+  const urgencyColor =
+    remaining.h >= 6 ? "#FACC15" : remaining.h >= 1 ? "#FB923C" : "#F87171";
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Clock size={10} style={{ color: urgencyColor }} />
+      <span
+        className="text-[10px] font-black tabular-nums tracking-wider"
+        style={{ color: urgencyColor }}
+      >
+        {pad(remaining.h)}:{pad(remaining.m)}:{pad(remaining.s)}
+      </span>
+    </div>
+  );
+};
+
 /* ── Filter tab ── */
 const FilterTab = ({ label, active, count, onClick }) => (
   <button
@@ -107,22 +156,37 @@ const TicketHome = () => {
   }
 
   const allTickets = tickets?.events ? tickets?.events : [];
-  const filtered =
-    filter === "all"
-      ? allTickets
-      : allTickets.filter((t) => t.status === filter);
 
-  const counts = {
-    all: allTickets?.length,
-    paid: allTickets?.filter((t) => t.status === "paid").length,
-    pending: allTickets?.filter((t) => t.status === "pending").length,
-    cancelled: allTickets?.filter((t) => t.status === "cancelled").length,
-  };
+  const filtered = useMemo(() => {
+    if (!allTickets) return [];
+
+    return filter === "all"
+      ? allTickets
+      : // 1. ADDED toLowerCase() and trim() HERE
+        allTickets.filter((t) => t?.status?.toLowerCase().trim() === filter);
+  }, [allTickets, filter]);
+
+  const counts = useMemo(() => {
+    if (!allTickets) {
+      return { all: 0, paid: 0, pending: 0, cancelled: 0 };
+    }
+
+    return {
+      all: allTickets.length,
+      // 2. ADDED toLowerCase() and trim() TO ALL OF THESE
+      paid: allTickets.filter((t) => t?.status?.toLowerCase().trim() === "paid")
+        .length,
+      pending: allTickets.filter(
+        (t) => t?.status?.toLowerCase().trim() === "pending",
+      ).length,
+      cancelled: allTickets.filter(
+        (t) => t?.status?.toLowerCase().trim() === "cancelled",
+      ).length,
+    };
+  }, [allTickets]);
 
   return (
     <div className="relative min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-x-hidden">
-
-
       {/* ambient orbs */}
       <div className="absolute w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none top-[-150px] left-[-150px] bg-[#FF7A00]/[0.07]" />
       <div className="absolute w-[400px] h-[400px] rounded-full blur-[120px] pointer-events-none top-[40%] right-[-100px] bg-purple-600/[0.05]" />
@@ -252,6 +316,10 @@ const TicketHome = () => {
               const statusKey = event?.dates?.status?.code;
               const status = STATUS[statusKey] || STATUS.upcoming;
 
+              const isPendingUnverified =
+                t?.status?.toLowerCase().trim() === "pending" &&
+                !t?.isVerified;
+
               const infoRows = [
                 {
                   label: "Venue",
@@ -284,12 +352,30 @@ const TicketHome = () => {
                     duration: 0.7,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl"
+                  className="rounded-3xl overflow-hidden border shadow-2xl relative"
                   style={{
                     background:
                       "linear-gradient(160deg, #141416 0%, #0e0e10 100%)",
+                    opacity: isPendingUnverified ? 0.55 : 1,
+                    borderColor: isPendingUnverified
+                      ? "rgba(251, 146, 60, 0.2)"
+                      : "rgba(255,255,255,0.08)",
+                    filter: isPendingUnverified
+                      ? "saturate(0.5)"
+                      : "none",
                   }}
                 >
+                  {/* ── PENDING BADGE + TIMER ── */}
+                  {isPendingUnverified && (
+                    <div className="absolute top-3 right-3 z-30 flex items-center gap-2 bg-black/70 backdrop-blur-md border border-orange-500/30 rounded-xl px-3 py-1.5">
+                      <AlertTriangle size={10} className="text-orange-400" />
+                      <span className="text-[8px] font-black uppercase tracking-widest text-orange-400">
+                        Pending
+                      </span>
+                      <div className="w-[1px] h-3 bg-orange-500/30" />
+                      <CountdownTimer expiresAt={t.expiresAt} />
+                    </div>
+                  )}
                   {/* ── TOP BAND ── */}
                   <div
                     className="relative px-5 pt-5 pb-4 overflow-hidden"
@@ -388,42 +474,59 @@ const TicketHome = () => {
                       ))}
                     </div>
 
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => navigate(`/tickets_home/${t?._id}`)}
-                      className="relative w-full py-3 rounded-xl flex items-center justify-center gap-2 overflow-hidden"
-                      style={{ background: theme.ctaGradient }}
+                    <button
+                      onClick={() =>
+                        isPendingUnverified
+                          ? navigate(`/tickets_home/verify/${t?._id}`)
+                          : navigate(`/tickets_home/${t?._id}`)
+                      }
+                      className="w-full py-3 rounded-xl flex items-center justify-center gap-2"
+                      style={{
+                        background: isPendingUnverified
+                          ? "linear-gradient(135deg, #FB923C 0%, #F97316 50%, #EA580C 100%)"
+                          : theme.ctaGradient,
+                      }}
                     >
-                      <motion.div
-                        animate={{ x: ["-100%", "200%"] }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 2.5,
-                          ease: "easeInOut",
-                          repeatDelay: 1,
-                        }}
-                        className="absolute inset-0 w-1/3 bg-white/20 skew-x-[-20deg] pointer-events-none"
-                      />
-                      <span className="relative text-[10px] font-black uppercase tracking-widest text-black">
-                        View Ticket
+                      {isPendingUnverified && (
+                        <ShieldCheck size={13} className="text-black" />
+                      )}
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black">
+                        {isPendingUnverified ? "Verify Ticket" : "View Ticket"}
                       </span>
-                      <MoveRight size={13} className="relative text-black" />
-                    </motion.button>
+                      <MoveRight size={13} className="text-black" />
+                    </button>
 
                     {/* trust row */}
                     <div className="flex justify-around">
                       {[
                         { Icon: ShieldCheck, label: "Secure" },
-                        { Icon: Star, label: "Verified" },
+                        {
+                          Icon: Star,
+                          label: isPendingUnverified
+                            ? "Unverified"
+                            : "Verified",
+                        },
                         { Icon: Zap, label: "Instant" },
                       ].map(({ Icon, label }) => (
                         <div
                           key={label}
                           className="flex flex-col items-center gap-0.5"
                         >
-                          <Icon size={11} className="text-gray-600" />
-                          <span className="text-[6px] font-black text-gray-700 uppercase tracking-wide">
+                          <Icon
+                            size={11}
+                            className={
+                              label === "Unverified"
+                                ? "text-orange-500/60"
+                                : "text-gray-600"
+                            }
+                          />
+                          <span
+                            className={`text-[6px] font-black uppercase tracking-wide ${
+                              label === "Unverified"
+                                ? "text-orange-500/60"
+                                : "text-gray-700"
+                            }`}
+                          >
                             {label}
                           </span>
                         </div>

@@ -9,7 +9,7 @@ import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
 dotenv.config();
 
-const refreshToken_SECRET = process.env.refreshToken_SECRET;
+const refreshToken_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
 export const registerAdmin = async (req, res) => {
   try {
@@ -133,25 +133,35 @@ export const register = catchAsync(async (req, res, next) => {
   });
 });
 
-export const login = catchAsync(async (req, res) => {
+// 1. ADD 'next' TO THE PARAMETERS HERE 👇
+export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   const user = await UserService.findByEmail(email);
 
-  if (!user) next(new AppError(404, "User not found"));
+  // 2. ADD 'return' TO STOP EXECUTION IF USER IS NOT FOUND
+  if (!user) {
+    return next(new AppError("User not found", 404));
+  }
+
+  // 3. ADD 'return' HERE AS WELL
   if (user.status === "banned") {
-    next(new AppError(400, "Your account has been banned from using Paysso"));
+    return next(
+      new AppError("Your account has been banned from using Paysso", 403),
+    );
   }
 
   const isMatch = await comparePassword(password, user.password);
-  if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
 
   const payload = {
     id: user._id,
     email: user.email,
     role: user.role,
   };
-  console.log(payload);
+
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
@@ -182,36 +192,47 @@ export const login = catchAsync(async (req, res) => {
 
 export const refresh = catchAsync(async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken)
-    return res.status(401).json({ message: "their is no refreshToken" });
 
-  jwt.verify(refreshToken, refreshToken_SECRET, async (error, decoded) => {
-    if (error) next(new AppError(error.message, 401));
-    const user = await UserModel.findById(decoded?.id);
-    if (!user) return next(new AppError(404, "User not found"));
-    const tokenExists = user.refreshTokens.some(
-      (t) => t.token === refreshToken,
-    );
-    if (!tokenExists) {
-      return res.status(403).json({ message: "Token mismatch" });
-    }
-    const payload = {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-    };
+  if (!refreshToken) {
+    return res.status(401).json({ message: "There is no refreshToken" });
+  }
 
-    const newAccessToken = generateAccessToken(payload);
-    res
-      .cookie("accessToken", newAccessToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-        path: "/",
-      })
-      .status(200)
-      .json({ message: "Token refreshed" });
-  });
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, refreshToken_SECRET);
+  } catch (error) {
+    return next(new AppError(error.message, 401));
+  }
+
+  const user = await UserModel.findById(decoded.id);
+
+  if (!user) {
+    return next(new AppError("User not found", 404));
+  }
+
+  const tokenExists = user.refreshTokens.some((t) => t.token === refreshToken);
+
+  if (!tokenExists) {
+    return res.status(403).json({ message: "Token mismatch" });
+  }
+
+  const payload = {
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  };
+
+  const newAccessToken = generateAccessToken(payload);
+
+  res
+    .cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    })
+    .status(200)
+    .json({ message: "Token refreshed" });
 });
 
 export const logout = catchAsync(async (req, res, next) => {

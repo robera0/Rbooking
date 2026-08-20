@@ -15,9 +15,15 @@ const UserTicketSchema = new mongoose.Schema(
     },
 
     orderNo: {
-      type: String, // better as string (can include prefix)
+      type: String,
       required: true,
       unique: true,
+    },
+
+    receiptNo:String,
+    isVerified: {
+      type: Boolean,
+      required: true,
     },
 
     quantity: {
@@ -36,6 +42,11 @@ const UserTicketSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "expired"],
       default: "pending",
+    },
+
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 24 * 60 * 60 * 1000),
     },
 
     phone: {

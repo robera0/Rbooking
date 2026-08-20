@@ -48,6 +48,7 @@ export const updateUser = catchAsync(async (req, res, next) => {
     : phone.starWith("0")
       ? `+251${phone.slice(1)}`
       : `+251${phone}`;
+      
   const updates = Object.fromEntries(
     Object.entries({
       fullName,

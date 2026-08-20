@@ -36,8 +36,9 @@ class TicketService {
   static async find(userId) {
     return await UserTicketModel.find({
       userId,
-      status: "paid",
+      status: { $in: ["paid", "pending"] },
     })
+      .sort({ createdAt: -1 })
       .populate({
         path: "ticketId",
         populate: {

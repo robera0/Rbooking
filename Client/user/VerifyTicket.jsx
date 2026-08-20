@@ -310,11 +310,11 @@ const VerifyTicket = () => {
 
       {/* Back link */}
       <Link
-        to="/"
+        to="/tickets_home"
         className="absolute top-6 left-6 flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
       >
         <ArrowLeft size={14} />
-        Home
+        My Tickets
       </Link>
 
       <motion.div
@@ -365,8 +365,8 @@ const VerifyTicket = () => {
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
                 <p className="text-lg font-black tracking-widest text-white font-mono">
-                  Copy the url that you get from telebirr after you pay and
-                  verify below !
+                  Copy the URL you receive from Telebirr after completing your
+                  payment, then paste it below to verify your ticket.
                 </p>
               </div>
             </div>

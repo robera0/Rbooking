@@ -1,25 +1,27 @@
 import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
-import redisClient, { clearTicketCache, REDIS_PREFIX } from "../config/redis.js";
+import redisClient, {
+  clearTicketCache,
+  REDIS_PREFIX,
+} from "../config/redis.js";
 import TicketService from "../service/ticket.service.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
 import Transaction from "../models/transaction.model.js";
 import { nanoid } from "nanoid";
-
+import verifyReceipt from "../service/verifyRecipt.service.js";
 export const purchaseTicket = async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+
+  const userId = req.user.id;
+  const { ticketId } = req.params;
+  const { quantity, phone } = req.body;
+
+  if (!ticketId) return res.status(400).json({ message: "Ticket ID required" });
+  if (!quantity || quantity <= 0)
+    return res.status(400).json({ message: "Invalid quantity" });
+
   try {
-    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
-
-    const userId = req.user.id;
-    const { ticketId } = req.params;
-    const { quantity, phone } = req.body;
-
-    if (!ticketId)
-      return res.status(400).json({ message: "Ticket ID required" });
-    if (!quantity || quantity <= 0)
-      return res.status(400).json({ message: "Invalid quantity" });
-
     // Atomically check availability AND decrement in one operation.
     // $inc is atomic in MongoDB — no replica-set session needed.
     const ticket = await TicketModel.findOneAndUpdate(
@@ -41,11 +43,13 @@ export const purchaseTicket = async (req, res) => {
     const userTicket = await UserTicketModel.create({
       userId,
       ticketId,
-      orderNo,
       quantity,
+      orderNo,
+      isVerified: false,
       totalAmount,
       phone: phone || "",
       status: "pending",
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
 
     await clearTicketCache(userId);
@@ -144,20 +148,22 @@ export const updateTicketStatus = async (req, res) => {
  * - Creates a Transaction record with isVerified: true
  */
 export const verifyTicket = async (req, res) => {
+  const { userTicketId } = req.params;
+  const { receiptUrl } = req.body;
+
+  const userId = req.user.id;
+
+  const EXPECTED_RECEIVER = "Robera Ararsa Ulu";
+
+  if (!receiptUrl || !receiptUrl.trim())
+    return res.status(400).json({ message: "Receipt link is required" });
+
+  // Basic validation: ensure it looks like a valid Telebirr receipt URL
+  if (!receiptUrl.includes("ethiotelecom") && !receiptUrl.startsWith("http")) {
+    return res.status(400).json({ message: "The link is not correct" });
+  }
+
   try {
-    const { userTicketId } = req.params;
-    const { receiptUrl } = req.body;
-
-    const userId = req.user.id;
-
-    if (!receiptUrl || !receiptUrl.trim())
-      return res.status(400).json({ message: "Receipt link is required" });
-
-    // Basic validation: ensure it looks like a valid Telebirr receipt URL
-    if (!receiptUrl.includes("ethiotelecom") && !receiptUrl.startsWith("http")) {
-      return res.status(400).json({ message: "The link is not correct" });
-    }
-
     // Fetch the UserTicket and populate ticket tier (to get eventId)
     const userTicket = await UserTicketModel.findById(userTicketId).populate({
       path: "ticketId",
@@ -178,10 +184,54 @@ export const verifyTicket = async (req, res) => {
     if (userTicket.status === "cancelled")
       return res.status(400).json({ message: "This ticket was cancelled" });
 
+    // verification
+    const TOTAL_AMOUNT = 150;
+
+    const isValid = await verifyReceipt(receiptUrl);
+
+    if (!isValid || isValid.error || !isValid.receipt) {
+      return res.status(400).json({
+        message: isValid?.error || "Receipt verification failed or invalid URL",
+      });
+    }
+
+    const receipt = isValid.receipt;
+    const settledAmount = parseFloat(receipt.settledAmount);
+
+    if (receipt.transactionStatus !== "Completed") {
+      return res.status(400).json({ message: "Transaction is not completed" });
+    }
+
+    if (receipt.creditedPartyName !== EXPECTED_RECEIVER) {
+      return res
+        .status(400)
+        .json({ message: "Invalid receiver name on receipt" });
+    }
+
+    if (settledAmount !== TOTAL_AMOUNT) {
+      return res.status(400).json({
+        message: `Invalid amount. Expected ${TOTAL_AMOUNT.trim()}, but receipt shows ${receipt.settledAmount}`,
+      });
+    }
+
+    if (!receipt.receiptNo) {
+      return res
+        .status(400)
+        .json({ message: "Receipt number is missing from receipt data" });
+    }
+
+    const existingTicket = await UserTicketModel.findOne({
+      receiptNo: receipt.receiptNo,
+    });
+    if (existingTicket) {
+      return res
+        .status(400)
+        .json({ message: "This receipt has already been used." });
+    }
     // Mark ticket as paid
     const updatedTicket = await UserTicketModel.findByIdAndUpdate(
       userTicketId,
-      { status: "paid", receiptUrl },
+      { status: "paid", isVerified: true, receiptUrl },
       { new: true },
     ).populate({
       path: "ticketId",
@@ -198,6 +248,7 @@ export const verifyTicket = async (req, res) => {
       event: userTicket.ticketId.eventId,
       ticket: userTicketId,
       isVerified: true,
+      receiptNo: receipt.receiptNo,
     });
 
     await clearTicketCache(userId);

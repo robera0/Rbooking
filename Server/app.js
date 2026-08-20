@@ -17,6 +17,7 @@ import passport from "./config/googleAuth.js";
 import session from "express-session";
 import rateLimit from "express-rate-limit";
 import errorHandler from "./errors/errorHandler.js";
+import { expirePendingTickets } from "./utils/ticketExpiry.js";
 import {
   Event,
   Concert,
@@ -34,6 +35,8 @@ const PORT = process.env.PORT || 5002;
 const startServer = async () => {
   try {
     await connectDB();
+    // Run once on startup, then every 10 minutes
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

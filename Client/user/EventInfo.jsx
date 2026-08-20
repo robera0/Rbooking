@@ -1004,9 +1004,7 @@ const EventInfo = () => {
                     ))}
                   </div>
 
-                  <motion.button
-                    whileHover={!isSoldOut ? { scale: 1.02 } : {}}
-                    whileTap={!isSoldOut ? { scale: 0.97 } : {}}
+                  <button
                     disabled={isSoldOut}
                     onClick={() => {
                       if (!user || usererror) {
@@ -1015,34 +1013,22 @@ const EventInfo = () => {
                       }
                       setCheckoutOpen(true);
                     }}
-                    className={`relative w-full py-5 rounded-2xl flex items-center justify-center gap-3 overflow-hidden ${
+                    className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 ${
                       isSoldOut ? "cursor-not-allowed opacity-80" : ""
                     }`}
                     style={{ background: theme?.ctaGradient }}
                   >
-                    {!isSoldOut && (
-                      <motion.div
-                        animate={{ x: ["-100%", "200%"] }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 2.5,
-                          ease: "easeInOut",
-                          repeatDelay: 1,
-                        }}
-                        className="absolute inset-0 w-1/3 bg-white/20 skew-x-[-20deg] pointer-events-none"
-                      />
-                    )}
                     <span
-                      className={`relative text-[12px] font-black uppercase tracking-widest ${
+                      className={`text-[12px] font-black uppercase tracking-widest ${
                         isSoldOut ? "text-red-500" : "text-black"
                       }`}
                     >
                       {isSoldOut ? "Sold Out" : "Get Tickets"}
                     </span>
                     {!isSoldOut && (
-                      <MoveRight size={16} className="relative text-black" />
+                      <MoveRight size={16} className="text-black" />
                     )}
-                  </motion.button>
+                  </button>
 
                   <div className="flex justify-around pt-1">
                     {[
