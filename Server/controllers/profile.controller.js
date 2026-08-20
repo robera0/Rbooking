@@ -43,12 +43,16 @@ export const updateUser = catchAsync(async (req, res, next) => {
   if (req.file) {
     avatarUrl = `uploads/${req.file.filename}`;
   }
-
+  const normalizedPhone = phone.starWith("+251")
+    ? phone
+    : phone.starWith("0")
+      ? `+251${phone.slice(1)}`
+      : `+251${phone}`;
   const updates = Object.fromEntries(
     Object.entries({
       fullName,
       nationality,
-      phone,
+      phone: normalizedPhone,
       dateOfBirth,
       Gender,
       address,

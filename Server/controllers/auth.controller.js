@@ -187,7 +187,7 @@ export const refresh = catchAsync(async (req, res, next) => {
 
   jwt.verify(refreshToken, refreshToken_SECRET, async (error, decoded) => {
     if (error) next(new AppError(error.message, 401));
-    const user = await UserModel.findById(decoded.id);
+    const user = await UserModel.findById(decoded?.id);
     if (!user) return next(new AppError(404, "User not found"));
     const tokenExists = user.refreshTokens.some(
       (t) => t.token === refreshToken,
