@@ -61,6 +61,7 @@ export const updateUser = catchAsync(async (req, res, next) => {
 
   // Build avatarUrl from the uploaded file (handled by multer)
   let avatarUrl;
+  let coverPage;
 
   if (req.files?.avatarUrl?.[0]) {
     avatarUrl = `uploads/${req.files.avatarUrl[0].filename}`;
@@ -77,7 +78,7 @@ export const updateUser = catchAsync(async (req, res, next) => {
         : `+251${phone}`
     : phone;
 
-  const existingUser = await UserService.findOne({ phone: normalizedPhone });
+  const existingUser = await ProfileService.findByPhone(normalizedPhone);
   if (existingUser) {
     return res.status(400).json({ message: "phone already exists" });
   }

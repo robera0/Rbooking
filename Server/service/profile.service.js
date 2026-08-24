@@ -19,6 +19,9 @@ class ProfileService {
   static async findByUserId(userId) {
     return ProfileModel.findOne({ userId }).populate("userId");
   }
+  static async findByPhone(normalizedPhone) {
+    return await ProfileModel.findOne({ phone: normalizedPhone });
+  }
 
   static async findOne(userId) {
     return await ProfileModel.findOne({ userId: userId })
