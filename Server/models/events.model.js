@@ -7,6 +7,7 @@ export const PriceRangeSchema = new mongoose.Schema(
     currency: String,
     min: Number,
     max: Number,
+    capacity: Number,
     activeFrom: Date,
     activeUntil: Date,
     isActive: Boolean,

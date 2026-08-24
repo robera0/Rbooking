@@ -8,6 +8,8 @@ import mongoose from "mongoose";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
 import QRCode from "qrcode";
+import { notificationModel } from "../models/notification.model.js";
+import { AdminProfile } from "../models/adminProfile.model.js";
 import "dotenv/config";
 
 const URL = process.env.VITE_API_URL;
@@ -84,10 +86,20 @@ export const addEvent = catchAsync(async (req, res, next) => {
     pictures = req.files.map((file) => `uploads/${file.filename}`);
   }
 
+  let adminProfileId = userId;
+  try {
+    const adminProfile = await AdminProfile.findOne({ userId });
+    if (adminProfile) {
+      adminProfileId = adminProfile._id;
+    }
+  } catch (e) {
+    console.error("Failed to find AdminProfile:", e);
+  }
+
   const events = {
     type: normalizedType,
     status,
-    adminId: userId,
+    adminId: adminProfileId,
     name,
     artist,
     locale: typeof locale === "string" ? locale : "",
@@ -123,6 +135,25 @@ export const addEvent = catchAsync(async (req, res, next) => {
   }
 
   await clearEventsCache();
+
+  try {
+    await notificationModel.findOneAndUpdate(
+      { userId },
+      {
+        $push: {
+          notifications: {
+            title: `Created Event: ${name}`,
+            message: `You have successfully created the event ${name}.`,
+            type: "event",
+          },
+        },
+      },
+      { upsert: true, new: true }
+    );
+  } catch (notifErr) {
+    console.error("Failed to create notification for event creation", notifErr);
+  }
+
   res
     .status(200)
     .json({
@@ -145,6 +176,9 @@ export const createTickets = catchAsync(async (req, res, next) => {
       availableQuantity: Number(t.capacity),
     })),
   );
+
+  await clearEventsCache();
+  await clearSingleEventCache(eventId);
 
   res.status(201).json({
     success: true,
@@ -445,8 +479,60 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   if (!updatedEvent) {
     return res.status(404).json({ success: false, message: "Event not found" });
   }
+
+  // Sync tickets based on updated priceRanges
+  if (priceRanges && Array.isArray(priceRanges)) {
+    try {
+      const eventIdObj = new mongoose.Types.ObjectId(eventId);
+      const ticketOps = priceRanges.map((pr) => {
+        return {
+          updateOne: {
+            filter: { eventId: eventIdObj, name: pr.type },
+            update: {
+              $set: {
+                price: Number(pr.min),
+                totalQuantity: Number(pr.capacity) || 0,
+              },
+              $setOnInsert: {
+                availableQuantity: Number(pr.capacity) || 0,
+              }
+            },
+            upsert: true
+          }
+        };
+      });
+      if (ticketOps.length > 0) {
+        await TicketModel.bulkWrite(ticketOps);
+      }
+    } catch (ticketErr) {
+      console.error("Failed to sync tickets:", ticketErr);
+    }
+  }
+
   await clearEventsCache();
   await clearSingleEventCache(eventId);
+
+  try {
+    const userId = req.user?.id;
+    if (userId) {
+      await notificationModel.findOneAndUpdate(
+        { userId },
+        {
+          $push: {
+            notifications: {
+              title: `Updated Event: ${name || updatedEvent.name}`,
+              message: `You have successfully updated the event ${name || updatedEvent.name}.`,
+              type: "event",
+            },
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
+  } catch (notifErr) {
+    console.error("Failed to create notification for event update", notifErr);
+  }
+
   res.status(200).json({
     success: true,
     event: updatedEvent,

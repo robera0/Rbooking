@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from "react";
-import axios from "axios";
+import api from "./api/api.config";
 
 const ServiceContext = createContext();
 
@@ -47,10 +47,10 @@ export const ServiceProvider = ({ children }) => {
   const API_URL = import.meta.env.VITE_API_URL;
   const toggleWishlist = async ({ eventId, ticketId, isAdding }) => {
     const url = isAdding
-      ? `${API_URL}/api/auth/wishlist/add`
-      : `${API_URL}/api/auth/wishlist/remove`;
+      ? `/api/auth/wishlist/add`
+      : `/api/auth/wishlist/remove`;
 
-    return axios.post(url, { eventId, ticketId }, { withCredentials: true });
+    return api.post(url, { eventId, ticketId });
   };
   const titles = {
     booking: "Booking Confirmed",

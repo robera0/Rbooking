@@ -8,11 +8,11 @@ const adminProfileSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-
     // Personal
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     phone: { type: String, required: true },
+    email: { type: String, required: true },
     dateOfBirth: {
       type: Date,
     },
@@ -43,8 +43,8 @@ const adminProfileSchema = new mongoose.Schema(
         "Sports Organizer",
       ],
     },
-    businessRegistrationNumber: String,
-    taxId: String,
+    // businessRegistrationNumber: String,
+    //taxId: String,
 
     // Location
     country: String,
@@ -52,17 +52,29 @@ const adminProfileSchema = new mongoose.Schema(
     region: String,
     streetAddress: String,
 
+    // Documents
+    coverPage: String,
+    paymentMethods: [
+      {
+        provider: {
+          type: String,
+          enum: ["Telebirr", "Abyssinia Bank", "CBE", "MPSA"],
+        },
+        accountNumber: String,
+      },
+    ],
+    
     // Role within admin system
     adminRole: {
       type: String,
       enum: [
-        "super_admin",
-        "event_manager",
-        "ticket_manager",
-        "finance_manager",
-        "corporate_events",
+        "super admin",
+        "event organizer",
+        "ticket manager",
+        "finance manager",
+        "corporate events",
       ],
-      default: "event_manager",
+      default: "event organizer",
     },
 
     // Documents
@@ -72,7 +84,7 @@ const adminProfileSchema = new mongoose.Schema(
 
     // Security
     isVerified: { type: Boolean, default: false },
-    twoFactorEnabled: { type: Boolean, default: false },
+    // twoFactorEnabled: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

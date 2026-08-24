@@ -15,6 +15,7 @@ import { CustomLabels } from "./Graphs";
 import { useQuery } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
 import { Loader2 } from "lucide-react";
+import api from "../src/Context/api/api.config";
 
 const Report = () => {
   const { API_URL } = useService();
@@ -22,10 +23,8 @@ const Report = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["adminDashboardStats"],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/admin/analytics/dashboard`);
-      if (!res.ok) throw new Error("Failed to fetch analytics");
-      const json = await res.json();
-      return json.data;
+      const res = await api.get(`/api/auth/admin/analytics/dashboard`);
+      return res.data.data;
     },
   });
 
@@ -45,7 +44,7 @@ const Report = () => {
       {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-8 border-b border-white/[0.04] pb-6">
         <div className="space-y-2">
-          <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none text-white">
+          <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none text-white">
             Reports & <span className="text-[#FF7A00]">Analytics</span>
           </h1>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />

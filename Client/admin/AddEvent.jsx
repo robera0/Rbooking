@@ -12,12 +12,14 @@ import {
   Flag,
   CalendarDays,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useBlocker } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
+import { eventService } from "@/Context/ApiEvent";
 import { CustomSelect } from "./Cards";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+import api from "../src/Context/api/api.config";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { StaticDateTimePicker } from "@mui/x-date-pickers/StaticDateTimePicker";
@@ -586,6 +588,7 @@ const SectionCard = ({ icon: Icon, title, badge, children }) => (
 const AddEvent = () => {
   const navigate = useNavigate();
   const { API_URL } = useService();
+  const { adminSettings } = eventService();
 
   const EMPTY_FORM = {
     type: "",
@@ -616,13 +619,33 @@ const AddEvent = () => {
     name: "",
     price: "",
     capacity: "",
-  });
-  const [newAmenity, setNewAmenity] = useState("");
+  })
+   const [newAmenity, setNewAmenity] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
 
   const posterInputRef = useRef(null);
   const timerRef = useRef(null);
   const draftIdRef = useRef(null);
+
+  const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(EMPTY_FORM);
+
+  useBlocker(({ currentLocation, nextLocation }) => {
+    if (hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname) {
+      return !window.confirm("You have unsaved changes. Are you sure you want to leave?");
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const validate = (field, dataOverride) => {
     const data = dataOverride || formData;
@@ -646,56 +669,43 @@ const AddEvent = () => {
     timerRef.current = setTimeout(saveDraft, 3000);
   };
 
-  const readErrorMessage = async (res, fallback) => {
-    try {
-      const data = await res.json();
-      return data?.message || data?.error || fallback;
-    } catch {
-      return fallback;
-    }
+  const readErrorMessage = (err, fallback) => {
+    return err.response?.data?.message || err.response?.data?.error || fallback;
   };
 
-  const shouldCreateFreshDraft = (res, message) => {
-    if (res?.status === 404) return true;
+  const shouldCreateFreshDraft = (err, message) => {
+    if (err.response?.status === 404) return true;
     return /not found/i.test(message || "");
   };
 
   const saveDraft = async () => {
     try {
       if (draftIdRef.current) {
-        const res = await fetch(
-          `${API_URL}/api/auth/admin/events/${draftIdRef.current}`,
-          {
-            method: "PATCH",
-            credentials: "include",
-            body: buildFormData(buildPayload("draft")),
-          },
-        );
-        if (!res.ok) {
-          const message = await readErrorMessage(res, "Failed to update draft");
-          if (shouldCreateFreshDraft(res, message)) {
+        try {
+          const res = await api.patch(
+            `/api/auth/admin/events/${draftIdRef.current}`,
+            buildFormData(buildPayload("draft")),
+          );
+          return res.data;
+        } catch (err) {
+          const message = readErrorMessage(err, "Failed to update draft");
+          if (shouldCreateFreshDraft(err, message)) {
             draftIdRef.current = null;
           } else {
             throw new Error(message);
           }
-        } else {
-          return res.json();
         }
       }
 
-      const res = await fetch(`${API_URL}/api/auth/admin/addEvents`, {
-        method: "POST",
-        credentials: "include",
-        body: buildFormData(buildPayload("draft")),
-      });
-      if (!res.ok) {
-        throw new Error(await readErrorMessage(res, "Failed to create draft"));
-      }
-      const data = await res.json();
+      const res = await api.post(
+        `/api/auth/admin/addEvents`,
+        buildFormData(buildPayload("draft")),
+      );
+      const data = res.data;
       draftIdRef.current = data?.event?._id;
       return data;
     } catch (err) {
-      console.error("Draft save error:", err); 
+      console.error("Draft save error:", err);
       return null;
     }
   };
@@ -790,39 +800,32 @@ const AddEvent = () => {
   const publishMutation = useMutation({
     mutationFn: async (payload) => {
       if (draftIdRef.current) {
-        const res = await fetch(
-          `${API_URL}/api/auth/admin/events/${draftIdRef.current}`,
-          {
-            method: "PATCH",
-            credentials: "include",
-            body: buildFormData(payload),
-          },
-        );
-        if (!res.ok) {
-          const message = await readErrorMessage(
-            res,
-            "Failed to publish event",
+        try {
+          const res = await api.patch(
+            `/api/auth/admin/events/${draftIdRef.current}`,
+            buildFormData(payload),
           );
-          if (shouldCreateFreshDraft(res, message)) {
+          return res.data;
+        } catch (err) {
+          const message = readErrorMessage(err, "Failed to publish event");
+          if (shouldCreateFreshDraft(err, message)) {
             draftIdRef.current = null;
           } else {
             throw new Error(message);
           }
-        } else {
-          return res.json();
         }
       }
-      const res = await fetch(`${API_URL}/api/auth/admin/addEvents`, {
-        method: "POST",
-        credentials: "include",
-        body: buildFormData(payload),
-      });
-      if (!res.ok) {
-        throw new Error(await readErrorMessage(res, "Failed to create event"));
+      try {
+        const res = await api.post(
+          `/api/auth/admin/addEvents`,
+          buildFormData(payload),
+        );
+        const data = res.data;
+        draftIdRef.current = data?.event?._id || data?.events?._id || null;
+        return data;
+      } catch (err) {
+        throw new Error(readErrorMessage(err, "Failed to create event"));
       }
-      const data = await res.json();
-      draftIdRef.current = data?.event?._id || data?.events?._id || null;
-      return data;
     },
     onSuccess: () => {
       createTicketsMutation.mutate({
@@ -846,17 +849,10 @@ const AddEvent = () => {
 
   const createTicketsMutation = useMutation({
     mutationFn: async ({ eventId, tickets }) => {
-      const res = await fetch(
-        `${API_URL}/api/auth/admin/events/${eventId}/tickets`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tickets }),
-        },
-      );
-      if (!res.ok) throw new Error("Failed to create tickets");
-      return res.json();
+      const res = await api.post(`/api/auth/admin/events/${eventId}/tickets`, {
+        tickets,
+      });
+      return res.data;
     },
     onError: (err) => toast.error(getFriendlyErrorMessage(err)),
   });
@@ -907,7 +903,7 @@ const AddEvent = () => {
                 options={[
                   { label: "Concert", value: "concert" },
                   { label: "Festival", value: "festival" },
-                  { label: "Generic", value: "generic" },
+                  { label: "Event", value: "generic" },
                 ]}
                 value={formData.type}
                 onChange={(val) => handleChange("type", val)}
@@ -1046,14 +1042,20 @@ const AddEvent = () => {
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Ticket Name
                     </label>
-                    <input
+                    <CustomSelect
+                      options={[
+                        { label: "Regular", value: "Regular" },
+                        { label: "Early Bird", value: "Early Bird" },
+                        { label: "VIP", value: "VIP" },
+                        { label: "VVIP", value: "VVIP" },
+                      ]}
                       value={ticket.name}
-                      onChange={(e) => {
+                      onChange={(val) => {
                         const updated = [...formData.tickets];
-                        updated[idx].name = e.target.value;
+                        updated[idx].name = val;
                         handleChange("tickets", updated);
                       }}
-                      className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
+                      placeholder="Ticket Type"
                     />
                   </div>
                   <div className="w-24">
@@ -1101,13 +1103,16 @@ const AddEvent = () => {
 
               <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
                 <div className="flex-1">
-                  <input
+                  <CustomSelect
+                    options={[
+                      { label: "Regular", value: "Regular" },
+                      { label: "Early Bird", value: "Early Bird" },
+                      { label: "VIP", value: "VIP" },
+                      { label: "VVIP", value: "VVIP" },
+                    ]}
                     value={newTicket.name}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, name: e.target.value })
-                    }
-                    className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
-                    placeholder="Ticket Name"
+                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
+                    placeholder="Ticket Type"
                   />
                 </div>
                 <div className="w-24">
@@ -1120,7 +1125,7 @@ const AddEvent = () => {
                     placeholder="Price"
                   />
                 </div>
-                <div className="w-24">
+                <div className="w-32">
                   <input
                     type="number"
                     value={newTicket.capacity}
@@ -1128,19 +1133,21 @@ const AddEvent = () => {
                       setNewTicket({ ...newTicket, capacity: e.target.value })
                     }
                     className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                    placeholder="Cap"
+                    placeholder="Capacity"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     if (
-                      newTicket.name &&
-                      newTicket.price &&
-                      newTicket.capacity
+                      newTicket.name.trim() !== "" &&
+                      newTicket.price !== "" &&
+                      newTicket.capacity !== ""
                     ) {
                       set({ tickets: [...formData.tickets, { ...newTicket }] });
                       setNewTicket({ name: "", price: "", capacity: "" });
+                    } else {
+                      toast.error("Please fill in Ticket Name, Price, and Capacity to add a ticket.");
                     }
                   }}
                   className="ml-2 text-[#22c55e] border border-[#22c55e] rounded-full p-2"
@@ -1216,18 +1223,24 @@ const AddEvent = () => {
           {formData.type === "concert" && (
             <SectionCard icon={Music} title="Concert Details" badge="Concert">
               <PillMultiSelect
-                label="Music Genre"
-                options={[
-                  "Pop",
-                  "Rock",
-                  "Hip-Hop",
-                  "Electronic",
-                  "Jazz",
-                  "Afrobeats",
-                  "Gospel",
-                  "R&B",
-                  "Other",
-                ]}
+                label="Primary Genre(s)"
+                options={
+                  adminSettings?.eventClassifications?.genres?.length > 0
+                    ? adminSettings.eventClassifications.genres
+                    : [
+                        "Pop",
+                        "Rock",
+                        "Jazz",
+                        "Cultural",
+                        "Hip-Hop",
+                        "Classical",
+                        "Electronic",
+                        "Afrobeats",
+                        "Gospel",
+                        "R&B",
+                        "Other",
+                      ]
+                }
                 value={formData.musicGenre}
                 onChange={(val) => handleChange("musicGenre", val)}
               />
@@ -1285,25 +1298,6 @@ const AddEvent = () => {
             </SectionCard>
           )}
 
-          {formData.type === "generic" && (
-            <SectionCard icon={Zap} title="Event Category" badge="Generic">
-              <PillSelect
-                label="Category"
-                options={[
-                  "Sports",
-                  "Conference",
-                  "Expo",
-                  "Community",
-                  "Corporate",
-                  "Religious",
-                  "Exhibition",
-                  "Other",
-                ]}
-                value={formData.category}
-                onChange={(v) => handleChange("category", v)}
-              />
-            </SectionCard>
-          )}
         </div>
 
         <div className="space-y-8">
@@ -1319,7 +1313,7 @@ const AddEvent = () => {
 
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
             <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm">
-              Amenities
+              Features
             </h3>
             <div className="space-y-3">
               {formData.amenities.map((item, i) => (
@@ -1346,7 +1340,7 @@ const AddEvent = () => {
               <div className="relative pt-2">
                 <input
                   className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-4 py-3 text-[10px] text-white outline-none focus:border-[#FF7A00]/50 font-bold uppercase transition-colors"
-                  placeholder="NEW AMENITY..."
+                  placeholder="NEW FEATURE..."
                   value={newAmenity}
                   onChange={(e) => setNewAmenity(e.target.value)}
                   onKeyDown={(e) => {
@@ -1467,6 +1461,30 @@ const AddEvent = () => {
               hint="At least one photo required to publish"
             />
           </div>
+
+          {formData.type === "generic" && (
+            <SectionCard icon={Zap} title="Event Category" badge="Event">
+              <PillSelect
+                label="Category"
+                options={
+                  adminSettings?.eventClassifications?.categories?.length > 0
+                    ? adminSettings.eventClassifications.categories
+                    : [
+                        "Sports",
+                        "Conference",
+                        "Expo",
+                        "Community",
+                        "Corporate",
+                        "Religious",
+                        "Exhibition",
+                        "Other",
+                      ]
+                }
+                value={formData.category}
+                onChange={(v) => handleChange("category", v)}
+              />
+            </SectionCard>
+          )}
 
           <div className="p-6 bg-[#FF7A00]/5 border border-[#FF7A00]/10 rounded-3xl flex items-center gap-4">
             <ShieldCheck size={24} className="text-[#FF7A00]" />

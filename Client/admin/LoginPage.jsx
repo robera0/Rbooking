@@ -1,19 +1,37 @@
 import { useState } from "react";
 import Button from "./Button";
 import { useNavigate } from "react-router-dom";
-import LoginUser from "../user/LoginUser";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useService } from "../src/Context/ServiceContext";
+import api from "../src/Context/api/api.config";
+import toast from "react-hot-toast";
+
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { setIsLoggedIn } = useService();
 
   const loginMutation = useMutation({
-    mutationFn: login,
-    onSuccess: () => {
-      navigate("/dashboard");
+    mutationFn: async (userData) => {
+      const res = await api.post(`/api/auth/login`, userData);
+      return res.data;
     },
+    onSuccess: (data) => {
+      if (data.user?.role !== "admin") {
+         toast.error("You are not authorized as an admin");
+         return;
+      }
+      setIsLoggedIn(true);
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      toast.success("Logged in successfully");
+      navigate("/admin/home");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Login failed");
+    }
   });
 
   return (

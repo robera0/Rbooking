@@ -14,11 +14,12 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { CustomSelect } from "./Cards";
-import { useNavigate, useParams, useLoaderData } from "react-router-dom";
+import { useNavigate, useParams, useLoaderData, useBlocker } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+import api from "../src/Context/api/api.config";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { StaticDateTimePicker } from "@mui/x-date-pickers/StaticDateTimePicker";
@@ -187,10 +188,13 @@ const EditEvent = () => {
   const queryClient = useQueryClient();
   const eventData = useLoaderData();
 
+  const initialFormRef = useRef(null);
+
   const [formData, setFormData] = useState(() => {
+    let initialObj = {};
     if (eventData?.event) {
       const ev = eventData.event;
-      return {
+      initialObj = {
         type: ev.type || "concert",
         eventName: ev.name || "",
         artistName: ev.artist?.name || "",
@@ -224,29 +228,55 @@ const EditEvent = () => {
         stages: ev.stages || [],
         category: ev.category || "",
       };
+    } else {
+      initialObj = {
+        type: "",
+        eventName: "",
+        artistName: "",
+        supportingArtists: [],
+        venue: { name: "", city: "", address: "" },
+        description: "",
+        eventDate: "",
+        tickets: [],
+        policies: [],
+        amenities: [],
+        existingPictures: [],
+        newPictures: [],
+        musicGenre: [],
+        familyFriendly: false,
+        durationDays: "",
+        stages: [],
+        category: "",
+      };
     }
-    return {
-      type: "",
-      eventName: "",
-      artistName: "",
-      supportingArtists: [],
-      venue: { name: "", city: "", address: "" },
-      description: "",
-      eventDate: "",
-      tickets: [],
-      policies: [],
-      amenities: [],
-      existingPictures: [],
-      newPictures: [],
-      musicGenre: [],
-      familyFriendly: false,
-      durationDays: "",
-      stages: [],
-      category: "",
-    };
+    initialFormRef.current = initialObj;
+    return initialObj;
   });
 
   const set = (patch) => setFormData((prev) => ({ ...prev, ...patch }));
+  const [isSaved, setIsSaved] = useState(false);
+
+  const hasUnsavedChanges = React.useMemo(() => {
+    return JSON.stringify(formData) !== JSON.stringify(initialFormRef.current);
+  }, [formData]);
+
+  useBlocker(({ currentLocation, nextLocation }) => {
+    if (hasUnsavedChanges && !isSaved && currentLocation.pathname !== nextLocation.pathname) {
+      return !window.confirm("You have unsaved changes. Are you sure you want to leave?");
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges && !isSaved) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const [newAmenity, setNewAmenity] = useState("");
   const [newTicket, setNewTicket] = useState({
@@ -260,6 +290,7 @@ const EditEvent = () => {
   const updateMutation = useMutation({
     mutationFn: async (payload) => {
       const form = new FormData();
+      if (payload.status) form.append("status", payload.status);
       form.append("type", payload.type);
       form.append("name", payload.name);
       form.append("locale", payload.locale ?? "");
@@ -280,13 +311,8 @@ const EditEvent = () => {
 
       formData.newPictures.forEach((img) => form.append("pictures", img));
 
-      const res = await fetch(`${API_URL}/api/admin/events/${eventId}`, {
-        method: "PUT",
-        credentials: "include",
-        body: form,
-      });
-      if (!res.ok) throw new Error("Failed to update event");
-      return res.json();
+      const res = await api.put(`/api/auth/admin/events/${eventId}`, form);
+      return res.data;
     },
     onSuccess: () => {
       toast.success("Event Updated Successfully!", {
@@ -299,19 +325,20 @@ const EditEvent = () => {
       });
       queryClient.invalidateQueries(["adminEvents"]);
       queryClient.invalidateQueries(["events"]);
+      setIsSaved(true);
       setTimeout(() => navigate("/admin/events"), 2000);
     },
     onError: (err) => toast.error(getFriendlyErrorMessage(err)),
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = (publishStatus = null) => {
     if (!formData.eventName) return setError("Event Name is required");
     if (!formData.venue.name) return setError("Venue name is required");
     setError("");
 
     const type = formData.type.toLowerCase();
 
-    updateMutation.mutate({
+    const payload = {
       type,
       name: formData.eventName,
       artist: {
@@ -365,7 +392,13 @@ const EditEvent = () => {
         stages: formData.stages,
       }),
       ...(type === "generic" && { category: formData.category }),
-    });
+    };
+
+    if (publishStatus) {
+      payload.status = publishStatus;
+    }
+
+    updateMutation.mutate(payload);
   };
 
   if (!formData.eventName && !eventData?.event) {
@@ -398,14 +431,27 @@ const EditEvent = () => {
           </div>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00] ml-14" />
         </div>
-        <button
-          onClick={handleSubmit}
-          disabled={updateMutation.isLoading}
-          className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
-        >
-          <Save size={16} strokeWidth={3} />
-          {updateMutation.isLoading ? "Saving Changes..." : "Save Changes"}
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => handleSubmit()}
+            disabled={updateMutation.isLoading}
+            className="mt-4 md:mt-0 px-6 py-4 bg-transparent border border-[#FF7A00] text-[#FF7A00] hover:bg-[#FF7A00] hover:text-black text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
+          >
+            <Save size={16} strokeWidth={3} />
+            {updateMutation.isLoading ? "Saving..." : "Save Changes"}
+          </button>
+
+          {eventData?.event?.status === "draft" && (
+            <button
+              onClick={() => handleSubmit("published")}
+              disabled={updateMutation.isLoading}
+              className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
+            >
+              <Upload size={16} strokeWidth={3} />
+              Publish Event
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -550,14 +596,20 @@ const EditEvent = () => {
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Ticket Name
                     </label>
-                    <input
+                    <CustomSelect
+                      options={[
+                        { label: "Regular", value: "Regular" },
+                        { label: "Early Bird", value: "Early Bird" },
+                        { label: "VIP", value: "VIP" },
+                        { label: "VVIP", value: "VVIP" },
+                      ]}
                       value={ticket.name}
-                      onChange={(e) => {
+                      onChange={(val) => {
                         const updated = [...formData.tickets];
-                        updated[idx].name = e.target.value;
+                        updated[idx].name = val;
                         set({ tickets: updated });
                       }}
-                      className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
+                      placeholder="Ticket Type"
                     />
                   </div>
                   <div className="w-24">
@@ -606,13 +658,16 @@ const EditEvent = () => {
               {/* New ticket row */}
               <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
                 <div className="flex-1">
-                  <input
+                  <CustomSelect
+                    options={[
+                      { label: "Regular", value: "Regular" },
+                      { label: "Early Bird", value: "Early Bird" },
+                      { label: "VIP", value: "VIP" },
+                      { label: "VVIP", value: "VVIP" },
+                    ]}
                     value={newTicket.name}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, name: e.target.value })
-                    }
-                    className="bg-transparent border-none text-white font-bold outline-none w-full uppercase"
-                    placeholder="Ticket Name"
+                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
+                    placeholder="Ticket Type"
                   />
                 </div>
                 <div className="w-24">
@@ -625,7 +680,7 @@ const EditEvent = () => {
                     placeholder="Price"
                   />
                 </div>
-                <div className="w-24">
+                <div className="w-32">
                   <input
                     type="number"
                     value={newTicket.capacity}
@@ -633,19 +688,21 @@ const EditEvent = () => {
                       setNewTicket({ ...newTicket, capacity: e.target.value })
                     }
                     className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                    placeholder="Cap"
+                    placeholder="Capacity"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     if (
-                      newTicket.name &&
-                      newTicket.price &&
-                      newTicket.capacity
+                      newTicket.name.trim() !== "" &&
+                      newTicket.price !== "" &&
+                      newTicket.capacity !== ""
                     ) {
                       set({ tickets: [...formData.tickets, { ...newTicket }] });
                       setNewTicket({ name: "", price: "", capacity: "" });
+                    } else {
+                      toast.error("Please fill in Ticket Name, Price, and Capacity to add a ticket.");
                     }
                   }}
                   className="ml-2 text-[#22c55e] border border-[#22c55e] rounded-full p-2"

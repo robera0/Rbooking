@@ -3,35 +3,26 @@ import { useService } from "@/Context/ServiceContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import api from "./api/api.config";
 const EventContext = createContext();
 
 export const EventProvider = ({ children }) => {
   const [selected, setSelected] = useState([]);
-  const { API_URL } = useService();
   const queryClient = useQueryClient();
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["adminEvents"],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/auth/admin/events`, {
-        method: "GET",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to fetch");
-      const json = await res.json();
-      return json.events || [];
+      const res = await api.get(`/api/auth/admin/events`);
+      return res.data?.events || [];
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (eventIds) => {
-      const res = await fetch(`${API_URL}/api/auth/admin/events/delete`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ eventIds }),
+      await api.delete(`/api/auth/admin/events/delete`, {
+        data: { eventIds },
       });
-      if (!res.ok) throw new Error("Delete failed");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminEvents"] });

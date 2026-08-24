@@ -1,6 +1,7 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { UserModel } from "../models/user.model.js";
+import { ProfileModel } from "../models/profile.model.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -34,9 +35,23 @@ passport.use(
             isNewUser = true;
             user = await UserModel.create({
               googleId: profile.id,
-              username: profile.displayName,
               email: profile.emails[0].value,
               isProfileComplete: false,
+            });
+
+            // Generate unique username
+            const baseUsername = profile.displayName ? profile.displayName.replace(/\s+/g, "").toLowerCase() : profile.emails[0].value.split("@")[0];
+            let username = baseUsername;
+            let count = 0;
+            while (await ProfileModel.findOne({ username })) {
+              count++;
+              username = `${baseUsername}${count}`;
+            }
+
+            await ProfileModel.create({
+              userId: user._id,
+              username,
+              fullName: profile.displayName || "User",
             });
           }
         }

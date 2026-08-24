@@ -1,4 +1,5 @@
 import { Event } from "../models/events.model.js";
+import { AdminProfile } from "../models/adminProfile.model.js";
 
 class EventService {
   static async create(eventData) {
@@ -12,7 +13,7 @@ class EventService {
   }
 
   static async findById(id) {
-    return await Event.findById(id).populate({
+    const event = await Event.findById(id).populate({
       path: "comments", // This is the array of Comment documents in Event
       populate: [
         {
@@ -26,7 +27,24 @@ class EventService {
           select: "fullName avatarUrl",
         },
       ],
+    }).populate({
+      path: "adminId",
+      model: "AdminProfile",
+      select: "paymentMethods organizationName",
     });
+
+    // Fallback for legacy events where adminId was mistakenly saved as userId
+    if (event && !event.adminId) {
+      const rawEvent = await Event.findById(id).lean();
+      if (rawEvent && rawEvent.adminId) {
+        const profile = await AdminProfile.findOne({ userId: rawEvent.adminId }).select("paymentMethods organizationName");
+        if (profile) {
+          event.adminId = profile;
+        }
+      }
+    }
+
+    return event;
   }
   static find(query = {}) {
     return Event.find(query).lean();

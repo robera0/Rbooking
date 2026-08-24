@@ -13,6 +13,7 @@ import {
   completeProfile,
   user,
 } from "../controllers/user.controller.js";
+import { upload } from "../controllers/events.controller.js";
 import passport from "../config/googleAuth.js";
 import { generateAccessToken, generateRefreshToken } from "../service/token.js";
 import { UserModel } from "../models/user.model.js";
@@ -75,7 +76,7 @@ authRouter.get(
       const redirectUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/google-auth?isNewUser=${isNewUser}`;
       res.redirect(redirectUrl);
     } catch (err) {
-      console.error("❌ OAuth error:", err);
+      console.error("OAuth error:", err);
       res.redirect(
         (process.env.CLIENT_URL || "http://localhost:5173") +
           "/login?error=OAuthFail",
@@ -85,7 +86,7 @@ authRouter.get(
 );
 authRouter.get("/user", authenticateTokenMiddleware, user);
 authRouter.post("/signup/user", register);
-authRouter.post("/admin/signup", registerAdmin);
+authRouter.post("/signup/admin", upload.single("coverPage"), registerAdmin);
 //authRouter.post("/signup/admin", register_admin);
 authRouter.post("/login", login);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);

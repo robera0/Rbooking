@@ -8,6 +8,7 @@ import {
   upload,
   generateEventQR,
 } from "../controllers/events.controller.js";
+import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 
 const eventRouter = express.Router();
 
@@ -16,11 +17,13 @@ eventRouter.get("/featuredEvents", featuredEvents);
 eventRouter.get("/events/:eventId", getEventById);
 eventRouter.put(
   "/admin/events/:eventId",
+  authenticateTokenMiddleware,
   upload.array("pictures", 10),
   updateEvent,
-); // make sure to add authmiddleware  to it
+); 
 eventRouter.patch(
   "/auth/admin/events/:eventId",
+  authenticateTokenMiddleware,
   upload.array("pictures", 10),
   updateEvent,
 );

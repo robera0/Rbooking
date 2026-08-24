@@ -10,6 +10,9 @@ import { UserTicketModel } from "../models/userTicket.model.js";
 import Transaction from "../models/transaction.model.js";
 import { nanoid } from "nanoid";
 import verifyReceipt from "../service/verifyRecipt.service.js";
+import { notificationModel } from "../models/notification.model.js";
+import { AdminProfile } from "../models/adminProfile.model.js";
+import { Event } from "../models/events.model.js";
 export const purchaseTicket = async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
@@ -40,19 +43,59 @@ export const purchaseTicket = async (req, res) => {
     const orderNo = `ORD-${nanoid(10)}`;
     const totalAmount = ticket.price * quantity;
 
+    const isFree = totalAmount === 0;
+
     const userTicket = await UserTicketModel.create({
       userId,
       ticketId,
       quantity,
       orderNo,
-      isVerified: false,
+      isVerified: isFree ? true : false,
       totalAmount,
       phone: phone || "",
-      status: "pending",
+      status: isFree ? "verified" : "pending",
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
 
     await clearTicketCache(userId);
+
+    // Notify Admin of purchase
+    try {
+      const ticketDetails = await TicketModel.findById(ticketId).populate("eventId");
+      if (ticketDetails && ticketDetails.eventId && ticketDetails.eventId.adminId) {
+        let adminProfile = await AdminProfile.findById(ticketDetails.eventId.adminId);
+        if (!adminProfile) {
+          adminProfile = await AdminProfile.findOne({ userId: ticketDetails.eventId.adminId });
+        }
+        
+        if (adminProfile && adminProfile.userId) {
+          // Check Admin Settings
+          const { AdminSettingsModel } = await import("../models/adminSettings.model.js");
+          const adminSettings = await AdminSettingsModel.findOne({ adminId: adminProfile.userId });
+          
+          if (!adminSettings || adminSettings.notifications?.adminAlerts?.newTicketPurchase !== false) {
+             await notificationModel.findOneAndUpdate(
+               { userId: adminProfile.userId },
+               {
+                 $push: {
+                   notifications: {
+                     $each: [{
+                       title: "New Ticket Purchase",
+                       type: "payment",
+                       message: `A new order (${orderNo}) has been placed for ${quantity} tickets for the event "${ticketDetails.eventId.name}".`,
+                     }],
+                     $position: 0,
+                   },
+                 },
+               },
+               { upsert: true, new: true, runValidators: true }
+             );
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error("Error sending admin purchase notification:", notifErr);
+    }
 
     res.status(201).json({ success: true, userTicket });
   } catch (error) {
@@ -185,7 +228,7 @@ export const verifyTicket = async (req, res) => {
       return res.status(400).json({ message: "This ticket was cancelled" });
 
     // verification
-    const TOTAL_AMOUNT = 150;
+    const TOTAL_AMOUNT = userTicket.totalAmount;
 
     const isValid = await verifyReceipt(receiptUrl);
 
@@ -252,6 +295,38 @@ export const verifyTicket = async (req, res) => {
     });
 
     await clearTicketCache(userId);
+
+    // Notify Admin of verification
+    try {
+      const eventInfo = await Event.findById(userTicket.ticketId.eventId);
+      if (eventInfo && eventInfo.adminId) {
+        let adminProfile = await AdminProfile.findById(eventInfo.adminId);
+        if (!adminProfile) {
+          adminProfile = await AdminProfile.findOne({ userId: eventInfo.adminId });
+        }
+        
+        if (adminProfile && adminProfile.userId) {
+           await notificationModel.findOneAndUpdate(
+             { userId: adminProfile.userId },
+             {
+               $push: {
+                 notifications: {
+                   $each: [{
+                     title: "Ticket Verified",
+                     type: "payment",
+                     message: `Order ${userTicket.orderNo} for the event "${eventInfo.name}" has been verified and marked as paid.`,
+                   }],
+                   $position: 0,
+                 },
+               },
+             },
+             { upsert: true, new: true, runValidators: true }
+           );
+        }
+      }
+    } catch (notifErr) {
+      console.error("Error sending admin verification notification:", notifErr);
+    }
 
     res.status(200).json({
       success: true,

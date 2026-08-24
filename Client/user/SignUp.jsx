@@ -13,6 +13,7 @@ import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+import api from "../src/Context/api/api.config";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const SignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [formData, setFormData] = useState({
-    username: "",
+    fullname: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -44,24 +45,13 @@ const SignUp = () => {
 
   const registerUserMutation = useMutation({
     mutationFn: async (payload) => {
-      const res = await fetch(`${API_URL}/api/auth/signup/user`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to create account");
-      }
-
-      return data;
+      const res = await api.post(`/api/auth/signup/user`, payload);
+      return res.data;
     },
     onSuccess: () => {
       toast.success("Account created successfully!");
       setFormData({
-        username: "",
+        fullname: "",
         email: "",
         password: "",
         confirmPassword: "",
@@ -77,7 +67,7 @@ const SignUp = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!formData.username || !formData.email || !formData.password) {
+    if (!formData.fullname || !formData.email || !formData.password) {
       return toast.error("Please fill in all required fields");
     }
 
@@ -90,7 +80,7 @@ const SignUp = () => {
     }
 
     registerUserMutation.mutate({
-      username: formData.username,
+      fullname: formData.fullname,
       email: formData.email,
       password: formData.password,
       rememberMe: formData.rememberMe,
@@ -183,17 +173,17 @@ const SignUp = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="px-6 w-full space-y-6 mt-4">
-        {/* username */}
+        {/* fullname */}
         <div className="relative flex items-center justify-center">
           <span className="absolute left-4">
             <User className="text-[#808080] w-5 h-5" />
           </span>
           <input
-            name="username"
-            value={formData.username}
+            name="fullname"
+            value={formData.fullname}
             onChange={handleChange}
             className="placeholder-[#808080] placeholder:text-sm text-white w-full bg-[#323232] pl-12 h-12 rounded-xl outline-none border border-transparent focus:border-[#FF7800]"
-            placeholder="Enter your username"
+            placeholder="Enter your full name"
             type="text"
             required
           />

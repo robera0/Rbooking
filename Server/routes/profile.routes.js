@@ -12,7 +12,10 @@ userProfilesRouter.get("/profile", authenticateTokenMiddleware, getProfile);
 userProfilesRouter.put(
   "/profile",
   authenticateTokenMiddleware,
-  upload.single("avatarUrl"),
+  upload.fields([
+    { name: "avatarUrl", maxCount: 1 },
+    { name: "coverPage", maxCount: 1 },
+  ]),
   updateUser,
 );
 

@@ -26,6 +26,7 @@ import {
 } from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
+import { isEventPassed8Hours } from "@/lib/utils";
 import toast from "react-hot-toast";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -416,159 +417,161 @@ const UserHome = () => {
                 <FeaturedEventSkeleton key={i} />
               ))
             : featuredEvents?.events?.length > 0 &&
-              featuredEvents?.events?.map((e, i) => (
-                <motion.div
-                  initial={{ opacity: 0, y: 25, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{
-                    duration: 0.6,
-                    ease: [0.25, 1, 0.5, 1],
-                    delay: i * 0.1,
-                  }}
-                  className="group"
-                  key={e?._id}
-                >
-                  <div className="relative rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
-                    {/* Sold Out Overlay */}
-                    {e?.tickets?.length === 0 && (
-                      <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[2px] rounded-[1.5rem] md:rounded-[2.2rem]  flex items-center justify-center pointer-events-none">
-                        <div className="bg-red-600/90 text-white px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2 shadow-2xl border border-white/20">
-                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                          Sold Out
+              featuredEvents?.events?.map((e, i) => {
+                const isSoldOut = e?.tickets?.length === 0 || isEventPassed8Hours(e);
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 25, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{
+                      duration: 0.6,
+                      ease: [0.25, 1, 0.5, 1],
+                      delay: i * 0.1,
+                    }}
+                    className="group"
+                    key={e?._id}
+                  >
+                    <div className="relative rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
+                      {/* Sold Out Overlay */}
+                      {isSoldOut && (
+                        <div className="absolute inset-0 z-10 bg-black/20 backdrop-blur-[2px] rounded-[1.5rem] md:rounded-[2.2rem]  flex items-center justify-center pointer-events-none">
+                          <div className="bg-red-600/90 text-white px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2 shadow-2xl border border-white/20">
+                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                            Sold Out
+                          </div>
                         </div>
-                      </div>
-                    )}
-
-                    <Link
-                      to={
-                        e?.tickets?.length > 0
-                          ? `/events/${e?._id}/tickets/${e?.tickets[0]?._id}`
-                          : "#"
-                      }
-                      className={`block ${
-                        e?.tickets?.length === 0 ? "cursor-not-allowed" : ""
-                      }`}
-                      onClick={(ev) => {
-                        setCommentId(e?._id);
-                        console.log(e?._id);
-                        e?.tickets?.length === 0 && ev.preventDefault();
-                      }}
-                    >
-                      {/* Image Container */}
-                      <div
-                        className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${
-                          e?.tickets?.length === 0 ? "brightness-75" : ""
-                        }`}
-                      >
-                        <img
-                          src={
-                            `${API_URL}/${e?.pictures?.[0]}`
-                              ? `${API_URL}/${e?.pictures?.[0]}`
-                              : e?.pictures?.[0]
-                          }
-                          className="w-full h-full object-cover brightness-95 transition-transform duration-700"
-                          alt={e?.name}
-                          loading="lazy"
-                        />
-                        {/* Hover Gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </Link>
-
-                    {/* Wishlist Button */}
-                    <button
-                      onClick={(ev) =>
-                        handleWishlistToggle(e._id, e.tickets[0]?._id, ev)
-                      }
-                      disabled={wishlistMutation.isLoading}
-                      className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
-                        checkWishlist(e._id)
-                          ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
-                          : "bg-black/20 border-white/10 text-white hover:bg-black/40"
-                      }`}
-                    >
-                      <Heart
-                        size={18}
-                        fill={checkWishlist(e._id) ? "currentColor" : "none"}
-                        strokeWidth={2.5}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Metadata Section */}
-                  <div className="mt-5 px-1 space-y-4">
-                    {/* Row 1: Location & Rating (Desktop Scaled) */}
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-1.5 text-[#FF7A00]">
-                        <MapPin
-                          size={12}
-                          className="md:w-3.5 md:h-3.5"
-                          strokeWidth={3}
-                        />
-                        <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
-                          {e.location || "London, UK"}
-                        </span>
-                      </div>
-
-                      {/* Scaled Rating Badge for Desktop */}
-                      <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
-                        <Star
-                          size={12}
-                          className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
-                        />
-                        <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
-                          {e?.rating?.score || "4.9"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Row 2: Event Name */}
-                    <Link
-                      to={
-                        e?.tickets?.length > 0
-                          ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
-                          : `/events/${e?._id}`
-                      }
-                    >
-                      <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
-                        {e.name}
-                      </h3>
-                    </Link>
-
-                    {/* Row 3: Pricing & Action */}
-                    <div className="flex justify-between items-end pt-1">
-                      <div className="flex flex-col">
-                        <span className="text-gray-600 text-[9px] lg:text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] mb-1">
-                          Entry From
-                        </span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
-                            ${e?.priceRanges?.[0]?.min || e?.price || "0"}
-                          </span>
-                          <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
-                            /pp
-                          </span>
-                        </div>
-                      </div>
+                      )}
 
                       <Link
                         to={
-                          e?.tickets?.length > 0
+                          !isSoldOut && e?.tickets?.length > 0
+                            ? `/events/${e?._id}/tickets/${e?.tickets[0]?._id}`
+                            : `/events/${e?._id}`
+                        }
+                        className="block"
+                        onClick={(ev) => {
+                          setCommentId(e?._id);
+                          console.log(e?._id);
+                        }}
+                      >
+                        {/* Image Container */}
+                        <div
+                          className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${
+                            isSoldOut ? "brightness-90" : ""
+                          }`}
+                        >
+                          <img
+                            src={
+                              e?.pictures?.[0]
+                                ? e.pictures[0].startsWith("http")
+                                  ? e.pictures[0]
+                                  : `${API_URL}/${e.pictures[0]}`
+                                : ""
+                            }
+                            className="w-full h-full object-cover brightness-95 transition-transform duration-700"
+                            alt={e?.name}
+                            loading="lazy"
+                          />
+                          {/* Hover Gradient */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </Link>
+
+                      {/* Wishlist Button */}
+                      <button
+                        onClick={(ev) =>
+                          handleWishlistToggle(e._id, e.tickets[0]?._id, ev)
+                        }
+                        disabled={wishlistMutation.isLoading}
+                        className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
+                          checkWishlist(e._id)
+                            ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
+                            : "bg-black/20 border-white/10 text-white hover:bg-black/40"
+                        }`}
+                      >
+                        <Heart
+                          size={18}
+                          fill={checkWishlist(e._id) ? "currentColor" : "none"}
+                          strokeWidth={2.5}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Metadata Section */}
+                    <div className="mt-5 px-1 space-y-4">
+                      {/* Row 1: Location & Rating (Desktop Scaled) */}
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-1.5 text-[#FF7A00]">
+                          <MapPin
+                            size={12}
+                            className="md:w-3.5 md:h-3.5"
+                            strokeWidth={3}
+                          />
+                          <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
+                            {e.location || "London, UK"}
+                          </span>
+                        </div>
+
+                        {/* Scaled Rating Badge for Desktop */}
+                        <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
+                          <Star
+                            size={12}
+                            className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
+                          />
+                          <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
+                            {e?.rating?.reviews > 0 ? e.rating.score : "NEW"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Row 2: Event Name */}
+                      <Link
+                        to={
+                          !isSoldOut && e?.tickets?.length > 0
                             ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
                             : `/events/${e?._id}`
                         }
-                        className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
                       >
-                        <Ticket
-                          size={20}
-                          className="md:w-6 md:h-6"
-                          strokeWidth={2.5}
-                        />
+                        <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
+                          {e.name}
+                        </h3>
                       </Link>
+
+                      {/* Row 3: Pricing & Action */}
+                      <div className="flex justify-between items-end pt-1">
+                        <div className="flex flex-col">
+                          <span className="text-gray-600 text-[9px] lg:text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] mb-1">
+                            Entry From
+                          </span>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
+                              {e?.priceRanges?.[0]?.min || e?.price || "0"} Birr
+                            </span>
+                            <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
+                              /pp
+                            </span>
+                          </div>
+                        </div>
+
+                        <Link
+                          to={
+                            !isSoldOut && e?.tickets?.length > 0
+                              ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                              : `/events/${e?._id}`
+                          }
+                          className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
+                        >
+                          <Ticket
+                            size={20}
+                            className="md:w-6 md:h-6"
+                            strokeWidth={2.5}
+                          />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
         </div>
       </motion.section>
 

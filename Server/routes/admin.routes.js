@@ -6,6 +6,7 @@ import {
   deleteEvents,
   addUser,
   updateUser,
+  getUsers,
 } from "../controllers/admin.controller.js";
 import {
   get_dashboard_stats,
@@ -23,6 +24,7 @@ import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js
 const adminRouter = express.Router();
 
 adminRouter.get("/admin_users", authenticateTokenMiddleware, getAdminProfile);
+adminRouter.get("/users", authenticateTokenMiddleware, getUsers);
 adminRouter.post("/users", authenticateTokenMiddleware, addUser);
 adminRouter.put("/users/:userId", authenticateTokenMiddleware, updateUser);
 adminRouter.post("/users/delete", authenticateTokenMiddleware, deleteUsers);

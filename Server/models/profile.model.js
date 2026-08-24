@@ -8,6 +8,12 @@ const ProfileSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    username: {
+      type: String,
+      sparse: true,
+      unique: true,
+      trim: true,
+    },
     fullName: {
       type: String,
       required: true,

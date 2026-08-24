@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
+import api from "../src/Context/api/api.config";
 
 const Payment = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,10 +26,8 @@ const Payment = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['adminDashboardStats'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/admin/analytics/dashboard`);
-      if (!res.ok) throw new Error("Failed to fetch payout stats");
-      const json = await res.json();
-      return json.data;
+      const res = await api.get(`/api/auth/admin/analytics/dashboard`);
+      return res.data.data;
     }
   });
 

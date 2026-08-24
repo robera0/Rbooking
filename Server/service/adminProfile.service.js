@@ -1,8 +1,8 @@
 import { AdminProfile } from "../models/adminProfile.model.js";
 
 class AdminProfileService {
-  static async create(userData) {
-    return await AdminProfile.create(userData);
+  static async create(userData, options = {}) {
+    return await AdminProfile.create(userData, options);
   }
 
   static async updateById(id, userData) {
@@ -15,6 +15,9 @@ class AdminProfileService {
 
   static async findOne(id) {
     return await AdminProfile.findOne({ userId: id }).populate("userId").exec();
+  }
+  static async findByEmail(email) {
+    return await AdminProfile.findOne({ email: email });
   }
   static async findByPhoneNumber(phoneNumber) {
     return AdminProfile.findOne({ phoneNumber });

@@ -10,6 +10,7 @@ import commentRouter from "./routes/comment.routes.js";
 import wishlistRouter from "./routes/wishlist.routes.js";
 import notiRouter from "./routes/notification.routes.js";
 import authRouter from "./routes/auth.routes.js";
+import adminSettingsRouter from "./routes/adminSettings.routes.js";
 import userProfilesRouter from "./routes/profile.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import cookieParser from "cookie-parser";
@@ -80,6 +81,8 @@ app.set("trust proxy", 1);
 
 app.use(passport.initialize());
 
+app.use("/api/auth", authRouter);
+
 app.use("/api", eventRouter);
 app.use("/api", commentRouter);
 
@@ -87,8 +90,7 @@ app.use("/api/auth", userProfilesRouter);
 app.use("/api/auth", ticketRouter);
 app.use("/api/auth", wishlistRouter);
 app.use("/api/auth", notiRouter);
-app.use("/api/auth", authRouter);
-
 app.use("/api/auth/admin", adminRouter);
+app.use("/api/auth/admin", adminSettingsRouter);
 app.use(errorHandler);
 startServer();

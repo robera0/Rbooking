@@ -10,14 +10,15 @@ import {
   Power,
   Tickets,
 } from "lucide-react";
+import api from "../src/Context/api/api.config";
+import { useQueryClient } from "@tanstack/react-query";
 
 const SideBar = ({ action }) => {
+  const queryClient = useQueryClient();
+
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await api.post(`/api/auth/logout`);
 
       queryClient.clear();
       window.location.href = "/login";
@@ -31,15 +32,10 @@ const SideBar = ({ action }) => {
     <div className="flex flex-col h-full bg-[#1C1F22]">
       {/*side Bar */}
       <div className="w-full h-full space-y-3 flex flex-col overflow-y-auto scroll-hidden">
-        <div className="w-full pt-8 pb-4 flex justify-center items-center space-x-3 border-b border-white/[0.04]">
-          <div className="p-2 bg-[#FF7A00]/10 rounded-xl">
-            <Tickets className="text-[#FF7A00]" size={24} strokeWidth={2.5} />
-          </div>
-          <h1 className="text-2xl text-white font-black uppercase tracking-tighter">
-            Pay<span className="text-[#FF7A00]">SSo</span>
-          </h1>
+        <div className="w-full h-20 shrink-0 flex justify-center items-center border-b border-white/[0.06]">
+          <img src="/P_logo.png" alt="PaySSo Logo" className="w-12 h-12 object-contain" />
         </div>
-        <div className="space-y-6 px-4 flex-1">
+        <div className="space-y-6 px-4 flex-1 pt-3">
           {/*Dashboard */}
           <SideMenu
             path="/admin/home"
@@ -87,16 +83,15 @@ const SideBar = ({ action }) => {
           {/*Profile */}
           <SideMenu
             path="/admin/profile"
-            name="Account & Security"
+            name="Admin Profile"
             icon={<UsersRound size={20} />}
           />
           {/*Setting */}
-          {/* 
-              <SideMenu
+          <SideMenu
             path="/admin/setting"
-            name="Setting"
+            name="Organizer Settings"
             icon={<Settings size={20} />}
-          />*/}
+          />
         </div>
         <div className="px-4 pb-8 mt-auto border-t border-white/[0.04] pt-4">
           {/*Logout */}

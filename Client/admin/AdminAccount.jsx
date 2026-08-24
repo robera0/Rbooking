@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatDistanceToNow } from "date-fns";
 import {
   User,
   Key,
@@ -21,10 +22,12 @@ import {
   Phone,
   MapPin,
   Flag,
+  Camera,
+  Trash2,
 } from "lucide-react";
 import { CustomSelect } from "./Cards";
 import { eventService } from "@/Context/ApiEvent";
-import axios from "axios";
+import api from "../src/Context/api/api.config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
@@ -76,11 +79,14 @@ const AdminAccount = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const queryClient = useQueryClient();
-  const { userProfile } = eventService();
+  const { userProfile, notifications } = eventService();
   const fileInputRef = useRef(null);
+  const coverFileInputRef = useRef(null);
   const { API_URL } = useService();
   const [preview, setPreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [selectedCoverFile, setSelectedCoverFile] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
 
   const [formData, setFormData] = useState({
@@ -114,8 +120,13 @@ const AdminAccount = () => {
         website: u.website || "",
         country: u.country || "",
       });
+      if (u.coverPage) {
+        setCoverPreview(`${API_URL}/${u.coverPage}`);
+      } else {
+        setCoverPreview(null);
+      }
     }
-  }, [userProfile]);
+  }, [userProfile, API_URL]);
 
   const [credentials, setCredentials] = useState({
     email: userProfile?.user?.userId?.email || "",
@@ -151,6 +162,15 @@ const AdminAccount = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleCoverFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setSelectedCoverFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setCoverPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleDiscard = () => {
     if (userProfile?.user) {
       const u = userProfile.user;
@@ -167,18 +187,23 @@ const AdminAccount = () => {
         website: u.website || "",
         country: u.country || "",
       });
+      if (u.coverPage) {
+        setCoverPreview(`${API_URL}/${u.coverPage}`);
+      } else {
+        setCoverPreview(null);
+      }
     }
     setPreview(null);
     setSelectedFile(null);
+    setSelectedCoverFile(null);
   };
 
   const updateUser = async () => {
     const data = new FormData();
     Object.entries(formData).forEach(([k, v]) => data.append(k, v));
     if (selectedFile) data.append("avatarUrl", selectedFile);
-    await axios.put(`${API_URL}/api/auth/profile`, data, {
-      withCredentials: true,
-    });
+    if (selectedCoverFile) data.append("coverPage", selectedCoverFile);
+    await api.put(`/api/auth/profile`, data);
   };
 
   const updateCredentials = async () => {
@@ -186,9 +211,7 @@ const AdminAccount = () => {
     if (!credentials.password) throw new Error("New password required");
     if (credentials.password.length < 8)
       throw new Error("Password must be at least 8 characters");
-    await axios.put(`${API_URL}/api/auth/user`, credentials, {
-      withCredentials: true,
-    });
+    await api.put(`/api/auth/user`, credentials);
   };
 
   const profileMutation = useMutation({
@@ -199,6 +222,7 @@ const AdminAccount = () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       setPreview(null);
       setSelectedFile(null);
+      setSelectedCoverFile(null);
     },
     onError: (err) =>
       toast.error(getFriendlyErrorMessage(err), { id: "profile" }),
@@ -218,13 +242,19 @@ const AdminAccount = () => {
       }),
   });
 
+  const clearHistoryMutation = useMutation({
+    mutationFn: async () => await api.delete(`/api/auth/notifications/clear`),
+    onMutate: () => toast.loading("Clearing history…", { id: "clear-history" }),
+    onSuccess: () => {
+      toast.success("History cleared", { id: "clear-history" });
+      queryClient.invalidateQueries({ queryKey: ["notification"] });
+    },
+    onError: () => toast.error("Failed to clear history", { id: "clear-history" }),
+  });
+
   const handleLogout = async () => {
     try {
-      await axios.post(
-        `${API_URL}/api/auth/logout`,
-        {},
-        { withCredentials: true },
-      );
+      await api.post(`/api/auth/logout`, {});
       window.location.href = "/login";
     } catch {
       toast.error("Logout failed. Please try again.");
@@ -245,28 +275,15 @@ const AdminAccount = () => {
   const userOrg = formData.organizationName || "—";
   const userRole = formData.role || "Admin";
 
-  const auditLogs = [
-    {
-      action: "Deleted Event #EV-402",
-      time: "2 hours ago",
-      status: "completed",
-    },
-    {
-      action: "Suspended User: user_882",
-      time: "5 hours ago",
-      status: "completed",
-    },
-    {
-      action: "Updated Commission Policy",
-      time: "Yesterday",
-      status: "completed",
-    },
-    {
-      action: "Exported Finance Report",
-      time: "2 days ago",
-      status: "completed",
-    },
-  ];
+  const auditLogs = notifications?.notifications
+    ?.slice()
+    ?.reverse()
+    ?.slice(0, 10)
+    ?.map((notif) => ({
+      action: notif.title || "Activity",
+      time: formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true }),
+      status: notif.read ? "read" : "unread",
+    })) || [];
 
   const containers = {
     hidden: { opacity: 0, y: 20 },
@@ -293,10 +310,11 @@ const AdminAccount = () => {
     <div className="w-full max-w-full space-y-10 pb-20">
 
       {/* Header */}
-      <div className=" items-end mb-8 border-b border-white/[0.04] pb-8">
-        <h1 className="text-3xl md:text-5xl text-white uppercase tracking-tighter leading-none">
-          Admin Infos
+      <div className="space-y-2 mb-8 border-b border-white/[0.04] pb-6">
+        <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none">
+          Admin <span className="text-[#FF7A00]">Profile</span>
         </h1>
+        <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -376,9 +394,6 @@ const AdminAccount = () => {
               <p className="text-[#FF7A00] font-black text-[10px] uppercase tracking-widest mt-0.5">
                 {userOrg}
               </p>
-              <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
-                {userRole}
-              </p>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
               <CheckCircle2 size={10} className="text-green-500" />
@@ -431,16 +446,7 @@ const AdminAccount = () => {
                           placeholder="e.g. RBooking Events"
                         />
                       </FieldWrap>
-                      <FieldWrap label="Role / Position">
-                        <IconInput
-                          icon={Briefcase}
-                          name="role"
-                          value={formData.role}
-                          onChange={handleChange}
-                          placeholder="e.g. Master Admin"
-                        />
-                      </FieldWrap>
-                      <FieldWrap label="Website" full>
+                      <FieldWrap label="Website">
                         <IconInput
                           icon={Link}
                           name="website"
@@ -448,6 +454,46 @@ const AdminAccount = () => {
                           onChange={handleChange}
                           placeholder="e.g. rbooking.com"
                         />
+                      </FieldWrap>
+                      <FieldWrap label="Organization Cover Page" full>
+                        <div className="flex flex-col gap-4">
+                          {coverPreview ? (
+                            <div className="relative w-full h-48 rounded-2xl overflow-hidden border border-white/[0.08]">
+                              <img
+                                src={coverPreview}
+                                alt="Cover Preview"
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCoverPreview(null);
+                                  setSelectedCoverFile(null);
+                                }}
+                                className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 p-2 rounded-full border border-white/10 transition-colors cursor-pointer"
+                              >
+                                <Trash2 size={14} className="text-red-500" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => coverFileInputRef.current?.click()}
+                              className="w-full h-48 border border-dashed border-white/[0.08] hover:border-[#FF7A00]/50 rounded-2xl flex flex-col justify-center items-center gap-2 cursor-pointer transition-colors bg-[#121417]"
+                            >
+                              <Camera size={20} className="text-gray-500" />
+                              <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">
+                                Upload Cover Page
+                              </span>
+                            </div>
+                          )}
+                          <input
+                            ref={coverFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleCoverFileChange}
+                          />
+                        </div>
                       </FieldWrap>
                     </div>
                   </div>
@@ -738,37 +784,64 @@ const AdminAccount = () => {
                     Recent <span className="text-[#FF7A00]">Activity</span>{" "}
                     History
                   </h2>
-                  <div className="px-4 py-2 bg-white/[0.04] rounded-full text-gray-500 font-bold text-[10px] uppercase tracking-widest">
-                    Real-time Feedback
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => clearHistoryMutation.mutate()}
+                      disabled={clearHistoryMutation.isPending || auditLogs.length === 0}
+                      className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-[10px] uppercase tracking-widest rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Clear History
+                    </button>
+                    <div className="px-4 py-2 bg-white/[0.04] rounded-full text-gray-500 font-bold text-[10px] uppercase tracking-widest">
+                      Real-time Feedback
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  {auditLogs.map((log, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:border-white/[0.1] transition-all"
-                    >
-                      <div className="flex items-center gap-6">
-                        <div className="w-12 h-12 rounded-xl bg-[#121417] flex justify-center items-center text-[#FF7A00]">
-                          <Clock size={20} />
+                  {auditLogs.length > 0 ? (
+                    auditLogs.map((log, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:border-white/[0.1] transition-all"
+                      >
+                        <div className="flex items-center gap-6">
+                          <div className="w-12 h-12 rounded-xl bg-[#121417] flex justify-center items-center text-[#FF7A00]">
+                            <Clock size={20} />
+                          </div>
+                          <div>
+                            <p className="text-sm text-white font-black uppercase tracking-tight">
+                              {log.action}
+                            </p>
+                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">
+                              Timestamp: {log.time}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm text-white font-black uppercase tracking-tight">
-                            {log.action}
-                          </p>
-                          <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">
-                            Timestamp: {log.time}
-                          </p>
+                        <div
+                          className={`flex items-center gap-2 px-3 py-1 rounded-lg ${
+                            log.status === "read"
+                              ? "bg-gray-500/10 text-gray-400"
+                              : "bg-green-500/10 text-green-500"
+                          }`}
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              log.status === "read"
+                                ? "bg-gray-400"
+                                : "bg-green-500 animate-pulse"
+                            }`}
+                          />
+                          <span className="text-[9px] font-black uppercase tracking-widest">
+                            {log.status}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-1 bg-green-500/5 text-green-500 rounded-lg">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-[9px] font-black uppercase tracking-widest">
-                          {log.status}
-                        </span>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500 text-sm font-bold uppercase tracking-widest p-10 text-center border border-white/[0.04] rounded-2xl border-dashed">
+                      No recent activity found.
                     </div>
-                  ))}
+                  )}
                 </div>
               </motion.div>
             )}

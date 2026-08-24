@@ -16,9 +16,10 @@ import {
 } from "lucide-react";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { useService } from "@/Context/ServiceContext.jsx";
+import { isEventPassed8Hours } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-
+import { useEffect } from "react";
 const Events = () => {
   const {
     type,
@@ -91,11 +92,12 @@ const Events = () => {
     { name: "Festivals", type: "festival" },
     { name: "Exclusives", type: "exclusive" },
   ];
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [filteredEvents]);
 
   return (
     <div className="min-h-screen w-full bg-[#121417] text-white overflow-hidden pb-32">
-
-
       <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-[#FF7A00]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
       <div className="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-white/[0.02] blur-[140px] rounded-full pointer-events-none -z-10" />
 
@@ -106,12 +108,7 @@ const Events = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3 text-[#FF7A00]"
-            >
-              <TrendingUp size={14} />
-              <span className="text-[10px] font-black uppercase tracking-[0.4em]">
-                Live & Verified
-              </span>
-            </motion.div>
+            ></motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -226,7 +223,7 @@ const Events = () => {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-10"
             >
               {filteredEvents.map((e) => {
-                const isSoldOut = e.tickets?.length === 0;
+                const isSoldOut = e.tickets?.length === 0 || isEventPassed8Hours(e);
                 const isAdded = checkWishlist(e._id);
                 const baseActiveTicket = e?.priceRanges?.[0] || e?.price || "0";
                 const activeTicket = baseActiveTicket
@@ -247,7 +244,7 @@ const Events = () => {
                     <div className="relative mb-5">
                       {/* Sold Out Overlay */}
                       {isSoldOut && (
-                        <div className="absolute inset-0 z-10 bg-black/50 backdrop-blur-[1px] rounded-[2rem] flex items-center justify-center pointer-events-none">
+                        <div className="absolute inset-0 z-10 bg-black/20 backdrop-blur-[1px] rounded-[2rem] flex items-center justify-center pointer-events-none">
                           <div className="bg-red-600/90 text-white px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-[0.3em] border border-white/20 shadow-2xl">
                             Sold Out
                           </div>
@@ -257,19 +254,20 @@ const Events = () => {
                       <Link
                         to={
                           isSoldOut
-                            ? "#"
+                            ? `/events/${e._id}`
                             : `/events/${e._id}/tickets/${e.tickets?.[0]?._id}`
                         }
-                        onClick={(ev) => isSoldOut && ev.preventDefault()}
                         className={`block relative aspect-[4/5] rounded-[2rem] overflow-hidden border border-white/[0.06] bg-[#1C1F22] transition-all duration-700 ${
-                          isSoldOut ? "grayscale" : ""
+                          isSoldOut ? "brightness-90" : ""
                         }`}
                       >
                         <img
                           src={
-                            `${API_URL}/${e?.pictures?.[0]}` != undefined
-                              ? `${API_URL}/${e?.pictures?.[0]}`
-                              : e?.pictures?.[0]
+                            e?.pictures?.[0]
+                              ? e.pictures[0].startsWith("http")
+                                ? e.pictures[0]
+                                : `${API_URL}/${e.pictures[0]}`
+                              : ""
                           }
                           alt={e.name}
                           loading="lazy"
@@ -332,7 +330,7 @@ const Events = () => {
                       <div className="flex items-center justify-between">
                         <Link
                           to={
-                            e.tickets?.length > 0
+                            !isSoldOut && e.tickets?.length > 0
                               ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
                               : `/events/${e._id}`
                           }
@@ -370,7 +368,7 @@ const Events = () => {
 
                         <Link
                           to={
-                            e.tickets?.length > 0
+                            !isSoldOut && e.tickets?.length > 0
                               ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
                               : `/events/${e._id}`
                           }

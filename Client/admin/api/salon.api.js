@@ -1,9 +1,4 @@
-import axios from "axios";
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.MODE === "development"
-    ? "/api/v1"
-    : "https://paysso.onrender.com");
+import api from "../../src/Context/api/api.config";
 
 export const buildFormData = () => {
   const fd = new FormData();
@@ -19,8 +14,6 @@ export const buildFormData = () => {
   return fd;
 };
 export async function add_salon(fd) {
-  const response = await axios.post(`${API_URL}/admins/login`, fd, {
-    withCredentials: true,
-  });
+  const response = await api.post(`/admins/login`, fd);
   return response.data;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "../src/Context/api/api.config";
 import { useNavigate, useLocation } from "react-router-dom";
 import { EyeOff, Eye, Loader2, ArrowRight } from "lucide-react";
 import { useService } from "@/Context/ServiceContext";
@@ -22,9 +22,7 @@ const LoginUser = () => {
 
   const mutation = useMutation({
     mutationFn: async (userData) => {
-      const res = await axios.post(`${API_URL}/api/auth/login`, userData, {
-        withCredentials: true,
-      });
+      const res = await api.post(`/api/auth/login`, userData);
       return res.data;
     },
     onSuccess: (data) => {

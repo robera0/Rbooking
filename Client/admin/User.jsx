@@ -15,6 +15,7 @@ import {
 import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
+import api from "../src/Context/api/api.config";
 
 const User = () => {
   const startRef = useRef(null);
@@ -35,13 +36,8 @@ const User = () => {
 
   const addMutation = useMutation({
     mutationFn: async (payload) => {
-      const res = await fetch(`${API_URL}/api/admin/users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error("Failed to create user");
-      return res.json();
+      const res = await api.post(`/api/auth/admin/users`, payload);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
@@ -53,13 +49,8 @@ const User = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (payload) => {
-      const res = await fetch(`${API_URL}/api/admin/users/${payload.userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: payload.role, status: payload.status })
-      });
-      if (!res.ok) throw new Error("Failed to update user");
-      return res.json();
+      const res = await api.put(`/api/auth/admin/users/${payload.userId}`, { role: payload.role, status: payload.status });
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
@@ -203,7 +194,7 @@ const User = () => {
       {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-8 border-b border-white/[0.04] pb-6">
         <div className="space-y-2">
-          <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
+          <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none">
             User <span className="text-[#FF7A00]">Management</span>
           </h1>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />

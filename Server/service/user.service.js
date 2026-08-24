@@ -1,7 +1,8 @@
 import { UserModel } from "../models/user.model.js";
 class UserService {
   static async create(userData) {
-    return await UserModel.create(userData);
+    return await UserModel.create(userData)
+    ;
   }
 
   static async updateById(id, userData) {
@@ -29,7 +30,7 @@ class UserService {
   }
 
   static async findByEmail(email) {
-    return await UserModel.findOne({ email }).populate();
+    return await UserModel.findOne({ email }).exec();
   }
 
   static async findById(id) {

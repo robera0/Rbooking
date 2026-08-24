@@ -41,14 +41,18 @@ export const completeProfile = catchAsync(async (req, res) => {
   const id = req.user.id;
   const { fullName, phoneNumber, city, dateOfBirth } = req.body;
 
-  const user = await UserModel.findById({ id });
-  // update or create profile
-  const profile = await ProfileService.findOneAndUpdate(user, {
+  const profileData = {
     fullName,
     phone: phoneNumber,
     address: city,
-    dateOfBirth,
-  });
+  };
+
+  if (dateOfBirth) {
+    profileData.dateOfBirth = dateOfBirth;
+  }
+
+  // update or create profile
+  const profile = await ProfileService.findOneAndUpdate(id, profileData);
 
   // mark user as profile complete
   await UserService.findByIdAndUpdate(id, { isProfileComplete: true });

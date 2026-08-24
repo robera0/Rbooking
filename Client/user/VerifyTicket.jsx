@@ -17,6 +17,7 @@ import {
 import { useService } from "@/Context/ServiceContext";
 import toast from "react-hot-toast";
 import { useVerify } from "@/Context/api/userVerify";
+import { useEffect } from "react";
 /* ── Ambient orb decoration ── */
 const Orb = ({ className }) => (
   <div
@@ -89,6 +90,10 @@ const VerifyTicket = () => {
     isError,
     reset: resetVerify,
   } = useVerify();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [userTicketId]);
 
   const handleVerify = async () => {
     if (!verifyLink.trim() || isPending) return;

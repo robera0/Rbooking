@@ -19,6 +19,7 @@ import { useService } from "../src/Context/ServiceContext";
 import { renderTableSkeleton } from "./../src/components/Reusable";
 import { useAdminEventService } from "@/Context/EventAdminContest";
 import { Toaster } from "react-hot-toast";
+import api from "../src/Context/api/api.config";
 export const Cards = ({
   header,
   num,
@@ -358,13 +359,8 @@ export const TicketTable = ({ search = "", filter = "" }) => {
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["adminTransactions"],
     queryFn: async () => {
-      const res = await fetch(
-        `${API_URL}/api/auth/admin/analytics/transactions`,
-        { method: "GET", credentials: "include" },
-      );
-      if (!res.ok) throw new Error("Failed to load transactions");
-      const data = await res.json();
-      return data.transactions || [];
+      const res = await api.get(`/api/auth/admin/analytics/transactions`);
+      return res.data.transactions || [];
     },
   });
 
@@ -588,10 +584,8 @@ export const UserTable = ({ onEdit, search = "", filter = "" }) => {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["adminUsers"],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/admin/users`);
-      if (!res.ok) throw new Error("Failed to fetch");
-      const json = await res.json();
-      return json.users || [];
+      const res = await api.get(`/api/auth/admin/users`);
+      return res.data.users || [];
     },
   });
 
@@ -607,12 +601,7 @@ export const UserTable = ({ onEdit, search = "", filter = "" }) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (userIds) => {
-      const res = await fetch(`${API_URL}/api/admin/users/delete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIds }),
-      });
-      if (!res.ok) throw new Error("Delete failed");
+      await api.post(`/api/auth/admin/users/delete`, { userIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
@@ -622,12 +611,7 @@ export const UserTable = ({ onEdit, search = "", filter = "" }) => {
 
   const suspendMutation = useMutation({
     mutationFn: async (userIds) => {
-      const res = await fetch(`${API_URL}/api/admin/users/suspend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIds }),
-      });
-      if (!res.ok) throw new Error("Suspend failed");
+      await api.post(`/api/auth/admin/users/suspend`, { userIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });

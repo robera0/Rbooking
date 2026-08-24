@@ -1,16 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "./api.config";
 import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 const verifyReceipt = async ({ userTicketId, receiptUrl }) => {
-  const res = await axios.post(
-    `${API_URL}/api/auth/ticket/${userTicketId}/verify`,
-    { receiptUrl },
-    {
-      withCredentials: true,
-    },
+  const res = await api.post(
+    `/api/auth/ticket/${userTicketId}/verify`,
+    { receiptUrl }
   );
   const data = res.data;
 

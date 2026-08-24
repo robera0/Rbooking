@@ -1,11 +1,10 @@
-import {
-  RouterProvider,
-} from "react-router-dom";
+import { RouterProvider } from "react-router-dom";
 import { ServiceProvider } from "./Context/ServiceContext";
 import { ApiProvider } from "./Context/ApiEvent";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AppToaster from "./components/Toaster";
 import { router } from "./router";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 

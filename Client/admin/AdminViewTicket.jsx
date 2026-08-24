@@ -21,6 +21,7 @@ import {
   TicketTypeIcon,
   TicketThemeBadge,
 } from "@/components/Reusable";
+import api from "../src/Context/api/api.config";
 
 // ─── Visual helpers ───
 
@@ -280,16 +281,8 @@ const AdminViewTicket = () => {
   } = useQuery({
     queryKey: ["adminTransaction", orderId],
     queryFn: async () => {
-      const res = await fetch(
-        `${API_URL}/api/auth/admin/analytics/transactions/${orderId}`,
-        { method: "GET", credentials: "include" },
-      );
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to fetch transaction");
-      }
-      const data = await res.json();
-      return data.transaction;
+      const res = await api.get(`/api/auth/admin/analytics/transactions/${orderId}`);
+      return res.data.transaction;
     },
     enabled: !!orderId,
     retry: false,

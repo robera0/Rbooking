@@ -26,6 +26,8 @@ import {
 } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
+import { isEventPassed8Hours } from "@/lib/utils";
+import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
@@ -256,6 +258,7 @@ const EventInfo = () => {
     commentsIsLoading,
     useComment,
     addLikeComment,
+    wishlist,
   } = eventService();
   const { mutate: likecommentmutation } = addLikeComment();
   const location = useLocation();
@@ -284,6 +287,36 @@ const EventInfo = () => {
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
   const allTickets = event_id?.tickets || [];
+
+  const { mutation: wishlistMutation } = useWishlistMutation();
+
+  const checkWishlist = (id) => {
+    return (
+      wishlist?.wishlist?.items?.some(
+        (item) => item?.eventId?._id === id,
+      ) || false
+    );
+  };
+
+  const handleWishlistToggle = (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    if (!user) {
+      toast.error("Please sign in to save events");
+      navigate("/login", { state: { from: location } });
+      return;
+    }
+
+    const isCurrentlyAdded = checkWishlist(eventId);
+    const activeTicketId = ticketId || allTickets[0]?._id;
+
+    wishlistMutation.mutate({
+      eventId: eventId,
+      ticketId: activeTicketId,
+      isAdding: !isCurrentlyAdded,
+    });
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -354,7 +387,7 @@ const EventInfo = () => {
     },
   };
 
-  const isSoldOut = allTickets.length === 0;
+  const isSoldOut = allTickets.length === 0 || isEventPassed8Hours(event);
   const activeTicket = ticket
     ? {
         ...ticket,
@@ -404,7 +437,11 @@ const EventInfo = () => {
         >
           {images[0] ? (
             <img
-              src={`${API_URL}/${images[0]}`}
+              src={
+                images[0].startsWith("http")
+                  ? images[0]
+                  : `${API_URL}/${images[0]}`
+              }
               onError={(e) => {
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = "/Login.jpg";
@@ -508,6 +545,23 @@ const EventInfo = () => {
             className="w-full h-full bg-gradient-to-b from-[#FF7A00] to-transparent"
           />
         </div>
+
+        {/* Wishlist Button */}
+        <button
+          onClick={handleWishlistToggle}
+          disabled={wishlistMutation.isLoading}
+          className={`absolute top-8 right-6 lg:right-14 z-20 w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
+            checkWishlist(eventId)
+              ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
+              : "bg-black/40 border-white/10 text-white hover:bg-black/60"
+          }`}
+        >
+          <Heart
+            size={20}
+            fill={checkWishlist(eventId) ? "currentColor" : "none"}
+            strokeWidth={2.5}
+          />
+        </button>
       </div>
 
       {/* ── MAP PANEL ── */}
@@ -565,7 +619,11 @@ const EventInfo = () => {
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={imgIdx}
-                        src={`${API_URL}/${images[imgIdx]}`}
+                        src={
+                          images[imgIdx].startsWith("http")
+                            ? images[imgIdx]
+                            : `${API_URL}/${images[imgIdx]}`
+                        }
                         alt={`Event ${imgIdx + 1}`}
                         initial={{ opacity: 0, scale: 1.06 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -616,7 +674,11 @@ const EventInfo = () => {
                           }`}
                         >
                           <img
-                            src={`${API_URL}/${img}`}
+                            src={
+                              img.startsWith("http")
+                                ? img
+                                : `${API_URL}/${img}`
+                            }
                             onError={(e) => {
                               e.currentTarget.onerror = null;
                               e.currentTarget.src = "/Login.jpg";
@@ -743,8 +805,9 @@ const EventInfo = () => {
                               <div className="flex-shrink-0">
                                 <img
                                   src={
-                                    `${API_URL}/${c?.userProfile?.avatarUrl}` ||
-                                    c?.userProfile?.avatarUrl
+                                    c?.userProfile?.avatarUrl?.startsWith("http")
+                                      ? c.userProfile.avatarUrl
+                                      : `${API_URL}/${c?.userProfile?.avatarUrl}`
                                   }
                                   alt={c?.userProfile?.fullName}
                                   className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
@@ -866,7 +929,7 @@ const EventInfo = () => {
                   initial={{ opacity: 0.8 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.6 }}
-                  className="relative px-8 pt-8 pb-6 overflow-hidden"
+                  className="relative px-5 sm:px-8 pt-6 sm:pt-8 pb-5 sm:pb-6 overflow-hidden"
                   style={{ background: theme?.bandGradient }}
                 >
                   <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10" />
@@ -877,7 +940,7 @@ const EventInfo = () => {
                       <p className="text-[9px] font-black uppercase tracking-[0.45em] text-black/60 mb-1">
                         Paysso · Official Ticket
                       </p>
-                      <h2 className="text-2xl font-black uppercase tracking-tight text-black leading-tight max-w-[200px]">
+                      <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black leading-tight max-w-[160px] sm:max-w-[200px]">
                         {event?.name || "Event"}
                       </h2>
                     </div>
@@ -902,7 +965,7 @@ const EventInfo = () => {
                       <p className="text-[8px] font-black uppercase tracking-[0.3em] text-black/50 mb-0.5">
                         Venue
                       </p>
-                      <p className="text-[11px] font-black text-black truncate max-w-[130px]">
+                      <p className="text-[11px] font-black text-black truncate max-w-[100px] sm:max-w-[130px]">
                         {event?.links?.venues?.name}
                       </p>
                     </div>
@@ -917,7 +980,7 @@ const EventInfo = () => {
                 </div>
 
                 {/* TICKET BODY */}
-                <div className="px-8 py-7 space-y-6">
+                <div className="px-5 sm:px-8 py-5 sm:py-7 space-y-6">
                   <div className="flex items-end justify-between">
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -949,7 +1012,7 @@ const EventInfo = () => {
                           Price
                         </p>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-black tracking-tighter">
+                          <span className="text-3xl sm:text-4xl font-black tracking-tighter">
                             {activeTicket?.price}
                           </span>
                           <span
@@ -1056,8 +1119,8 @@ const EventInfo = () => {
                     <div className="flex-1 border-t-2 border-dashed border-white/[0.07]" />
                     <div className="w-5 h-5 rounded-full -mr-2.5 bg-[#080809] shrink-0" />
                   </div>
-                  <div className="px-8 py-5 flex items-center justify-between">
-                    <div className="flex items-end gap-[2px] h-10">
+                  <div className="px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
+                    <div className="flex items-end gap-[1px] sm:gap-[2px] h-8 sm:h-10">
                       {Array.from({ length: 28 }).map((_, i) => (
                         <div
                           key={i}
@@ -1141,7 +1204,7 @@ const EventInfo = () => {
                                 navigate(`/events/${eventId}/tickets/${t._id}`);
                                 setShowTicketDropdown(false);
                               }}
-                              className={`w-full px-5 py-4 flex items-center justify-between border-b border-white/[0.04] last:border-0 group transition-colors ${
+                              className={`w-full px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between border-b border-white/[0.04] last:border-0 group transition-colors ${
                                 isActive ? "bg-white/[0.04]" : ""
                               }`}
                             >
@@ -1257,6 +1320,7 @@ const EventInfo = () => {
             amount={activeTicket?.price}
             name={event?.name}
             ticketId={ticketId}
+            paymentMethods={event?.adminId?.paymentMethods || []}
           />
         )}
       </AnimatePresence>

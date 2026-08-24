@@ -1,8 +1,7 @@
 import { createContext, useContext } from "react";
 import { useService } from "./ServiceContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import { fetchWithAuth, axiosWithAuth } from "../lib/fetchWithAuth";
+import api from "./api/api.config";
 
 const ApiContext = createContext();
 
@@ -19,8 +18,8 @@ export const ApiProvider = ({ children }) => {
     if (venues?.trim()) params.append("venues", venues.trim());
     if (date) params.append("date", date);
     if (search?.trim()) params.append("search", search.trim());
-    const res = await fetch(`${API_URL}/api/events?${params.toString()}`);
-    return res.json();
+    const res = await api.get(`/api/events?${params.toString()}`);
+    return res.data;
   };
   const formatDateForAPI = (dateObj) => {
     if (!dateObj) return "";
@@ -44,8 +43,8 @@ export const ApiProvider = ({ children }) => {
 
   // GET FEATURED EVENTS (filtered by date)
   const fetchFeaturedEvents = async () => {
-    const res = await fetch(`${API_URL}/api/featuredEvents`);
-    return res.json();
+    const res = await api.get(`/api/featuredEvents`);
+    return res.data;
   };
 
   const {
@@ -59,20 +58,8 @@ export const ApiProvider = ({ children }) => {
 
   // GET LOGGED USERS
   const fetchLoggedInUser = async () => {
-    const res = await fetchWithAuth(`${API_URL}/api/auth/user`, {
-      method: "GET",
-      credentials: "include",
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      throw new Error(
-        data.message || `Request failed with status ${res.status}`,
-      );
-    }
-
-    return data;
+    const res = await api.get(`/api/auth/user`);
+    return res.data;
   };
 
   const { data: user, isError: usererror } = useQuery({
@@ -90,14 +77,8 @@ export const ApiProvider = ({ children }) => {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetchWithAuth(`${API_URL}/api/auth/tickets_home`, {
-        method: "GET",
-        credentials: "include",
-      });
-      if (res.status === 401) {
-        throw new Error("Login required");
-      }
-      return res.json();
+      const res = await api.get(`/api/auth/tickets_home`);
+      return res.data;
     } catch (error) {
       throw new Error(error);
     }
@@ -118,14 +99,8 @@ export const ApiProvider = ({ children }) => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetchWithAuth(`${API_URL}/api/auth/notifications`, {
-        method: "GET",
-        credentials: "include",
-      });
-      if (res.status === 401) {
-        throw new Error("Login required");
-      }
-      return res.json();
+      const res = await api.get(`/api/auth/notifications`);
+      return res.data;
     } catch (error) {
       throw new Error(error);
     }
@@ -147,10 +122,9 @@ export const ApiProvider = ({ children }) => {
 
   const patchReadNotification = async (notId) => {
     try {
-      const res = await axiosWithAuth.patch(
-        `${API_URL}/api/auth/notifications/read`,
-        { notId },
-        { withCredentials: true },
+      const res = await api.patch(
+        `/api/auth/notifications/read`,
+        { notId }
       );
       return res.data;
     } catch (error) {
@@ -175,8 +149,8 @@ export const ApiProvider = ({ children }) => {
   const get_comment = async ({ queryKey }) => {
     try {
       const [, commentId] = queryKey;
-      const res = await fetch(`${API_URL}/api/events/${commentId}/comments`);
-      return res.json();
+      const res = await api.get(`/api/events/${commentId}/comments`);
+      return res.data;
     } catch (error) {
       throw new Error(error);
     }
@@ -194,12 +168,11 @@ export const ApiProvider = ({ children }) => {
   });
 
   //POST COMMENT
-  const sendComment = async (comment, eventId) => {
+  const sendComment = async ({ text, rating }, eventId) => {
     try {
-      const res = await axiosWithAuth.post(
-        `${API_URL}/api/auth/events/${eventId}/comments`,
-        { text: comment },
-        { withCredentials: true },
+      const res = await api.post(
+        `/api/auth/events/${eventId}/comments`,
+        { text, rating }
       );
       return res.data;
     } catch (error) {
@@ -212,7 +185,7 @@ export const ApiProvider = ({ children }) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: ({ text, eventId }) => sendComment(text, eventId),
+      mutationFn: ({ text, rating, eventId }) => sendComment({ text, rating }, eventId),
 
       onSuccess: () => {
         queryClient.invalidateQueries({
@@ -232,10 +205,9 @@ export const ApiProvider = ({ children }) => {
 
   const likeComment = async (commentId) => {
     try {
-      const res = await axiosWithAuth.post(
-        `${API_URL}/api/auth/comments/${commentId}/like`,
-        { commentId },
-        { withCredentials: true },
+      const res = await api.post(
+        `/api/auth/comments/${commentId}/like`,
+        { commentId }
       );
       return res.data;
     } catch (error) {
@@ -266,35 +238,14 @@ export const ApiProvider = ({ children }) => {
   };
   // GET TICKETS BY ID
   const fetchTicketById = async (ticketId) => {
-    const res = await fetchWithAuth(`${API_URL}/api/auth/tickets_home/${ticketId}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message || `Request failed with status ${res.status}`);
-    }
-    return data;
+    const res = await api.get(`/api/auth/tickets_home/${ticketId}`);
+    return res.data;
   };
 
   const fetchEventById = async (eventid, ticketId) => {
     try {
-      const res = await fetchWithAuth(
-        `${API_URL}/api/events/${eventid}/tickets/${ticketId}`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      return await res.json();
+      const res = await api.get(`/api/events/${eventid}/tickets/${ticketId}`);
+      return res.data;
     } catch (error) {
       console.error("Failed to fetch event ticket:", error);
       throw error;
@@ -303,15 +254,8 @@ export const ApiProvider = ({ children }) => {
   // GET WISHLIST
   const fetchWishlist = async () => {
     try {
-      const res = await fetchWithAuth(`${API_URL}/api/auth/wishlist`, {
-        method: "GET",
-        credentials: "include",
-      });
-      if (res.status === 401) {
-        throw new Error("Login required");
-      }
-
-      return res.json();
+      const res = await api.get(`/api/auth/wishlist`);
+      return res.data;
     } catch (error) {
       throw new Error(error);
     }
@@ -331,15 +275,8 @@ export const ApiProvider = ({ children }) => {
   // GET USERPROFILE
   const fetchUser = async () => {
     try {
-      const response = await fetchWithAuth(`${API_URL}/api/auth/profile`, {
-        method: "GET",
-        credentials: "include",
-      });
-      if (response.status === 401) {
-        throw new Error("Login required");
-      }
-
-      return response.json();
+      const response = await api.get(`/api/auth/profile`);
+      return response.data;
     } catch (error) {
       throw new Error(error);
     }
@@ -355,6 +292,30 @@ export const ApiProvider = ({ children }) => {
     retry: 1,
     enabled: !!user,
   });
+
+  // GET ADMIN SETTINGS
+  const fetchAdminSettings = async () => {
+    try {
+      const response = await api.get(`/api/auth/admin/settings`);
+      return response.data; // Now returns { settings, availablePaymentMethods }
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  const {
+    data: adminSettingsData,
+    isLoading: adminSettingsLoading,
+  } = useQuery({
+    queryKey: ["adminSettings"],
+    queryFn: fetchAdminSettings,
+    retry: 1,
+    enabled: !!user && user.role === "admin",
+  });
+  
+  const adminSettings = adminSettingsData?.settings;
+  const availablePaymentMethods = adminSettingsData?.paymentMethods || [];
+
   console.log("the profile is ", userProfile);
   return (
     <ApiContext.Provider
@@ -395,6 +356,9 @@ export const ApiProvider = ({ children }) => {
         fetchTicketById,
         fetchLoggedInUser,
         fetchUser,
+        adminSettings,
+        adminSettingsLoading,
+        availablePaymentMethods,
       }}
     >
       {children}

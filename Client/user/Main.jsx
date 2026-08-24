@@ -10,7 +10,17 @@ import {
   House,
   Ticket,
   User,
+  CalendarDays,
+  X,
+  MapPin,
 } from "lucide-react";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
+import { PickerDay } from "@mui/x-date-pickers/PickerDay";
+import { Badge } from "@mui/material";
+import dayjs from "dayjs";
 
 import {
   NotificationSidebar,
@@ -25,6 +35,174 @@ import { eventService } from "@/Context/ApiEvent";
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import api from "../src/Context/api/api.config";
+
+// ─── MUI Orange Theme ──────────────────────────────────────────────────────
+const orangeTheme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: {
+      main: "#FF7A00",
+      light: "#FF9A40",
+      dark: "#CC6200",
+      contrastText: "#000000",
+    },
+    background: { default: "#121417", paper: "#1C1F22" },
+    text: { primary: "#FFFFFF", secondary: "#9CA3AF" },
+  },
+  components: {
+    MuiPickersCalendarHeader: {
+      styleOverrides: {
+        root: { color: "#FF7A00", paddingLeft: "16px", paddingRight: "16px" },
+        label: {
+          color: "#FF7A00",
+          fontWeight: 900,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          fontSize: "0.75rem",
+        },
+        switchViewButton: { color: "#FF7A00" },
+      },
+    },
+    MuiPickersArrowSwitcher: {
+      styleOverrides: {
+        button: {
+          color: "#FF7A00",
+          "&:hover": { backgroundColor: "rgba(255,122,0,0.1)" },
+        },
+      },
+    },
+    MuiDayCalendar: {
+      styleOverrides: {
+        weekDayLabel: {
+          color: "#6B7280",
+          fontWeight: 900,
+          textTransform: "uppercase",
+          fontSize: "0.65rem",
+        },
+      },
+    },
+    MuiPickersDay: {
+      styleOverrides: {
+        root: {
+          color: "#FFFFFF",
+          fontSize: "0.75rem",
+          fontWeight: 700,
+          "&:hover": {
+            backgroundColor: "rgba(255,122,0,0.1)",
+            border: "1px solid rgba(255,122,0,0.3)",
+          },
+          "&.Mui-selected": {
+            backgroundColor: "#FF7A00 !important",
+            color: "#000000 !important",
+            fontWeight: 900,
+          },
+        },
+        today: {
+          border: "1px dashed #FF7A00 !important",
+        },
+      },
+    },
+  },
+});
+
+// ─── Calendar Sidebar Component ─────────────────────────────────────────────
+const CalendarSidebar = ({ setIsOpen }) => {
+  const { events } = eventService();
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  
+  const eventsOnSelectedDate = events?.events?.filter(ev => {
+    if (!ev?.dates?.start?.localDate) return false;
+    return dayjs(ev.dates.start.localDate).isSame(selectedDate, "day");
+  }) || [];
+
+  const ServerDay = (props) => {
+    const { day, outsideCurrentMonth, ...other } = props;
+    const hasEvent = events?.events?.some((ev) => {
+      if (!ev?.dates?.start?.localDate) return false;
+      return dayjs(ev.dates.start.localDate).isSame(day, "day");
+    });
+    
+    return (
+      <div className="relative">
+        <PickerDay {...other} outsideCurrentMonth={outsideCurrentMonth} day={day} />
+        {hasEvent && !outsideCurrentMonth && (
+          <svg 
+            viewBox="0 0 100 100" 
+            className="absolute inset-0 w-full h-full scale-[1.3] pointer-events-none"
+            style={{ stroke: "#ffb3c6", zIndex: 10 }}
+          >
+            <path 
+              fill="none" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              d="M 50 15 C 75 10, 90 30, 85 60 C 80 85, 40 90, 20 75 C 5 60, 15 25, 40 15 C 65 5, 95 30, 80 70" 
+            />
+          </svg>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-[#121417]">
+      <div className="p-6 border-b border-white/[0.04] flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black uppercase text-white tracking-tight">
+            Event <span className="text-[#FF7A00]">Calendar</span>
+          </h2>
+          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+            Discover what's happening
+          </p>
+        </div>
+        <button onClick={() => setIsOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.03] text-gray-500 hover:text-white hover:bg-white/[0.1] transition-colors">
+          <X size={16} />
+        </button>
+      </div>
+
+      <div className="p-6 border-b border-white/[0.04]">
+        <ThemeProvider theme={orangeTheme}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateCalendar
+              value={selectedDate}
+              onChange={(newDate) => setSelectedDate(newDate)}
+              slots={{ day: ServerDay }}
+              sx={{ width: '100%', '& .MuiPickersCalendarHeader-root': { padding: 0 } }}
+            />
+          </LocalizationProvider>
+        </ThemeProvider>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <h3 className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-4">
+          Events on {selectedDate.format("MMMM D, YYYY")}
+        </h3>
+        {eventsOnSelectedDate.length > 0 ? (
+          eventsOnSelectedDate.map(ev => (
+            <Link 
+              to={ev?.tickets?.length > 0 ? `/events/${ev?._id}/tickets/${ev.tickets[0]?._id}` : `/events/${ev?._id}`} 
+              key={ev._id} 
+              onClick={() => setIsOpen(false)} 
+              className="block bg-[#1A1D20] p-4 rounded-2xl border border-white/[0.04] hover:border-[#FF7A00]/50 transition-all"
+            >
+              <h4 className="text-sm font-black text-white">{ev.name}</h4>
+              <p className="text-[10px] text-gray-500 uppercase mt-1">
+                {ev.links?.venues?.name || "TBA"} • {ev.dates?.start?.localTime || "TBA"}
+              </p>
+            </Link>
+          ))
+        ) : (
+          <div className="text-center py-10 bg-white/[0.02] rounded-2xl border border-dashed border-white/[0.1]">
+            <p className="text-[11px] text-gray-500 uppercase font-black tracking-widest">
+              No events on this day
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Main = () => {
   const {
@@ -56,10 +234,7 @@ const Main = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await api.post(`/api/auth/logout`);
       queryClient.clear();
       window.location.href = "/login";
     } catch (error) {
@@ -115,10 +290,12 @@ const Main = () => {
   /* ---------------- FOOTER DATA ---------------- */
   const currentYear = new Date().getFullYear();
 
-  const profileImageSrc = useMemo(
-    () => userProfile?.pictures?.[0] || "/defaultAvater.jpg",
-    [userProfile?.pictures],
-  );
+  const profileImageSrc = useMemo(() => {
+    if (userProfile?.user?.avatarUrl) {
+      return `${API_URL}/${userProfile.user.avatarUrl}`;
+    }
+    return "/defaultAvater.jpg";
+  }, [userProfile?.user?.avatarUrl, API_URL]);
 
   const footerSections = useMemo(
     () => [
@@ -201,6 +378,14 @@ const Main = () => {
 
             {/* Actions */}
             <div className="flex items-center gap-6">
+              {/* Calendar Icon */}
+              <button
+                onClick={() => setActiveOverlay("calendar")}
+                className="relative text-gray-500 hover:text-[#FF7A00] transition"
+              >
+                <CalendarDays size={20} />
+              </button>
+
               {/* Notification */}
               {user && (
                 <button
@@ -225,9 +410,9 @@ const Main = () => {
                 {/* Mobile Menu Trigger */}
                 <button
                   onClick={() => openMenu(false)}
-                  className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.03] border border-white/10 text-gray-400"
+                  className="md:hidden w-8 h-8 flex items-center justify-center rounded-xl bg-white/[0.03] border border-white/10 text-gray-400"
                 >
-                  <Menu size={22} />
+                  <Menu size={18} />
                 </button>
 
                 {/* Profile Avatar */}
@@ -265,6 +450,11 @@ const Main = () => {
                         {user ? (
                           <>
                             <DropdownItem
+                              icon={<MapPin size={16} />}
+                              label="Venues"
+                              path="/venues"
+                            />
+                            <DropdownItem
                               icon={<Ticket size={16} />}
                               label="My Tickets"
                               path="/tickets_home"
@@ -274,7 +464,7 @@ const Main = () => {
                               label="Wishlist"
                               path="/account/favorites"
                             />
-                            <DropdownItem
+                            {/* <DropdownItem
                               icon={<Settings size={16} />}
                               label="Settings"
                               path="/account/setting"
@@ -283,7 +473,7 @@ const Main = () => {
                               icon={<CreditCard size={16} />}
                               label="Payment Detail"
                               path="/account/payment_detail"
-                            />
+                            /> */}
                             <hr className="my-2 border-white/[0.05]" />
                             <button
                               onClick={handleLogout}
@@ -446,6 +636,18 @@ const Main = () => {
                   className="absolute top-0 right-0 w-full sm:w-[420px] lg:w-[480px] h-full bg-[#121417]"
                 >
                   <NotificationSidebar setIsOpen={closeOverlay} />
+                </motion.div>
+              )}
+              {/* CALENDAR */}
+              {activeOverlay === "calendar" && (
+                <motion.div
+                  initial={{ x: "100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "100%" }}
+                  transition={{ type: "spring", damping: 30, stiffness: 200 }}
+                  className="absolute top-0 right-0 w-full sm:w-[420px] lg:w-[480px] h-full bg-[#121417] overflow-y-auto"
+                >
+                  <CalendarSidebar setIsOpen={closeOverlay} />
                 </motion.div>
               )}
             </div>

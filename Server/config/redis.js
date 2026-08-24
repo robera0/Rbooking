@@ -32,7 +32,13 @@ export const clearSingleEventCache = async (eventId) => {
   try {
     if (!eventId) return;
 
-    await redisClient.del(`${REDIS_PREFIX}event:single:${eventId}`);
+    // We must clear ALL keys starting with the eventId to clear both 
+    // event:single:ID and event:single:ID:ticketID caches
+    const pattern = `${REDIS_PREFIX}event:single:${eventId}*`;
+    const keys = await redisClient.keys(pattern);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+    }
   } catch (err) {
     console.error(`Failed to clear single event cache for ID ${eventId}:`, err);
   }

@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect } from "react";
 import { eventService } from "@/Context/ApiEvent.jsx";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -28,6 +28,9 @@ const Venue = () => {
   const { events, isLoading } = eventService();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [venues]);
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

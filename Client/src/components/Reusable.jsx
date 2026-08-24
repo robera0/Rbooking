@@ -41,6 +41,7 @@ import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useQueryClient } from "@tanstack/react-query";
+import api from "@/Context/api/api.config";
 export const ProtectedRoute = ({ children }) => {
   const { usererror, user } = eventService(); // remove userIsLoading
   const location = useLocation();
@@ -92,6 +93,7 @@ export default function CheckoutModal({
   amount = 400,
   name,
   ticketId,
+  paymentMethods = [],
 }) {
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -101,58 +103,65 @@ export default function CheckoutModal({
 
   const quantity = Math.max(1, parseInt(quantityStr) || 1);
 
-  const TELEBIRR_NUMBER = "0912345678"; // Telebirr payment number
-
   const totalAmount = amount * quantity;
 
-  const copyNumberToClipboard = async () => {
+  const copyNumberToClipboard = async (num) => {
     try {
-      await navigator.clipboard.writeText(TELEBIRR_NUMBER);
+      await navigator.clipboard.writeText(num);
+      import("react-hot-toast").then(({ default: toast }) =>
+        toast.success(`Copied ${num} to clipboard!`),
+      );
     } catch {
       // fallback for older browsers
       const ta = document.createElement("textarea");
-      ta.value = TELEBIRR_NUMBER;
+      ta.value = num;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand("copy");
       document.body.removeChild(ta);
+      import("react-hot-toast").then(({ default: toast }) =>
+        toast.success(`Copied ${num} to clipboard!`),
+      );
     }
   };
 
   const handleConfirmAndPay = async () => {
+    if (!phone || !phone.trim()) {
+      const { default: toast } = await import("react-hot-toast");
+      toast.error("Please enter your phone number to complete the purchase.");
+      return;
+    }
     setIsLoading(true);
     try {
-      const res = await fetch(
-        `${API_URL}/api/auth/ticket/${ticketId}/purchase`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quantity, phone }),
-        },
+      const res = await api.post(
+        `/api/auth/ticket/${ticketId}/purchase`,
+        { quantity, phone },
       );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Purchase failed");
+      const data = res.data;
 
-      // Copy Telebirr number to clipboard
-      await copyNumberToClipboard();
+      if (totalAmount === 0) {
+        const { default: toast } = await import("react-hot-toast");
+        toast.success(
+          "Your free ticket is acquired successfully!",
+          { duration: 4000 },
+        );
+        navigate(`/tickets_home/${data.userTicket._id}`);
+      } else {
+        const { default: toast } = await import("react-hot-toast");
+        toast.success(
+          "Your ticket is successfully held! Please complete your payment.",
+          { duration: 4000 },
+        );
 
-      // Show success toast
-      const { default: toast } = await import("react-hot-toast");
-      toast.success(
-        "Your ticket is successfully held! Telebirr number copied to clipboard.",
-        { duration: 4000 },
-      );
-
-      // Navigate to verify page
-      navigate(`/tickets_home/verify/${data.userTicket._id}`, {
-        state: {
-          orderNo: data.userTicket.orderNo,
-          eventName: name,
-          totalAmount,
-          quantity,
-        },
-      });
+        navigate(`/tickets_home/verify/${data.userTicket._id}`, {
+          state: {
+            orderNo: data.userTicket.orderNo,
+            eventName: name,
+            totalAmount,
+            quantity,
+          },
+        });
+      }
       onClose();
     } catch (error) {
       import("react-hot-toast").then(({ default: toast }) =>
@@ -249,34 +258,47 @@ export default function CheckoutModal({
           </div>
         </div>
 
-        {/* Telebirr Payment Number */}
-        <div className="space-y-3 mb-10">
+        {/* Payment Methods */}
+        <div className="space-y-3 mb-10 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
-            Pay via Telebirr
+            Payment Options
           </p>
-          <div
-            onClick={copyNumberToClipboard}
-            className="group relative rounded-2xl py-5 px-6 border border-[#FF7A00]/30 bg-[#FF7A00]/[0.06] cursor-pointer hover:bg-[#FF7A00]/[0.12] transition-all"
-          >
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
-                  Telebirr Number
-                </p>
-                <p className="text-2xl font-black tracking-wider text-white font-mono">
-                  {TELEBIRR_NUMBER}
+          <div className="flex flex-col gap-3">
+            {paymentMethods && paymentMethods.length > 0 ? (
+              paymentMethods.map((method, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => copyNumberToClipboard(method.accountNumber)}
+                  className="group relative rounded-2xl py-4 px-5 border border-[#FF7A00]/30 bg-[#FF7A00]/[0.06] cursor-pointer hover:bg-[#FF7A00]/[0.12] transition-all flex-shrink-0"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
+                        {method.provider} Number
+                      </p>
+                      <p className="text-xl font-black tracking-wider text-white font-mono">
+                        {method.accountNumber}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <Copy size={16} className="text-[#FF7A00]" />
+                      <span className="text-[7px] font-black uppercase tracking-wider text-gray-500">
+                        Tap to copy
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-4 text-center">
+                <p className="text-sm font-bold text-gray-500 italic">
+                  The organizer hasn't set up any payment methods yet.
                 </p>
               </div>
-              <div className="flex flex-col items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                <Copy size={18} className="text-[#FF7A00]" />
-                <span className="text-[7px] font-black uppercase tracking-wider text-gray-500">
-                  Tap to copy
-                </span>
-              </div>
-            </div>
+            )}
           </div>
-          <p className="text-[10px] text-gray-600 text-center">
-            Send <span className="text-[#FF7A00] font-bold">{totalAmount.toLocaleString()} ETB</span> to this number, then verify your receipt
+          <p className="text-[10px] text-gray-600 text-center mt-2">
+            Send <span className="text-[#FF7A00] font-bold">{totalAmount.toLocaleString()} ETB</span> to one of the accounts above, then verify your receipt
           </p>
         </div>
 
@@ -459,15 +481,12 @@ export const AccountMenu = ({ icon, header, path, action }) => {
 };
 
 export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
-  const { API_URL, userProfile } = useService();
-  const { user } = eventService();
+  const { API_URL } = useService();
+  const { user, userProfile } = eventService();
   const queryClient = useQueryClient();
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await api.post(`/api/auth/logout`, {});
       queryClient.clear();
       setIsOpen(false);
       window.location.href = "/login";
@@ -483,25 +502,25 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
       path: "/account",
     },
     {
-      icon: <Ticket size={20} />,
-      label: "My Tickets",
-      path: "/tickets_home",
-    },
-    {
-      icon: <CreditCard size={20} />,
-      label: "Payment Detail",
-      path: "/account/payment_detail",
+      icon: <MapPin size={20} />,
+      label: "Venues",
+      path: "/venues",
     },
     {
       icon: <Heart size={20} />,
       label: "Wishlist",
       path: "/account/favorites",
     },
-    {
-      icon: <Settings size={20} />,
-      label: "Settings",
-      path: "/account/setting",
-    },
+    // {
+    //   icon: <CreditCard size={20} />,
+    //   label: "Payment Detail",
+    //   path: "/account/payment_detail",
+    // },
+    // {
+    //   icon: <Settings size={20} />,
+    //   label: "Settings",
+    //   path: "/account/setting",
+    // },
   ];
 
   // Navigation items shown when not logged in
@@ -526,7 +545,7 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
   const menuItems = !user
     ? guestNavItems
     : minimal
-    ? allItems.filter((item) => ["My Tickets", "Wishlist"].includes(item.label))
+    ? allItems.filter((item) => ["Venues", "Wishlist"].includes(item.label))
     : allItems;
 
   return (
@@ -570,7 +589,11 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
           <div className="relative">
             <div className="absolute inset-0 bg-[#FF7A00]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             <img
-              src={userProfile?.user?.avatarUrl || "/defaultAvater.jpg"}
+              src={
+                userProfile?.user?.avatarUrl
+                  ? `${API_URL}/${userProfile.user.avatarUrl}`
+                  : "/defaultAvater.jpg"
+              }
               onError={(e) => {
                 e.currentTarget.onerror = null;
                 e.currentTarget.src = "/defaultAvater.jpg";

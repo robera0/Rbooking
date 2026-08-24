@@ -11,7 +11,7 @@ const TicketOrders = () => {
       {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-8 border-b border-white/[0.04] pb-6">
         <div className="space-y-2">
-          <h1 className="text-2xl md:text-5xl font-black uppercase tracking-tighter leading-none">
+          <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none">
             Ticket <span className="text-[#FF7A00]">Orders</span>
           </h1>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />

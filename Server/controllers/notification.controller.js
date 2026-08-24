@@ -95,3 +95,26 @@ export const add_notification = async (req, res) => {
     });
   }
 };
+
+export const clear_notifications = async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const updatedNotification = await notificationModel.findOneAndUpdate(
+      { userId },
+      {
+        $set: {
+          notifications: [],
+        },
+      },
+      { new: true }
+    );
+    return res.json({
+      success: true,
+      data: updatedNotification,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};

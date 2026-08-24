@@ -43,6 +43,7 @@ import { EventProvider } from "./Context/EventAdminContest";
 import { DashboardProvider } from "./Context/DashboardContext";
 import AdminSetting from "../admin/Setting";
 import TermsAndConditions from "../admin/TermsAndConditions";
+import api from "./Context/api/api.config";
 const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
   animate: { opacity: 1, y: 0, scale: 1 },
@@ -79,9 +80,8 @@ const Root = () => {
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const editEventLoader = async ({ params }) => {
-  const res = await fetch(`${API_URL}/api/events/${params.eventId}`);
-  if (!res.ok) throw new Error("Failed to fetch event data");
-  return res.json();
+  const res = await api.get(`/api/events/${params.eventId}`);
+  return res.data;
 };
 
 export const router = createBrowserRouter([

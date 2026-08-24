@@ -16,13 +16,17 @@ import {
   LayoutDashboard,
   Briefcase,
   FileBadge2,
+  Trash2,
+  Plus,
+  Image,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import { Link } from "react-router-dom";
+import api from "../src/Context/api/api.config";
 const inputStyle = {
   background: "rgba(255,255,255,0.05)",
   border: "1px solid rgba(255,255,255,0.08)",
@@ -221,9 +225,11 @@ const calculatePasswordStrength = (pass) => {
 
 const RegistrationPage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { API_URL } = useService();
+  const { API_URL, setIsLoggedIn } = useService();
+  const coverInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -234,8 +240,8 @@ const RegistrationPage = () => {
     confirmPassword: "",
     organizationName: "",
     businessType: "",
-    businessRegistrationNumber: "",
-    taxId: "",
+    // businessRegistrationNumber: "",
+    // taxId: "",
     country: "",
     city: "",
     region: "",
@@ -243,7 +249,30 @@ const RegistrationPage = () => {
     twoFactorEnabled: false,
     termsAccepted: false,
     privacyAccepted: false,
+    paymentMethods: [],
   });
+
+  const [coverPageFile, setCoverPageFile] = useState(null);
+  
+  const [currentPayment, setCurrentPayment] = useState({ provider: "Telebirr", accountNumber: "" });
+
+  const handleAddPayment = () => {
+    if (!currentPayment.accountNumber.trim()) {
+      return toast.error("Please enter an account number");
+    }
+    setFormData((prev) => ({
+      ...prev,
+      paymentMethods: [...prev.paymentMethods, currentPayment],
+    }));
+    setCurrentPayment({ provider: "Telebirr", accountNumber: "" });
+  };
+
+  const handleRemovePayment = (idx) => {
+    setFormData((prev) => ({
+      ...prev,
+      paymentMethods: prev.paymentMethods.filter((_, i) => i !== idx),
+    }));
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -266,40 +295,29 @@ const RegistrationPage = () => {
 
   const registerAdminMutation = useMutation({
     mutationFn: async (payload) => {
-      const form = new FormData();
-      form.append("username", payload.email);
-      form.append("email", payload.email);
-      form.append("password", payload.password);
-      form.append("firstName", payload.firstName);
-      form.append("lastName", payload.lastName);
-      form.append("phone", payload.phone);
-      form.append("organizationName", payload.organizationName);
-      form.append("businessType", payload.businessType);
-      form.append(
-        "businessRegistrationNumber",
-        payload.businessRegistrationNumber,
-      );
-      form.append("taxId", payload.taxId);
-      form.append("country", payload.country);
-      form.append("city", payload.city);
-      form.append("region", payload.region);
-      form.append("streetAddress", payload.streetAddress);
-      form.append("adminRole", payload.adminRole || "event_manager");
-      form.append("twoFactorEnabled", String(payload.twoFactorEnabled));
-
-      const res = await fetch(`${API_URL}/api/auth/admin/signup`, {
-        method: "POST",
-        body: form,
+      //
+      const formDataToSend = new FormData();
+      Object.keys(payload).forEach((key) => {
+        if (key === "paymentMethods") {
+          formDataToSend.append(key, JSON.stringify(payload[key]));
+        } else if (key !== "coverPage") {
+          formDataToSend.append(key, payload[key]);
+        }
       });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to register admin");
+      if (coverPageFile) {
+        formDataToSend.append("coverPage", coverPageFile);
       }
-      return res.json();
+
+      const res = await api.post(`/api/auth/signup/admin`, formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return res.data;
     },
+
     onSuccess: () => {
       toast.success("Admin Registered Successfully!");
+      setIsLoggedIn(true);
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       setFormData({
         firstName: "",
         lastName: "",
@@ -309,17 +327,19 @@ const RegistrationPage = () => {
         confirmPassword: "",
         organizationName: "",
         businessType: "",
-        businessRegistrationNumber: "",
-        taxId: "",
+        // businessRegistrationNumber: "",
+        //taxId: "",
         country: "",
         city: "",
         region: "",
         streetAddress: "",
-        twoFactorEnabled: false,
+        //twoFactorEnabled: false,
         termsAccepted: false,
         privacyAccepted: false,
+        paymentMethods: [],
       });
-      setTimeout(() => navigate("/admin/dashboard"), 2000);
+      setCoverPageFile(null);
+      setTimeout(() => navigate("/admin/home"), 2000);
     },
     onError: (error) => {
       toast.error(getFriendlyErrorMessage(error));
@@ -348,9 +368,19 @@ const RegistrationPage = () => {
     if (formData.password !== formData.confirmPassword) {
       return toast.error("Passwords do not match");
     }
+    let normalizedPhone = formData.phone.replace(/[^\d+]/g, "");
+    if (normalizedPhone.startsWith("0")) {
+      normalizedPhone = "+251" + normalizedPhone.substring(1);
+    } else if (normalizedPhone.startsWith("251")) {
+      normalizedPhone = "+" + normalizedPhone;
+    } else if (!normalizedPhone.startsWith("+")) {
+      normalizedPhone = "+251" + normalizedPhone;
+    }
+
     registerAdminMutation.mutate({
       ...formData,
-      adminRole: "event_manager",
+      phone: normalizedPhone,
+      adminRole: "event organizer",
     });
   };
 
@@ -452,7 +482,7 @@ const RegistrationPage = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+2519-000-000"
                   required
                 />
               </div>
@@ -602,17 +632,66 @@ const RegistrationPage = () => {
                   }
                   placeholder="Select business type"
                   options={[
-                    { value: "event_manager", label: "Event Manager" },
+                    { value: "Event Organizer", label: "Event Organizer" },
                     { value: "Venue Owner", label: "Venue Owner" },
-                    { value: "ticket_manager", label: "Ticket Reseller" },
+                    { value: "Ticket Reseller", label: "Ticket Reseller" },
                     {
                       value: "Festival Organizer",
                       label: "Festival Organizer",
                     },
-                    { value: "corporate_events", label: "Corporate Events" },
+                    { value: "Corporate Events", label: "Corporate Events" },
                     { value: "Sports Organizer", label: "Sports Organizer" },
                   ]}
                 />
+              </div>
+
+              {/* Cover Page */}
+              <div className="md:col-span-2">
+                <Label>Organization Cover Page</Label>
+                {coverPageFile ? (
+                  <div className="relative w-full h-48 rounded-[1.5rem] overflow-hidden border border-white/10 group bg-black">
+                    <img
+                      src={URL.createObjectURL(coverPageFile)}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover opacity-80"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => setCoverPageFile(null)}
+                        className="p-3 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors"
+                      >
+                        <Trash2 size={24} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => coverInputRef.current?.click()}
+                    className="w-full h-32 bg-[#121417] border border-dashed border-white/[0.2] hover:border-[#FF7A00] text-gray-500 hover:text-[#FF7A00] rounded-[1.5rem] flex flex-col items-center justify-center gap-3 transition-colors active:scale-95 group"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={coverInputRef}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setCoverPageFile(e.target.files[0]);
+                        }
+                      }}
+                    />
+                    <Image
+                      size={32}
+                      strokeWidth={1.5}
+                      className="group-hover:scale-110 transition-transform"
+                    />
+                    <p className="font-black text-[11px] uppercase tracking-[0.2em] italic">
+                      Upload Cover Photo
+                    </p>
+                  </button>
+                )}
               </div>
               {/* 
            <div>
@@ -758,7 +837,82 @@ const RegistrationPage = () => {
             </div>
           </section>
 
-          {/* SECTION 4 — Security & Agreement */}
+          {/* SECTION 4 — Payment Information */}
+          <section className="flex flex-col gap-5">
+            <SectionHeading icon={FileText} number="4" title="Payment Information" />
+            <div className="bg-[#1C1F22] p-5 rounded-2xl border border-white/[0.04]">
+              <div className="flex flex-col md:flex-row gap-4 mb-4">
+                <div className="w-full md:w-1/3">
+                  <Label>Payment Provider</Label>
+                  <CustomSelect
+                    value={currentPayment.provider}
+                    onChange={(val) => setCurrentPayment((prev) => ({ ...prev, provider: val }))}
+                    options={[
+                      { value: "Telebirr", label: "Telebirr" },
+                      { value: "Abyssinia Bank", label: "Abyssinia Bank" },
+                      { value: "CBE", label: "CBE" },
+                      { value: "MPSA", label: "MPSA" },
+                    ]}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label>Account / Phone Number</Label>
+                  <div className="flex gap-3">
+                    <FieldInput
+                      name="accountNumber"
+                      value={currentPayment.accountNumber}
+                      onChange={(e) => setCurrentPayment((prev) => ({ ...prev, accountNumber: e.target.value }))}
+                      placeholder={
+                        currentPayment.provider === "Telebirr" || currentPayment.provider === "MPSA"
+                          ? "+2519-000-000"
+                          : "10000..."
+                      }
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddPayment}
+                      className="px-6 py-4 rounded-xl font-bold transition-all hover:opacity-80 active:scale-95"
+                      style={{ background: "#FF7A00", color: "#000" }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {formData.paymentMethods.length > 0 && (
+                <div className="mt-6 space-y-3">
+                  <Label>Added Methods</Label>
+                  {formData.paymentMethods.map((method, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-4 rounded-xl bg-black/40 border border-white/[0.05]"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-[#FF7A00]/10 flex items-center justify-center text-[#FF7A00] font-black text-xs uppercase">
+                          {method.provider.slice(0, 3)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">{method.provider}</p>
+                          <p className="text-xs text-gray-400">{method.accountNumber}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePayment(idx)}
+                        className="text-red-500 hover:text-red-400 text-sm font-bold transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* SECTION 5 — Security & Agreement */}
           <section
             className="flex flex-col gap-5 p-6 rounded-2xl"
             style={{
@@ -767,7 +921,8 @@ const RegistrationPage = () => {
             }}
           >
             {/* 2FA Toggle */}
-            <div className="flex items-center justify-between gap-4">
+            {/* 
+                  <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-bold text-white">
                   Enable Two-Factor Authentication (2FA)
@@ -804,9 +959,10 @@ const RegistrationPage = () => {
                   />
                 </div>
               </label>
-            </div>
 
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }} />
+                   <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }} />
+
+            </div>*/}
 
             {/* Checkboxes */}
             <div className="flex flex-col gap-3">

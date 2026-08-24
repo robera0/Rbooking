@@ -2,6 +2,9 @@ import AdminProfileService from "../service/adminProfile.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import UserService from "../service/user.service.js";
 import EventService from "../service/event.service.js";
+import { UserModel } from "../models/user.model.js";
+import { ProfileModel } from "../models/profile.model.js";
+import { AdminProfile } from "../models/adminProfile.model.js";
 
 export const getAdminProfile = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
@@ -60,14 +63,43 @@ export const addEvent = catchAsync(async (req, res, next) => {
 export const addUser = catchAsync(async (req, res, next) => {
   const payload = req.body;
   const newUser = await UserService.create({
-    username: payload.username || `user_${Date.now()}`,
     email: payload.email,
     password: payload.password || "defaultPass123",
     role: payload.role || "user",
     status: "active",
   });
 
+  const username = payload.username || `user_${Date.now()}`;
+  await ProfileModel.create({
+    userId: newUser._id,
+    username: username,
+    fullName: username,
+  });
+
   res.status(201).json({ success: true, user: newUser });
+});
+
+export const getUsers = catchAsync(async (req, res, next) => {
+  const users = await UserModel.find().select("-password -refreshTokens");
+  
+  const usersWithProfiles = await Promise.all(
+    users.map(async (user) => {
+      let profile = null;
+      if (user.role === "admin") {
+        profile = await AdminProfile.findOne({ userId: user._id });
+      } else {
+        profile = await ProfileModel.findOne({ userId: user._id });
+      }
+      
+      return {
+        ...user.toObject(),
+        username: profile?.username || profile?.fullName || "",
+        fullName: profile?.fullName || "",
+      };
+    })
+  );
+  
+  res.status(200).json({ success: true, users: usersWithProfiles });
 });
 
 export const updateUser = catchAsync(async (req, res) => {

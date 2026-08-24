@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
   Ticket,
@@ -12,6 +12,7 @@ import {
   Mail,
   ArrowRight,
   FileText,
+  ArrowLeft,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -101,6 +102,11 @@ const TermsAndConditions = () => {
     },
   };
 
+  const navigate = useNavigate();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [navigate]);
+
   return (
     <div className="relative min-h-screen bg-[#121417] text-white selection:bg-[#FF7A00]/20 pb-32">
       {/* ================= HEADER ================= */}
@@ -111,6 +117,13 @@ const TermsAndConditions = () => {
         className="px-6 lg:px-10 pt-16 lg:pt-24 pb-14 max-w-[1000px] mx-auto"
       >
         <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => navigate("/admin/register")}
+            className="text-gray-400 hover:text-white transition-colors"
+            title="Back to selection"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div className="w-10 h-10 rounded-xl bg-[#FF7A00]/10 text-[#FF7A00] flex items-center justify-center">
             <FileText size={18} />
           </div>
@@ -186,8 +199,10 @@ const TermsAndConditions = () => {
               </p>
             </div>
           </div>
-          <Link
-            to="/contact"
+          <a
+            href="https://www.instagram.com/paysso_event"
+            target="_blank"
+            rel="noopener noreferrer"
             className="group flex items-center gap-2 px-6 py-3 bg-[#FF7A00] text-black text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] rounded-full transition-all hover:bg-white active:scale-95 shrink-0"
           >
             Contact Us
@@ -195,7 +210,7 @@ const TermsAndConditions = () => {
               size={14}
               className="group-hover:translate-x-1 transition-transform"
             />
-          </Link>
+          </a>
         </div>
       </motion.section>
     </div>

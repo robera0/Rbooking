@@ -80,6 +80,24 @@ const ViewTicket = () => {
   const localDate = event?.dates?.start?.localDate;
   const localTime = event?.dates?.start?.localTime;
 
+  const downloadQRCode = async () => {
+    try {
+      const qrUrl = `${API_URL}/api/events/${event?._id}/tickets/${tkt?._id}/qr`;
+      const res = await fetch(qrUrl);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `QR-${orderNo || ticketId}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error downloading QR code:", err);
+    }
+  };
+
   return (
     <div
       className="min-h-screen text-[#f4f4f5] antialiased"
@@ -267,6 +285,13 @@ const ViewTicket = () => {
                       Present this code to venue staff
                     </p>
                   </div>
+                  <button
+                    onClick={downloadQRCode}
+                    className="mt-2 text-[11px] font-medium text-[#FF7A00] hover:text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <Download size={12} />
+                    Download QR Code
+                  </button>
                 </div>
 
                 {/* ── footer ── */}

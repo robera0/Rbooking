@@ -1,90 +1,26 @@
-[] add a schema of  a review about the app
-[f] send the total amount ticket to the tickets route
-[] download the qr code
-
-//TODAY 
-[f] finished the naming of the routes
-[f] finished naming of the models
-[f] finish naming of the controllers
-[] make the cs and the class in the analytics side too
-[f] wishlist catchAsync and classes
-[f] the comment add classes 
-[f] the ticket class
-[f] add the classes in the controller of the events
-[f] test if the schema is using the index
-[f] add custom  datePicket in the add event 
-[f] edit the design of the add event so it can handle all categories also in the event.controller
-[] make the admin registration work 
-[f] make the ticket controller send all the ticket
-[f] change the url of ticket based on type
-[f] cache the tickets instead of the ids only
-[f] add qr generator controller for events
-//
-[f] make sure to remove the info
-[f] post an event too
-[f] when user post event the cap should go to the ticket schema so it can show the available number of tickets 
-[f] edit the routes to update the admin profile
-[f] make the drop down of the admin side work with path
-[f] instead of posting everytime they can keep it on draft and post it every time just changing the pictures and price
-[f] make sure the error should be user friendly
-[f] add comment rating and show the ratings of the event
-[] make the verification work properly  and home in the verify ticekt route to the prevous route they came from
-[] make sure it save when they leave the site using useBlocker and when they exit the browser using beforeunload
-[f] still creating event  every 3 second instead of updating it
-// WHEN THE APP IS PUBLISHED 
-
-[] add the calendar and put all the event there is on that like a poster
+/EDIT 
+[f] sign in with normal not working 
+[f] complete profile after a new google user is signed in it shouls be normal form
+[f] make Generic property changed to "event" 
+[]create a profile after a registration // or make a username  to full name 
+[] add category in the last to be visible in event  
+[] add connect with artist at last  
+[f] change the nam of amenities to normal user friendly name 
+[] in edit change the names too 
+[f] the notification side to be work in admin when a user purchased a ticket when pending is verified and so on 
+[] username is require when logging in using email
 
 
-
-
-src/
-├── api/
-│   ├── auth/
-│   │   └── authApi.js           → login, register, logout, refresh
-│   │
-│   ├── user/
-│   │   └── userApi.js           → getProfile, updateProfile, updateCredentials
-│   │
-│   ├── admin/
-│   │   ├── adminApi.js          → getAdminProfile, updateAdminProfile
-│   │   ├── adminUserApi.js      → getAllUsers, banUser, suspendUser, deleteUser
-│   │   └── adminTicketApi.js    → getAllTickets, refundTicket, cancelTicket
-│   │
-│   └── ticket/
-│       └── ticketApi.js         → buyTicket, getUserTickets, cancelTicket
-
-
-
-
-
-
-
-
-//
-
-
-
-
-1. User clicks "Get Tickets"
-   └─> Checkout modal opens
-
-2. Selects payment method → "CONFIRM & PAY"
-   └─> POST /api/auth/ticket/:ticketId/purchase
-       → UserTicket created (status: "pending")
-       → orderNo generated (e.g. ORD-xV3kFj2qAm)
-       → Redirects to /tickets_home/verify/:userTicketId
-
-3. VerifyTicket page loads
-   └─> Shows the orderNo prominently with a copy button
-   └─> User types their code in the input field
-   └─> Clicks "Verify & Confirm Ticket"
-       → POST /api/auth/ticket/:userTicketId/verify { orderNo }
-       → Validates ownership + code match
-       → UserTicket.status = "paid"
-       → Transaction created { isVerified: true }
-       → Cache cleared
-
-4. Success screen
-   └─> Animated ticket card shows PAID & VERIFIED
-   └─> "View My Tickets" button
+// Test
+[f] admin registration working  
+[F] create event  
+[f] EDIT event
+[f] add to wishlist 
+[] purchase ticket
+[f] comment 
+[f] logout 
+[f] login with google 
+[] login with email 
+[f] history in the admin section 
+[f] change the profile section
+[] change the password and profile in admin section 

@@ -12,7 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { eventService } from "@/Context/ApiEvent";
-import axios from "axios";
+import api from "../src/Context/api/api.config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useState, useRef, useEffect } from "react";
@@ -198,6 +198,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("profile");
 
   const [formData, setFormData] = useState({
+    username: "",
     fullName: "",
     nationality: "",
     phone: "",
@@ -210,6 +211,7 @@ const Profile = () => {
   useEffect(() => {
     if (userProfile?.user) {
       const initial = {
+        username: userProfile.user.username || "",
         fullName: userProfile.user.fullName || "",
         nationality: userProfile.user.nationality || "",
         phone: userProfile.user.phone || "",
@@ -248,55 +250,48 @@ const Profile = () => {
   };
 
   const updateUser = async () => {
-    const id = toast.loading("Saving profile…");
-    try {
-      const data = new FormData();
-      Object.entries(formData).forEach(([k, v]) => data.append(k, v));
-      if (selectedFile) data.append("avatarUrl", selectedFile);
-      await axios.put(`${API_URL}/api/auth/profile`, data, {
-        withCredentials: true,
-      });
-      toast.success("Profile saved", { id });
-    } catch (error) {
-      toast.error(getFriendlyErrorMessage(error), { id });
-    }
+    const data = new FormData();
+    Object.entries(formData).forEach(([k, v]) => data.append(k, v));
+    if (selectedFile) data.append("avatarUrl", selectedFile);
+    await api.put(`/api/auth/profile`, data);
   };
 
   const updateCredentials = async () => {
     if (credentials.password !== credentials.confirmPassword) {
-      toast.error("Passwords don't match");
-      return;
+      throw new Error("Passwords don't match");
     }
-    const id = toast.loading("Updating password…");
-    try {
-      await axios.put(`${API_URL}/api/auth/user`, credentials, {
-        withCredentials: true,
-      });
-      toast.success("Password updated", { id });
+    await api.put(`/api/auth/user`, credentials);
+  };
+
+  const profileMutation = useMutation({
+    mutationFn: updateUser,
+    onMutate: () => toast.loading("Saving profile…", { id: "profile" }),
+    onSuccess: () => {
+      toast.success("Profile saved", { id: "profile" });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      setPreview(null);
+      setSelectedFile(null);
+    },
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err), { id: "profile" }),
+  });
+
+  const credentialsMutation = useMutation({
+    mutationFn: updateCredentials,
+    onMutate: () => toast.loading("Updating password…", { id: "credentials" }),
+    onSuccess: () => {
+      toast.success("Password updated", { id: "credentials" });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       setCredentials({
         email: "",
         currentPass: "",
         password: "",
         confirmPassword: "",
       });
-    } catch (error) {
-      toast.error(getFriendlyErrorMessage(error), { id });
-    }
-  };
-
-  const profileMutation = useMutation({
-    mutationFn: updateUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
-      setPreview(null);
-      setSelectedFile(null);
     },
-  });
-
-  const credentialsMutation = useMutation({
-    mutationFn: updateCredentials,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err), { id: "credentials" }),
   });
 
   const avatarSrc = preview
@@ -485,6 +480,19 @@ const Profile = () => {
                           placeholder="Your full name"
                         />
                       </Field>
+                      <Field label="Username">
+                        <StyledInput
+                          name="username"
+                          type="text"
+                          value={formData.username}
+                          onChange={handleChange}
+                          placeholder="Your username"
+                        />
+                      </Field>
+                    </div>
+
+                    {/* row 2 */}
+                    <div className="grid sm:grid-cols-2 gap-4">
                       <Field label="Email Address">
                         <StyledInput
                           name="email"
@@ -498,10 +506,6 @@ const Profile = () => {
                           }
                         />
                       </Field>
-                    </div>
-
-                    {/* row 2 */}
-                    <div className="grid sm:grid-cols-2 gap-4">
                       <Field label="Phone Number">
                         <StyledInput
                           name="phone"
@@ -511,6 +515,10 @@ const Profile = () => {
                           placeholder="+251 9xx xxx xxxx"
                         />
                       </Field>
+                    </div>
+
+                    {/* row 2.5 */}
+                    <div className="grid sm:grid-cols-1 gap-4">
                       <Field label="Nationality">
                         <StyledInput
                           name="nationality"
@@ -702,7 +710,7 @@ const Profile = () => {
                           value={credentials.password}
                           onChange={handleCredentials}
                         />
-                        <StrengthMeter password={credentials.password} />
+                        <StrengthMeter password={credentials?.password} />
                       </div>
 
                       <PasswordInput

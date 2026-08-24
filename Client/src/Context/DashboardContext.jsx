@@ -1,23 +1,18 @@
 import { createContext, useContext } from "react";
 import { useService } from "@/Context/ServiceContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "./api/api.config";
 
 const DashboardContext = createContext();
 
 export const DashboardProvider = ({ children }) => {
-  const { API_URL } = useService();
+  
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["adminDashboardStats"],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/auth/admin/analytics/dashboard`, {
-        method: "GET",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to load dashboard stats");
-      const json = await res.json();
-      return json.data;
+      const res = await api.get(`/api/auth/admin/analytics/dashboard`);
+      return res.data?.data;
     },
   });
 
