@@ -232,6 +232,9 @@ const Main = () => {
     }
   }, [user, navigate]);
 
+  // Hide bottom nav on account/profile pages
+  const isAccountPage = location.pathname.startsWith("/account");
+
   const handleLogout = async () => {
     try {
       await api.post(`/api/auth/logout`);
@@ -656,15 +659,21 @@ const Main = () => {
 
         {/* ================= MOBILE NAV ================= */}
         <AnimatePresence>
-          {!isAccountActive && (
+          {!isAccountPage && (
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
-              className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[360px] bg-[#1A1C1E]/95 backdrop-blur-xl py-4 px-10 z-[55] border border-white/10 rounded-2xl flex justify-between"
+              className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1C1E]/95 backdrop-blur-xl py-3 px-4 z-[55] border border-white/10 rounded-2xl flex justify-between"
             >
-              <MenuBar icon={<House size={20} />} path="/" />
-              <MenuBar icon={<Ticket size={20} />} path="/tickets_home" />
-              <MenuBar icon={<CircleUser size={20} />} onClick={openMenu} />
+              <MenuBar icon={<House size={20} />} header="Home" path="/" />
+              <MenuBar icon={<Ticket size={20} />} header="Tickets" path="/tickets_home" />
+              <MenuBar icon={<MapPin size={20} />} header="Venues" path="/venues" />
+              <MenuBar icon={<Heart size={20} />} header="Wishlist" path="/account/favorites" />
+              <MenuBar
+                icon={<Menu size={20} />}
+                header="Menu"
+                onClick={() => openMenu(false)}
+              />
             </motion.div>
           )}
         </AnimatePresence>

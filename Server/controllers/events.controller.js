@@ -148,19 +148,17 @@ export const addEvent = catchAsync(async (req, res, next) => {
           },
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
   } catch (notifErr) {
     console.error("Failed to create notification for event creation", notifErr);
   }
 
-  res
-    .status(200)
-    .json({
-      success: true,
-      event: newEvent,
-      message: "event created successfully",
-    });
+  res.status(200).json({
+    success: true,
+    event: newEvent,
+    message: "event created successfully",
+  });
 });
 
 export const createTickets = catchAsync(async (req, res, next) => {
@@ -384,6 +382,7 @@ export const getEventById = catchAsync(async (req, res, next) => {
   await redisClient.setex(cacheKey, 3600, JSON.stringify(event));
   res.status(200).json({ success: true, event });
 });
+//update event
 
 export const updateEvent = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
@@ -495,10 +494,10 @@ export const updateEvent = catchAsync(async (req, res, next) => {
               },
               $setOnInsert: {
                 availableQuantity: Number(pr.capacity) || 0,
-              }
+              },
             },
-            upsert: true
-          }
+            upsert: true,
+          },
         };
       });
       if (ticketOps.length > 0) {
@@ -526,7 +525,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
             },
           },
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
     }
   } catch (notifErr) {

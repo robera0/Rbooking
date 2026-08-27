@@ -507,6 +507,11 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
       path: "/venues",
     },
     {
+      icon: <Ticket size={20} />,
+      label: "My Tickets",
+      path: "/tickets_home",
+    },
+    {
       icon: <Heart size={20} />,
       label: "Wishlist",
       path: "/account/favorites",

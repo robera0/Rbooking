@@ -14,7 +14,12 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { CustomSelect } from "./Cards";
-import { useNavigate, useParams, useLoaderData, useBlocker } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+  useLoaderData,
+  useBlocker,
+} from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
@@ -261,8 +266,14 @@ const EditEvent = () => {
   }, [formData]);
 
   useBlocker(({ currentLocation, nextLocation }) => {
-    if (hasUnsavedChanges && !isSaved && currentLocation.pathname !== nextLocation.pathname) {
-      return !window.confirm("You have unsaved changes. Are you sure you want to leave?");
+    if (
+      hasUnsavedChanges &&
+      !isSaved &&
+      currentLocation.pathname !== nextLocation.pathname
+    ) {
+      return !window.confirm(
+        "You have unsaved changes. Are you sure you want to leave?",
+      );
     }
     return false;
   });
@@ -311,7 +322,7 @@ const EditEvent = () => {
 
       formData.newPictures.forEach((img) => form.append("pictures", img));
 
-      const res = await api.put(`/api/auth/admin/events/${eventId}`, form);
+      const res = await api.put(`/api/admin/events/${eventId}`, form);
       return res.data;
     },
     onSuccess: () => {
@@ -414,7 +425,6 @@ const EditEvent = () => {
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
-
       {/* Header */}
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
         <div className="space-y-2">
@@ -666,7 +676,9 @@ const EditEvent = () => {
                       { label: "VVIP", value: "VVIP" },
                     ]}
                     value={newTicket.name}
-                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
+                    onChange={(val) =>
+                      setNewTicket({ ...newTicket, name: val })
+                    }
                     placeholder="Ticket Type"
                   />
                 </div>
@@ -702,7 +714,9 @@ const EditEvent = () => {
                       set({ tickets: [...formData.tickets, { ...newTicket }] });
                       setNewTicket({ name: "", price: "", capacity: "" });
                     } else {
-                      toast.error("Please fill in Ticket Name, Price, and Capacity to add a ticket.");
+                      toast.error(
+                        "Please fill in Ticket Name, Price, and Capacity to add a ticket.",
+                      );
                     }
                   }}
                   className="ml-2 text-[#22c55e] border border-[#22c55e] rounded-full p-2"

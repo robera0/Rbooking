@@ -39,60 +39,16 @@ export const updateUser = catchAsync(async (req, res, next) => {
     return next(new AppError("There is no user", 401));
   }
 
-  const {
-    fullName,
-    nationality,
-    phone,
-    dateOfBirth,
-    Gender,
-    address,
-    bio,
-    firstName,
-    lastName,
-    organizationName,
-    role,
-    website,
-    country,
-    city,
-    region,
-    streetAddress,
-    paymentMethods,
-  } = req.body;
-
-  // Build avatarUrl from the uploaded file (handled by multer)
-  let avatarUrl;
-  let coverPage;
-
-  if (req.files?.avatarUrl?.[0]) {
-    avatarUrl = `uploads/${req.files.avatarUrl[0].filename}`;
-  }
-  if (req.files?.coverPage?.[0]) {
-    coverPage = `uploads/${req.files.coverPage[0].filename}`;
-  }
-
-  const normalizedPhone = phone
-    ? phone.startsWith("+251")
-      ? phone
-      : phone.startsWith("0")
-        ? `+251${phone.slice(1)}`
-        : `+251${phone}`
-    : phone;
-
-  const existingUser = await ProfileService.findByPhone(normalizedPhone);
-  if (existingUser) {
-    return res.status(400).json({ message: "phone already exists" });
-  }
-
-  const updates = Object.fromEntries(
-    Object.entries({
+  try {
+    const {
+      username,
       fullName,
       nationality,
-      phone: normalizedPhone,
+      phone,
       dateOfBirth,
       Gender,
       address,
       bio,
-      avatarUrl,
       firstName,
       lastName,
       organizationName,
@@ -102,37 +58,96 @@ export const updateUser = catchAsync(async (req, res, next) => {
       city,
       region,
       streetAddress,
-      paymentMethods: paymentMethods ? safeParse(paymentMethods) : undefined,
-    }).filter(([_, v]) => v !== undefined && v !== ""),
-  );
-  let updatedProfile;
-  if (req.user.role === "admin") {
-    updatedProfile = await AdminProfile.findOneAndUpdate(
-      { userId: user_id },
-      updates,
-      {
-        new: true,
-        runValidators: true,
+      paymentMethods,
+    } = req.body;
 
-        setDefaultsOnInsert: true,
-      },
-    );
-  } else {
-    updatedProfile = await ProfileModel.findOneAndUpdate(
-      { userId: user_id },
-      updates,
-      {
-        new: true,
-        runValidators: true,
+    console.log(req.body);
+    // Build avatarUrl from the uploaded file (handled by multer)
+    let avatarUrl;
+    let coverPage;
 
-        setDefaultsOnInsert: true,
-      },
+    if (req.files?.avatarUrl?.[0]) {
+      avatarUrl = `uploads/${req.files.avatarUrl[0].filename}`;
+    }
+    if (req.files?.coverPage?.[0]) {
+      coverPage = `uploads/${req.files.coverPage[0].filename}`;
+    }
+
+    const normalizedPhone = phone
+      ? phone.startsWith("+251")
+        ? phone
+        : phone.startsWith("0")
+          ? `+251${phone.slice(1)}`
+          : `+251${phone}`
+      : undefined;
+
+    if (normalizedPhone) {
+      const existingUser = await ProfileService.findByPhone(normalizedPhone);
+      if (
+        existingUser &&
+        existingUser.userId.toString() !== user_id.toString()
+      ) {
+        return res.status(400).json({ message: "phone already exists" });
+      }
+    }
+
+    const updates = Object.fromEntries(
+      Object.entries({
+        username,
+        fullName,
+        nationality,
+        phone: normalizedPhone,
+        dateOfBirth,
+        Gender,
+        address,
+        bio,
+        avatarUrl,
+        firstName,
+        lastName,
+        organizationName,
+        role,
+        website,
+        country,
+        city,
+        region,
+        streetAddress,
+        paymentMethods: paymentMethods ? safeParse(paymentMethods) : undefined,
+      }).filter(([_, v]) => v !== undefined && v !== ""),
     );
+
+    console.log("update profile", updates);
+    let updatedProfile;
+    if (req.user.role === "admin") {
+      updatedProfile = await AdminProfile.findOneAndUpdate(
+        { userId: user_id },
+        updates,
+        {
+          new: true,
+          runValidators: true,
+
+          setDefaultsOnInsert: true,
+        },
+      );
+    } else {
+      updatedProfile = await ProfileModel.findOneAndUpdate(
+        { userId: user_id },
+        updates,
+        {
+          new: true,
+          runValidators: true,
+
+          setDefaultsOnInsert: true,
+        },
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      profile: updatedProfile,
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: error.message });
   }
-
-  return res.status(200).json({
-    success: true,
-    profile: updatedProfile,
-    message: "Profile updated successfully",
-  });
 });

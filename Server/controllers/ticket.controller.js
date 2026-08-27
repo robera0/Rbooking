@@ -61,35 +61,53 @@ export const purchaseTicket = async (req, res) => {
 
     // Notify Admin of purchase
     try {
-      const ticketDetails = await TicketModel.findById(ticketId).populate("eventId");
-      if (ticketDetails && ticketDetails.eventId && ticketDetails.eventId.adminId) {
-        let adminProfile = await AdminProfile.findById(ticketDetails.eventId.adminId);
+      const ticketDetails =
+        await TicketModel.findById(ticketId).populate("eventId");
+      if (
+        ticketDetails &&
+        ticketDetails.eventId &&
+        ticketDetails.eventId.adminId
+      ) {
+        let adminProfile = await AdminProfile.findById(
+          ticketDetails.eventId.adminId,
+        );
         if (!adminProfile) {
-          adminProfile = await AdminProfile.findOne({ userId: ticketDetails.eventId.adminId });
+          adminProfile = await AdminProfile.findOne({
+            userId: ticketDetails.eventId.adminId,
+          });
         }
-        
+
         if (adminProfile && adminProfile.userId) {
           // Check Admin Settings
-          const { AdminSettingsModel } = await import("../models/adminSettings.model.js");
-          const adminSettings = await AdminSettingsModel.findOne({ adminId: adminProfile.userId });
-          
-          if (!adminSettings || adminSettings.notifications?.adminAlerts?.newTicketPurchase !== false) {
-             await notificationModel.findOneAndUpdate(
-               { userId: adminProfile.userId },
-               {
-                 $push: {
-                   notifications: {
-                     $each: [{
-                       title: "New Ticket Purchase",
-                       type: "payment",
-                       message: `A new order (${orderNo}) has been placed for ${quantity} tickets for the event "${ticketDetails.eventId.name}".`,
-                     }],
-                     $position: 0,
-                   },
-                 },
-               },
-               { upsert: true, new: true, runValidators: true }
-             );
+          const { AdminSettingsModel } =
+            await import("../models/adminSettings.model.js");
+          const adminSettings = await AdminSettingsModel.findOne({
+            adminId: adminProfile.userId,
+          });
+
+          if (
+            !adminSettings ||
+            adminSettings.notifications?.adminAlerts?.newTicketPurchase !==
+              false
+          ) {
+            await notificationModel.findOneAndUpdate(
+              { userId: adminProfile.userId },
+              {
+                $push: {
+                  notifications: {
+                    $each: [
+                      {
+                        title: "New Ticket Purchase",
+                        type: "payment",
+                        message: `A new order (${orderNo}) has been placed for ${quantity} tickets for the event "${ticketDetails.eventId.name}".`,
+                      },
+                    ],
+                    $position: 0,
+                  },
+                },
+              },
+              { upsert: true, new: true, runValidators: true },
+            );
           }
         }
       }
@@ -253,7 +271,7 @@ export const verifyTicket = async (req, res) => {
 
     if (settledAmount !== TOTAL_AMOUNT) {
       return res.status(400).json({
-        message: `Invalid amount. Expected ${TOTAL_AMOUNT.trim()}, but receipt shows ${receipt.settledAmount}`,
+        message: `Invalid amount. Expected ${TOTAL_AMOUNT}, but receipt shows ${receipt.settledAmount}`,
       });
     }
 
@@ -302,26 +320,30 @@ export const verifyTicket = async (req, res) => {
       if (eventInfo && eventInfo.adminId) {
         let adminProfile = await AdminProfile.findById(eventInfo.adminId);
         if (!adminProfile) {
-          adminProfile = await AdminProfile.findOne({ userId: eventInfo.adminId });
+          adminProfile = await AdminProfile.findOne({
+            userId: eventInfo.adminId,
+          });
         }
-        
+
         if (adminProfile && adminProfile.userId) {
-           await notificationModel.findOneAndUpdate(
-             { userId: adminProfile.userId },
-             {
-               $push: {
-                 notifications: {
-                   $each: [{
-                     title: "Ticket Verified",
-                     type: "payment",
-                     message: `Order ${userTicket.orderNo} for the event "${eventInfo.name}" has been verified and marked as paid.`,
-                   }],
-                   $position: 0,
-                 },
-               },
-             },
-             { upsert: true, new: true, runValidators: true }
-           );
+          await notificationModel.findOneAndUpdate(
+            { userId: adminProfile.userId },
+            {
+              $push: {
+                notifications: {
+                  $each: [
+                    {
+                      title: "Ticket Verified",
+                      type: "payment",
+                      message: `Order ${userTicket.orderNo} for the event "${eventInfo.name}" has been verified and marked as paid.`,
+                    },
+                  ],
+                  $position: 0,
+                },
+              },
+            },
+            { upsert: true, new: true, runValidators: true },
+          );
         }
       }
     } catch (notifErr) {
