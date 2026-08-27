@@ -43,6 +43,7 @@ import { EventProvider } from "./Context/EventAdminContest";
 import { DashboardProvider } from "./Context/DashboardContext";
 import AdminSetting from "../admin/Setting";
 import TermsAndConditions from "../admin/TermsAndConditions";
+import EventQR from "../admin/EventQR";
 import api from "./Context/api/api.config";
 const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
@@ -182,6 +183,14 @@ export const router = createBrowserRouter([
               </PageWrapper>
             ),
             loader: editEventLoader,
+          },
+          {
+            path: "events/:eventId/qr",
+            element: (
+              <PageWrapper>
+                <EventQR />
+              </PageWrapper>
+            ),
           },
           {
             path: "orders",

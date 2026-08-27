@@ -360,3 +360,50 @@ export const verifyTicket = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const scanTicket = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const { orderNo } = req.body;
+  const staffId = req.user?.id;
+
+  const userTicket = await UserTicketModel.findOneAndUpdate(
+    {
+      orderNo,
+      status: "paid",
+      isVerified: true,
+      "checked.checkedIn": false,
+    },
+    {
+      $set: {
+        "checked.checkedIn": true,
+        "checked.checkedInAt": new Date(),
+        "checked.checkedInBy": staffId,
+      },
+    },
+    { new: true },
+  );
+
+  if (!userTicket) {
+    const existing = await UserTicketModel.findOne({ orderNo });
+
+    if (!existing) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Ticket not found" });
+    }
+    if (existing.checked?.checkedIn) {
+      return res.status(409).json({
+        success: false,
+        message: "Ticket already scanned",
+        scannedAt: existing.checked.checkedInAt,
+        scannedBy: existing.checked.checkedInBy,
+      });
+    }
+    return res.status(403).json({
+      success: false,
+      message: `Ticket cannot be checked in (status: ${existing.status}, verified: ${existing.isVerified})`,
+    });
+  }
+
+  res.status(200).json({ success: true, message: "Checked in", userTicket });
+});

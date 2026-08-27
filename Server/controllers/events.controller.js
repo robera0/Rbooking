@@ -12,7 +12,9 @@ import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import "dotenv/config";
 
-const URL = process.env.VITE_API_URL;
+const URL = process.env.NODE_ENV === "production"
+  ? process.env.CLIENT_URL
+  : "http://localhost:5173";
 //ADD EVENTS
 
 const storage = multer.diskStorage({
@@ -299,8 +301,37 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
 });
 
 export const generateEventQR = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+
+  const event = await EventService.findById(eventId);
+  if (!event) {
+    return res.status(404).json({ message: "Event not found" });
+  }
+
+  // Auto-fetch the first ticket tier for this event
+  const firstTicket = await TicketModel.findOne({ eventId }).sort({ _id: 1 });
+  if (!firstTicket) {
+    return res.status(404).json({ message: "No tickets found for this event" });
+  }
+
+  const url = `${URL}/events/${eventId}/tickets/${firstTicket._id}`;
+  const qrCode = await QRCode.toDataURL(url, {
+    width: 600,
+    margin: 2,
+    color: { dark: "#000000", light: "#ffffff" },
+  });
+
+  return res.status(200).json({
+    success: true,
+    qrCode,
+    eventName: event.name,
+    url,
+  });
+});
+
+export const generateTicketQR = catchAsync(async (req, res, next) => {
   const { eventId, ticketId } = req.params;
-  const url = `${URL}/events/${eventId}/tickets/${ticketId}`;
+
   if (!ticketId || ticketId === "null") {
     return res.status(400).json({ message: "Ticket ID is required" });
   }
@@ -310,6 +341,7 @@ export const generateEventQR = catchAsync(async (req, res, next) => {
     return res.status(404).json({ message: "Event not found" });
   }
 
+  const url = `${URL}/events/${eventId}/tickets/${ticketId}`;
   const qrCode = await QRCode.toDataURL(url);
 
   return res.status(200).json({

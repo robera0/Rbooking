@@ -20,7 +20,10 @@ const UserTicketSchema = new mongoose.Schema(
       unique: true,
     },
 
-    receiptNo:String,
+    receiptNo: {
+      source: String,
+    },
+
     isVerified: {
       type: Boolean,
       required: true,
@@ -62,6 +65,16 @@ const UserTicketSchema = new mongoose.Schema(
     purchasedAt: {
       type: Date,
       default: Date.now,
+    },
+
+    checked: {
+      checkedIn: { type: Boolean, default: false },
+      checkedInAt: { type: Date, default: null },
+      checkedInBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "AdminProfile",
+        default: null,
+      },
     },
   },
   {

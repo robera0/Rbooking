@@ -28,8 +28,6 @@ export async function expirePendingTickets() {
       ticket.status = "expired";
       await ticket.save();
     }
-
-    console.log(`[TicketExpiry] Expired ${expiredTickets.length} pending ticket(s)`);
   } catch (error) {
     console.error("[TicketExpiry] Error:", error.message);
   }

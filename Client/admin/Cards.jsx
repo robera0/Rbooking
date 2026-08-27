@@ -260,6 +260,9 @@ export const EventTable = ({ search = "", filter = "" }) => {
             <th className="px-6 py-4 w-[160px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
               Action
             </th>
+            <th className="px-6 py-4 w-[160px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+              QR
+            </th>
           </tr>
         </thead>
         <tbody className="text-gray-300 font-medium">
@@ -340,6 +343,15 @@ export const EventTable = ({ search = "", filter = "" }) => {
                     className="text-gray-400 hover:text-[#FF7A00] font-black uppercase text-[10px] tracking-widest transition-colors"
                   >
                     Manage
+                  </button>
+                </td>
+
+                <td className="px-6 py-4 text-center">
+                  <button
+                    onClick={() => navigate(`/admin/events/${item?._id}/qr`)}
+                    className="text-gray-400 hover:text-[#FF7A00] font-black uppercase text-[10px] tracking-widest transition-colors"
+                  >
+                   Get QR
                   </button>
                 </td>
               </tr>
