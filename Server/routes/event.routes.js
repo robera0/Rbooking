@@ -7,7 +7,7 @@ import {
   updateEvent,
   upload,
   generateEventQR,
-  generateTicketQR,
+ 
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 
@@ -30,6 +30,5 @@ eventRouter.patch(
 );
 eventRouter.get("/events/:eventId/tickets/:ticketId", fetchEventsId);
 eventRouter.get("/events/:eventId/qr", generateEventQR);
-eventRouter.get("/events/:eventId/tickets/:ticketId/qr", generateTicketQR);
 
 export default eventRouter;

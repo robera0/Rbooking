@@ -228,7 +228,7 @@ export const EventTable = ({ search = "", filter = "" }) => {
         </div>
       )}
 
-      <table className="w-full table-fixed text-sm text-left">
+      <table className="w-full min-w-[800px] table-fixed text-sm text-left">
         <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
           <tr>
             <th className="px-6 py-4 w-12 text-center">
@@ -429,7 +429,7 @@ export const TicketTable = ({ search = "", filter = "" }) => {
   };
 
   return (
-    <table className="w-full table-fixed text-sm text-left">
+    <table className="w-full min-w-[900px] table-fixed text-sm text-left">
       <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
         <tr>
           <th className="px-6 py-4 w-12 text-center">
@@ -675,7 +675,7 @@ export const UserTable = ({ onEdit, search = "", filter = "" }) => {
         </div>
       )}
 
-      <table className="w-full table-fixed text-sm text-left">
+      <table className="w-full min-w-[800px] table-fixed text-sm text-left">
         <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
           <tr>
             <th className="px-6 py-4 w-12 text-center">
@@ -874,7 +874,7 @@ export const TransactionTable = ({ search = "", filter = "" }) => {
 
   return (
     <div className="w-full">
-      <table className="w-full table-fixed text-sm text-left">
+      <table className="w-full min-w-[750px] table-fixed text-sm text-left">
         <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
           <tr>
             <th className="px-6 py-4 w-[150px] text-white font-bold uppercase tracking-wider text-[10px]">

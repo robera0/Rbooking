@@ -152,7 +152,7 @@ function EventImagePanel({ pictures, eventName, eventType, apiUrl }) {
   const hasImages = images.length > 0;
 
   return (
-    <div className="flex flex-col gap-3 w-56 shrink-0">
+    <div className="flex flex-col gap-3 w-full sm:w-56 shrink-0">
       {/* Main image card */}
       <div
         className="relative rounded-2xl overflow-hidden"
@@ -302,7 +302,7 @@ const AdminViewTicket = () => {
 
   return (
     <div
-      className="min-h-screen p-8"
+      className="min-h-screen p-4 sm:p-8"
       style={{
         backgroundImage:
           "radial-gradient(circle at 1px 1px, rgba(249,115,22,0.07) 1px, transparent 0)",
@@ -332,7 +332,7 @@ const AdminViewTicket = () => {
         {/* Page header */}
         <div className="flex items-end justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-4xl uppercase tracking-tighter text-orange-400 leading-none">
+            <h1 className="text-2xl sm:text-4xl uppercase tracking-tighter text-orange-400 leading-none">
               Order{" "}
               <span className="text-white">
                 #{transaction?.orderNo || orderId?.slice(-8).toUpperCase()}
@@ -370,7 +370,7 @@ const AdminViewTicket = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="flex gap-6 items-start"
+            className="flex flex-col md:flex-row gap-6 items-start"
           >
             {/* ── Left: Event image panel ── */}
             <EventImagePanel
@@ -381,267 +381,379 @@ const AdminViewTicket = () => {
             />
 
             {/* ── Right: Ticket + security strip ── */}
-            <div className="flex-1 min-w-0 flex flex-col gap-5">
-              <div className="flex shadow-[0_8px_40px_rgba(0,0,0,0.15)]">
-                {/* Spine */}
+            <div className="flex-1 min-w-0 flex flex-col gap-5 w-full">
+
+              {/* ── MOBILE CARD LAYOUT (shown below md) ── */}
+              <div className="md:hidden space-y-4">
+                {/* Ticket header card */}
                 <div
-                  className="w-10 rounded-l-2xl flex flex-col items-center justify-center py-6 shrink-0"
-                  style={{ background: orangeBandGradient }}
+                  className={`${theme.bgColor} rounded-2xl overflow-hidden`}
+                  style={{ border: "2px solid rgba(249,115,22,0.12)" }}
                 >
-                  <span
-                    className="text-white text-[9px] font-black uppercase tracking-[0.3em] select-none"
+                  {/* Orange band */}
+                  <div
+                    className="px-5 py-3 flex items-center justify-between"
+                    style={{ background: orangeBandGradient }}
+                  >
+                    <span className="text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                      {theme.label} Ticket
+                    </span>
+                    <TicketTypeIcon type={ticketType} size={14} />
+                  </div>
+
+                  {/* Event info */}
+                  <div className="p-5 space-y-4">
+                    <div>
+                      <p
+                        className="text-[9px] font-black uppercase tracking-[0.25em] mb-1"
+                        style={{ color: "rgba(249,115,22,0.60)" }}
+                      >
+                        {event?.type ? `${event.type.toUpperCase()} · ` : ""}
+                        {event?.links?.venues?.city || "Addis Ababa"}
+                      </p>
+                      <h2 className="text-xl font-black uppercase tracking-tight text-[#1a1208] leading-tight">
+                        {event?.name || "—"}
+                      </h2>
+                      <div
+                        className="flex flex-wrap items-center gap-3 mt-2 text-[11px] font-bold"
+                        style={{ color: "rgba(249,115,22,0.65)" }}
+                      >
+                        {event?.dates?.start?.localDate && (
+                          <span className="flex items-center gap-1">
+                            <Calendar size={11} /> {event.dates.start.localDate}
+                          </span>
+                        )}
+                        {event?.dates?.start?.localTime && (
+                          <span className="flex items-center gap-1">
+                            <Clock size={11} /> {event.dates.start.localTime}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <MapPin size={11} /> {event?.links?.venues?.city || "Addis Ababa"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ borderTop: "2px dashed rgba(249,115,22,0.12)" }} />
+
+                    {/* Fields */}
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      <Field label="Order number" value={transaction.orderNo} />
+                      <Field label="Payment method" value="Chapa Gateway" />
+                      <Field label="Ticket tier" value={ticket?.name} />
+                      <Field label="Quantity" value={`${transaction.quantity}× Tickets`} />
+                      <Field
+                        label="Date authorized"
+                        value={moment(transaction.purchasedAt).format("MMM D, YYYY · HH:mm")}
+                      />
+                      <Field
+                        label="Availability"
+                        value={ticket ? `${ticket.availableQuantity} / ${ticket.totalQuantity} left` : "—"}
+                      />
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                      <Field label="Transaction ID" value={transaction._id} mono />
+                      <Field label="Linked user ID" value={transaction.userId} mono />
+                    </div>
+                  </div>
+
+                  {/* Pricing band */}
+                  <div
+                    className="px-5 py-4 flex items-center justify-between"
+                    style={{ borderTop: "2px dashed rgba(249,115,22,0.12)" }}
+                  >
+                    <div>
+                      <p className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: "rgba(249,115,22,0.50)" }}>
+                        Unit price
+                      </p>
+                      <p className="text-xl font-black text-[#1a1208]">
+                        {ticket?.price?.toLocaleString() ?? "—"} <span className="text-xs font-bold" style={{ color: "rgba(249,115,22,0.45)" }}>ETB</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[8px] font-black uppercase tracking-[0.2em]" style={{ color: "rgba(249,115,22,0.50)" }}>
+                        Total settled
+                      </p>
+                      <p className="text-2xl font-black" style={{ color: accentColor }}>
+                        {transaction.totalAmount?.toLocaleString()} <span className="text-xs font-bold" style={{ color: "rgba(249,115,22,0.45)" }}>ETB</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Barcode */}
+                  <div className="px-5 pb-4" style={{ color: "rgba(249,115,22,0.50)" }}>
+                    <Barcode />
+                    <p className="text-center text-[8px] font-mono font-bold tracking-widest mt-1" style={{ color: "rgba(249,115,22,0.40)" }}>
+                      {(transaction._id ?? "").slice(-12).toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── DESKTOP TICKET LAYOUT (shown at md+) ── */}
+              <div className="hidden md:block">
+                <div className="flex shadow-[0_8px_40px_rgba(0,0,0,0.15)]">
+                  {/* Spine */}
+                  <div
+                    className="w-10 rounded-l-2xl flex flex-col items-center justify-center py-6 shrink-0"
+                    style={{ background: orangeBandGradient }}
+                  >
+                    <span
+                      className="text-white text-[9px] font-black uppercase tracking-[0.3em] select-none"
+                      style={{
+                        writingMode: "vertical-rl",
+                        transform: "rotate(180deg)",
+                      }}
+                    >
+                      {theme.label} Ticket
+                    </span>
+                  </div>
+
+                  {/* Body */}
+                  <div
+                    className={`flex-1 ${theme.bgColor} relative`}
                     style={{
-                      writingMode: "vertical-rl",
-                      transform: "rotate(180deg)",
+                      borderTop: "4px solid rgba(249,115,22,0.12)",
+                      borderBottom: "4px solid rgba(249,115,22,0.12)",
                     }}
                   >
-                    {theme.label} Ticket
-                  </span>
-                </div>
-
-                {/* Body */}
-                <div
-                  className={`flex-1 ${theme.bgColor} relative`}
-                  style={{
-                    borderTop: "4px solid rgba(249,115,22,0.12)",
-                    borderBottom: "4px solid rgba(249,115,22,0.12)",
-                  }}
-                >
-                  {/* Notch circles */}
-                  <div
-                    className="absolute -top-4 left-[68%] -translate-x-1/2 w-8 h-8 rounded-full z-10"
-                    style={{
-                      background: "#f5ede1",
-                      border: "2px solid rgba(249,115,22,0.12)",
-                    }}
-                  />
-                  <div
-                    className="absolute -bottom-4 left-[68%] -translate-x-1/2 w-8 h-8 rounded-full z-10"
-                    style={{
-                      background: "#f5ede1",
-                      border: "2px solid rgba(249,115,22,0.12)",
-                    }}
-                  />
-
-                  <div className="flex h-full">
-                    {/* Left content */}
-                    <div className="flex-1 p-8 pr-6">
-                      {/* Event header */}
-                      <div
-                        className="mb-6 pb-5"
-                        style={{
-                          borderBottom: "2px dashed rgba(249,115,22,0.12)",
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <p
-                            className="text-[9px] font-black uppercase tracking-[0.25em] mb-1.5"
-                            style={{ color: "rgba(249,115,22,0.60)" }}
-                          >
-                            {event?.type
-                              ? `${event.type.toUpperCase()} · `
-                              : ""}
-                            {event?.links?.venues?.city || "Addis Ababa"}
-                          </p>
-                          <TicketTypeIcon type={ticketType} size={14} />
-                        </div>
-                        <h2 className="text-2xl font-black uppercase tracking-tight text-[#1a1208] leading-tight mb-2">
-                          {event?.name || "—"}
-                        </h2>
-                        <div
-                          className="flex flex-wrap items-center gap-4 text-[11px] font-bold"
-                          style={{ color: "rgba(249,115,22,0.65)" }}
-                        >
-                          {event?.dates?.start?.localDate && (
-                            <span className="flex items-center gap-1">
-                              <Calendar size={11} />{" "}
-                              {event.dates.start.localDate}
-                            </span>
-                          )}
-                          {event?.dates?.start?.localTime && (
-                            <span className="flex items-center gap-1">
-                              <Clock size={11} /> {event.dates.start.localTime}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <MapPin size={11} />{" "}
-                            {event?.links?.venues?.city || "Addis Ababa"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Fields grid */}
-                      <div className="grid grid-cols-2 gap-x-10 gap-y-5">
-                        <Field
-                          label="Order number"
-                          value={transaction.orderNo}
-                        />
-                        <Field label="Payment method" value="Chapa Gateway" />
-                        <Field label="Ticket tier" value={ticket?.name} />
-                        <Field
-                          label="Quantity"
-                          value={`${transaction.quantity}× Tickets`}
-                        />
-                        <Field
-                          label="Date authorized"
-                          value={moment(transaction.purchasedAt).format(
-                            "MMM D, YYYY · HH:mm",
-                          )}
-                        />
-                        <Field
-                          label="Availability"
-                          value={
-                            ticket
-                              ? `${ticket.availableQuantity} / ${ticket.totalQuantity} remaining`
-                              : "—"
-                          }
-                        />
-                        <Field
-                          label="Transaction ID"
-                          value={transaction._id}
-                          mono
-                          span
-                        />
-                        <Field
-                          label="Linked user ID"
-                          value={transaction.userId}
-                          mono
-                          span
-                        />
-                      </div>
-                    </div>
-
-                    {/* Perforation divider */}
-                    <div className="relative flex items-center">
-                      <div
-                        className="absolute inset-y-0 left-1/2"
-                        style={{
-                          borderLeft: "2px dashed rgba(249,115,22,0.18)",
-                        }}
-                      />
-                      <div className="relative z-10 px-1">
-                        <Perforation vertical />
-                      </div>
-                    </div>
-
-                    {/* Stub */}
+                    {/* Notch circles */}
                     <div
-                      className={`w-52 shrink-0 p-6 flex flex-col items-center justify-between ${theme.bgColor}`}
-                    >
-                      {/* Tier */}
-                      <div className="text-center w-full">
-                        <p
-                          className="text-[8px] font-black uppercase tracking-[0.2em] mb-2"
-                          style={{ color: "rgba(249,115,22,0.50)" }}
+                      className="absolute -top-4 left-[68%] -translate-x-1/2 w-8 h-8 rounded-full z-10"
+                      style={{
+                        background: "#f5ede1",
+                        border: "2px solid rgba(249,115,22,0.12)",
+                      }}
+                    />
+                    <div
+                      className="absolute -bottom-4 left-[68%] -translate-x-1/2 w-8 h-8 rounded-full z-10"
+                      style={{
+                        background: "#f5ede1",
+                        border: "2px solid rgba(249,115,22,0.12)",
+                      }}
+                    />
+
+                    <div className="flex h-full">
+                      {/* Left content */}
+                      <div className="flex-1 p-8 pr-6">
+                        {/* Event header */}
+                        <div
+                          className="mb-6 pb-5"
+                          style={{
+                            borderBottom: "2px dashed rgba(249,115,22,0.12)",
+                          }}
                         >
-                          Ticket class
-                        </p>
-                        <TicketThemeBadge
-                          type={ticketType}
-                          className="text-xs"
-                        />
-                        <p
-                          className="text-[9px] font-bold uppercase tracking-widest mt-1"
-                          style={{ color: "rgba(249,115,22,0.50)" }}
-                        >
-                          {event?.dates?.status?.code || "—"}
-                        </p>
+                          <div className="flex items-center gap-2">
+                            <p
+                              className="text-[9px] font-black uppercase tracking-[0.25em] mb-1.5"
+                              style={{ color: "rgba(249,115,22,0.60)" }}
+                            >
+                              {event?.type
+                                ? `${event.type.toUpperCase()} · `
+                                : ""}
+                              {event?.links?.venues?.city || "Addis Ababa"}
+                            </p>
+                            <TicketTypeIcon type={ticketType} size={14} />
+                          </div>
+                          <h2 className="text-2xl font-black uppercase tracking-tight text-[#1a1208] leading-tight mb-2">
+                            {event?.name || "—"}
+                          </h2>
+                          <div
+                            className="flex flex-wrap items-center gap-4 text-[11px] font-bold"
+                            style={{ color: "rgba(249,115,22,0.65)" }}
+                          >
+                            {event?.dates?.start?.localDate && (
+                              <span className="flex items-center gap-1">
+                                <Calendar size={11} />{" "}
+                                {event.dates.start.localDate}
+                              </span>
+                            )}
+                            {event?.dates?.start?.localTime && (
+                              <span className="flex items-center gap-1">
+                                <Clock size={11} /> {event.dates.start.localTime}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <MapPin size={11} />{" "}
+                              {event?.links?.venues?.city || "Addis Ababa"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Fields grid */}
+                        <div className="grid grid-cols-2 gap-x-10 gap-y-5">
+                          <Field
+                            label="Order number"
+                            value={transaction.orderNo}
+                          />
+                          <Field label="Payment method" value="Chapa Gateway" />
+                          <Field label="Ticket tier" value={ticket?.name} />
+                          <Field
+                            label="Quantity"
+                            value={`${transaction.quantity}× Tickets`}
+                          />
+                          <Field
+                            label="Date authorized"
+                            value={moment(transaction.purchasedAt).format(
+                              "MMM D, YYYY · HH:mm",
+                            )}
+                          />
+                          <Field
+                            label="Availability"
+                            value={
+                              ticket
+                                ? `${ticket.availableQuantity} / ${ticket.totalQuantity} remaining`
+                                : "—"
+                            }
+                          />
+                          <Field
+                            label="Transaction ID"
+                            value={transaction._id}
+                            mono
+                            span
+                          />
+                          <Field
+                            label="Linked user ID"
+                            value={transaction.userId}
+                            mono
+                            span
+                          />
+                        </div>
                       </div>
 
-                      {/* Pricing */}
-                      <div className="text-center w-full">
-                        <p
-                          className="text-[8px] font-black uppercase tracking-[0.2em] mb-1"
-                          style={{ color: "rgba(249,115,22,0.50)" }}
-                        >
-                          Unit price
-                        </p>
-                        <p className="text-2xl font-black text-[#1a1208]">
-                          {ticket?.price?.toLocaleString() ?? "—"}
-                        </p>
-                        <p
-                          className="text-[10px] font-black uppercase tracking-widest"
-                          style={{ color: "rgba(249,115,22,0.45)" }}
-                        >
-                          ETB / ticket
-                        </p>
+                      {/* Perforation divider */}
+                      <div className="relative flex items-center">
                         <div
-                          className="w-full my-3"
+                          className="absolute inset-y-0 left-1/2"
                           style={{
-                            borderTop: "1px dashed rgba(249,115,22,0.18)",
+                            borderLeft: "2px dashed rgba(249,115,22,0.18)",
                           }}
                         />
-                        <p
-                          className="text-[8px] font-black uppercase tracking-[0.2em] mb-1"
-                          style={{ color: "rgba(249,115,22,0.50)" }}
-                        >
-                          Total settled
-                        </p>
-                        <p
-                          className="text-3xl font-black"
-                          style={{ color: accentColor }}
-                        >
-                          {transaction.totalAmount?.toLocaleString()}
-                        </p>
-                        <p
-                          className="text-[10px] font-black uppercase tracking-widest"
-                          style={{ color: "rgba(249,115,22,0.45)" }}
-                        >
-                          ETB
-                        </p>
-                        <p
-                          className="text-[8px] font-black uppercase tracking-widest mt-2"
-                          style={{ color: "rgba(249,115,22,0.40)" }}
-                        >
-                          Commission ~{commission?.toLocaleString()} ETB
-                        </p>
+                        <div className="relative z-10 px-1">
+                          <Perforation vertical />
+                        </div>
                       </div>
 
-                      {/* Barcode */}
+                      {/* Stub */}
                       <div
-                        className="w-full"
-                        style={{ color: "rgba(249,115,22,0.50)" }}
+                        className={`w-52 shrink-0 p-6 flex flex-col items-center justify-between ${theme.bgColor}`}
                       >
-                        <Barcode />
-                        <p
-                          className="text-center text-[8px] font-mono font-bold tracking-widest mt-1"
-                          style={{ color: "rgba(249,115,22,0.40)" }}
+                        {/* Tier */}
+                        <div className="text-center w-full">
+                          <p
+                            className="text-[8px] font-black uppercase tracking-[0.2em] mb-2"
+                            style={{ color: "rgba(249,115,22,0.50)" }}
+                          >
+                            Ticket class
+                          </p>
+                          <TicketThemeBadge
+                            type={ticketType}
+                            className="text-xs"
+                          />
+                          <p
+                            className="text-[9px] font-bold uppercase tracking-widest mt-1"
+                            style={{ color: "rgba(249,115,22,0.50)" }}
+                          >
+                            {event?.dates?.status?.code || "—"}
+                          </p>
+                        </div>
+
+                        {/* Pricing */}
+                        <div className="text-center w-full">
+                          <p
+                            className="text-[8px] font-black uppercase tracking-[0.2em] mb-1"
+                            style={{ color: "rgba(249,115,22,0.50)" }}
+                          >
+                            Unit price
+                          </p>
+                          <p className="text-2xl font-black text-[#1a1208]">
+                            {ticket?.price?.toLocaleString() ?? "—"}
+                          </p>
+                          <p
+                            className="text-[10px] font-black uppercase tracking-widest"
+                            style={{ color: "rgba(249,115,22,0.45)" }}
+                          >
+                            ETB / ticket
+                          </p>
+                          <div
+                            className="w-full my-3"
+                            style={{
+                              borderTop: "1px dashed rgba(249,115,22,0.18)",
+                            }}
+                          />
+                          <p
+                            className="text-[8px] font-black uppercase tracking-[0.2em] mb-1"
+                            style={{ color: "rgba(249,115,22,0.50)" }}
+                          >
+                            Total settled
+                          </p>
+                          <p
+                            className="text-3xl font-black"
+                            style={{ color: accentColor }}
+                          >
+                            {transaction.totalAmount?.toLocaleString()}
+                          </p>
+                          <p
+                            className="text-[10px] font-black uppercase tracking-widest"
+                            style={{ color: "rgba(249,115,22,0.45)" }}
+                          >
+                            ETB
+                          </p>
+                          <p
+                            className="text-[8px] font-black uppercase tracking-widest mt-2"
+                            style={{ color: "rgba(249,115,22,0.40)" }}
+                          >
+                            Commission ~{commission?.toLocaleString()} ETB
+                          </p>
+                        </div>
+
+                        {/* Barcode */}
+                        <div
+                          className="w-full"
+                          style={{ color: "rgba(249,115,22,0.50)" }}
                         >
-                          {(transaction._id ?? "").slice(-12).toUpperCase()}
-                        </p>
+                          <Barcode />
+                          <p
+                            className="text-center text-[8px] font-mono font-bold tracking-widest mt-1"
+                            style={{ color: "rgba(249,115,22,0.40)" }}
+                          >
+                            {(transaction._id ?? "").slice(-12).toUpperCase()}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Right edge */}
-                <div
-                  className={`w-10 ${theme.bgColor} rounded-r-2xl flex flex-col items-center justify-center py-4`}
-                  style={{
-                    borderTop: "4px solid rgba(249,115,22,0.10)",
-                    borderBottom: "4px solid rgba(249,115,22,0.10)",
-                  }}
-                >
-                  <Perforation vertical />
+                  {/* Right edge */}
+                  <div
+                    className={`w-10 ${theme.bgColor} rounded-r-2xl flex flex-col items-center justify-center py-4`}
+                    style={{
+                      borderTop: "4px solid rgba(249,115,22,0.10)",
+                      borderBottom: "4px solid rgba(249,115,22,0.10)",
+                    }}
+                  >
+                    <Perforation vertical />
+                  </div>
                 </div>
               </div>
 
               {/* Security strip */}
               <div
-                className="rounded-xl px-6 py-3 flex items-center justify-between"
+                className="rounded-xl px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2"
                 style={{ background: orangeBandGradient }}
               >
                 <div
                   className="flex items-center gap-2"
                   style={{ color: "rgba(255,255,255,0.90)" }}
                 >
-                  <ShieldCheck size={14} />
-                  <span className="text-[9px] font-black uppercase tracking-[0.25em]">
-                    Tamper-evident audit logging active
+                  <ShieldCheck size={14} className="shrink-0" />
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.25em]">
+                    Tamper-evident audit logging
                   </span>
                 </div>
                 <span
-                  className="text-[9px] font-black uppercase tracking-[0.2em]"
+                  className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em]"
                   style={{ color: "rgba(255,255,255,0.50)" }}
                 >
                   {new Date().toISOString().split("T")[0]}

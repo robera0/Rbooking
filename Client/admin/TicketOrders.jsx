@@ -18,7 +18,7 @@ const TicketOrders = () => {
         </div>
       </div>
 
-      <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl flex flex-col min-h-[400px]">
+      <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-xl flex flex-col min-h-[400px]">
         {/* Filters Wrapper */}
         <div className="w-full flex flex-wrap items-center gap-4 mb-6">
           <div className="flex-1 min-w-[200px]">

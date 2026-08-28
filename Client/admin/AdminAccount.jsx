@@ -416,7 +416,7 @@ const AdminAccount = () => {
                 animate="visible"
                 exit="hidden"
               >
-                <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-8 md:p-10 shadow-2xl space-y-10">
+                <div className="bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-5 sm:p-8 md:p-10 shadow-2xl space-y-10">
                   {/* Card header */}
                   <div className="flex items-start justify-between border-b border-white/[0.04] pb-6">
                     <div>
@@ -574,18 +574,18 @@ const AdminAccount = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-4 pt-2 border-t border-white/[0.04]">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2 border-t border-white/[0.04]">
                     <button
                       onClick={() => profileMutation.mutate()}
                       disabled={profileMutation.isPending}
-                      className="px-10 py-4 bg-[#FF7A00] text-black font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-orange-400 transition-all active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-10 py-4 bg-[#FF7A00] text-black font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-orange-400 transition-all active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-center"
                     >
                       {profileMutation.isPending ? "Saving…" : "Save Changes"}
                     </button>
                     <button
                       onClick={handleDiscard}
                       disabled={profileMutation.isPending}
-                      className="px-10 py-4 bg-transparent border border-white/[0.08] text-gray-400 hover:text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all active:scale-95"
+                      className="px-10 py-4 bg-transparent border border-white/[0.08] text-gray-400 hover:text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all active:scale-95 text-center"
                     >
                       Discard
                     </button>
@@ -606,7 +606,7 @@ const AdminAccount = () => {
               >
                 <div className="">
                   {/* Password Change */}
-                  <div className="bg-[#1C1F22] w-full border border-white/[0.04] rounded-[2.5rem] p-8 space-y-8">
+                  <div className="bg-[#1C1F22] w-full border border-white/[0.04] rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 space-y-8">
                     <div className="flex items-center gap-4 text-white">
                       <Lock className="text-[#FF7A00]" size={24} />
                       <h2 className="text-xl  uppercase tracking-tighter ">
@@ -777,14 +777,14 @@ const AdminAccount = () => {
                 initial="hidden"
                 animate="visible"
                 exit="hidden"
-                className="bg-[#1C1F22] border border-white/[0.04] rounded-[2.5rem] p-8"
+                className="bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-8"
               >
-                <div className="flex items-center justify-between mb-10 border-b border-white/[0.04] pb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4 border-b border-white/[0.04] pb-6">
                   <h2 className="text-2xl  text-white uppercase  tracking-tighter">
                     Recent <span className="text-[#FF7A00]">Activity</span>{" "}
                     History
                   </h2>
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-3 sm:gap-4">
                     <button 
                       onClick={() => clearHistoryMutation.mutate()}
                       disabled={clearHistoryMutation.isPending || auditLogs.length === 0}
@@ -802,7 +802,7 @@ const AdminAccount = () => {
                     auditLogs.map((log, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:border-white/[0.1] transition-all"
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 bg-white/[0.02] border border-white/[0.04] rounded-2xl hover:border-white/[0.1] transition-all gap-3 sm:gap-0"
                       >
                         <div className="flex items-center gap-6">
                           <div className="w-12 h-12 rounded-xl bg-[#121417] flex justify-center items-center text-[#FF7A00]">

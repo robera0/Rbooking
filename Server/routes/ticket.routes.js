@@ -32,9 +32,6 @@ ticketRouter.post(
   verifyTicket,
 );
 ticketRouter.patch("/ticket/:ticketId/status", updateTicketStatus);
-ticketRouter.patch(
-  "/admin/events/:eventId/tickets/scan",
-  authenticateTokenMiddleware,
-  scanTicket,
-);
+ticketRouter.patch("/tickets/qr", authenticateTokenMiddleware, scanTicket);
+
 export default ticketRouter;

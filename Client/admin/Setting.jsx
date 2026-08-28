@@ -22,10 +22,10 @@ const SectionHeader = ({ icon: Icon, title, desc }) => (
 
 // Toggle Row
 const ToggleRow = ({ label, desc, on, onToggle }) => (
-  <div className="flex items-center justify-between py-4 border-b border-[#5a4136]/20 last:border-0 group">
-    <div>
+  <div className="flex items-center justify-between gap-4 py-4 border-b border-[#5a4136]/20 last:border-0 group">
+    <div className="min-w-0 flex-1">
       <h3 className="text-sm font-bold text-[#e5e2e1] group-hover:text-white transition-colors">{label}</h3>
-      <p className="text-xs text-[#8a8683] mt-1 max-w-sm">{desc}</p>
+      <p className="text-xs text-[#8a8683] mt-1">{desc}</p>
     </div>
     <button
       type="button"
@@ -173,7 +173,7 @@ const AdminSetting = () => {
   };
 
   return (
-    <div className="space-y-10 max-w-4xl pb-20">
+    <div className="space-y-10 w-full max-w-4xl pb-20 overflow-hidden">
       {/* Header */}
       <div className="space-y-2 mb-8 border-b border-white/[0.04] pb-6">
         <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none">
@@ -344,7 +344,7 @@ const AdminSetting = () => {
         <button
           onClick={() => updateMutation.mutate(formData)}
           disabled={updateMutation.isPending}
-          className="flex items-center gap-2 px-8 py-3 bg-[#ff6b00] text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-[#ff8533] transition-colors disabled:opacity-50"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-[#ff6b00] text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-[#ff8533] transition-colors disabled:opacity-50"
         >
           <CheckCircle2 size={16} />
           {updateMutation.isPending ? "Saving..." : "Save Settings"}

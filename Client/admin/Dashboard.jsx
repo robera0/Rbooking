@@ -80,7 +80,7 @@ const Dashboard = () => {
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Left Column (Revenue) */}
         <div className="w-full lg:w-2/3 flex flex-col gap-6 lg:gap-8">
-          <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 md:p-8 shadow-xl flex flex-col min-h-[300px]">
+          <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-xl flex flex-col min-h-[300px]">
             <div className="flex flex-wrap justify-between items-center mb-6">
               <div>
                 <h1 className="text-xl font-bold text-white uppercase tracking-tight">
@@ -98,7 +98,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 md:p-8 shadow-xl flex flex-col min-h-[400px]">
+          <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-xl flex flex-col min-h-[400px]">
             <div className="flex flex-wrap justify-between mb-8 items-center">
               <h1 className="text-xl text-white font-bold uppercase tracking-tight">
                 Revenue History
@@ -121,7 +121,7 @@ const Dashboard = () => {
         </div>
 
         {/* Right Column (Customers) */}
-        <div className="flex-1 space-y-8 bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 md:p-8 shadow-xl flex flex-col min-h-[400px]">
+        <div className="flex-1 space-y-8 bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-xl flex flex-col min-h-[400px]">
           <div>
             <h1 className="text-xl text-white font-bold uppercase tracking-tight">
               Customers

@@ -45,6 +45,7 @@ import AdminSetting from "../admin/Setting";
 import TermsAndConditions from "../admin/TermsAndConditions";
 import EventQR from "../admin/EventQR";
 import api from "./Context/api/api.config";
+import GetScanner from "../admin/GateScanner";
 const pageVariants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
   animate: { opacity: 1, y: 0, scale: 1 },
@@ -189,6 +190,15 @@ export const router = createBrowserRouter([
             element: (
               <PageWrapper>
                 <EventQR />
+              </PageWrapper>
+            ),
+          },
+
+          {
+            path: "ticket/qr",
+            element: (
+              <PageWrapper>
+                <GetScanner />
               </PageWrapper>
             ),
           },

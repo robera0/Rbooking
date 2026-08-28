@@ -5,6 +5,8 @@ import {
   KeyRound,
   RotateCcw,
   CheckCheck,
+  Menu,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import { SearchInput } from "./Cards";
@@ -45,7 +47,7 @@ export const Dropdown = ({ name, icon, isDanger, path }) => {
   );
 };
 
-const Header = () => {
+const Header = ({ onMenuToggle }) => {
   const [drop, setDrop] = useState(false);
   const [notifDrop, setNotifDrop] = useState(false);
   const { userProfile, notifications, readNotification } = eventService();
@@ -62,19 +64,23 @@ const Header = () => {
 
   const userRole = userProfile?.role || "Admin";
   return (
-    <div className="w-full h-20 bg-[#121417]/95 backdrop-blur-md flex items-center justify-between px-6 md:px-10 sticky top-0 z-40 border-b border-white/[0.06]">
-      {/* Search bar 
-      <div className="flex-1 max-w-xl pr-6">
-        <SearchInput placeholder="Search bookings, salons..." />
-      </div> */}
-      <div className="flex-1 flex items-center pl-2">
-        <h1 className="text-2xl text-white font-black uppercase tracking-tighter">
+    <div className="w-full h-16 sm:h-20 bg-[#121417]/95 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 md:px-10 sticky top-0 z-40 border-b border-white/[0.06]">
+      {/* Left side: Hamburger + Logo */}
+      <div className="flex-1 flex items-center gap-3 pl-0 sm:pl-2">
+        {/* Mobile hamburger */}
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/[0.04] rounded-xl transition-colors"
+        >
+          <Menu size={22} strokeWidth={2.5} />
+        </button>
+        <h1 className="text-xl sm:text-2xl text-white font-black uppercase tracking-tighter">
           PAY<span className="text-[#FF7A00]">SSO</span>
         </h1>
       </div>
 
       {/* Right side: notifications, language, profile */}
-      <div className="flex items-center space-x-6 md:space-x-8">
+      <div className="flex items-center space-x-3 sm:space-x-6 md:space-x-8">
         {/* Notification */}
         <div className="relative flex flex-col justify-center items-center">
           <button 
@@ -83,8 +89,8 @@ const Header = () => {
           >
             <Bell
               strokeWidth={2.5}
-              size={22}
-              className="group-hover:text-[#FF7A00]"
+              size={20}
+              className="group-hover:text-[#FF7A00] sm:w-[22px] sm:h-[22px]"
             />
             {unreadCount > 0 && (
               <div className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center bg-[#FF7A00] rounded-full shadow-lg shadow-[#FF7A00]/40">
@@ -101,7 +107,7 @@ const Header = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-                className="absolute top-full right-[-50px] mt-3 w-72 bg-[#1C1F22] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 origin-top"
+                className="absolute top-full right-[-50px] sm:right-[-50px] mt-3 w-[calc(100vw-2rem)] sm:w-72 max-w-72 bg-[#1C1F22] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 origin-top"
               >
                 <div className="flex justify-between items-center px-4 py-3 border-b border-white/[0.04] bg-white/[0.02]">
                   <h3 className="text-white text-xs font-bold uppercase tracking-widest">Notifications</h3>
@@ -142,13 +148,13 @@ const Header = () => {
           </AnimatePresence>
         </div>
 
-        <div className="h-8 w-px bg-white/[0.08] hidden md:block"></div>
+        <div className="h-8 w-px bg-white/[0.08] hidden sm:block"></div>
 
         {/* Profile */}
         <div className="relative flex flex-col justify-center items-center">
           <button
             onClick={() => setDrop((prev) => !prev)}
-            className="flex items-center space-x-3 md:space-x-4 px-2 md:px-3 py-1.5 rounded-full border border-transparent hover:border-white/[0.08] hover:bg-white/[0.02] transition-all z-10"
+            className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 px-1.5 sm:px-2 md:px-3 py-1.5 rounded-full border border-transparent hover:border-white/[0.08] hover:bg-white/[0.02] transition-all z-10"
           >
             {/* Profile image */}
             <div
@@ -157,7 +163,7 @@ const Header = () => {
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }}
-              className="w-10 h-10 rounded-full border border-white/[0.1] shadow-inner"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/[0.1] shadow-inner"
             ></div>
 
             {/* Name */}
@@ -171,7 +177,7 @@ const Header = () => {
             <ChevronDown
               strokeWidth={2.5}
               size={16}
-              className={`text-gray-400 transition-transform ${
+              className={`text-gray-400 transition-transform hidden sm:block ${
                 drop ? "rotate-180" : ""
               }`}
             />

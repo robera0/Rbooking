@@ -329,26 +329,7 @@ export const generateEventQR = catchAsync(async (req, res, next) => {
   });
 });
 
-export const generateTicketQR = catchAsync(async (req, res, next) => {
-  const { eventId, ticketId } = req.params;
 
-  if (!ticketId || ticketId === "null") {
-    return res.status(400).json({ message: "Ticket ID is required" });
-  }
-
-  const event = await EventService.findById(eventId);
-  if (!event) {
-    return res.status(404).json({ message: "Event not found" });
-  }
-
-  const url = `${URL}/events/${eventId}/tickets/${ticketId}`;
-  const qrCode = await QRCode.toDataURL(url);
-
-  return res.status(200).json({
-    success: true,
-    qrCode,
-  });
-});
 
 // FETCH WITH RESPECT TO ITS INDEX\
 

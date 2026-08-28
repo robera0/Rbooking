@@ -1,11 +1,16 @@
 import { NavLink } from "react-router-dom";
 
-const SideMenu = ({ name, icon, path, isDanger, action }) => {
+const SideMenu = ({ name, icon, path, isDanger, action, onNavigate }) => {
+  const handleClick = () => {
+    if (action) action();
+    if (onNavigate) onNavigate();
+  };
+
   return (
     <div className="w-full">
       <NavLink
         to={path}
-        onClick={action}
+        onClick={handleClick}
         className={({ isActive }) =>
           `group flex w-full h-12 md:h-14 px-4 space-x-4 items-center transition-all duration-300 rounded-[1.2rem]
           ${

@@ -81,7 +81,7 @@ const Payment = () => {
       </div>
 
       {/* Main Table Interface */}
-      <div className="bg-[#1C1F22] border border-white/[0.04] rounded-[2rem] p-6 shadow-xl flex flex-col min-h-[500px]">
+      <div className="bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-xl flex flex-col min-h-[500px]">
         <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
           <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Transaction <span className="text-[#FF7A00]">History</span></h2>
           
@@ -118,7 +118,7 @@ const Payment = () => {
         </div>
 
         {/* Date Filter Bar */}
-        <div className="flex items-center gap-4 mb-8 bg-[#121417]/50 p-2 rounded-2xl border border-white/[0.04] w-fit">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-8 bg-[#121417]/50 p-2 rounded-2xl border border-white/[0.04] w-full sm:w-fit">
            <div className="h-10 px-4 flex items-center bg-[#121417] border border-white/[0.06] rounded-xl gap-3 text-white">
               <CalendarDays className="text-gray-500 w-4 h-4" />
               <input type="date" className="bg-transparent text-[10px] font-black uppercase outline-none text-white w-[120px] cursor-pointer" />

@@ -13,13 +13,18 @@ import verifyReceipt from "../service/verifyRecipt.service.js";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
+import QRCode from "qrcode";
+
 export const purchaseTicket = async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
   const userId = req.user.id;
-  const { ticketId } = req.params;
+  const { ticketId, eventId } = req.params;
   const { quantity, phone } = req.body;
-
+  const event = await EventService.findById(eventId);
+  if (!event) {
+    return res.status(404).json({ message: "Event not found" });
+  }
   if (!ticketId) return res.status(400).json({ message: "Ticket ID required" });
   if (!quantity || quantity <= 0)
     return res.status(400).json({ message: "Invalid quantity" });
@@ -42,8 +47,19 @@ export const purchaseTicket = async (req, res) => {
 
     const orderNo = `ORD-${nanoid(10)}`;
     const totalAmount = ticket.price * quantity;
-
     const isFree = totalAmount === 0;
+
+    const userTicketId = new mongoose.Types.ObjectId();
+    const qrPayload = JSON.stringify({
+      userTicketId: userTicketId,
+      token: orderNo,
+    });
+
+    const qrCode = await QRCode.toDataURL(qrPayload, {
+      width: 600,
+      margin: 2,
+      color: { dark: "#000000", light: "#ffffff" },
+    });
 
     const userTicket = await UserTicketModel.create({
       userId,
@@ -52,6 +68,7 @@ export const purchaseTicket = async (req, res) => {
       orderNo,
       isVerified: isFree ? true : false,
       totalAmount,
+      qrCode,
       phone: phone || "",
       status: isFree ? "verified" : "pending",
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -362,13 +379,24 @@ export const verifyTicket = async (req, res) => {
 };
 
 export const scanTicket = catchAsync(async (req, res, next) => {
-  const { eventId } = req.params;
-  const { orderNo } = req.body;
-  const staffId = req.user?.id;
+  const { userTicketId, token } = req.body;
+  const scannerUserId = req.user.id;
 
+  if (!userTicketId || !token) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid QR payload format.",
+    });
+  }
+  if (req.user.role !== "admin") {
+    return res
+      .status(403)
+      .json({ message: "Forbidden: Gate staff access required." });
+  }
   const userTicket = await UserTicketModel.findOneAndUpdate(
     {
-      orderNo,
+      _id: userTicketId,
+      orderNo: token,
       status: "paid",
       isVerified: true,
       "checked.checkedIn": false,
@@ -377,7 +405,7 @@ export const scanTicket = catchAsync(async (req, res, next) => {
       $set: {
         "checked.checkedIn": true,
         "checked.checkedInAt": new Date(),
-        "checked.checkedInBy": staffId,
+        "checked.checkedInBy": scannerUserId,
       },
     },
     { new: true },
