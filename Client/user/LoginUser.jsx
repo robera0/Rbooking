@@ -25,10 +25,10 @@ const LoginUser = () => {
       const res = await api.post(`/api/auth/login`, userData);
       return res.data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.message === "Logged in successfully") {
         setIsLoggedIn(true);
-        queryClient.invalidateQueries({ queryKey: ["user"] });
+        await queryClient.invalidateQueries({ queryKey: ["user"] });
         toast.success("Logged in successfully");
         if (data.role == "admin") return navigate("/dashboard");
         navigate(from, { replace: true });
