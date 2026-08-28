@@ -110,11 +110,12 @@ const orangeTheme = createTheme({
 const CalendarSidebar = ({ setIsOpen }) => {
   const { events } = eventService();
   const [selectedDate, setSelectedDate] = useState(dayjs());
-  
-  const eventsOnSelectedDate = events?.events?.filter(ev => {
-    if (!ev?.dates?.start?.localDate) return false;
-    return dayjs(ev.dates.start.localDate).isSame(selectedDate, "day");
-  }) || [];
+
+  const eventsOnSelectedDate =
+    events?.events?.filter((ev) => {
+      if (!ev?.dates?.start?.localDate) return false;
+      return dayjs(ev.dates.start.localDate).isSame(selectedDate, "day");
+    }) || [];
 
   const ServerDay = (props) => {
     const { day, outsideCurrentMonth, ...other } = props;
@@ -122,22 +123,26 @@ const CalendarSidebar = ({ setIsOpen }) => {
       if (!ev?.dates?.start?.localDate) return false;
       return dayjs(ev.dates.start.localDate).isSame(day, "day");
     });
-    
+
     return (
       <div className="relative">
-        <PickerDay {...other} outsideCurrentMonth={outsideCurrentMonth} day={day} />
+        <PickerDay
+          {...other}
+          outsideCurrentMonth={outsideCurrentMonth}
+          day={day}
+        />
         {hasEvent && !outsideCurrentMonth && (
-          <svg 
-            viewBox="0 0 100 100" 
+          <svg
+            viewBox="0 0 100 100"
             className="absolute inset-0 w-full h-full scale-[1.3] pointer-events-none"
             style={{ stroke: "#ffb3c6", zIndex: 10 }}
           >
-            <path 
-              fill="none" 
-              strokeWidth="2.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              d="M 50 15 C 75 10, 90 30, 85 60 C 80 85, 40 90, 20 75 C 5 60, 15 25, 40 15 C 65 5, 95 30, 80 70" 
+            <path
+              fill="none"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M 50 15 C 75 10, 90 30, 85 60 C 80 85, 40 90, 20 75 C 5 60, 15 25, 40 15 C 65 5, 95 30, 80 70"
             />
           </svg>
         )}
@@ -156,7 +161,10 @@ const CalendarSidebar = ({ setIsOpen }) => {
             Discover what's happening
           </p>
         </div>
-        <button onClick={() => setIsOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.03] text-gray-500 hover:text-white hover:bg-white/[0.1] transition-colors">
+        <button
+          onClick={() => setIsOpen(false)}
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.03] text-gray-500 hover:text-white hover:bg-white/[0.1] transition-colors"
+        >
           <X size={16} />
         </button>
       </div>
@@ -168,7 +176,10 @@ const CalendarSidebar = ({ setIsOpen }) => {
               value={selectedDate}
               onChange={(newDate) => setSelectedDate(newDate)}
               slots={{ day: ServerDay }}
-              sx={{ width: '100%', '& .MuiPickersCalendarHeader-root': { padding: 0 } }}
+              sx={{
+                width: "100%",
+                "& .MuiPickersCalendarHeader-root": { padding: 0 },
+              }}
             />
           </LocalizationProvider>
         </ThemeProvider>
@@ -179,16 +190,21 @@ const CalendarSidebar = ({ setIsOpen }) => {
           Events on {selectedDate.format("MMMM D, YYYY")}
         </h3>
         {eventsOnSelectedDate.length > 0 ? (
-          eventsOnSelectedDate.map(ev => (
-            <Link 
-              to={ev?.tickets?.length > 0 ? `/events/${ev?._id}/tickets/${ev.tickets[0]?._id}` : `/events/${ev?._id}`} 
-              key={ev._id} 
-              onClick={() => setIsOpen(false)} 
+          eventsOnSelectedDate.map((ev) => (
+            <Link
+              to={
+                ev?.tickets?.length > 0
+                  ? `/events/${ev?._id}/tickets/${ev.tickets[0]?._id}`
+                  : `/events/${ev?._id}`
+              }
+              key={ev._id}
+              onClick={() => setIsOpen(false)}
               className="block bg-[#1A1D20] p-4 rounded-2xl border border-white/[0.04] hover:border-[#FF7A00]/50 transition-all"
             >
               <h4 className="text-sm font-black text-white">{ev.name}</h4>
               <p className="text-[10px] text-gray-500 uppercase mt-1">
-                {ev.links?.venues?.name || "TBA"} • {ev.dates?.start?.localTime || "TBA"}
+                {ev.links?.venues?.name || "TBA"} •{" "}
+                {ev.dates?.start?.localTime || "TBA"}
               </p>
             </Link>
           ))
@@ -410,13 +426,16 @@ const Main = () => {
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
               >
-                {/* Mobile Menu Trigger */}
-                <button
+                {/* Mobile Menu Trigger 
+                
+                 <button
                   onClick={() => openMenu(false)}
                   className="md:hidden w-8 h-8 flex items-center justify-center rounded-xl bg-white/[0.03] border border-white/10 text-gray-400"
                 >
                   <Menu size={18} />
                 </button>
+
+                */}
 
                 {/* Profile Avatar */}
                 <Link
@@ -467,7 +486,8 @@ const Main = () => {
                               label="Wishlist"
                               path="/account/favorites"
                             />
-                            {/* <DropdownItem
+                            /*{" "}
+                            <DropdownItem
                               icon={<Settings size={16} />}
                               label="Settings"
                               path="/account/setting"
@@ -476,7 +496,8 @@ const Main = () => {
                               icon={<CreditCard size={16} />}
                               label="Payment Detail"
                               path="/account/payment_detail"
-                            /> */}
+                            />{" "}
+                            */}
                             <hr className="my-2 border-white/[0.05]" />
                             <button
                               onClick={handleLogout}
@@ -666,9 +687,17 @@ const Main = () => {
               className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1C1E]/95 backdrop-blur-xl py-3 px-4 z-[55] border border-white/10 rounded-2xl flex justify-between"
             >
               <MenuBar icon={<House size={20} />} header="Home" path="/" />
-              <MenuBar icon={<Ticket size={20} />} header="Tickets" path="/tickets_home" />
-              <MenuBar icon={<MapPin size={20} />} header="Venues" path="/venues" />
-              <MenuBar icon={<Heart size={20} />} header="Wishlist" path="/account/favorites" />
+              <MenuBar
+                icon={<Ticket size={20} />}
+                header="Tickets"
+                path="/tickets_home"
+              />
+
+              <MenuBar
+                icon={<Heart size={20} />}
+                header="Wishlist"
+                path="/account/favorites"
+              />
               <MenuBar
                 icon={<Menu size={20} />}
                 header="Menu"
