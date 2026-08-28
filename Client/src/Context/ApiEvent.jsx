@@ -62,7 +62,7 @@ export const ApiProvider = ({ children }) => {
     return res.data;
   };
 
-  const { data: user, isError: usererror } = useQuery({
+  const { data: user, isError: usererror, isLoading: isUserLoading, isFetching: isUserFetching } = useQuery({
     queryFn: fetchLoggedInUser,
     queryKey: ["user"],
     retry: false,
@@ -322,6 +322,8 @@ export const ApiProvider = ({ children }) => {
       value={{
         user,
         usererror,
+        isUserLoading,
+        isUserFetching,
         events,
         eventLoading,
         eventerror,

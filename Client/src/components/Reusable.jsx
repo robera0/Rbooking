@@ -43,10 +43,10 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "@/Context/api/api.config";
 export const ProtectedRoute = ({ children }) => {
-  const { usererror, user } = eventService(); // remove userIsLoading
+  const { usererror, user, isUserLoading, isUserFetching } = eventService();
   const location = useLocation();
 
-  if (!user && !usererror) {
+  if (isUserLoading || isUserFetching) {
     // still loading
     return (
       <div className="fixed inset-0 bg-[#121417] z-[100] flex flex-col items-center justify-center">
