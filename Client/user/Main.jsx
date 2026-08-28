@@ -486,7 +486,7 @@ const Main = () => {
                               label="Wishlist"
                               path="/account/favorites"
                             />
-                            /*{" "}
+                            {/*{" "}
                             <DropdownItem
                               icon={<Settings size={16} />}
                               label="Settings"
