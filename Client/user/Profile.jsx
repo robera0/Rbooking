@@ -32,6 +32,7 @@ const CompletionRing = ({ progress, size = 96, stroke = 4 }) => {
   const r = (size - stroke * 2) / 2;
   const circ = 2 * Math.PI * r;
   const dash = (progress / 100) * circ;
+  const ringColor = progress === 100 ? "#22c55e" : "#FF7A00";
   return (
     <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
       <circle
@@ -47,12 +48,12 @@ const CompletionRing = ({ progress, size = 96, stroke = 4 }) => {
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#FF7A00"
+        stroke={ringColor}
         strokeWidth={stroke}
         strokeLinecap="round"
         strokeDasharray={circ}
         initial={{ strokeDashoffset: circ }}
-        animate={{ strokeDashoffset: circ - dash }}
+        animate={{ strokeDashoffset: circ - dash, stroke: ringColor }}
         transition={{ delay: 0.4, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
       />
     </svg>
@@ -188,7 +189,6 @@ const NavItem = ({ icon: Icon, label, active, onClick }) => (
 
 /* ═══════════════════ MAIN COMPONENT ═══════════════════ */
 const Profile = () => {
-  const COMPLETION = 80;
   const queryClient = useQueryClient();
   const { userProfile } = eventService();
   const fileInputRef = useRef(null);
@@ -303,6 +303,15 @@ const Profile = () => {
   const userName = userProfile?.user?.fullName || "Your Name";
   const userEmail = userProfile?.user?.userId?.email || "";
 
+  const COMPLETION = (() => {
+    let score = 0;
+    if (formData.Gender && formData.Gender.trim() !== "") score += 25;
+    if (formData.phone && formData.phone.trim() !== "") score += 25;
+    if (userEmail && userEmail.trim() !== "") score += 25;
+    if (avatarSrc !== "/Login.jpg") score += 25;
+    return score;
+  })();
+
   const navTabs = [
     { key: "profile", label: "Profile", icon: User },
     { key: "security", label: "Security", icon: Shield },
@@ -411,9 +420,15 @@ const Profile = () => {
               <p className="text-[11px] text-[#6b7280] font-medium">
                 Profile complete
               </p>
-              <p className="text-2xl font-bold text-[#f4f4f5] mt-0.5">
+              <p 
+                className="text-2xl font-bold mt-0.5 transition-colors duration-500"
+                style={{ color: COMPLETION === 100 ? "#22c55e" : "#f4f4f5" }}
+              >
                 {COMPLETION}
-                <span className="text-sm font-normal text-[#6b7280]">%</span>
+                <span 
+                  className="text-sm font-normal ml-0.5 transition-colors duration-500"
+                  style={{ color: COMPLETION === 100 ? "#22c55e" : "#6b7280" }}
+                >%</span>
               </p>
             </div>
           </div>

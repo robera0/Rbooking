@@ -35,7 +35,7 @@ const normalizeMessage = (message = "") => {
   }
 
   if (/validation|required|must be|already exists|duplicate/i.test(cleaned)) {
-    return "Please check the information you entered and try again.";
+    return cleaned;
   }
 
   return "Something went wrong. Please try again.";
@@ -46,13 +46,13 @@ export function getFriendlyErrorMessage(error) {
 
   if (typeof error === "string") return normalizeMessage(error);
 
-  if (error?.message) return normalizeMessage(error.message);
   if (error?.response?.data?.message) {
     return normalizeMessage(error.response.data.message);
   }
   if (error?.response?.data?.error) {
     return normalizeMessage(error.response.data.error);
   }
+  if (error?.message) return normalizeMessage(error.message);
 
   return "Something went wrong. Please try again.";
 }
