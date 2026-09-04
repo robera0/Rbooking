@@ -74,6 +74,12 @@ const Header = ({ onMenuToggle }) => {
       {/* Left side: Hamburger + Logo */}
       <div className="flex-1 flex items-center gap-3 pl-0 sm:pl-2">
         {/* Mobile hamburger */}
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+        >
+          <Menu size={24} />
+        </button>
 
         <h1 className="text-xl sm:text-2xl text-white font-black uppercase tracking-tighter">
           PAY<span className="text-[#FF7A00]">SSO</span>
