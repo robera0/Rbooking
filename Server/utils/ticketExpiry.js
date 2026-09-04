@@ -28,6 +28,13 @@ export async function expirePendingTickets() {
       ticket.status = "expired";
       await ticket.save();
     }
+
+    // Additionally, delete any tickets that have been expired for more than 1 day
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    await UserTicketModel.deleteMany({
+      status: "expired",
+      expiresAt: { $lte: oneDayAgo },
+    });
   } catch (error) {
     console.error("[TicketExpiry] Error:", error.message);
   }
