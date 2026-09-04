@@ -33,7 +33,7 @@ export const getProfile = catchAsync(async (req, res, next) => {
 
 // EDIT USER PROFILE
 export const updateUser = catchAsync(async (req, res, next) => {
-  const user_id = req.user.id;
+  const user_id = new mongoose.Types.ObjectId(req.user.id);
 
   if (!user_id) {
     return next(new AppError("There is no user", 401));
@@ -124,8 +124,8 @@ export const updateUser = catchAsync(async (req, res, next) => {
         {
           new: true,
           runValidators: true,
-
           setDefaultsOnInsert: true,
+          upsert: true,
         },
       );
     } else {
@@ -135,8 +135,8 @@ export const updateUser = catchAsync(async (req, res, next) => {
         {
           new: true,
           runValidators: true,
-
           setDefaultsOnInsert: true,
+          upsert: true,
         },
       );
     }
