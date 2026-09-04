@@ -35,18 +35,18 @@ const LoginPage = () => {
   });
 
   return (
-    <div className="w-full h-screen flex justify-center items-center bg-[#A61866]">
-      <div className="w-[560px] h-[560px] flex flex-col bg-white rounded-xl space-y-8">
+    <div className="w-full min-h-screen flex justify-center items-center bg-[#A61866] p-4">
+      <div className="w-full max-w-lg min-h-[560px] flex flex-col bg-white rounded-xl space-y-8 py-8 shadow-2xl">
         {/* Header */}
-        <div className="space-y-4 pt-16">
-          <h1 className="text-center text-3xl font-bold">Login to Account</h1>
-          <p className="text-gray-500 font-semibold text-center">
+        <div className="space-y-4 pt-4 sm:pt-8">
+          <h1 className="text-center text-2xl sm:text-3xl font-bold text-gray-800">Login to Account</h1>
+          <p className="text-gray-500 font-semibold text-center text-sm sm:text-base px-4">
             Please enter email and password to continue
           </p>
         </div>
         {/* Form */}
         <form
-          className="space-y-8 pl-14"
+          className="space-y-8 px-6 sm:pl-14 sm:pr-8"
           onSubmit={(e) => {
             e.preventDefault();
             loginMutation.mutate({ email, password });
@@ -63,7 +63,7 @@ const LoginPage = () => {
               type="email"
               placeholder="example@gmail.com"
               onChange={(e) => setEmail(e.target.value)}
-              className="w-5/6 px-3 py-3 bg-[#F1F4F9] border border-gray-300 rounded-lg outline-none"
+              className="w-full sm:w-5/6 px-3 py-3 bg-[#F1F4F9] border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#A61866]/50 transition-all text-black"
               required
             />
             {/* {inEmail && email.trim().toLowerCase() !== inEmail.trim().toLowerCase() &&
@@ -80,14 +80,14 @@ const LoginPage = () => {
               type="password"
               placeholder="********"
               onChange={(e) => setPassword(e.target.value)}
-              className="w-5/6 px-3 py-3 bg-[#F1F4F9] border border-gray-300 rounded-lg outline-none"
+              className="w-full sm:w-5/6 px-3 py-3 bg-[#F1F4F9] border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#A61866]/50 transition-all text-black"
               required
             />
             {/* {iNpasssword && password.trim() !== iNpasssword.trim() &&
               <p className='text-[#F48467] font-semibold '>Wrong passsword</p>} */}
           </div>
           {/* checkbox */}
-          <div className="flex items-center justify-between w-5/6 -mt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full sm:w-5/6 -mt-4 gap-4 sm:gap-0">
             <div className="flex items-center space-x-2">
               <input
                 id="checkbox"
@@ -107,8 +107,8 @@ const LoginPage = () => {
             </button>
           </div>
           {/* Sign in button */}
-          <div className="flex ">
-            <Button width="w-5/6" bg="bg-[#AF2F75]" />
+          <div className="flex w-full sm:w-5/6 pt-4">
+            <Button width="w-full" bg="bg-[#AF2F75]" />
           </div>
         </form>
       </div>

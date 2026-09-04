@@ -6,19 +6,21 @@ import { eventService } from "../src/Context/ApiEvent";
 import { AnimatePresence, motion } from "framer-motion";
 
 const Home = () => {
-  const { user, usererror } = eventService();
+  const { user, usererror, isUserFetching } = eventService();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (isUserFetching) return;
+    
     // If there's an auth error or the user is loaded but NOT an admin, redirect.
     if (usererror || (user && user.role !== "admin")) {
       navigate("/");
     }
-  }, [user, usererror, navigate]);
+  }, [user, usererror, isUserFetching, navigate]);
 
   // Optionally show a blank screen or a loader while validating user
-  if (!user && !usererror) {
+  if (isUserFetching || (!user && !usererror)) {
     return <div className="h-screen bg-[#121417]" />;
   }
 
