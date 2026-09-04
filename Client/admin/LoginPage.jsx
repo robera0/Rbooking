@@ -20,12 +20,13 @@ const LoginPage = () => {
       return res.data;
     },
     onSuccess: async (data) => {
-      if (data.user?.role !== "admin") {
+      if (data.role !== "admin") {
          toast.error("You are not authorized as an admin");
          return;
       }
       setIsLoggedIn(true);
-      await queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.removeQueries({ queryKey: ["user"] });
+      await queryClient.refetchQueries({ queryKey: ["user"] });
       toast.success("Logged in successfully");
       navigate("/admin/home");
     },

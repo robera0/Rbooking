@@ -28,7 +28,8 @@ const LoginUser = () => {
     onSuccess: async (data) => {
       if (data.message === "Logged in successfully") {
         setIsLoggedIn(true);
-        await queryClient.invalidateQueries({ queryKey: ["user"] });
+        queryClient.removeQueries({ queryKey: ["user"] });
+        await queryClient.refetchQueries({ queryKey: ["user"] });
         toast.success("Logged in successfully");
         if (data.role == "admin") return navigate("/admin/home");
         navigate(from, { replace: true });
