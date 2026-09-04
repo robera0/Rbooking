@@ -65,7 +65,9 @@ app.use(
         "https://paysso.netlify.app",
       ];
 
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      // Also allow any local network IPs for mobile testing (e.g., http://192.168...)
+      if (!origin || allowedOrigins.includes(origin) || origin.startsWith("http://192.168.") || origin.startsWith("http://10.")) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
