@@ -174,6 +174,7 @@ export const createTickets = catchAsync(async (req, res, next) => {
       price: Number(t.price),
       totalQuantity: Number(t.capacity),
       availableQuantity: Number(t.capacity),
+      isActive: t.isActive !== false,
     })),
   );
 
@@ -238,7 +239,7 @@ export const getEvents = catchAsync(async (req, res, next) => {
   });
 
   const eventIds = events.map((e) => e._id);
-  const allTickets = await TicketModel.find({ eventId: { $in: eventIds } });
+  const allTickets = await TicketModel.find({ eventId: { $in: eventIds }, isActive: { $ne: false } });
   // Group Tickets for an event
   const ticketsByEvent = allTickets.reduce((acc, ticket) => {
     const key = ticket?.eventId?.toString();
@@ -279,7 +280,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
 
   const eventIds = events.map((e) => e._id);
 
-  const allTickets = await TicketModel.find({ eventId: { $in: eventIds } });
+  const allTickets = await TicketModel.find({ eventId: { $in: eventIds }, isActive: { $ne: false } });
 
   const ticketsByEvent = allTickets.reduce((acc, ticket) => {
     const key = ticket?.eventId?.toString();
@@ -309,7 +310,7 @@ export const generateEventQR = catchAsync(async (req, res, next) => {
   }
 
   // Auto-fetch the first ticket tier for this event
-  const firstTicket = await TicketModel.findOne({ eventId }).sort({ _id: 1 });
+  const firstTicket = await TicketModel.findOne({ eventId, isActive: { $ne: false } }).sort({ _id: 1 });
   if (!firstTicket) {
     return res.status(404).json({ message: "No tickets found for this event" });
   }
@@ -360,12 +361,12 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
     return res.status(404).json({ message: "Event not found" });
   }
 
-  const ticketInfo = await TicketModel.findOne({ _id: ticketId, eventId });
+  const ticketInfo = await TicketModel.findOne({ _id: ticketId, eventId, isActive: { $ne: false } });
   if (!ticketInfo) {
     return res.status(404).json({ message: "Ticket not found for this event" });
   }
 
-  const allTickets = await TicketModel.find({ eventId }).lean();
+  const allTickets = await TicketModel.find({ eventId, isActive: { $ne: false } }).lean();
 
   const payloadToCache = { event, ticket: ticketInfo, tickets: allTickets };
   await redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache));
@@ -504,6 +505,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
               $set: {
                 price: Number(pr.min),
                 totalQuantity: Number(pr.capacity) || 0,
+                isActive: pr.isActive !== false,
               },
               $setOnInsert: {
                 availableQuantity: Number(pr.capacity) || 0,

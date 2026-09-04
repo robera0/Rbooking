@@ -286,7 +286,7 @@ const EventInfo = () => {
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
-  const allTickets = event_id?.tickets || [];
+  const allTickets = (event_id?.tickets || []).filter((t) => t.isActive !== false);
 
   const { mutation: wishlistMutation } = useWishlistMutation();
 

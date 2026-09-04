@@ -11,6 +11,8 @@ import {
   Check,
   Flag,
   CalendarDays,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useNavigate, useBlocker } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -619,6 +621,7 @@ const AddEvent = () => {
     name: "",
     price: "",
     capacity: "",
+    isActive: true,
   })
    const [newAmenity, setNewAmenity] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -761,6 +764,8 @@ const AddEvent = () => {
         currency: "ETB",
         min: Number(t.price),
         max: Number(t.price),
+        capacity: Number(t.capacity),
+        isActive: t.isActive !== false,
       })),
       pictures: formData.pictures,
       desc: formData.description,
@@ -1087,6 +1092,28 @@ const AddEvent = () => {
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
                   </div>
+                  <div className="flex flex-col items-center ml-2">
+                    <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Visible
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = [...formData.tickets];
+                        updated[idx].isActive = ticket.isActive === false ? true : false;
+                        handleChange("tickets", updated);
+                      }}
+                      className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
+                        ticket.isActive !== false ? "bg-[#FF7A00]" : "bg-white/10"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all shadow ${
+                          ticket.isActive !== false ? "left-[18px]" : "left-[2px]"
+                        }`}
+                      />
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() =>
@@ -1145,7 +1172,7 @@ const AddEvent = () => {
                       newTicket.capacity !== ""
                     ) {
                       set({ tickets: [...formData.tickets, { ...newTicket }] });
-                      setNewTicket({ name: "", price: "", capacity: "" });
+                      setNewTicket({ name: "", price: "", capacity: "", isActive: true });
                     } else {
                       toast.error("Please fill in Ticket Name, Price, and Capacity to add a ticket.");
                     }

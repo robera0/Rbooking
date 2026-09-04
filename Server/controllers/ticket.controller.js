@@ -32,7 +32,11 @@ export const purchaseTicket = async (req, res) => {
   try {
 
     const ticket = await TicketModel.findOneAndUpdate(
-      { _id: ticketId, availableQuantity: { $gte: quantity } },
+      {
+        _id: ticketId,
+        availableQuantity: { $gte: quantity },
+        isActive: { $ne: false },
+      },
       { $inc: { availableQuantity: -quantity } },
       { new: true },
     );

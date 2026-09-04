@@ -12,6 +12,8 @@ import {
   Flag,
   Zap,
   CalendarDays,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { CustomSelect } from "./Cards";
 import {
@@ -218,6 +220,7 @@ const EditEvent = () => {
             name: pr.type || "",
             price: pr.min || 0,
             capacity: pr.capacity || pr.max || 0,
+            isActive: pr.isActive !== false,
           })) || [],
         policies: ev.policies || [],
         amenities: ev.amenities?.activity || [],
@@ -294,6 +297,7 @@ const EditEvent = () => {
     name: "",
     price: "",
     capacity: "",
+    isActive: true,
   });
   const posterInputRef = useRef(null);
   const [error, setError] = useState("");
@@ -380,6 +384,7 @@ const EditEvent = () => {
         min: Number(t.price),
         max: Number(t.price),
         capacity: Number(t.capacity),
+        isActive: t.isActive !== false,
       })),
       dates: {
         start: {
@@ -651,6 +656,28 @@ const EditEvent = () => {
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
                   </div>
+                  <div className="flex flex-col items-center ml-2">
+                    <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Visible
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = [...formData.tickets];
+                        updated[idx].isActive = ticket.isActive === false ? true : false;
+                        set({ tickets: updated });
+                      }}
+                      className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
+                        ticket.isActive !== false ? "bg-[#FF7A00]" : "bg-white/10"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all shadow ${
+                          ticket.isActive !== false ? "left-[18px]" : "left-[2px]"
+                        }`}
+                      />
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() =>
@@ -712,7 +739,7 @@ const EditEvent = () => {
                       newTicket.capacity !== ""
                     ) {
                       set({ tickets: [...formData.tickets, { ...newTicket }] });
-                      setNewTicket({ name: "", price: "", capacity: "" });
+                      setNewTicket({ name: "", price: "", capacity: "", isActive: true });
                     } else {
                       toast.error(
                         "Please fill in Ticket Name, Price, and Capacity to add a ticket.",

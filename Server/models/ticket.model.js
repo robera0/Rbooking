@@ -23,6 +23,10 @@ const TicketSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 TicketSchema.index({ eventId: 1, price: 1 });
