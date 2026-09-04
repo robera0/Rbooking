@@ -30,7 +30,7 @@ const LoginUser = () => {
         setIsLoggedIn(true);
         await queryClient.invalidateQueries({ queryKey: ["user"] });
         toast.success("Logged in successfully");
-        if (data.role == "admin") return navigate("/dashboard");
+        if (data.role == "admin") return navigate("/admin/home");
         navigate(from, { replace: true });
       }
     },
