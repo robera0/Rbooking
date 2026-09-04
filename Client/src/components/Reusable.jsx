@@ -209,14 +209,22 @@ export default function CheckoutModal({
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
               Phone Number
             </label>
-            <input
-              type="tel"
-              placeholder="+251 ..."
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
-              transition-all rounded-2xl px-5 py-4 outline-none font-bold text-lg tracking-tight"
-            />
+            <div className="relative flex items-center">
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-bold z-10 pointer-events-none">
+                +251
+              </span>
+              <input
+                type="tel"
+                placeholder="9xx xxx xxxx"
+                value={phone.replace(/^\+251/, '')}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setPhone(val ? `+251${val}` : "");
+                }}
+                className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
+                transition-all rounded-2xl pl-[68px] pr-5 py-4 outline-none font-bold text-lg tracking-tight"
+              />
+            </div>
           </div>
 
           {/* Quantity and Price Display */}

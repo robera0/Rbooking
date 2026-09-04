@@ -428,7 +428,7 @@ const UserHome = () => {
                       ease: [0.25, 1, 0.5, 1],
                       delay: i * 0.1,
                     }}
-                    className="group"
+                    className="group max-w-[360px] mx-auto w-full sm:max-w-none"
                     key={e?._id}
                   >
                     <div className="relative rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">

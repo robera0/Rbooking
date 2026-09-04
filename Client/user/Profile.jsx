@@ -522,13 +522,26 @@ const Profile = () => {
                         />
                       </Field>
                       <Field label="Phone Number">
-                        <StyledInput
-                          name="phone"
-                          type="tel"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          placeholder="+251 9xx xxx xxxx"
-                        />
+                        <div className="relative flex items-center">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-primary)] text-[13.5px] font-normal z-10 pointer-events-none">
+                            +251
+                          </span>
+                          <input
+                            name="phone"
+                            type="tel"
+                            value={formData.phone.replace(/^\+251/, '')}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '');
+                              setFormData((p) => ({
+                                ...p,
+                                phone: val ? `+251${val}` : "",
+                              }));
+                            }}
+                            placeholder="9xx xxx xxxx"
+                            className={`${INPUT_BASE} pl-[46px]`}
+                            style={{ colorScheme: "dark" }}
+                          />
+                        </div>
                       </Field>
                     </div>
 

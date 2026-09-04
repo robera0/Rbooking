@@ -63,3 +63,12 @@ export const clearTicketCache = async (userId) => {
     console.error("Failed to clear ticket cache:", err);
   }
 };
+
+export const clearTicketInfoCache = async (ticketId) => {
+  try {
+    if (!ticketId) return;
+    await redisClient.del(`${REDIS_PREFIX}user:ticket:info:${ticketId}`);
+  } catch (err) {
+    console.error("Failed to clear ticket info cache:", err);
+  }
+};

@@ -2,6 +2,7 @@ import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
 import redisClient, {
   clearTicketCache,
+  clearTicketInfoCache,
   REDIS_PREFIX,
 } from "../config/redis.js";
 import TicketService from "../service/ticket.service.js";
@@ -15,23 +16,21 @@ import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
 import EventService from "../service/event.service.js";
+
+
+
 export const purchaseTicket = async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
   const userId = req.user.id;
-  const { ticketId, eventId } = req.params;
+  const { ticketId } = req.params;
   const { quantity, phone } = req.body;
-  const event = await EventService.findById(eventId);
-  if (!event) {
-    return res.status(404).json({ message: "Event not found" });
-  }
   if (!ticketId) return res.status(400).json({ message: "Ticket ID required" });
   if (!quantity || quantity <= 0)
     return res.status(400).json({ message: "Invalid quantity" });
 
   try {
-    // Atomically check availability AND decrement in one operation.
-    // $inc is atomic in MongoDB — no replica-set session needed.
+
     const ticket = await TicketModel.findOneAndUpdate(
       { _id: ticketId, availableQuantity: { $gte: quantity } },
       { $inc: { availableQuantity: -quantity } },
@@ -330,6 +329,7 @@ export const verifyTicket = async (req, res) => {
     });
 
     await clearTicketCache(userId);
+    await clearTicketInfoCache(userTicketId);
 
     // Notify Admin of verification
     try {

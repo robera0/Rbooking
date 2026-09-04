@@ -247,6 +247,22 @@ const ViewTicket = () => {
                     label="Ticket ID"
                     value={`#${parseInt(ticketId?.slice(-6), 16)}`}
                   />
+                  <Detail
+                    icon={ShieldCheck}
+                    label="Status"
+                    value={
+                      ticketsinfo?.ticket?.status
+                        ? ticketsinfo.ticket.status.toUpperCase()
+                        : "PENDING"
+                    }
+                  />
+                  {ticketsinfo?.ticket?.receiptUrl && (
+                    <Detail
+                      icon={Hash}
+                      label="Receipt URL"
+                      value={ticketsinfo.ticket.receiptUrl}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -269,10 +285,10 @@ const ViewTicket = () => {
               <div className="flex flex-col md:w-72 bg-[#0f1011] shrink-0">
                 {/* QR section */}
                 <div className="px-6 py-6 flex flex-col items-center justify-center flex-1 gap-4">
-                  <div className="p-4 rounded-2xl bg-white inline-block shadow-lg">
+                  <div className="p-4 md:p-6 rounded-2xl bg-white inline-block shadow-lg">
                     <img
                       src={`${API_URL}/api/events/${event?._id}/tickets/${tkt?._id}/qr`}
-                      className="w-28 h-28"
+                      className="w-32 h-32 md:w-40 md:h-40 object-contain"
                       alt="Entry QR Code"
                       onError={(e) => { e.target.src = "/qr-code.png"; }}
                     />
