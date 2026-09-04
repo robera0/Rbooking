@@ -1,9 +1,10 @@
 import axios from "axios";
 
-const VITE_API_URL = import.meta.env.VITE_API_URL;
+// Use empty string in dev to leverage Vite's proxy, otherwise use env variable
+const baseURL = import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "");
 
 const api = axios.create({
-  baseURL: VITE_API_URL,
+  baseURL,
   withCredentials: true,
 });
 
@@ -25,7 +26,7 @@ api.interceptors.response.use(
 
       try {
         await axios.post(
-          `${VITE_API_URL}/api/auth/tokens`,
+          `${baseURL}/api/auth/tokens`,
           {},
           { withCredentials: true },
         );
