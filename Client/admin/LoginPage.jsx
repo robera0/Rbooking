@@ -28,7 +28,7 @@ const LoginPage = () => {
       queryClient.removeQueries({ queryKey: ["user"] });
       await queryClient.refetchQueries({ queryKey: ["user"] });
       toast.success("Logged in successfully");
-      navigate("/admin/home");
+      window.location.href = "/admin/home";
     },
     onError: (err) => {
       toast.error(err.response?.data?.message || "Login failed");

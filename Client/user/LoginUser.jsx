@@ -31,7 +31,10 @@ const LoginUser = () => {
         queryClient.removeQueries({ queryKey: ["user"] });
         await queryClient.refetchQueries({ queryKey: ["user"] });
         toast.success("Logged in successfully");
-        if (data.role == "admin") return navigate("/admin/home");
+        if (data.role == "admin") {
+          window.location.href = "/admin/home";
+          return;
+        }
         navigate(from, { replace: true });
       }
     },
