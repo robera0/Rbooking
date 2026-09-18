@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  AlertCircle,
 } from "lucide-react";
 import { eventService } from "@/Context/ApiEvent";
 import api from "../src/Context/api/api.config";
@@ -233,6 +232,12 @@ const Profile = () => {
     confirmPassword: "",
   });
 
+  useEffect(() => {
+    if (userProfile?.user?.email) {
+      setCredentials((p) => ({ ...p, email: userProfile.user.email }));
+    }
+  }, [userProfile]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
@@ -256,11 +261,18 @@ const Profile = () => {
     await api.put(`/api/auth/profile`, data);
   };
 
+  const updateEmail = async () => {
+    await api.put(`/api/auth/user`, { email: credentials.email });
+  };
+
   const updateCredentials = async () => {
     if (credentials.password !== credentials.confirmPassword) {
       throw new Error("Passwords don't match");
     }
-    await api.put(`/api/auth/user`, credentials);
+    await api.put(`/api/auth/user`, {
+      currentPass: credentials.currentPass,
+      password: credentials.password,
+    });
   };
 
   const profileMutation = useMutation({
@@ -277,18 +289,29 @@ const Profile = () => {
       toast.error(getFriendlyErrorMessage(err), { id: "profile" }),
   });
 
+  const emailMutation = useMutation({
+    mutationFn: updateEmail,
+    onMutate: () => toast.loading("Updating email…", { id: "email" }),
+    onSuccess: () => {
+      toast.success("Email updated", { id: "email" });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+    onError: (err) => toast.error(getFriendlyErrorMessage(err), { id: "email" }),
+  });
+
   const credentialsMutation = useMutation({
     mutationFn: updateCredentials,
     onMutate: () => toast.loading("Updating password…", { id: "credentials" }),
     onSuccess: () => {
       toast.success("Password updated", { id: "credentials" });
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
-      setCredentials({
-        email: "",
+      setCredentials((p) => ({
+        ...p,
         currentPass: "",
         password: "",
         confirmPassword: "",
-      });
+      }));
     },
     onError: (err) =>
       toast.error(getFriendlyErrorMessage(err), { id: "credentials" }),
@@ -673,7 +696,13 @@ const Profile = () => {
                       title="Email Address"
                       description="Change the email associated with your account."
                     />
-                    <form className="space-y-4">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        emailMutation.mutate();
+                      }}
+                      className="space-y-4"
+                    >
                       <Field label="New Email Address">
                         <StyledInput
                           name="email"
@@ -684,24 +713,13 @@ const Profile = () => {
                         />
                       </Field>
 
-                      <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#18191c] border border-[#262729]">
-                        <AlertCircle
-                          size={14}
-                          className="text-[#f59e0b] shrink-0 mt-0.5"
-                        />
-                        <p className="text-[11.5px] text-[#9ca3af] leading-relaxed">
-                          You'll receive a verification link at both your old
-                          and new email address. Your email will only change
-                          after you verify both links.
-                        </p>
-                      </div>
-
                       <div className="flex justify-end pt-1">
                         <motion.button
                           type="submit"
+                          disabled={emailMutation.isPending}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.97 }}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-black bg-[#FF7A00] hover:bg-[#ff8f1f] transition-colors"
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-black bg-[#FF7A00] hover:bg-[#ff8f1f] transition-colors disabled:opacity-60"
                         >
                           Update email
                         </motion.button>

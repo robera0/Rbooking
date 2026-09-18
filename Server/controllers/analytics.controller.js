@@ -1,10 +1,20 @@
 import EventService from "../service/event.service.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
+import { AdminProfile } from "../models/adminProfile.model.js";
 import UserService from "../service/user.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import TicketService from "../service/ticket.service.js";
 import mongoose from "mongoose";
+
+// Events are created with `adminId` set to the admin's AdminProfile._id
+// (see events.controller.js addEvent), not their User._id, so any query
+// scoping data to "this admin" has to resolve that id first.
+const resolveAdminScopeId = async (userId) => {
+  const adminProfile = await AdminProfile.findOne({ userId });
+  return adminProfile ? adminProfile._id : userId;
+};
+
 // Utility function to get dates
 const getDateRanges = () => {
   const now = new Date();
@@ -33,26 +43,42 @@ export const get_dashboard_stats = catchAsync(async (req, res, next) => {
     createdAt: { $gte: sevenDaysAgo },
   });
 
-  // 2. Events & Bookings
-  const totalEvents = await EventService.countDocuments({ adminId: userId });
+  // 2. Events & Bookings - scoped to this admin's own events only
+  const adminScopeId = await resolveAdminScopeId(userId);
+  const adminEventIds = await EventService.find({
+    adminId: adminScopeId,
+  }).distinct("_id");
+  const totalEvents = adminEventIds.length;
+
+  const adminTicketIds = await TicketModel.find({
+    eventId: { $in: adminEventIds },
+  }).distinct("_id");
+
   const totalBookings = await UserTicketModel.countDocuments({
     status: "paid",
+    ticketId: { $in: adminTicketIds },
   });
-  console.log(totalBookings);
   const pendingApprovals = await UserTicketModel.countDocuments({
     status: "pending",
+    ticketId: { $in: adminTicketIds },
   });
 
   // 3. Revenue Metrics
-  // Aggregate total amount of all 'paid' tickets
+  // Aggregate total amount of this admin's 'paid' tickets
   const revenueAggr = await UserTicketModel.aggregate([
-    { $match: { status: "paid" } },
+    { $match: { status: "paid", ticketId: { $in: adminTicketIds } } },
     { $group: { _id: null, totalEarnings: { $sum: "$totalAmount" } } },
   ]);
 
   // Aggregate revenue of last 30 days
   const recentRevenueAggr = await UserTicketModel.aggregate([
-    { $match: { status: "paid", purchasedAt: { $gte: thirtyDaysAgo } } },
+    {
+      $match: {
+        status: "paid",
+        ticketId: { $in: adminTicketIds },
+        purchasedAt: { $gte: thirtyDaysAgo },
+      },
+    },
     { $group: { _id: null, recentEarnings: { $sum: "$totalAmount" } } },
   ]);
 
@@ -92,15 +118,17 @@ export const get_dashboard_stats = catchAsync(async (req, res, next) => {
 });
 export const getEvents = catchAsync(async (req, res, next) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
+  const adminScopeId = await resolveAdminScopeId(userId);
 
-  const events = await EventService.find({ adminId: userId });
+  const events = await EventService.find({ adminId: adminScopeId });
   res.status(200).json({ success: true, events: events });
 });
 
 export const getTransactionLedger = catchAsync(async (req, res, next) => {
-  const adminId = new mongoose.Types.ObjectId(req.user.id);
+  const userId = new mongoose.Types.ObjectId(req.user.id);
+  const adminScopeId = await resolveAdminScopeId(userId);
 
-  const transactions = await TicketService.findTickets(adminId);
+  const transactions = await TicketService.findTickets(adminScopeId);
 
   res.status(200).json({ success: true, transactions: transactions });
 });

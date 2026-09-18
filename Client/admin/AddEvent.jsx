@@ -1381,7 +1381,7 @@ const AddEvent = () => {
                 />
                 <button
                   type="button"
-                  className="absolute right-2 top-[13px] p-1.5 bg-[#FF7A00] text-black rounded-lg hover:bg-white transition-all shadow-lg"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-[#FF7A00] text-black rounded-lg hover:bg-white transition-all shadow-lg"
                   onClick={() => {
                     if (newAmenity.trim()) {
                       set({

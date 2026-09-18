@@ -27,22 +27,21 @@ const Wishlist = () => {
 
   const { mutation: wishlistMutation } = useWishlistMutation();
   const [selected, setSelected] = useState(options[0]);
-  const [hasAlerted, setHasAlerted] = useState(false);
   const { API_URL } = useService();
   const { events, wishlist, wishlistLoading, wishlistIsError } = eventService();
 
   useEffect(() => {
-    if (wishlistIsError && !hasAlerted) {
-      toast.error("Access Required. Please sign in.", {
+    if (wishlistIsError) {
+      toast.error("Couldn't load your wishlist. Please try again.", {
+        id: "wishlist-error",
         style: {
           background: "#121417",
           color: "#fff",
           border: "1px solid rgba(255,255,255,0.05)",
         },
       });
-      setHasAlerted(true);
     }
-  }, [wishlistIsError, hasAlerted]);
+  }, [wishlistIsError]);
 
   const checkWishlist = (eventId) => {
     return (

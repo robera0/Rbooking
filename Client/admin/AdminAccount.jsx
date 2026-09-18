@@ -211,7 +211,14 @@ const AdminAccount = () => {
     if (!credentials.password) throw new Error("New password required");
     if (credentials.password.length < 8)
       throw new Error("Password must be at least 8 characters");
-    await api.put(`/api/auth/user`, credentials);
+    await api.put(`/api/auth/user`, {
+      currentPass: credentials.currentPass,
+      password: credentials.password,
+    });
+  };
+
+  const updateEmail = async () => {
+    await api.put(`/api/auth/user`, { email: credentials.email });
   };
 
   const profileMutation = useMutation({
@@ -226,6 +233,16 @@ const AdminAccount = () => {
     },
     onError: (err) =>
       toast.error(getFriendlyErrorMessage(err), { id: "profile" }),
+  });
+
+  const emailMutation = useMutation({
+    mutationFn: updateEmail,
+    onMutate: () => toast.loading("Updating email…", { id: "email" }),
+    onSuccess: () => {
+      toast.success("Email updated", { id: "email" });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    },
+    onError: (err) => toast.error(getFriendlyErrorMessage(err), { id: "email" }),
   });
 
   const credentialsMutation = useMutation({
@@ -604,7 +621,37 @@ const AdminAccount = () => {
                 exit="hidden"
                 className="space-y-8"
               >
-                <div className="">
+                <div className="space-y-8">
+                  {/* Email Change */}
+                  <div className="bg-[#1C1F22] w-full border border-white/[0.04] rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 space-y-8">
+                    <div className="flex items-center gap-4 text-white">
+                      <Mail className="text-[#FF7A00]" size={24} />
+                      <h2 className="text-xl  uppercase tracking-tighter ">
+                        Change <span className="text-[#FF7A00]">Email</span>
+                      </h2>
+                    </div>
+
+                    <div className="space-y-2">
+                      <SectionLabel label="email address" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={credentials.email}
+                        onChange={handleCredentials}
+                        className="w-full bg-[#121417] border border-white/[0.06] rounded-xl px-6 py-4 text-white font-bold outline-none focus:border-[#FF7A00]/50 transition-all"
+                        placeholder="you@example.com"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => emailMutation.mutate()}
+                      disabled={emailMutation.isPending || !credentials.email}
+                      className="w-full py-4 bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white hover:text-black transition-all font-black text-[10px] uppercase tracking-widest rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {emailMutation.isPending ? "Saving…" : "Save Email"}
+                    </button>
+                  </div>
+
                   {/* Password Change */}
                   <div className="bg-[#1C1F22] w-full border border-white/[0.04] rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 space-y-8">
                     <div className="flex items-center gap-4 text-white">

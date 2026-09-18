@@ -18,15 +18,38 @@ export const updateUser = catchAsync(async (req, res, next) => {
 
   if (!userId) return res.status(401).json({ message: "There is no user" });
 
-  const { email, password, status } = req.body;
+  const { email, password, currentPass } = req.body;
 
   const updates = Object.fromEntries(
-    Object.entries({ email, password }).filter(([_, v]) => v !== undefined),
+    Object.entries({ email, password }).filter(
+      ([_, v]) => v !== undefined && v !== null && v !== "",
+    ),
   );
 
   if (updates.password) {
+    if (!currentPass) {
+      return res
+        .status(400)
+        .json({ message: "Current password is required" });
+    }
+
+    const existingUser = await UserModel.findById(userId);
+    const isMatch =
+      existingUser?.password &&
+      (await bcrypt.compare(currentPass, existingUser.password));
+
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ message: "Current password is incorrect" });
+    }
+
     const salt = await bcrypt.genSalt(10);
     updates.password = await bcrypt.hash(updates.password, salt);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ message: "Nothing to update" });
   }
 
   const updatedUser = await UserService.findByIdAndUpdate(userId, updates);

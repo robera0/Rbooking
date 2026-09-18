@@ -73,7 +73,7 @@ const Events = () => {
     e.stopPropagation();
 
     if (!user) {
-      toast.error("Please sign in to save events");
+      toast.error("Please sign in to save events", { id: "signin-required" });
       navigate("/login", { state: { from: location } });
       return;
     }

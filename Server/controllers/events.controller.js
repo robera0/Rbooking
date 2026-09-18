@@ -1,5 +1,5 @@
 import multer from "multer";
-import redisClient, { REDIS_PREFIX } from "../config/redis.js";
+import redisClient, { REDIS_PREFIX, safeGet } from "../config/redis.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 import EventService from "../service/event.service.js";
@@ -191,7 +191,7 @@ export const getEvents = catchAsync(async (req, res, next) => {
   const { type, artist, date, venues, search } = req.query;
   const cacheKey = `${REDIS_PREFIX}event:list:${JSON.stringify(req.query)}`;
   //hit the cache
-  const cachedEvents = await redisClient.get(cacheKey);
+  const cachedEvents = await safeGet(cacheKey);
   if (cachedEvents) {
     return res.status(200).json({
       success: true,
@@ -265,7 +265,7 @@ export const getEvents = catchAsync(async (req, res, next) => {
 export const featuredEvents = catchAsync(async (req, res, next) => {
   const limit = 4;
   const cacheKey = `${REDIS_PREFIX}events:featured`;
-  const cachedEvent = await redisClient.get(cacheKey);
+  const cachedEvent = await safeGet(cacheKey);
   if (cachedEvent) {
     return res.status(200).json({
       success: true,
@@ -340,7 +340,7 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
   //
   const cacheKey = `${REDIS_PREFIX}event:single:${eventId}:${ticketId}`;
 
-  const cachedCombo = await redisClient.get(cacheKey);
+  const cachedCombo = await safeGet(cacheKey);
   if (cachedCombo) {
     const decoded = JSON.parse(cachedCombo);
     return res.status(200).json({
@@ -383,7 +383,7 @@ export const getEventById = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
 
   const cacheKey = `${REDIS_PREFIX}event:single:${eventId}`;
-  const cachedEvent = await redisClient.get(cacheKey);
+  const cachedEvent = await safeGet(cacheKey);
   if (cachedEvent) {
     return res
       .status(200)
