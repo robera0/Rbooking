@@ -133,7 +133,7 @@ const GateScanner = () => {
       }
 
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/auth/tickets/qr`, {
+      const res = await fetch(`${API_URL}/api/tickets/qr`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -151,7 +151,7 @@ const GateScanner = () => {
         setScanResult({
           success: true,
           message: data.message || "Entry Granted!",
-          ticket: data.ticket,
+          ticket: data.userTicket,
         });
       } else {
         setScanResult({
