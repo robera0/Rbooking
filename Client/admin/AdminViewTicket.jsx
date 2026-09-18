@@ -439,7 +439,7 @@ const AdminViewTicket = () => {
                     {/* Fields */}
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                       <Field label="Order number" value={transaction.orderNo} />
-                      <Field label="Payment method" value="Chapa Gateway" />
+                      <Field label="Payment method" value="Telebirr" />
                       <Field label="Ticket tier" value={ticket?.name} />
                       <Field label="Quantity" value={`${transaction.quantity}× Tickets`} />
                       <Field
@@ -587,7 +587,7 @@ const AdminViewTicket = () => {
                             label="Order number"
                             value={transaction.orderNo}
                           />
-                          <Field label="Payment method" value="Chapa Gateway" />
+                          <Field label="Payment method" value="Telebirr" />
                           <Field label="Ticket tier" value={ticket?.name} />
                           <Field
                             label="Quantity"

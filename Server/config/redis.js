@@ -7,7 +7,13 @@ const REDIS_URL = process.env.REDIS_URL;
 // Key prefix to avoid collisions with other apps (e.g. Payso Bingo) sharing the same Redis URL
 export const REDIS_PREFIX = "paysso:";
 
-const redisClient = new Redis(REDIS_URL);
+const redisClient = new Redis(REDIS_URL, {
+  // Fail fast instead of letting a command hang for tens of seconds when
+  // Redis is briefly unreachable - callers should fall back to the DB.
+  maxRetriesPerRequest: 1,
+  connectTimeout: 3000,
+  commandTimeout: 2000,
+});
 console.log("REDIS_URL:", REDIS_URL);
 redisClient.on("connect", () =>
   console.log("Redis Connected Successfully  via ioredis"),
@@ -15,6 +21,17 @@ redisClient.on("connect", () =>
 redisClient.on("error", (err) => console.error("Redis Client Error", err));
 redisClient.on("reconnect", () => console.log("Redis Reconnected"));
 export default redisClient;
+
+// Wraps a Redis read so a slow/unavailable Redis never blocks the request -
+// callers treat a rejected/failed read the same as a cache miss.
+export const safeGet = async (key) => {
+  try {
+    return await redisClient.get(key);
+  } catch (err) {
+    console.error(`Redis GET failed for ${key}:`, err.message);
+    return null;
+  }
+};
 
 export const clearEventsCache = async () => {
   try {

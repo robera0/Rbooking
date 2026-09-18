@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
-import { useService } from "@/Context/ServiceContext";
 
 /* ─── design tokens ─── */
 const SURFACE = "bg-[#111214]";
@@ -57,7 +56,6 @@ const ViewTicket = () => {
   const { ticketId } = useParams();
   const navigate = useNavigate();
   const { fetchTicketById } = eventService();
-  const { API_URL } = useService();
 
   const {
     data: ticketsinfo,
@@ -69,6 +67,10 @@ const ViewTicket = () => {
     queryFn: () => fetchTicketById(ticketId),
     enabled: !!ticketId,
     retry: false,
+    // Keep polling while the ticket is still pending verification so the
+    // status updates on its own instead of requiring a manual reload.
+    refetchInterval: (query) =>
+      query.state.data?.ticket?.status === "pending" ? 5000 : false,
   });
 
   const event = ticketsinfo?.ticket?.ticketId?.eventId;
@@ -80,22 +82,15 @@ const ViewTicket = () => {
   const localDate = event?.dates?.start?.localDate;
   const localTime = event?.dates?.start?.localTime;
 
-  const downloadQRCode = async () => {
-    try {
-      const qrUrl = `${API_URL}/api/events/${event?._id}/tickets/${tkt?._id}/qr`;
-      const res = await fetch(qrUrl);
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `QR-${orderNo || ticketId}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Error downloading QR code:", err);
-    }
+  const downloadQRCode = () => {
+    const qrDataUrl = ticketsinfo?.ticket?.qrCode;
+    if (!qrDataUrl) return;
+    const link = document.createElement("a");
+    link.href = qrDataUrl;
+    link.download = `QR-${orderNo || ticketId}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -178,7 +173,7 @@ const ViewTicket = () => {
               className={`rounded-2xl ${SURFACE} border ${BORDER} overflow-hidden flex flex-col md:flex-row`}
             >
               {/* Left Section (Banner + Details) */}
-              <div className="flex-1 flex flex-col">
+              <div className="flex-1 min-w-0 flex flex-col">
                 {/* event banner */}
                 <div className="relative h-36 md:h-48 overflow-hidden">
                   <img
@@ -211,7 +206,7 @@ const ViewTicket = () => {
                   className="px-6 pt-4 pb-5 border-b"
                   style={{ borderColor: "#1f2023" }}
                 >
-                  <h2 className="text-[16px] font-semibold text-[#f4f4f5] leading-snug">
+                  <h2 className="text-[16px] font-semibold text-[#f4f4f5] leading-snug truncate">
                     {event?.name}
                   </h2>
                 </div>
@@ -287,7 +282,7 @@ const ViewTicket = () => {
                 <div className="px-6 py-6 flex flex-col items-center justify-center flex-1 gap-4">
                   <div className="p-4 md:p-6 rounded-2xl bg-white inline-block shadow-lg">
                     <img
-                      src={`${API_URL}/api/events/${event?._id}/tickets/${tkt?._id}/qr`}
+                      src={ticketsinfo?.ticket?.qrCode || "/qr-code.png"}
                       className="w-32 h-32 md:w-40 md:h-40 object-contain"
                       alt="Entry QR Code"
                       onError={(e) => { e.target.src = "/qr-code.png"; }}

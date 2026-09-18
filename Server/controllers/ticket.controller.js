@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import redisClient, {
   clearTicketCache,
   clearTicketInfoCache,
+  safeGet,
   REDIS_PREFIX,
 } from "../config/redis.js";
 import TicketService from "../service/ticket.service.js";
@@ -73,7 +74,7 @@ export const purchaseTicket = async (req, res) => {
       totalAmount,
       qrCode,
       phone: phone || "",
-      status: isFree ? "verified" : "pending",
+      status: isFree ? "paid" : "pending",
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
 
@@ -147,7 +148,7 @@ export const getTickets = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.user.id);
     const cacheKey = `${REDIS_PREFIX}user:ticket:list:${userId}`;
 
-    const cachedRaw = await redisClient.get(cacheKey);
+    const cachedRaw = await safeGet(cacheKey);
     if (cachedRaw) {
       await redisClient.expire(cacheKey, 3600);
       return res.status(200).json({
@@ -177,7 +178,7 @@ export const getTicketsInfo = async (req, res) => {
     const { ticketId } = req.params;
     const cacheKey = `${REDIS_PREFIX}user:ticket:info:${ticketId}`;
 
-    const cachedRaw = await redisClient.get(cacheKey);
+    const cachedRaw = await safeGet(cacheKey);
     if (cachedRaw) {
       await redisClient.expire(cacheKey, 3600);
       return res.status(200).json({
@@ -234,7 +235,7 @@ export const verifyTicket = async (req, res) => {
 
   const userId = req.user.id;
 
-  const EXPECTED_RECEIVER = "Robera Ararsa Ulu";
+  const EXPECTED_RECEIVER = "Naod Ararsa Ulu";
 
   if (!receiptUrl || !receiptUrl.trim())
     return res.status(400).json({ message: "Receipt link is required" });
@@ -283,7 +284,7 @@ export const verifyTicket = async (req, res) => {
       return res.status(400).json({ message: "Transaction is not completed" });
     }
 
-    if (receipt.creditedPartyName !== EXPECTED_RECEIVER) {
+    if (receipt.creditedPartyName.toLowerCase() !== EXPECTED_RECEIVER.toLowerCase()) {
       return res
         .status(400)
         .json({ message: "Invalid receiver name on receipt" });
@@ -378,6 +379,7 @@ export const verifyTicket = async (req, res) => {
     });
   } catch (error) {
     console.error("verifyTicket error:", error.message);
+    console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -416,7 +418,7 @@ export const scanTicket = catchAsync(async (req, res, next) => {
   );
 
   if (!userTicket) {
-    const existing = await UserTicketModel.findOne({ orderNo });
+    const existing = await UserTicketModel.findOne({ orderNo: token });
 
     if (!existing) {
       return res

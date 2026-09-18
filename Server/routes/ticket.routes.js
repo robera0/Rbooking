@@ -9,7 +9,6 @@ import {
 } from "../controllers/ticket.controller.js";
 
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
-import { createPayment } from "../controllers/payment.controller.js";
 
 const ticketRouter = express.Router();
 
@@ -20,7 +19,6 @@ ticketRouter.get(
   getTicketsInfo,
 );
 
-ticketRouter.post("/tickets_home", authenticateTokenMiddleware, createPayment);
 ticketRouter.post(
   "/ticket/:ticketId/purchase",
   authenticateTokenMiddleware,
