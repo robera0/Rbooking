@@ -622,19 +622,25 @@ const AddEvent = () => {
     price: "",
     capacity: "",
     isActive: true,
-  })
-   const [newAmenity, setNewAmenity] = useState("");
+  });
+  const [newAmenity, setNewAmenity] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
 
   const posterInputRef = useRef(null);
   const timerRef = useRef(null);
   const draftIdRef = useRef(null);
 
-  const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(EMPTY_FORM);
+  const hasUnsavedChanges =
+    JSON.stringify(formData) !== JSON.stringify(EMPTY_FORM);
 
   useBlocker(({ currentLocation, nextLocation }) => {
-    if (hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname) {
-      return !window.confirm("You have unsaved changes. Are you sure you want to leave?");
+    if (
+      hasUnsavedChanges &&
+      currentLocation.pathname !== nextLocation.pathname
+    ) {
+      return !window.confirm(
+        "You have unsaved changes. Are you sure you want to leave?",
+      );
     }
     return false;
   });
@@ -1100,16 +1106,21 @@ const AddEvent = () => {
                       type="button"
                       onClick={() => {
                         const updated = [...formData.tickets];
-                        updated[idx].isActive = ticket.isActive === false ? true : false;
+                        updated[idx].isActive =
+                          ticket.isActive === false ? true : false;
                         handleChange("tickets", updated);
                       }}
-                      className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
-                        ticket.isActive !== false ? "bg-[#FF7A00]" : "bg-white/10"
+                      className={`w-9 h-5 rounded-full transition-all  relative flex-shrink-0 ${
+                        ticket.isActive !== false
+                          ? "bg-[#FF7A00]"
+                          : "bg-white/10"
                       }`}
                     >
                       <span
                         className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all shadow ${
-                          ticket.isActive !== false ? "left-[18px]" : "left-[2px]"
+                          ticket.isActive !== false
+                            ? "left-[18px]"
+                            : "left-[2px]"
                         }`}
                       />
                     </button>
@@ -1138,7 +1149,9 @@ const AddEvent = () => {
                       { label: "VVIP", value: "VVIP" },
                     ]}
                     value={newTicket.name}
-                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
+                    onChange={(val) =>
+                      setNewTicket({ ...newTicket, name: val })
+                    }
                     placeholder="Ticket Type"
                   />
                 </div>
@@ -1172,9 +1185,16 @@ const AddEvent = () => {
                       newTicket.capacity !== ""
                     ) {
                       set({ tickets: [...formData.tickets, { ...newTicket }] });
-                      setNewTicket({ name: "", price: "", capacity: "", isActive: true });
+                      setNewTicket({
+                        name: "",
+                        price: "",
+                        capacity: "",
+                        isActive: true,
+                      });
                     } else {
-                      toast.error("Please fill in Ticket Name, Price, and Capacity to add a ticket.");
+                      toast.error(
+                        "Please fill in Ticket Name, Price, and Capacity to add a ticket.",
+                      );
                     }
                   }}
                   className="ml-2 text-[#22c55e] border border-[#22c55e] rounded-full p-2"
@@ -1324,7 +1344,6 @@ const AddEvent = () => {
               />
             </SectionCard>
           )}
-
         </div>
 
         <div className="space-y-8">
