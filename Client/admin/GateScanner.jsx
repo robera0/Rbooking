@@ -133,7 +133,7 @@ const GateScanner = () => {
       }
 
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/tickets/qr`, {
+      const res = await fetch(`${API_URL}/api/auth/tickets/qr`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

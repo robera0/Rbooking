@@ -740,7 +740,7 @@ const AddEvent = () => {
   const buildPayload = (status) => {
     const type = formData.type.toLowerCase();
     const basePayload = {
-      type: "generic",
+      type,
       name: formData.eventName,
       artist: { name: formData.artistName },
       locale: "ETH",
