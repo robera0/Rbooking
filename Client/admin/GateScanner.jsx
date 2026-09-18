@@ -12,7 +12,6 @@ import {
   Camera,
   RefreshCw,
   Scan,
-  AlertTriangle,
 } from "lucide-react";
 import { useService } from "@/Context/ServiceContext";
 
@@ -72,11 +71,15 @@ const GateScanner = () => {
   const [loading, setLoading] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const html5QrcodeScannerRef = useRef(null);
+  // Html5Qrcode's own "isScanning" property isn't reliable across versions,
+  // so we track camera state ourselves to guarantee stop()/clear() actually run.
+  const isCameraActiveRef = useRef(false);
 
   useEffect(() => {
     return () => {
       stopScanner();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startScanner = async () => {
@@ -96,8 +99,10 @@ const GateScanner = () => {
         onScanSuccess,
         onScanFailure,
       );
+      isCameraActiveRef.current = true;
     } catch (err) {
       console.error("Camera access error:", err);
+      isCameraActiveRef.current = false;
       setIsScanning(false);
       setScanResult({
         success: false,
@@ -107,15 +112,14 @@ const GateScanner = () => {
   };
 
   const stopScanner = async () => {
-    if (
-      html5QrcodeScannerRef.current &&
-      html5QrcodeScannerRef.current.isScanning
-    ) {
+    if (html5QrcodeScannerRef.current && isCameraActiveRef.current) {
       try {
         await html5QrcodeScannerRef.current.stop();
         html5QrcodeScannerRef.current.clear();
       } catch (err) {
         console.error("Failed to stop scanner:", err);
+      } finally {
+        isCameraActiveRef.current = false;
       }
     }
     setIsScanning(false);
@@ -145,7 +149,26 @@ const GateScanner = () => {
         }),
       });
 
-      const data = await res.json();
+      // Read the body as text first so a non-JSON response (HTML error page,
+      // proxy/auth failure page, etc.) doesn't crash res.json() with
+      // "Unexpected token '<'" — instead we surface a clear error message.
+      const rawText = await res.text();
+      const contentType = res.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        console.error("Non-JSON response:", res.status, rawText.slice(0, 300));
+        throw new Error(
+          `Server returned an unexpected response (status ${res.status}). Check that the API URL and route are correct.`,
+        );
+      }
+
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseErr) {
+        console.error("Failed to parse JSON:", rawText.slice(0, 300));
+        throw new Error("Server response could not be parsed as JSON.");
+      }
 
       if (res.ok && data.success) {
         setScanResult({
