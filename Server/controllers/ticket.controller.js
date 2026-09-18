@@ -180,16 +180,37 @@ export const getTicketsInfo = async (req, res) => {
 
     const cachedRaw = await safeGet(cacheKey);
     if (cachedRaw) {
-      await redisClient.expire(cacheKey, 3600);
-      return res.status(200).json({
-        success: true,
-        ticket: JSON.parse(cachedRaw),
-        source: "cache",
-      });
+      const cachedTicket = JSON.parse(cachedRaw);
+      // Cached before qrCode existed/was backfilled - don't serve it stale.
+      if (cachedTicket.qrCode) {
+        await redisClient.expire(cacheKey, 3600);
+        return res.status(200).json({
+          success: true,
+          ticket: cachedTicket,
+          source: "cache",
+        });
+      }
     }
 
-    const ticket = await TicketService.findById(ticketId);
+    let ticket = await TicketService.findById(ticketId);
     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+
+    // Backfill: tickets purchased before qrCode was added to the schema
+    // never got one persisted, so generate it now.
+    if (!ticket.qrCode) {
+      const qrPayload = JSON.stringify({
+        userTicketId: ticket._id,
+        token: ticket.orderNo,
+      });
+      const qrCode = await QRCode.toDataURL(qrPayload, {
+        width: 600,
+        margin: 2,
+        color: { dark: "#000000", light: "#ffffff" },
+      });
+      await UserTicketModel.updateOne({ _id: ticket._id }, { qrCode });
+      ticket = ticket.toObject ? ticket.toObject() : ticket;
+      ticket.qrCode = qrCode;
+    }
 
     await redisClient.setex(cacheKey, 3600, JSON.stringify(ticket));
 
