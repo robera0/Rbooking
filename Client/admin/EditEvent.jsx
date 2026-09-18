@@ -263,6 +263,7 @@ const EditEvent = () => {
 
   const set = (patch) => setFormData((prev) => ({ ...prev, ...patch }));
   const [isSaved, setIsSaved] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const hasUnsavedChanges = React.useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify(initialFormRef.current);
@@ -415,6 +416,15 @@ const EditEvent = () => {
     }
 
     updateMutation.mutate(payload);
+  };
+
+  const handleCancelEvent = () => {
+    setShowCancelConfirm(true);
+  };
+
+  const confirmCancelEvent = () => {
+    setShowCancelConfirm(false);
+    handleSubmit("cancelled");
   };
 
   if (!formData.eventName && !eventData?.event) {
@@ -664,16 +674,21 @@ const EditEvent = () => {
                       type="button"
                       onClick={() => {
                         const updated = [...formData.tickets];
-                        updated[idx].isActive = ticket.isActive === false ? true : false;
+                        updated[idx].isActive =
+                          ticket.isActive === false ? true : false;
                         set({ tickets: updated });
                       }}
                       className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
-                        ticket.isActive !== false ? "bg-[#FF7A00]" : "bg-white/10"
+                        ticket.isActive !== false
+                          ? "bg-[#FF7A00]"
+                          : "bg-white/10"
                       }`}
                     >
                       <span
                         className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all shadow ${
-                          ticket.isActive !== false ? "left-[18px]" : "left-[2px]"
+                          ticket.isActive !== false
+                            ? "left-[18px]"
+                            : "left-[2px]"
                         }`}
                       />
                     </button>
@@ -739,16 +754,21 @@ const EditEvent = () => {
                       newTicket.capacity !== ""
                     ) {
                       set({ tickets: [...formData.tickets, { ...newTicket }] });
-                      setNewTicket({ name: "", price: "", capacity: "", isActive: true });
+                      setNewTicket({
+                        name: "",
+                        price: "",
+                        capacity: "",
+                        isActive: true,
+                      });
                     } else {
                       toast.error(
                         "Please fill in Ticket Name, Price, and Capacity to add a ticket.",
                       );
                     }
                   }}
-                  className="ml-2 text-[#22c55e] border border-[#22c55e] rounded-full p-2"
+                  className="ml-2 text-[#22c55e] border border-[#22c55e] hover:text-white   hover:bg-green-400 transition duration-300 rounded-full p-2"
                 >
-                  <Check size={18} />
+                  <Check className="hover:text-white  " size={18} />
                 </button>
               </div>
             </div>
@@ -1095,8 +1115,62 @@ const EditEvent = () => {
               <p className="text-xs text-gray-500">Authorized changes only</p>
             </div>
           </div>
+
+          {eventData?.event?.status !== "cancelled" && (
+            <button
+              type="button"
+              onClick={handleCancelEvent}
+              disabled={updateMutation.isLoading}
+              className="w-full mt-2 px-6 py-4 bg-red-500/10 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Trash2 size={16} strokeWidth={2} />
+              {updateMutation.isLoading ? "Cancelling..." : "Cancel Event"}
+            </button>
+          )}
         </div>
       </div>
+
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-[2rem] border border-red-500/30 bg-[#1C1F22] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-2xl bg-red-500/10 text-red-400">
+                <Trash2 size={20} strokeWidth={2} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-300">
+                  Danger
+                </p>
+                <h3 className="text-xl font-black uppercase tracking-tight text-white">
+                  Cancel Event
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-300 leading-relaxed mb-6">
+              This action will make the event unavailable to customers and mark
+              it as cancelled.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 px-4 py-3 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-colors"
+              >
+                Keep Event
+              </button>
+              <button
+                type="button"
+                onClick={confirmCancelEvent}
+                className="flex-1 px-4 py-3 rounded-full bg-red-500 text-white hover:bg-red-400 text-[10px] font-black uppercase tracking-widest transition-colors"
+              >
+                Confirm Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
