@@ -9,6 +9,7 @@ import UserService from "../service/user.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
 import mongoose from "mongoose";
+import redisClient, { REDIS_PREFIX } from "../config/redis.js";
 dotenv.config();
 
 const refreshToken_SECRET = process.env.REFRESH_TOKEN_SECRET;
@@ -248,6 +249,63 @@ export const login = catchAsync(async (req, res, next) => {
     user.refreshTokens = user.refreshTokens.slice(-MAX_TOKENS);
   }
 
+  await user.save();
+
+  res
+    .cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    })
+    .cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    })
+    .status(200)
+    .json({ role: user.role, message: "Logged in successfully" });
+});
+
+// Exchanges a short-lived one-time code (issued by the Google OAuth
+// callback redirect) for a real session. Called by the frontend right
+// after landing back on its own domain, so the cookies set here are
+// first-party - unlike setting them directly from the callback response,
+// which would bind them to the backend's own cross-site domain.
+export const googleExchange = catchAsync(async (req, res, next) => {
+  const { code } = req.body;
+
+  if (!code) {
+    return res.status(400).json({ message: "Missing exchange code" });
+  }
+
+  const key = `${REDIS_PREFIX}oauth_exchange:${code}`;
+  const raw = await redisClient.get(key);
+
+  if (!raw) {
+    return res
+      .status(400)
+      .json({ message: "Invalid or expired exchange code" });
+  }
+  await redisClient.del(key);
+
+  const { id, email, role } = JSON.parse(raw);
+
+  const user = await UserModel.findById(id);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const payload = { id: user._id, email, role };
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+
+  const MAX_TOKENS = 5;
+  user.refreshTokens.push({ token: refreshToken });
+  if (user.refreshTokens.length > MAX_TOKENS) {
+    user.refreshTokens = user.refreshTokens.slice(-MAX_TOKENS);
+  }
   await user.save();
 
   res

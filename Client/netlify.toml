@@ -1,3 +1,14 @@
 [build]
   command = "npm run build"
   publish = "dist"
+
+# Proxy API calls through Netlify's own origin so the auth cookies set by
+# the backend (paysso.onrender.com) are first-party from the browser's
+# perspective. Without this, iOS Safari/Chrome (WebKit) blocks the
+# cross-site cookie entirely under ITP, silently breaking login on iPhone
+# even though it works on desktop browsers that still allow it.
+[[redirects]]
+  from = "/api/*"
+  to = "https://paysso.onrender.com/api/:splat"
+  status = 200
+  force = true

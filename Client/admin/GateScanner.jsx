@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Scan,
 } from "lucide-react";
-import { useService } from "@/Context/ServiceContext";
 
 /* ── Ambient orb decoration ── */
 const Orb = ({ className }) => (
@@ -66,7 +65,6 @@ const Particles = () =>
   });
 
 const GateScanner = () => {
-  const { API_URL } = useService();
   const [scanResult, setScanResult] = useState(null); // { success: boolean, message: string, ticket?: object }
   const [loading, setLoading] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -136,7 +134,7 @@ const GateScanner = () => {
         throw new Error("Invalid ticket QR structure");
       }
 
-      const res = await fetch(`${API_URL}/api/auth/tickets/qr`, {
+      const res = await fetch(`/api/auth/tickets/qr`, {
         method: "PATCH",
         credentials: "include",
         headers: {

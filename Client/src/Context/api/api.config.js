@@ -1,7 +1,11 @@
 import axios from "axios";
 
-// Use empty string in dev to leverage Vite's proxy, otherwise use env variable
-const baseURL = import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "");
+// Always use a relative baseURL so requests go through the same origin as
+// the frontend (Vite's dev proxy locally, Netlify's /api/* redirect in
+// production). This keeps the auth cookie first-party — iOS Safari/Chrome
+// (WebKit) blocks third-party cookies entirely, which broke login on
+// iPhone when this pointed straight at the cross-site backend domain.
+const baseURL = "";
 
 const api = axios.create({
   baseURL,
