@@ -8,13 +8,11 @@ const REDIS_URL = process.env.REDIS_URL;
 export const REDIS_PREFIX = "paysso:";
 
 const redisClient = new Redis(REDIS_URL, {
-  // Fail fast instead of letting a command hang for tens of seconds when
-  // Redis is briefly unreachable - callers should fall back to the DB.
   maxRetriesPerRequest: 1,
   connectTimeout: 3000,
   commandTimeout: 2000,
 });
-console.log("REDIS_URL:", REDIS_URL);
+
 redisClient.on("connect", () =>
   console.log("Redis Connected Successfully  via ioredis"),
 );
@@ -49,7 +47,7 @@ export const clearSingleEventCache = async (eventId) => {
   try {
     if (!eventId) return;
 
-    // We must clear ALL keys starting with the eventId to clear both 
+    // We must clear ALL keys starting with the eventId to clear both
     // event:single:ID and event:single:ID:ticketID caches
     const pattern = `${REDIS_PREFIX}event:single:${eventId}*`;
     const keys = await redisClient.keys(pattern);
