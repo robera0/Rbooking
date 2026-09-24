@@ -1,1 +1,8 @@
+# Proxy API calls through Netlify's own origin so the auth cookies set by
+# the backend (paysso.onrender.com) are first-party from the browser's
+# perspective (iOS Safari/Chrome block third-party cookies outright).
+# This must come before the SPA catch-all below - _redirects rules are
+# matched top to bottom, first match wins.
+/api/*  https://paysso.onrender.com/api/:splat  200!
+
 /*    /index.html   200
