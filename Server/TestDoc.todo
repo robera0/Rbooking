@@ -1,0 +1,32 @@
+  
+   USER SIDE 
+
+[] create a user using email and password 
+[] updating a profile 
+[] adding to wishlist
+[] removing to wishlist 
+[] routing to the specific event in the calendar icon 
+[] venue route 
+[] the search engine is working 
+[] search from the date in home 
+[] sign out working 
+
+  THINGS NOT WORKING 
+
+[] updating email and password not working 
+[] after purchasing the tickets now showing in the ticket route 
+[] add event as a filter in the search bar 
+
+   ADMIN SIDE 
+
+[] log in as an admin using email and password
+[] notification when a user  purchase a ticket 
+
+
+   THINGS NOT WORKING
+   [] add a button to cancel  the event 
+
+ [] the revenue breakdown metrics 
+ [] revenue history 
+ [] customer  // should be commented out   
+ [] the notification setting that notify the users to see when a ticket is purchased 

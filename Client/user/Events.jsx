@@ -88,9 +88,10 @@ const Events = () => {
 
   const filterButtons = [
     { name: "All Experiences", type: "" },
+    { name: "Events", type: "generic" },
     { name: "Concerts", type: "concert" },
     { name: "Festivals", type: "festival" },
-    { name: "Exclusives", type: "exclusive" },
+    // { name: "Exclusives", type: "exclusive" },
   ];
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -223,7 +224,8 @@ const Events = () => {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-10"
             >
               {filteredEvents.map((e) => {
-                const isSoldOut = e.tickets?.length === 0 || isEventPassed8Hours(e);
+                const isSoldOut =
+                  e.tickets?.length === 0 || isEventPassed8Hours(e);
                 const isAdded = checkWishlist(e._id);
                 const baseActiveTicket = e?.priceRanges?.[0] || e?.price || "0";
                 const activeTicket = baseActiveTicket
