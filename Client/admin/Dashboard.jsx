@@ -9,14 +9,13 @@ import {
 } from "lucide-react";
 import { Cards } from "./Cards";
 import GridDemo from "./Graphs";
-import ArcDesign from "./Guage";
 import RevenueChart from "./RevenueGraph";
 import { useQuery } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
 import { Loader2 } from "lucide-react";
 import { useDashboard } from "@/Context/DashboardContext";
 const Dashboard = () => {
-  const { stats, isLoading } = useDashboard();
+  const { stats, isLoading, revenueHistory } = useDashboard();
   if (isLoading) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
@@ -78,8 +77,8 @@ const Dashboard = () => {
 
       {/* Main Content Area */}
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        {/* Left Column (Revenue) */}
-        <div className="w-full lg:w-2/3 flex flex-col gap-6 lg:gap-8">
+        {/* Revenue */}
+        <div className="w-full flex flex-col gap-6 lg:gap-8">
           <div className="w-full bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-xl flex flex-col min-h-[300px]">
             <div className="flex flex-wrap justify-between items-center mb-6">
               <div>
@@ -93,8 +92,8 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            <div className="flex-1 flex items-end justify-center pb-4 text-gray-500 italic font-medium">
-              [Revenue Breakdown Chart UI]
+            <div className="flex-1 w-full relative min-h-[220px]">
+              <GridDemo dataset={revenueHistory || []} />
             </div>
           </div>
 
@@ -115,47 +114,7 @@ const Dashboard = () => {
             </div>
             {/* graph content */}
             <div className="flex-1 w-full relative min-h-[300px]">
-              <RevenueChart />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column (Customers) */}
-        <div className="flex-1 space-y-8 bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-xl flex flex-col min-h-[400px]">
-          <div>
-            <h1 className="text-xl text-white font-bold uppercase tracking-tight">
-              Customers
-            </h1>
-          </div>
-          <div className="flex justify-center items-center flex-1 min-h-[250px]">
-            <ArcDesign />
-          </div>
-          <div className="flex flex-col justify-center items-center pb-4 pt-6 border-t border-white/[0.06]">
-            <div className="flex w-full justify-around px-2">
-              <div className="flex flex-col items-center space-y-3">
-                <h1 className="text-3xl md:text-4xl text-center text-white font-black tracking-tighter">
-                  {stats?.users?.newLast7Days?.toLocaleString() || "0"}
-                </h1>
-                <div className="flex items-center space-x-2 bg-white/[0.04] px-3 py-1.5 rounded-lg border border-white/[0.05]">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF7A00] shadow-[0_0_10px_rgba(255,122,0,0.5)]"></div>
-                  <p className="text-gray-400 text-[9px] font-black uppercase tracking-[0.2em] leading-none mt-0.5">
-                    New Current
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col items-center space-y-3">
-                <h1 className="text-3xl md:text-4xl text-center text-white font-black tracking-tighter">
-                  {(
-                    stats?.users?.total - (stats?.users?.newLast7Days || 0)
-                  ).toLocaleString() || "0"}
-                </h1>
-                <div className="flex items-center space-x-2 bg-white/[0.04] px-3 py-1.5 rounded-lg border border-white/[0.05]">
-                  <div className="w-2.5 h-2.5 rounded-full bg-gray-500"></div>
-                  <p className="text-gray-400 text-[9px] font-black uppercase tracking-[0.2em] leading-none mt-0.5">
-                    Established
-                  </p>
-                </div>
-              </div>
+              <RevenueChart history={revenueHistory || []} />
             </div>
           </div>
         </div>

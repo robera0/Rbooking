@@ -28,6 +28,23 @@ const Report = () => {
     },
   });
 
+  const { data: revenueHistory } = useQuery({
+    queryKey: ["adminRevenueHistory"],
+    queryFn: async () => {
+      const res = await api.get(`/api/auth/admin/analytics/revenue`);
+      return res.data?.history || [];
+    },
+  });
+
+  const newCustomers = stats?.users?.newLast7Days || 0;
+  const establishedCustomers = Math.max(
+    (stats?.users?.total || 0) - newCustomers,
+    0,
+  );
+  const customerGaugeValue = stats?.users?.total
+    ? Math.round((newCustomers / stats.users.total) * 100)
+    : 0;
+
   if (isLoading) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
@@ -111,7 +128,7 @@ const Report = () => {
             </select>
           </div>
           {/*graph content */}
-          <GridDemo />
+          <GridDemo dataset={revenueHistory || []} />
         </div>
 
         <div className="flex-1 space-y-8  pt-6 bg-[#1C1F22]  shadow-xl rounded-xl ">
@@ -119,13 +136,13 @@ const Report = () => {
             <h1 className="text-2xl pl-4 font-semibold">Customers</h1>
           </div>
           <div className=" flex justify-center items-center">
-            <ArcDesign />
+            <ArcDesign value={customerGaugeValue} />
           </div>
           <div className="flex flex-col  justify-center items-center ">
             <div className="flex flex-wrap space-x-12">
               <div className="flex flex-col justify-between space-y-2">
                 <h1 className="text-3xl text-center text-white font-bold">
-                  10,293
+                  {newCustomers.toLocaleString()}
                 </h1>
                 <div className="flex flex-wrap  items-center  space-x-3  ">
                   <div className="w-3 h-3 rounded-full bg-orange-400"></div>
@@ -134,11 +151,11 @@ const Report = () => {
               </div>
               <div className="flex flex-col  justify-between space-y-2">
                 <h1 className="text-3xl text-center  text-white font-bold">
-                  30,373
+                  {establishedCustomers.toLocaleString()}
                 </h1>
                 <div className="flex flex-wrap  items-center space-x-3  ">
                   <div className="w-3 h-3 flex rounded-full bg-[#EADCE4]"></div>
-                  <p className=" text-[#6F6F6F] font-semibold">Repeated</p>
+                  <p className=" text-[#6F6F6F] font-semibold">Established</p>
                 </div>
               </div>
             </div>
@@ -163,7 +180,7 @@ const Report = () => {
 
           {/* Graph content */}
           <div className="w-full px-4">
-            <CustomLabels /> {/* Replace with your chart component */}
+            <CustomLabels dataset={revenueHistory || []} />
           </div>
         </div>
         {/*User graph */}
@@ -186,7 +203,7 @@ const Report = () => {
           </div>
           {/*graph content */}
           <div className="">
-            <RevenueChart />
+            <RevenueChart history={revenueHistory || []} />
           </div>
         </div>
       </div>

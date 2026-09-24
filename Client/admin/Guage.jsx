@@ -1,12 +1,11 @@
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 
-const settings = {
-  width: 150,
-  height: 150,
-  value: 60,
-};
-
-export default function ArcDesign() {
+export default function ArcDesign({ value = 0 }) {
+  const settings = {
+    width: 150,
+    height: 150,
+    value,
+  };
   return (
     <Gauge
       {...settings}

@@ -1,11 +1,10 @@
 import { LineChart } from "@mui/x-charts/LineChart";
 import { BarChart } from "@mui/x-charts/BarChart";
-import { bookingData, dateAxisFormatter } from "@/dataset/bookingData";
+
 const xAxis = [
   {
-    dataKey: "date",
-    scaleType: "time",
-    valueFormatter: dateAxisFormatter,
+    dataKey: "name",
+    scaleType: "band",
   },
 ];
 
@@ -17,17 +16,17 @@ const yAxis = [
 
 const series = [
   {
-    dataKey: "rate",
+    dataKey: "revenue",
     showMark: true,
     area: true, // enable area fill
     color: "#FF7A00", // line color
   },
 ];
 
-export default function BookingChart() {
+export default function BookingChart({ dataset = [] }) {
   return (
     <LineChart
-      dataset={bookingData}
+      dataset={dataset}
       xAxis={xAxis}
       yAxis={yAxis}
       series={series}
@@ -55,15 +54,15 @@ export default function BookingChart() {
   );
 }
 
-export const CustomLabels = () => {
+export const CustomLabels = ({ dataset = [] }) => {
   return (
     <BarChart
       height={350}
       margin={{ left: 0 }}
+      dataset={dataset}
+      xAxis={[{ scaleType: "band", dataKey: "name" }]}
       series={[
-        { data: [4, 2, 5, 4, 1], stack: "A", label: "Series A1" },
-        { data: [2, 8, 1, 3, 1], stack: "A", label: "Series A2" },
-        { data: [14, 6, 5, 8, 9], label: "Series B1" },
+        { dataKey: "tickets", label: "Tickets Sold", color: "#FF7A00" },
       ]}
       barLabel={(item, context) => {
         if ((item.value ?? 0) > 10) {
