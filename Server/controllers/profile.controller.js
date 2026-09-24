@@ -1,11 +1,13 @@
 import { ProfileModel } from "../models/profile.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import multer from "multer";
+import fs from "fs";
 import mongoose from "mongoose";
 import catchAsync from "../errors/catchAsync.js";
 import { safeParse } from "../utils/safeParse.js";
 import AdminProfileService from "../service/adminProfile.service.js";
 import ProfileService from "../service/profile.service.js";
+import { imageUploader } from "../liberary/index.js";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -62,15 +64,31 @@ export const updateUser = catchAsync(async (req, res, next) => {
     } = req.body;
 
     console.log(req.body);
-    // Build avatarUrl from the uploaded file (handled by multer)
+    // Build avatarUrl/coverPage from the uploaded file (handled by multer, then Cloudinary)
     let avatarUrl;
     let coverPage;
 
     if (req.files?.avatarUrl?.[0]) {
-      avatarUrl = `uploads/${req.files.avatarUrl[0].filename}`;
+      const avatarFile = req.files.avatarUrl[0];
+      [avatarUrl] = await imageUploader.uploadMultipleImage(
+        [avatarFile.path],
+        "avatars",
+      );
+      fs.unlink(avatarFile.path, (unlinkErr) => {
+        if (unlinkErr)
+          console.error("Failed to delete temp file:", avatarFile.path, unlinkErr);
+      });
     }
     if (req.files?.coverPage?.[0]) {
-      coverPage = `uploads/${req.files.coverPage[0].filename}`;
+      const coverFile = req.files.coverPage[0];
+      [coverPage] = await imageUploader.uploadMultipleImage(
+        [coverFile.path],
+        "covers",
+      );
+      fs.unlink(coverFile.path, (unlinkErr) => {
+        if (unlinkErr)
+          console.error("Failed to delete temp file:", coverFile.path, unlinkErr);
+      });
     }
 
     const normalizedPhone = phone

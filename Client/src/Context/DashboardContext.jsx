@@ -16,11 +16,21 @@ export const DashboardProvider = ({ children }) => {
     },
   });
 
+  const { data: revenueHistory, isLoading: isRevenueLoading } = useQuery({
+    queryKey: ["adminRevenueHistory"],
+    queryFn: async () => {
+      const res = await api.get(`/api/auth/admin/analytics/revenue`);
+      return res.data?.history || [];
+    },
+  });
+
   return (
     <DashboardContext.Provider
       value={{
         stats,
         isLoading,
+        revenueHistory,
+        isRevenueLoading,
       }}
     >
       {children}

@@ -320,7 +320,9 @@ const Profile = () => {
   const avatarSrc = preview
     ? preview
     : userProfile?.user?.avatarUrl
-    ? `${API_URL}/${userProfile.user.avatarUrl}`
+    ? userProfile.user.avatarUrl.startsWith("http")
+      ? userProfile.user.avatarUrl
+      : `${API_URL}/${userProfile.user.avatarUrl}`
     : "/Login.jpg";
 
   const userName = userProfile?.user?.fullName || "Your Name";

@@ -140,9 +140,9 @@ const GateScanner = () => {
       console.log(localStorage.getItem("token"));
       const res = await fetch(`${API_URL}/api/auth/tickets/qr`, {
         method: "PATCH",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           userTicketId: payload.userTicketId,

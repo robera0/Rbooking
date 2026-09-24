@@ -311,7 +311,9 @@ const Main = () => {
 
   const profileImageSrc = useMemo(() => {
     if (userProfile?.user?.avatarUrl) {
-      return `${API_URL}/${userProfile.user.avatarUrl}`;
+      return userProfile.user.avatarUrl.startsWith("http")
+        ? userProfile.user.avatarUrl
+        : `${API_URL}/${userProfile.user.avatarUrl}`;
     }
     return "/defaultAvater.jpg";
   }, [userProfile?.user?.avatarUrl, API_URL]);

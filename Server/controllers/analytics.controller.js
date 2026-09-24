@@ -154,7 +154,16 @@ export const get_transaction_by_id = catchAsync(async (req, res) => {
 });
 
 export const get_revenue_history = catchAsync(async (req, res, next) => {
-  // Aggregates revenue per month for the current year
+  // Aggregates revenue per month for the current year, scoped to this admin's own events
+  const userId = new mongoose.Types.ObjectId(req.user.id);
+  const adminScopeId = await resolveAdminScopeId(userId);
+  const adminEventIds = await EventService.find({
+    adminId: adminScopeId,
+  }).distinct("_id");
+  const adminTicketIds = await TicketModel.find({
+    eventId: { $in: adminEventIds },
+  }).distinct("_id");
+
   const currentYear = new Date().getFullYear();
   const startOfYear = new Date(currentYear, 0, 1);
   const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
@@ -163,6 +172,7 @@ export const get_revenue_history = catchAsync(async (req, res, next) => {
     {
       $match: {
         status: "paid",
+        ticketId: { $in: adminTicketIds },
         purchasedAt: { $gte: startOfYear, $lte: endOfYear },
       },
     },

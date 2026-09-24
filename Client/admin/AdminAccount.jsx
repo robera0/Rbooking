@@ -121,7 +121,11 @@ const AdminAccount = () => {
         country: u.country || "",
       });
       if (u.coverPage) {
-        setCoverPreview(`${API_URL}/${u.coverPage}`);
+        setCoverPreview(
+          u.coverPage.startsWith("http")
+            ? u.coverPage
+            : `${API_URL}/${u.coverPage}`,
+        );
       } else {
         setCoverPreview(null);
       }
@@ -188,7 +192,11 @@ const AdminAccount = () => {
         country: u.country || "",
       });
       if (u.coverPage) {
-        setCoverPreview(`${API_URL}/${u.coverPage}`);
+        setCoverPreview(
+          u.coverPage.startsWith("http")
+            ? u.coverPage
+            : `${API_URL}/${u.coverPage}`,
+        );
       } else {
         setCoverPreview(null);
       }
@@ -281,7 +289,9 @@ const AdminAccount = () => {
   const avatarSrc = preview
     ? preview
     : userProfile?.user?.avatarUrl
-    ? `${API_URL}/${userProfile.user.avatarUrl}`
+    ? userProfile.user.avatarUrl.startsWith("http")
+      ? userProfile.user.avatarUrl
+      : `${API_URL}/${userProfile.user.avatarUrl}`
     : "/Login.jpg";
 
   const userName =
