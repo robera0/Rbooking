@@ -17,8 +17,10 @@ import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
 import EventService from "../service/event.service.js";
-
-
+import {
+  getExpectedReceiver,
+  nameMatches,
+} from "../service/receiver.service.js";
 
 export const purchaseTicket = async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -31,7 +33,6 @@ export const purchaseTicket = async (req, res) => {
     return res.status(400).json({ message: "Invalid quantity" });
 
   try {
-
     const ticket = await TicketModel.findOneAndUpdate(
       {
         _id: ticketId,
@@ -256,8 +257,6 @@ export const verifyTicket = async (req, res) => {
 
   const userId = req.user.id;
 
-  const EXPECTED_RECEIVER = "Naod Ararsa Ulu";
-
   if (!receiptUrl || !receiptUrl.trim())
     return res.status(400).json({ message: "Receipt link is required" });
 
@@ -287,6 +286,13 @@ export const verifyTicket = async (req, res) => {
     if (userTicket.status === "cancelled")
       return res.status(400).json({ message: "This ticket was cancelled" });
 
+    const expected = await getExpectedReceiver(userTicket);
+    if (expected.message) {
+      return res.status(expected.status).json({ message: expected.message });
+    }
+    const { eventInfo, adminProfile } = expected;
+    const EXPECTED_RECEIVER = expected.receiverName;
+
     // verification
     const TOTAL_AMOUNT = userTicket.totalAmount;
 
@@ -305,7 +311,10 @@ export const verifyTicket = async (req, res) => {
       return res.status(400).json({ message: "Transaction is not completed" });
     }
 
-    if (receipt.creditedPartyName.toLowerCase() !== EXPECTED_RECEIVER.toLowerCase()) {
+    if (
+      receipt.creditedPartyName.split(" ")[0].toLowerCase() !==
+      EXPECTED_RECEIVER.toLowerCase()
+    ) {
       return res
         .status(400)
         .json({ message: "Invalid receiver name on receipt" });
@@ -459,6 +468,7 @@ export const scanTicket = catchAsync(async (req, res, next) => {
       message: `Ticket cannot be checked in (status: ${existing.status}, verified: ${existing.isVerified})`,
     });
   }
-
-  res.status(200).json({ success: true, message: "Checked in", userTicket });
+  return res
+    .status(200)
+    .json({ success: true, message: "Checked in", userTicket });
 });

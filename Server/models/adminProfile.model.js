@@ -61,9 +61,10 @@ const adminProfileSchema = new mongoose.Schema(
           enum: ["Telebirr", "Abyssinia Bank", "CBE", "MPSA"],
         },
         accountNumber: String,
+        receiverName: String,
       },
     ],
-    
+
     // Role within admin system
     adminRole: {
       type: String,

@@ -146,9 +146,6 @@ const GateScanner = () => {
         }),
       });
 
-      // Read the body as text first so a non-JSON response (HTML error page,
-      // proxy/auth failure page, etc.) doesn't crash res.json() with
-      // "Unexpected token '<'" — instead we surface a clear error message.
       const rawText = await res.text();
       const contentType = res.headers.get("content-type") || "";
 

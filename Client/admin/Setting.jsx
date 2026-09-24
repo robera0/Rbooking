@@ -3,7 +3,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { eventService } from "@/Context/ApiEvent";
 import api from "@/Context/api/api.config";
 import toast from "react-hot-toast";
-import { BellRing, Tag, CreditCard, CheckCircle2, Trash2, Plus, Edit2 } from "lucide-react";
+import {
+  BellRing,
+  Tag,
+  CreditCard,
+  CheckCircle2,
+  Trash2,
+  Plus,
+  Edit2,
+  Clock,
+} from "lucide-react";
 
 // Section Header
 const SectionHeader = ({ icon: Icon, title, desc }) => (
@@ -24,7 +33,9 @@ const SectionHeader = ({ icon: Icon, title, desc }) => (
 const ToggleRow = ({ label, desc, on, onToggle }) => (
   <div className="flex items-center justify-between gap-4 py-4 border-b border-[#5a4136]/20 last:border-0 group">
     <div className="min-w-0 flex-1">
-      <h3 className="text-sm font-bold text-[#e5e2e1] group-hover:text-white transition-colors">{label}</h3>
+      <h3 className="text-sm font-bold text-[#e5e2e1] group-hover:text-white transition-colors">
+        {label}
+      </h3>
       <p className="text-xs text-[#8a8683] mt-1">{desc}</p>
     </div>
     <button
@@ -94,7 +105,8 @@ const ArrayManager = ({ label, items, onChange, placeholder }) => {
 };
 
 const AdminSetting = () => {
-  const { adminSettings, adminSettingsLoading, availablePaymentMethods } = eventService();
+  const { adminSettings, adminSettingsLoading, availablePaymentMethods } =
+    eventService();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
@@ -132,12 +144,18 @@ const AdminSetting = () => {
       queryClient.invalidateQueries({ queryKey: ["adminSettings"] });
     },
     onError: (err) => {
-      toast.error(err.response?.data?.message || err.message, { id: "settings" });
+      toast.error(err.response?.data?.message || err.message, {
+        id: "settings",
+      });
     },
   });
 
   if (adminSettingsLoading) {
-    return <div className="p-8 text-[#8a8683] animate-pulse">Loading settings...</div>;
+    return (
+      <div className="p-8 text-[#8a8683] animate-pulse">
+        Loading settings...
+      </div>
+    );
   }
 
   const setNested = (category, section, field, value) => {
@@ -166,7 +184,10 @@ const AdminSetting = () => {
   const togglePaymentMethod = (method) => {
     const active = formData.activePaymentMethods;
     if (active.includes(method)) {
-      setFormData({ ...formData, activePaymentMethods: active.filter((m) => m !== method) });
+      setFormData({
+        ...formData,
+        activePaymentMethods: active.filter((m) => m !== method),
+      });
     } else {
       setFormData({ ...formData, activePaymentMethods: [...active, method] });
     }
@@ -181,7 +202,8 @@ const AdminSetting = () => {
         </h1>
         <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
         <p className="text-sm text-[#e2bfb0] opacity-70 mt-4">
-          Configure notifications, categorize your events, and manage payment gateways.
+          Configure notifications, categorize your events, and manage payment
+          gateways.
         </p>
       </div>
 
@@ -192,33 +214,58 @@ const AdminSetting = () => {
           title="Notification Triggers"
           desc="Control which automated alerts are sent to you or your attendees."
         />
-        
+
         <div className="space-y-6">
           <div>
-            <h3 className="text-xs font-bold text-[#ff6b00] uppercase tracking-widest mb-2">Admin Alerts</h3>
+            <h3 className="text-xs font-bold text-[#ff6b00] uppercase tracking-widest mb-2">
+              Admin Alerts
+            </h3>
             <div className="bg-[#141313] border border-[#5a4136]/20 rounded-xl px-5">
               <ToggleRow
                 label="New Ticket Purchase"
                 desc="Receive an in-app alert when a user buys a ticket for your event."
                 on={formData.notifications.adminAlerts.newTicketPurchase}
-                onToggle={(val) => setNested("notifications", "adminAlerts", "newTicketPurchase", val)}
+                onToggle={(val) =>
+                  setNested(
+                    "notifications",
+                    "adminAlerts",
+                    "newTicketPurchase",
+                    val,
+                  )
+                }
               />
             </div>
           </div>
           <div>
-            <h3 className="text-xs font-bold text-[#ff6b00] uppercase tracking-widest mb-2">User Alerts</h3>
+            <h3 className="text-xs font-bold text-[#ff6b00] uppercase tracking-widest mb-2">
+              User Alerts
+            </h3>
             <div className="bg-[#141313] border border-[#5a4136]/20 rounded-xl px-5">
               <ToggleRow
                 label="Ticket Verified"
                 desc="Automatically notify attendees when their payment is approved."
                 on={formData.notifications.userAlerts.ticketVerified}
-                onToggle={(val) => setNested("notifications", "userAlerts", "ticketVerified", val)}
+                onToggle={(val) =>
+                  setNested(
+                    "notifications",
+                    "userAlerts",
+                    "ticketVerified",
+                    val,
+                  )
+                }
               />
               <ToggleRow
                 label="Event Cancelled"
                 desc="Automatically notify ticket holders if you cancel an event."
                 on={formData.notifications.userAlerts.eventCancelled}
-                onToggle={(val) => setNested("notifications", "userAlerts", "eventCancelled", val)}
+                onToggle={(val) =>
+                  setNested(
+                    "notifications",
+                    "userAlerts",
+                    "eventCancelled",
+                    val,
+                  )
+                }
               />
             </div>
           </div>
@@ -236,7 +283,9 @@ const AdminSetting = () => {
           <ArrayManager
             label="Event Categories"
             items={formData.eventClassifications.categories}
-            onChange={(val) => setArray("eventClassifications", "categories", val)}
+            onChange={(val) =>
+              setArray("eventClassifications", "categories", val)
+            }
             placeholder="Add category (e.g. Workshop)"
           />
           <ArrayManager
@@ -249,6 +298,7 @@ const AdminSetting = () => {
       </div>
 
       {/* 3. Payment Gateways */}
+      {/* 3. Payment Gateways */}
       <div className="bg-[#1c1b1b] border border-[#5a4136]/40 rounded-xl p-6 md:p-8">
         <SectionHeader
           icon={CreditCard}
@@ -256,75 +306,150 @@ const AdminSetting = () => {
           desc="Manage the payment accounts that buyers will use to purchase your tickets."
         />
         <div className="space-y-6">
-          {(!formData.paymentMethods || formData.paymentMethods.length === 0) && (
-            <p className="text-[#8a8683] text-xs italic">No payment methods added yet.</p>
+          {(!formData.paymentMethods ||
+            formData.paymentMethods.length === 0) && (
+            <p className="text-[#8a8683] text-xs italic">
+              No payment methods added yet.
+            </p>
           )}
-          {(formData.paymentMethods || []).map((method, idx) => (
-            <div key={idx} className="flex flex-col sm:flex-row gap-4 sm:items-center bg-[#141313] p-5 rounded-xl border border-[#5a4136]/20">
-              <div className="flex-1 space-y-2">
-                <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">Provider</label>
-                <select
-                  value={method.provider}
-                  disabled={editingMethodIndex !== idx}
-                  onChange={(e) => {
-                    const updated = [...formData.paymentMethods];
-                    updated[idx].provider = e.target.value;
-                    setFormData({ ...formData, paymentMethods: updated });
-                  }}
-                  className="w-full bg-transparent border-none text-white font-bold outline-none cursor-pointer text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option className="bg-[#141313]" value="Telebirr">Telebirr</option>
-                  <option className="bg-[#141313]" value="CBE">CBE</option>
-                  <option className="bg-[#141313]" value="Awash">Awash</option>
-                  <option className="bg-[#141313]" value="Dashen">Dashen</option>
-                  <option className="bg-[#141313]" value="BOA">Bank of Abyssinia</option>
-                </select>
+          {(formData.paymentMethods || []).map((method, idx) => {
+            const isActive = formData.activePaymentMethods.includes(
+              method.provider,
+            );
+            const isEditing = editingMethodIndex === idx;
+
+            return (
+              <div
+                key={idx}
+                className="flex flex-col lg:flex-row gap-4 lg:items-center bg-[#141313] p-5 rounded-xl border border-[#5a4136]/20"
+              >
+                {/* Provider Selector */}
+                <div className="w-full lg:w-1/4 space-y-2">
+                  <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">
+                    Provider
+                  </label>
+                  <select
+                    value={method.provider}
+                    disabled={!isEditing}
+                    onChange={(e) => {
+                      const updated = [...formData.paymentMethods];
+                      updated[idx].provider = e.target.value;
+                      setFormData({ ...formData, paymentMethods: updated });
+                    }}
+                    className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-white font-bold outline-none cursor-pointer text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:border-none"
+                  >
+                    <option className="bg-[#141313]" value="Telebirr">
+                      Telebirr
+                    </option>
+                    <option className="bg-[#141313]" value="Abyssinia Bank">
+                      Bank of Abyssinia
+                    </option>
+                    <option className="bg-[#141313]" value="CBE">
+                      CBE
+                    </option>
+                    <option className="bg-[#141313]" value="MPSA">
+                      MPSA
+                    </option>
+                  </select>
+                </div>
+
+                {/* Account / Phone Number */}
+                <div className="flex-1 space-y-2">
+                  <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">
+                    Account / Phone Number
+                  </label>
+                  <input
+                    value={method.accountNumber || ""}
+                    disabled={!isEditing}
+                    onChange={(e) => {
+                      const updated = [...formData.paymentMethods];
+                      updated[idx].accountNumber = e.target.value;
+                      setFormData({ ...formData, paymentMethods: updated });
+                    }}
+                    className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-[#ff6b00] font-bold outline-none placeholder:text-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:border-none"
+                    placeholder="Enter Account Number"
+                  />
+                </div>
+
+                {/* Receiver Name */}
+                <div className="flex-1 space-y-2">
+                  <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">
+                    Receiver / Holder Name
+                  </label>
+                  <input
+                    value={method.receiverName || ""}
+                    disabled={!isEditing}
+                    onChange={(e) => {
+                      const updated = [...formData.paymentMethods];
+                      updated[idx].receiverName = e.target.value;
+                      setFormData({ ...formData, paymentMethods: updated });
+                    }}
+                    className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-white font-bold outline-none placeholder:text-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:border-none"
+                    placeholder="Enter Full Name"
+                  />
+                </div>
+
+                {/* Controls */}
+                <div className="lg:mt-4 flex items-center gap-2 self-end lg:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => togglePaymentMethod(method.provider)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      isActive
+                        ? "bg-[#FF7A00]"
+                        : "bg-[#0f0f0f] border-[#5a4136]/40"
+                    }`}
+                    title={
+                      isActive
+                        ? "Active — tap to disable"
+                        : "Disabled — tap to activate"
+                    }
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        isActive ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingMethodIndex(isEditing ? null : idx);
+                    }}
+                    className="text-gray-400 hover:text-white p-2 transition-colors"
+                  >
+                    {isEditing ? (
+                      <CheckCircle2 size={16} className="text-green-500" />
+                    ) : (
+                      <Edit2 size={16} />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = formData.paymentMethods.filter(
+                        (_, i) => i !== idx,
+                      );
+                      setFormData({ ...formData, paymentMethods: updated });
+                      if (editingMethodIndex === idx)
+                        setEditingMethodIndex(null);
+                    }}
+                    className="text-red-500 hover:text-red-400 p-2 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-              <div className="flex-[2] space-y-2">
-                <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">Account Number</label>
-                <input
-                  value={method.accountNumber}
-                  disabled={editingMethodIndex !== idx}
-                  onChange={(e) => {
-                    const updated = [...formData.paymentMethods];
-                    updated[idx].accountNumber = e.target.value;
-                    setFormData({ ...formData, paymentMethods: updated });
-                  }}
-                  className="w-full bg-transparent border-none text-[#ff6b00] font-bold outline-none placeholder:text-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="Enter Account Number"
-                />
-              </div>
-              <div className="sm:mt-4 flex items-center gap-1 self-end sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingMethodIndex(editingMethodIndex === idx ? null : idx);
-                  }}
-                  className="text-gray-400 hover:text-white p-2 transition-colors"
-                >
-                  {editingMethodIndex === idx ? <CheckCircle2 size={16} className="text-green-500" /> : <Edit2 size={16} />}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const updated = formData.paymentMethods.filter((_, i) => i !== idx);
-                    setFormData({ ...formData, paymentMethods: updated });
-                    if (editingMethodIndex === idx) setEditingMethodIndex(null);
-                  }}
-                  className="text-red-500 hover:text-red-400 p-2 transition-colors"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           <button
             type="button"
             onClick={() => {
               const newMethods = [
                 ...(formData.paymentMethods || []),
-                { provider: "Telebirr", accountNumber: "" },
+                { provider: "Telebirr", accountNumber: "", receiverName: "" },
               ];
               setFormData({
                 ...formData,
