@@ -864,9 +864,9 @@ const RegistrationPage = () => {
                     }
                     options={[
                       { value: "Telebirr", label: "Telebirr" },
-                      { value: "Abyssinia Bank", label: "Abyssinia Bank" },
-                      { value: "CBE", label: "CBE" },
-                      { value: "MPSA", label: "MPSA" },
+                      // { value: "Abyssinia Bank", label: "Abyssinia Bank" },
+                      //{ value: "CBE", label: "CBE" },
+                      // { value: "MPSA", label: "MPSA" },
                     ]}
                   />
                 </div>
