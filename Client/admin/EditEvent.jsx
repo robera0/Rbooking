@@ -1019,7 +1019,7 @@ const EditEvent = () => {
                   className="w-full bg-[#121417] border border-white/10 rounded-[1.5rem] p-4 flex gap-4 items-center"
                 >
                   <img
-                    src={`${API_URL}/${src}`}
+                    src={src.startsWith("http") ? src : `${API_URL}/${src}`}
                     className="w-16 h-16 rounded-xl object-cover opacity-80"
                     alt="existing"
                   />

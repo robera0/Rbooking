@@ -10,6 +10,7 @@ import fs from "fs";
 import QRCode from "qrcode";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
+import { imageUploader } from "../liberary/index.js";
 import "dotenv/config";
 
 const URL = process.env.NODE_ENV === "production"
@@ -85,7 +86,16 @@ export const addEvent = catchAsync(async (req, res, next) => {
 
   let pictures = [];
   if (req.files && req.files.length > 0) {
-    pictures = req.files.map((file) => `uploads/${file.filename}`);
+    pictures = await imageUploader.uploadMultipleImage(
+      req.files.map((file) => file.path),
+      "events",
+    );
+    req.files.forEach((file) => {
+      fs.unlink(file.path, (unlinkErr) => {
+        if (unlinkErr)
+          console.error("Failed to delete temp file:", file.path, unlinkErr);
+      });
+    });
   }
 
   let adminProfileId = userId;
@@ -124,15 +134,6 @@ export const addEvent = catchAsync(async (req, res, next) => {
   try {
     newEvent = await EventService.create(events);
   } catch (err) {
-    // Cleanup uploaded files on error
-    if (req.files && req.files.length > 0) {
-      req.files.forEach((file) => {
-        fs.unlink(file.path, (unlinkErr) => {
-          if (unlinkErr)
-            console.error("Failed to delete file:", file.path, unlinkErr);
-        });
-      });
-    }
     return next(err);
   }
 
@@ -450,8 +451,17 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   // Handle images
   let pictures = existingPictures || [];
   if (req.files && req.files.length > 0) {
-    const newPictures = req.files.map((file) => `uploads/${file.filename}`);
+    const newPictures = await imageUploader.uploadMultipleImage(
+      req.files.map((file) => file.path),
+      "events",
+    );
     pictures = [...pictures, ...newPictures];
+    req.files.forEach((file) => {
+      fs.unlink(file.path, (unlinkErr) => {
+        if (unlinkErr)
+          console.error("Failed to delete temp file:", file.path, unlinkErr);
+      });
+    });
   }
 
   const updateData = {
