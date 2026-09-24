@@ -17,6 +17,10 @@ import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
 import EventService from "../service/event.service.js";
+import {
+  getExpectedReceiver,
+  nameMatches,
+} from "../service/receiver.service.js";
 
 export const purchaseTicket = async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -253,20 +257,6 @@ export const verifyTicket = async (req, res) => {
 
   const userId = req.user.id;
 
-  const user = await AdminProfile.findOne({ userId: userId });
-
-  if (!user || !user.paymentMethods || user.paymentMethods.length === 0) {
-    return res
-      .status(400)
-      .json({ message: "Admin payment methods not configured" });
-  }
-
-  const matchingPaymentMethod = user?.paymentMethods?.find(
-    (m) => m.provider.toLowerCase() === receipt.provider?.toLowerCase(),
-  );
-
-  const EXPECTED_RECEIVER = matchingPaymentMethod?.receiverName;
-
   if (!receiptUrl || !receiptUrl.trim())
     return res.status(400).json({ message: "Receipt link is required" });
 
@@ -296,6 +286,13 @@ export const verifyTicket = async (req, res) => {
     if (userTicket.status === "cancelled")
       return res.status(400).json({ message: "This ticket was cancelled" });
 
+    const expected = await getExpectedReceiver(userTicket);
+    if (expected.message) {
+      return res.status(expected.status).json({ message: expected.message });
+    }
+    const { eventInfo, adminProfile } = expected;
+    const EXPECTED_RECEIVER = expected.receiverName;
+
     // verification
     const TOTAL_AMOUNT = userTicket.totalAmount;
 
@@ -315,7 +312,7 @@ export const verifyTicket = async (req, res) => {
     }
 
     if (
-      receipt.creditedPartyName.toLowerCase() !==
+      receipt.creditedPartyName.split(" ")[0].toLowerCase() !==
       EXPECTED_RECEIVER.toLowerCase()
     ) {
       return res
