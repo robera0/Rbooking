@@ -176,7 +176,9 @@ const Header = ({ onMenuToggle }) => {
               style={{
                 backgroundImage: `url(${
                   userProfile?.user?.avatarUrl
-                    ? `${API_URL}/${userProfile.user.avatarUrl}`
+                    ? userProfile.user.avatarUrl.startsWith("http")
+                      ? userProfile.user.avatarUrl
+                      : `${API_URL}/${userProfile.user.avatarUrl}`
                     : "/userdefault.webp"
                 })`,
                 backgroundSize: "cover",
