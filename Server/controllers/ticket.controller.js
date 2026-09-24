@@ -18,8 +18,6 @@ import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
 import EventService from "../service/event.service.js";
 
-
-
 export const purchaseTicket = async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
@@ -31,7 +29,6 @@ export const purchaseTicket = async (req, res) => {
     return res.status(400).json({ message: "Invalid quantity" });
 
   try {
-
     const ticket = await TicketModel.findOneAndUpdate(
       {
         _id: ticketId,
@@ -256,7 +253,19 @@ export const verifyTicket = async (req, res) => {
 
   const userId = req.user.id;
 
-  const EXPECTED_RECEIVER = "Naod Ararsa Ulu";
+  const user = await AdminProfile.findOne({ userId: userId });
+
+  if (!user || !user.paymentMethods || user.paymentMethods.length === 0) {
+    return res
+      .status(400)
+      .json({ message: "Admin payment methods not configured" });
+  }
+
+  const matchingPaymentMethod = user?.paymentMethods?.find(
+    (m) => m.provider.toLowerCase() === receipt.provider?.toLowerCase(),
+  );
+
+  const EXPECTED_RECEIVER = matchingPaymentMethod?.receiverName;
 
   if (!receiptUrl || !receiptUrl.trim())
     return res.status(400).json({ message: "Receipt link is required" });
@@ -305,7 +314,10 @@ export const verifyTicket = async (req, res) => {
       return res.status(400).json({ message: "Transaction is not completed" });
     }
 
-    if (receipt.creditedPartyName.toLowerCase() !== EXPECTED_RECEIVER.toLowerCase()) {
+    if (
+      receipt.creditedPartyName.toLowerCase() !==
+      EXPECTED_RECEIVER.toLowerCase()
+    ) {
       return res
         .status(400)
         .json({ message: "Invalid receiver name on receipt" });
@@ -459,6 +471,7 @@ export const scanTicket = catchAsync(async (req, res, next) => {
       message: `Ticket cannot be checked in (status: ${existing.status}, verified: ${existing.isVerified})`,
     });
   }
-
-  res.status(200).json({ success: true, message: "Checked in", userTicket });
+  return res
+    .status(200)
+    .json({ success: true, message: "Checked in", userTicket });
 });

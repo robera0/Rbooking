@@ -253,8 +253,12 @@ const RegistrationPage = () => {
   });
 
   const [coverPageFile, setCoverPageFile] = useState(null);
-  
-  const [currentPayment, setCurrentPayment] = useState({ provider: "Telebirr", accountNumber: "" });
+
+  const [currentPayment, setCurrentPayment] = useState({
+    provider: "Telebirr",
+    accountNumber: "",
+    receiverName: "",
+  });
 
   const handleAddPayment = () => {
     if (!currentPayment.accountNumber.trim()) {
@@ -264,7 +268,11 @@ const RegistrationPage = () => {
       ...prev,
       paymentMethods: [...prev.paymentMethods, currentPayment],
     }));
-    setCurrentPayment({ provider: "Telebirr", accountNumber: "" });
+    setCurrentPayment({
+      provider: "Telebirr",
+      accountNumber: "",
+      receiverName: "",
+    });
   };
 
   const handleRemovePayment = (idx) => {
@@ -839,14 +847,21 @@ const RegistrationPage = () => {
 
           {/* SECTION 4 — Payment Information */}
           <section className="flex flex-col gap-5">
-            <SectionHeading icon={FileText} number="4" title="Payment Information" />
+            <SectionHeading
+              icon={FileText}
+              number="4"
+              title="Payment Information"
+            />
             <div className="bg-[#1C1F22] p-5 rounded-2xl border border-white/[0.04]">
-              <div className="flex flex-col md:flex-row gap-4 mb-4">
-                <div className="w-full md:w-1/3">
+              <div className="flex flex-col md:flex-row gap-4 items-end mb-4">
+                {/* Payment Provider */}
+                <div className="w-full md:w-1/4">
                   <Label>Payment Provider</Label>
                   <CustomSelect
                     value={currentPayment.provider}
-                    onChange={(val) => setCurrentPayment((prev) => ({ ...prev, provider: val }))}
+                    onChange={(val) =>
+                      setCurrentPayment((prev) => ({ ...prev, provider: val }))
+                    }
                     options={[
                       { value: "Telebirr", label: "Telebirr" },
                       { value: "Abyssinia Bank", label: "Abyssinia Bank" },
@@ -855,29 +870,58 @@ const RegistrationPage = () => {
                     ]}
                   />
                 </div>
-                <div className="flex-1">
+
+                {/* Account / Phone Number */}
+                <div className="flex-1 w-full">
                   <Label>Account / Phone Number</Label>
-                  <div className="flex gap-3">
-                    <FieldInput
-                      name="accountNumber"
-                      value={currentPayment.accountNumber}
-                      onChange={(e) => setCurrentPayment((prev) => ({ ...prev, accountNumber: e.target.value }))}
-                      placeholder={
-                        currentPayment.provider === "Telebirr" || currentPayment.provider === "MPSA"
-                          ? "+2519-000-000"
-                          : "10000..."
-                      }
-                      className="flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddPayment}
-                      className="px-6 py-4 rounded-xl font-bold transition-all hover:opacity-80 active:scale-95"
-                      style={{ background: "#FF7A00", color: "#000" }}
-                    >
-                      Add
-                    </button>
-                  </div>
+                  <FieldInput
+                    name="accountNumber"
+                    value={currentPayment.accountNumber}
+                    onChange={(e) =>
+                      setCurrentPayment((prev) => ({
+                        ...prev,
+                        accountNumber: e.target.value,
+                      }))
+                    }
+                    placeholder={
+                      currentPayment.provider === "Telebirr" ||
+                      currentPayment.provider === "MPSA"
+                        ? "+2519-000-000"
+                        : "10000..."
+                    }
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Account Holder Name (Maps to receiverName) */}
+                <div className="flex-1 w-full">
+                  <Label>
+                    Account Holder Name (that appear in the account)
+                  </Label>
+                  <FieldInput
+                    name="receiverName"
+                    value={currentPayment.receiverName || ""}
+                    onChange={(e) =>
+                      setCurrentPayment((prev) => ({
+                        ...prev,
+                        receiverName: e.target.value,
+                      }))
+                    }
+                    placeholder="Full name registered on account"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Add Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleAddPayment}
+                    className="px-6 py-3 rounded-xl font-bold transition-all hover:opacity-80 active:scale-95 h-[42px] flex items-center justify-center"
+                    style={{ background: "#FF7A00", color: "#000" }}
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
 
@@ -894,8 +938,15 @@ const RegistrationPage = () => {
                           {method.provider.slice(0, 3)}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white">{method.provider}</p>
-                          <p className="text-xs text-gray-400">{method.accountNumber}</p>
+                          <p className="text-sm font-bold text-white">
+                            {method.provider}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {method.accountNumber}
+                          </p>
+                          <p className="text-sm font-bold text-white">
+                            {method.receiverName}
+                          </p>
                         </div>
                       </div>
                       <button
