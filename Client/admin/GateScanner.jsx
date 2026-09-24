@@ -136,12 +136,11 @@ const GateScanner = () => {
         throw new Error("Invalid ticket QR structure");
       }
 
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/tickets/qr`, {
+      const res = await fetch(`${API_URL}/api/auth/tickets/qr`, {
         method: "PATCH",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           userTicketId: payload.userTicketId,
