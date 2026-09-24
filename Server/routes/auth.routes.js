@@ -5,6 +5,7 @@ import {
   logout,
   registerAdmin,
   register,
+  googleExchange,
 } from "../controllers/auth.controller.js";
 
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
@@ -15,8 +16,8 @@ import {
 } from "../controllers/user.controller.js";
 import { upload } from "../controllers/events.controller.js";
 import passport from "../config/googleAuth.js";
-import { generateAccessToken, generateRefreshToken } from "../service/token.js";
-import { UserModel } from "../models/user.model.js";
+import { nanoid } from "nanoid";
+import redisClient, { REDIS_PREFIX } from "../config/redis.js";
 const authRouter = express.Router();
 // Google OAuth
 authRouter.get(
@@ -37,7 +38,13 @@ authRouter.get(
   async (req, res) => {
     console.log(" Google callback hit!");
     console.log("user:", req.user);
-    // Issue JWT and set cookie, then redirect to frontend with token
+    // The browser is still on the backend's own domain (onrender.com) at
+    // this point, while the app itself lives on a different domain
+    // (netlify.app). Setting the session cookie here would bind it to the
+    // wrong domain, so instead we hand the frontend a short-lived one-time
+    // code; the frontend exchanges it through its own same-origin /api
+    // proxy (see /google/exchange below), which is what actually sets the
+    // cookie on the right domain.
     try {
       const user = req.user;
       if (!user) {
@@ -47,40 +54,17 @@ authRouter.get(
         );
       }
 
-      const payload = {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      };
-      const accessToken = generateAccessToken(payload);
-      const refreshToken = generateRefreshToken(payload);
-      // Optionally, store refresh token in DB for session management
-      const MAX_REFRESH_TOKENS = 5;
-      await UserModel.findByIdAndUpdate(user._id, {
-        $push: {
-          refreshTokens: {
-            $each: [{ token: refreshToken, createdAt: new Date() }],
-            $slice: -MAX_REFRESH_TOKENS, // keeps only the most recent N entries
-          },
-        },
-      });
+      const exchangeCode = nanoid(32);
+      await redisClient.set(
+        `${REDIS_PREFIX}oauth_exchange:${exchangeCode}`,
+        JSON.stringify({ id: user._id, email: user.email, role: user.role }),
+        "EX",
+        120,
+      );
 
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        path: "/",
-      });
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        path: "/",
-      });
-      // Redirect to frontend with token as query param (optional)
       const isNewUser = user.isNewUser || !user.isProfileComplete;
 
-      const redirectUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/google-auth?isNewUser=${isNewUser}`;
+      const redirectUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/google-auth?isNewUser=${isNewUser}&code=${exchangeCode}`;
       res.redirect(redirectUrl);
     } catch (err) {
       console.error("OAuth error:", err);
@@ -96,6 +80,7 @@ authRouter.post("/signup/user", register);
 authRouter.post("/signup/admin", upload.single("coverPage"), registerAdmin);
 //authRouter.post("/signup/admin", register_admin);
 authRouter.post("/login", login);
+authRouter.post("/google/exchange", googleExchange);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);
 authRouter.post("/tokens", refresh);
 
