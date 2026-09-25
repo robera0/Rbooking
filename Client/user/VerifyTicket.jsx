@@ -8,7 +8,7 @@ import {
   XCircle,
   ChevronRight,
   Copy,
-  Eye,
+  Clock3,
   EyeOff,
   ArrowLeft,
   Loader2,
@@ -356,6 +356,42 @@ const VerifyTicket = () => {
           </h1>
         </div>
 
+        <div className="flex items-start gap-3 rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-4 py-3.5 text-left">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-400/10 border border-amber-400/15">
+            <Clock3 size={15} className="text-amber-300" />
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+              Important Notice
+            </p>
+
+            <p className="text-[12px] leading-relaxed text-gray-300">
+              Please complete your payment verification within{" "}
+              <span className="font-bold text-white">30 minutes</span>.
+              <span className="text-gray-400">
+                {" "}
+                Unverified tickets will expire automatically.
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="rounded-2xl border border-[#FF7A00]/20 bg-[#FF7A00]/[0.04] p-5"
+        >
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 mb-1.5">
+            How to verify
+          </p>
+          <p className="text-[12px] leading-relaxed text-gray-300">
+            After paying with Telebirr, copy the confirmation URL sent via SMS
+            and paste it below to verify your ticket.
+          </p>
+        </motion.div>
+
         {/* Order code hint card */}
         {orderNo && (
           <motion.div
@@ -364,17 +400,13 @@ const VerifyTicket = () => {
             transition={{ delay: 0.3 }}
             className="rounded-2xl border border-[#FF7A00]/20 bg-[#FF7A00]/[0.04] p-5"
           >
-            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#FF7A00] mb-3">
-              Your Order Code
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 mb-1.5">
+              How to verify
             </p>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1">
-                <p className="text-lg font-black tracking-widest text-white font-mono">
-                  Copy the URL you receive from Telebirr after completing your
-                  payment, then paste it below to verify your ticket.
-                </p>
-              </div>
-            </div>
+            <p className="text-[12px] leading-relaxed text-gray-300">
+              After paying with Telebirr, copy the confirmation URL sent via SMS
+              and paste it below to verify your ticket.
+            </p>
           </motion.div>
         )}
 

@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
-import redisClient, { clearWishListCache, REDIS_PREFIX } from "../config/redis.js";
+import redisClient, {
+  clearWishListCache,
+  REDIS_PREFIX,
+} from "../config/redis.js";
 import whishListService from "../service/wishlist.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
@@ -8,19 +11,26 @@ import AppError from "../errors/AppError.js";
 
 export const getWishlist = catchAsync(async (req, res) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
-
   const cacheKey = `${REDIS_PREFIX}user:wishlist:${userId}`;
-  const cachedWishlist = await redisClient.smembers(cacheKey);
-  if (cachedWishlist && cachedWishlist.length > 0) {
+
+  let cachedWishlist = [];
+
+  try {
+    cachedWishlist = await redisClient.smembers(cacheKey);
+  } catch (error) {
+    console.log("Redis unavailable, using database:", error.message);
+  }
+
+  if (cachedWishlist.length > 0) {
     const populatedItems = await whishListService.findOne(userId);
-    // Refresh the cache rolling TTL (1 hour) to keep active users warm
-    await redisClient.expire(cacheKey, 3600);
+
     return res.status(200).json({
       success: true,
       wishlist: populatedItems,
-      source: "cache-hit (populated from DB)",
+      source: "cache-hit",
     });
   }
+
   const wishlist = await whishListService.findOne(userId);
 
   if (!wishlist) {
@@ -28,21 +38,30 @@ export const getWishlist = catchAsync(async (req, res) => {
       message: "Wishlist not found",
     });
   }
-  const itemIdsToCache = (wishlist?.items || [])
-    .map((item) => item?.eventId?._id?.toString())
-    .filter(Boolean);
-  // write pipeline
-  if (itemIdsToCache.length > 0) {
-    const pipeline = redisClient.pipeline();
-    pipeline.sadd(cacheKey, ...itemIdsToCache);
-    pipeline.expire(cacheKey, 3600);
-    await pipeline.exec();
-  } else {
-    await redisClient.unlink(cacheKey);
+
+  // Try to cache, but don't fail the request if Redis is unavailable
+  try {
+    const itemIdsToCache = (wishlist.items || [])
+      .map((item) => item?.eventId?._id?.toString())
+      .filter(Boolean);
+
+    if (itemIdsToCache.length > 0) {
+      const pipeline = redisClient.pipeline();
+
+      pipeline.sadd(cacheKey, ...itemIdsToCache);
+      pipeline.expire(cacheKey, 3600);
+
+      await pipeline.exec();
+    } else {
+      await redisClient.unlink(cacheKey);
+    }
+  } catch (error) {
+    console.log("Could not update Redis cache:", error.message);
   }
-  res.status(200).json({
+
+  return res.status(200).json({
     success: true,
-    wishlist: wishlist,
+    wishlist,
     source: "database",
   });
 });
@@ -73,8 +92,15 @@ export const addWishlist = catchAsync(async (req, res, next) => {
       upsert: true,
     },
   );
-  console.log(updatedWishlist);
-  await clearWishListCache(userId);
+
+  try {
+    await clearWishListCache(userId);
+  } catch (error) {
+    console.log(
+      "Redis unavailable, wishlist cache not cleared:",
+      error.message,
+    );
+  }
   res.status(200).json({
     message: "Added to wishlist",
     wishlist: updatedWishlist,
@@ -107,7 +133,14 @@ export const removeWishlist = catchAsync(async (req, res, next) => {
   if (!updatedWishlist) {
     next(new AppError("whishlist not found", 404));
   }
-  await clearWishListCache(userId);
+  try {
+    await clearWishListCache(userId);
+  } catch (error) {
+    console.log(
+      "Redis unavailable, wishlist cache not cleared:",
+      error.message,
+    );
+  }
   res.status(200).json({
     message: "Removed from wishlist",
     wishlist: updatedWishlist,

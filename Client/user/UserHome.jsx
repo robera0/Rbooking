@@ -163,37 +163,6 @@ const UserHome = () => {
     },
   };
 
-  const dummyEvents = [
-    {
-      _id: "1",
-      name: "Warehouse Project",
-      price: "45",
-      location: "Manchester",
-      img: "/Login.jpg",
-    },
-    {
-      _id: "2",
-      name: "Afterlife Ibiza",
-      price: "80",
-      location: "Hï Ibiza",
-      img: "/1308183.jpeg",
-    },
-    {
-      _id: "3",
-      name: "Fabric London",
-      price: "30",
-      location: "London",
-      img: "/1763661369611.webp",
-    },
-    {
-      _id: "4",
-      name: "Techno Bunker",
-      price: "25",
-      location: "Berlin",
-      img: "/Login.jpg",
-    },
-  ];
-
   return (
     <div
       ref={containerRef}
@@ -418,7 +387,8 @@ const UserHome = () => {
               ))
             : featuredEvents?.events?.length > 0 &&
               featuredEvents?.events?.map((e, i) => {
-                const isSoldOut = e?.tickets?.length === 0 || isEventPassed8Hours(e);
+                const isSoldOut =
+                  e?.tickets?.length === 0 || isEventPassed8Hours(e);
                 return (
                   <motion.div
                     initial={{ opacity: 0, y: 25, scale: 0.98 }}
@@ -508,12 +478,12 @@ const UserHome = () => {
                             strokeWidth={3}
                           />
                           <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
-                            {e.location || "London, UK"}
+                            {e.locale || "Ethiopia, Addis Ababa"}
                           </span>
                         </div>
 
                         {/* Scaled Rating Badge for Desktop */}
-                        <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
+                        <div className="flex items-cUKenter gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
                           <Star
                             size={12}
                             className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"

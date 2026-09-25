@@ -133,24 +133,23 @@ export default function CheckoutModal({
     }
     setIsLoading(true);
     try {
-      const res = await api.post(
-        `/api/auth/ticket/${ticketId}/purchase`,
-        { quantity, phone },
-      );
+      const res = await api.post(`/api/auth/ticket/${ticketId}/purchase`, {
+        quantity,
+        phone,
+      });
       const data = res.data;
 
       if (totalAmount === 0) {
         const { default: toast } = await import("react-hot-toast");
-        toast.success(
-          "Your free ticket is acquired successfully!",
-          { duration: 4000 },
-        );
+        toast.success("Your free ticket is acquired successfully!", {
+          duration: 4000,
+        });
         navigate(`/tickets_home/${data.userTicket._id}`);
       } else {
         const { default: toast } = await import("react-hot-toast");
         toast.success(
           "Your ticket is successfully held! Please complete your payment.",
-          { duration: 4000 },
+          { duration: 9000 },
         );
 
         navigate(`/tickets_home/verify/${data.userTicket._id}`, {
@@ -216,9 +215,9 @@ export default function CheckoutModal({
               <input
                 type="tel"
                 placeholder="9xx xxx xxxx"
-                value={phone.replace(/^\+251/, '')}
+                value={phone.replace(/^\+251/, "")}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, '');
+                  const val = e.target.value.replace(/\D/g, "");
                   setPhone(val ? `+251${val}` : "");
                 }}
                 className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00] 
@@ -287,6 +286,10 @@ export default function CheckoutModal({
                       <p className="text-xl font-black tracking-wider text-white font-mono">
                         {method.accountNumber}
                       </p>
+
+                      <p className="text-xl font-black tracking-wider text-white font-mono">
+                        {method.receiverName}
+                      </p>
                     </div>
                     <div className="flex flex-col items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                       <Copy size={16} className="text-[#FF7A00]" />
@@ -306,7 +309,11 @@ export default function CheckoutModal({
             )}
           </div>
           <p className="text-[10px] text-gray-600 text-center mt-2">
-            Send <span className="text-[#FF7A00] font-bold">{totalAmount.toLocaleString()} ETB</span> to one of the accounts above, then verify your receipt
+            Send{" "}
+            <span className="text-[#FF7A00] font-bold">
+              {totalAmount.toLocaleString()} ETB
+            </span>{" "}
+            to one of the accounts above, then verify your receipt
           </p>
         </div>
 
