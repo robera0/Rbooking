@@ -5,7 +5,7 @@ import axios from "axios";
 // production). This keeps the auth cookie first-party — iOS Safari/Chrome
 // (WebKit) blocks third-party cookies entirely, which broke login on
 // iPhone when this pointed straight at the cross-site backend domain.
-const baseURL = "";
+const baseURL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL,

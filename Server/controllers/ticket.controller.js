@@ -293,6 +293,8 @@ export const verifyTicket = async (req, res) => {
     const { eventInfo, adminProfile } = expected;
     const EXPECTED_RECEIVER = expected.receiverName;
 
+    console.log(EXPECTED_RECEIVER, " and");
+
     // verification
     const TOTAL_AMOUNT = userTicket.totalAmount;
 
@@ -306,18 +308,16 @@ export const verifyTicket = async (req, res) => {
 
     const receipt = isValid.receipt;
     const settledAmount = parseFloat(receipt.settledAmount);
-
+    (console.log("e", EXPECTED_RECEIVER.toLowerCase()),
+      console.log("l", receipt.creditedPartyName.split(" ")[0].toLowerCase()));
     if (receipt.transactionStatus !== "Completed") {
       return res.status(400).json({ message: "Transaction is not completed" });
     }
 
-    if (
-      receipt.creditedPartyName.split(" ")[0].toLowerCase() !==
-      EXPECTED_RECEIVER.toLowerCase()
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Invalid receiver name on receipt" });
+    if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
+      return res.status(400).json({
+        message: "Invalid receiver name on receipt",
+      });
     }
 
     if (settledAmount !== TOTAL_AMOUNT) {

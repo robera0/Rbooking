@@ -233,6 +233,7 @@ const Main = () => {
     setSearch,
   } = useService();
 
+  const [avatarFailed, setAvatarFailed] = useState(false); // add this
   const location = useLocation();
   const { user, userIsLoading, userProfile, notifications } = eventService();
   const navigate = useNavigate();
@@ -447,10 +448,7 @@ const Main = () => {
                   <img
                     src={profileImageSrc}
                     alt="Profile"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/Login.jpg";
-                    }}
+                    onError={() => setAvatarFailed(true)}
                     className="w-full h-full object-cover"
                   />
                 </Link>

@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import connectDB from "./config/databse.js";
+import connectDB from "./config/database.js";
 import eventRouter from "./routes/event.routes.js";
 import ticketRouter from "./routes/ticket.routes.js";
 import commentRouter from "./routes/comment.routes.js";
@@ -63,11 +63,17 @@ app.use(
       const allowedOrigins = [
         "http://localhost:5173",
         "https://paysso.netlify.app",
+        "https://paysso.et",
       ];
 
       // Allow requests with no origin (like mobile apps or curl requests)
       // Also allow any local network IPs for mobile testing (e.g., http://192.168...)
-      if (!origin || allowedOrigins.includes(origin) || origin.startsWith("http://192.168.") || origin.startsWith("http://10.")) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.startsWith("http://192.168.") ||
+        origin.startsWith("http://10.")
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -77,7 +83,7 @@ app.use(
   }),
 );
 app.use(cookieParser());
-
+app.use("/assets", express.static(path.join(process.cwd(), "assets")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.set("trust proxy", 1);
 

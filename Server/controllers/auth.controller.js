@@ -192,7 +192,9 @@ export const register = catchAsync(async (req, res, next) => {
   });
 
   // Generate a unique default username from fullname or email prefix
-  const baseUsername = fullname ? fullname.replace(/\s+/g, "").toLowerCase() : email.split("@")[0];
+  const baseUsername = fullname
+    ? fullname.replace(/\s+/g, "").toLowerCase()
+    : email.split("@")[0];
   let username = baseUsername;
   let count = 0;
   while (await ProfileModel.findOne({ username })) {
@@ -273,6 +275,11 @@ export const login = catchAsync(async (req, res, next) => {
 // after landing back on its own domain, so the cookies set here are
 // first-party - unlike setting them directly from the callback response,
 // which would bind them to the backend's own cross-site domain.
+//
+// TEMPORARY: using a signed JWT instead of Redis for the exchange code,
+// since Redis isn't reachable in production right now. Once Redis is
+// working again, swap back to the commented-out block below and remove
+// the jwt.verify block.
 export const googleExchange = catchAsync(async (req, res, next) => {
   const { code } = req.body;
 
@@ -280,26 +287,38 @@ export const googleExchange = catchAsync(async (req, res, next) => {
     return res.status(400).json({ message: "Missing exchange code" });
   }
 
-  const key = `${REDIS_PREFIX}oauth_exchange:${code}`;
-  const raw = await redisClient.get(key);
-
-  if (!raw) {
+  // --- JWT-based exchange (active) ---
+  let payload;
+  try {
+    payload = jwt.verify(code, process.env.OAUTH_EXCHANGE_SECRET);
+  } catch (err) {
     return res
       .status(400)
       .json({ message: "Invalid or expired exchange code" });
   }
-  await redisClient.del(key);
+  const { id, email, role } = payload;
 
-  const { id, email, role } = JSON.parse(raw);
+  // --- Previous Redis-based exchange (disabled until Redis is fixed) ---
+  // const key = `${REDIS_PREFIX}oauth_exchange:${code}`;
+  // const raw = await redisClient.get(key);
+  //
+  // if (!raw) {
+  //   return res
+  //     .status(400)
+  //     .json({ message: "Invalid or expired exchange code" });
+  // }
+  // await redisClient.del(key);
+  //
+  // const { id, email, role } = JSON.parse(raw);
 
   const user = await UserModel.findById(id);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
 
-  const payload = { id: user._id, email, role };
-  const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(payload);
+  const tokenPayload = { id: user._id, email, role };
+  const accessToken = generateAccessToken(tokenPayload);
+  const refreshToken = generateRefreshToken(tokenPayload);
 
   const MAX_TOKENS = 5;
   user.refreshTokens.push({ token: refreshToken });

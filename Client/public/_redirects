@@ -3,6 +3,6 @@
 # perspective (iOS Safari/Chrome block third-party cookies outright).
 # This must come before the SPA catch-all below - _redirects rules are
 # matched top to bottom, first match wins.
-/api/*  https://paysso.onrender.com/api/:splat  200!
+/api/*  https://api.paysso.et/api/:splat  200!
 
 /*    /index.html   200

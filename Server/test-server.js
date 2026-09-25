@@ -2,7 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import multer from "multer";
 import { ProfileModel } from "./models/profile.model.js";
-import connectDB from "./config/databse.js";
+import connectDB from "./config/database.js";
 
 const app = express();
 app.use(express.json());
@@ -15,9 +15,9 @@ app.put("/profile", upload.none(), async (req, res) => {
     await connectDB();
     const user_id = new mongoose.Types.ObjectId();
     const { fullName, Gender } = req.body;
-    
+
     const updates = { fullName, Gender };
-    
+
     const updatedProfile = await ProfileModel.findOneAndUpdate(
       { userId: user_id },
       updates,
@@ -26,7 +26,7 @@ app.put("/profile", upload.none(), async (req, res) => {
         runValidators: true,
         setDefaultsOnInsert: true,
         upsert: true,
-      }
+      },
     );
     res.json(updatedProfile);
   } catch (error) {
