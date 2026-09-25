@@ -308,8 +308,7 @@ export const verifyTicket = async (req, res) => {
 
     const receipt = isValid.receipt;
     const settledAmount = parseFloat(receipt.settledAmount);
-    (console.log("e", EXPECTED_RECEIVER.toLowerCase()),
-      console.log("l", receipt.creditedPartyName.split(" ")[0].toLowerCase()));
+
     if (receipt.transactionStatus !== "Completed") {
       return res.status(400).json({ message: "Transaction is not completed" });
     }
