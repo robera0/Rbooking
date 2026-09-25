@@ -76,7 +76,7 @@ export const purchaseTicket = async (req, res) => {
       qrCode,
       phone: phone || "",
       status: isFree ? "paid" : "pending",
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     });
 
     await clearTicketCache(userId);
@@ -312,6 +312,8 @@ export const verifyTicket = async (req, res) => {
     if (receipt.transactionStatus !== "Completed") {
       return res.status(400).json({ message: "Transaction is not completed" });
     }
+
+    console.log(receipt);
 
     if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
       return res.status(400).json({
