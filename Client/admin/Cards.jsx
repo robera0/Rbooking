@@ -30,7 +30,6 @@ export const Cards = ({
   daily_diff,
   border,
 }) => {
-  
   const loading = !header || !num;
   if (loading) {
     return (
@@ -318,7 +317,7 @@ export const EventTable = ({ search = "", filter = "" }) => {
                     {item?.name}
                   </h1>
                   <p className="text-[10px] text-[#FF7A00] uppercase tracking-widest mt-1">
-                    {item?.type || "Concert"}
+                    {item?.type}
                   </p>
                 </td>
                 <td className="px-6 py-4 text-center font-bold">
@@ -339,19 +338,23 @@ export const EventTable = ({ search = "", filter = "" }) => {
                 </td>
                 <td className="px-6 py-4 text-center">
                   <button
+                    type="button"
                     onClick={() => navigate(`/admin/events/${item?._id}`)}
-                    className="text-gray-400 hover:text-[#FF7A00] font-black uppercase text-[10px] tracking-widest transition-colors"
+                    className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all duration-200 hover:border-[#FF7A00] hover:bg-[#FF7A00]/10 hover:text-[#FF7A00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00]/50 active:scale-95"
                   >
                     Manage
+                    <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+                      →
+                    </span>
                   </button>
                 </td>
 
                 <td className="px-6 py-4 text-center">
                   <button
                     onClick={() => navigate(`/admin/events/${item?._id}/qr`)}
-                    className="text-gray-400 hover:text-[#FF7A00] font-black uppercase text-[10px] tracking-widest transition-colors"
+                    className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all duration-200 hover:border-[#FF7A00] hover:bg-[#FF7A00]/10 hover:text-[#FF7A00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00]/50 active:scale-95"
                   >
-                   Get QR
+                    Get QR
                   </button>
                 </td>
               </tr>
