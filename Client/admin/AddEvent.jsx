@@ -7,16 +7,16 @@ import {
   ShieldCheck,
   Music,
   Tag,
-  Zap,
   Check,
   Flag,
   CalendarDays,
   Eye,
   EyeOff,
+  Loader2,
 } from "lucide-react";
 import { useNavigate, useBlocker } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import { CustomSelect } from "./Cards";
@@ -280,6 +280,8 @@ const REQUIRED_RULES = {
     !formData.pictures.length
       ? "At least one photo is required to publish"
       : "",
+  eventDate: (formData) =>
+    !formData.eventDate ? "Date and time are required to publish" : "",
 };
 
 // ─── Date Picker Panel ─────────────────────────────────────────────────────
@@ -496,29 +498,46 @@ const ChipInput = ({ label, items, onAdd, onRemove, placeholder }) => {
   );
 };
 
-const PillSelect = ({ label, options, value, onChange }) => (
-  <div>
-    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
-      {label}
-    </label>
-    <div className="flex flex-wrap gap-2">
-      {options.map((opt) => (
-        <button
-          key={opt}
-          type="button"
-          onClick={() => onChange(opt)}
-          className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
-            value === opt
-              ? "bg-[#FF7A00] text-black border-[#FF7A00]"
-              : "bg-transparent text-gray-500 border-white/10 hover:border-[#FF7A00] hover:text-[#FF7A00]"
-          }`}
-        >
-          {opt}
-        </button>
-      ))}
+// Ticket type: a dropdown of common tiers, plus "Other" which reveals a
+// free-text input so admins can still name their own tier.
+const TICKET_TYPE_PRESETS = ["Regular", "Early Bird", "VIP", "VVIP"];
+
+const TicketTypeSelect = ({ value, onChange }) => {
+  const isCustomValue = value && !TICKET_TYPE_PRESETS.includes(value);
+  const [showCustomInput, setShowCustomInput] = useState(isCustomValue);
+
+  return (
+    <div>
+      <CustomSelect
+        options={[
+          ...TICKET_TYPE_PRESETS.map((opt) => ({ label: opt, value: opt })),
+          { label: "Other", value: "__other__" },
+        ]}
+        value={showCustomInput ? "__other__" : value}
+        onChange={(val) => {
+          if (val === "__other__") {
+            setShowCustomInput(true);
+            onChange("");
+          } else {
+            setShowCustomInput(false);
+            onChange(val);
+          }
+        }}
+        placeholder="Ticket Type"
+      />
+      {showCustomInput && (
+        <input
+          type="text"
+          autoFocus
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Type your own ticket name..."
+          className="mt-2 w-full bg-[#0f1113] border border-white/[0.06] rounded-xl px-4 py-3 text-white text-sm hover:border-[#FF7A00]/50 focus:border-[#FF7A00]/50 outline-none transition-colors"
+        />
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 const PillMultiSelect = ({ label, options, value, onChange }) => {
   const toggle = (opt) =>
@@ -610,7 +629,6 @@ const AddEvent = () => {
     familyFriendly: false,
     durationDays: "",
     stages: [],
-    category: "",
     status: "draft",
   };
 
@@ -629,6 +647,12 @@ const AddEvent = () => {
   const posterInputRef = useRef(null);
   const timerRef = useRef(null);
   const draftIdRef = useRef(null);
+  // Synchronous guard against double-submitting Publish - React state
+  // (publishMutation.isPending) only flips on the next render, so two
+  // rapid clicks (or a click landing right as the 3s autosave timer also
+  // fires) can both slip through before the disabled attribute applies,
+  // each running createTickets and inserting every ticket type twice.
+  const isPublishingRef = useRef(false);
 
   const hasUnsavedChanges =
     JSON.stringify(formData) !== JSON.stringify(EMPTY_FORM);
@@ -779,7 +803,14 @@ const AddEvent = () => {
         start: {
           localDate: formData.eventDate?.split("T")[0],
           localTime: formData.eventDate?.split("T")[1],
-          dateTime: formData.eventDate ? new Date(formData.eventDate) : null,
+          // formData.eventDate is a naive "YYYY-MM-DDTHH:mm" wall-clock
+          // string for the venue (Africa/Addis_Ababa, always UTC+3, no
+          // DST) - appending the offset explicitly here means this is
+          // parsed against the venue's timezone, not whatever timezone
+          // the admin's own browser happens to be in.
+          dateTime: formData.eventDate
+            ? new Date(`${formData.eventDate}:00+03:00`)
+            : null,
         },
         timezone: "Africa/Addis_Ababa",
         status: { code: "onsale" },
@@ -802,7 +833,6 @@ const AddEvent = () => {
       basePayload.stages = formData.stages;
       basePayload.familyFriendly = formData.familyFriendly;
     }
-    if (type === "generic") basePayload.category = formData.category;
 
     return { ...basePayload, status };
   };
@@ -869,13 +899,21 @@ const AddEvent = () => {
   });
 
   const handleSubmit = () => {
+    if (isPublishingRef.current) return;
     if (!validateAll()) return;
-    publishMutation.mutate(buildPayload("published"));
+    isPublishingRef.current = true;
+    // Cancel any in-flight autosave timer so it can't race the publish
+    // call and end up hitting the create-event endpoint a second time.
+    clearTimeout(timerRef.current);
+    publishMutation.mutate(buildPayload("published"), {
+      onSettled: () => {
+        isPublishingRef.current = false;
+      },
+    });
   };
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
-      <Toaster position="top-center" />
 
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
         <div className="space-y-2">
@@ -895,11 +933,15 @@ const AddEvent = () => {
         </div>
         <button
           onClick={handleSubmit}
-          disabled={publishMutation.isLoading}
-          className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
+          disabled={publishMutation.isPending}
+          className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Save size={16} strokeWidth={3} />
-          {publishMutation.isLoading ? "Publishing..." : "Publish Event"}
+          {publishMutation.isPending ? (
+            <Loader2 size={16} strokeWidth={3} className="animate-spin" />
+          ) : (
+            <Save size={16} strokeWidth={3} />
+          )}
+          {publishMutation.isPending ? "Publishing..." : "Publish Event"}
         </button>
       </div>
 
@@ -1053,20 +1095,13 @@ const AddEvent = () => {
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Ticket Name
                     </label>
-                    <CustomSelect
-                      options={[
-                        { label: "Regular", value: "Regular" },
-                        { label: "Early Bird", value: "Early Bird" },
-                        { label: "VIP", value: "VIP" },
-                        { label: "VVIP", value: "VVIP" },
-                      ]}
+                    <TicketTypeSelect
                       value={ticket.name}
                       onChange={(val) => {
                         const updated = [...formData.tickets];
                         updated[idx].name = val;
                         handleChange("tickets", updated);
                       }}
-                      placeholder="Ticket Type"
                     />
                   </div>
                   <div className="w-24">
@@ -1141,18 +1176,9 @@ const AddEvent = () => {
 
               <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
                 <div className="flex-1">
-                  <CustomSelect
-                    options={[
-                      { label: "Regular", value: "Regular" },
-                      { label: "Early Bird", value: "Early Bird" },
-                      { label: "VIP", value: "VIP" },
-                      { label: "VVIP", value: "VVIP" },
-                    ]}
+                  <TicketTypeSelect
                     value={newTicket.name}
-                    onChange={(val) =>
-                      setNewTicket({ ...newTicket, name: val })
-                    }
-                    placeholder="Ticket Type"
+                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
                   />
                 </div>
                 <div className="w-24">
@@ -1197,7 +1223,7 @@ const AddEvent = () => {
                       );
                     }
                   }}
-                  className="ml-2 text-[#22c55e] border border-[#22c55e] rounded-full p-2"
+                  className="ml-2 text-[#22c55e] border border-[#22c55e] hover:text-white hover:bg-green-400 transition duration-300 rounded-full p-2"
                 >
                   <Check size={18} />
                 </button>
@@ -1353,7 +1379,14 @@ const AddEvent = () => {
             </h3>
             <DatePickerPanel
               value={formData.eventDate}
-              onChange={(val) => handleChange("eventDate", val)}
+              onChange={(val) => {
+                handleChange("eventDate", val);
+                validate("eventDate", { ...formData, eventDate: val });
+              }}
+            />
+            <FieldHint
+              error={fieldErrors.eventDate}
+              hint="Required to publish this event"
             />
           </div>
 
@@ -1510,30 +1543,6 @@ const AddEvent = () => {
               hint="At least one photo required to publish"
             />
           </div>
-
-          {formData.type === "generic" && (
-            <SectionCard icon={Zap} title="Event Category" badge="Event">
-              <PillSelect
-                label="Category"
-                options={
-                  adminSettings?.eventClassifications?.categories?.length > 0
-                    ? adminSettings.eventClassifications.categories
-                    : [
-                        "Sports",
-                        "Conference",
-                        "Expo",
-                        "Community",
-                        "Corporate",
-                        "Religious",
-                        "Exhibition",
-                        "Other",
-                      ]
-                }
-                value={formData.category}
-                onChange={(v) => handleChange("category", v)}
-              />
-            </SectionCard>
-          )}
 
           <div className="p-6 bg-[#FF7A00]/5 border border-[#FF7A00]/10 rounded-3xl flex items-center gap-4">
             <ShieldCheck size={24} className="text-[#FF7A00]" />

@@ -1,0 +1,22 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Force HTTPS: the site currently serves http://paysso.et directly with
+  # a 200 instead of redirecting, so any visit that lands on plain http
+  # (an old link, a bookmark, a browser defaulting to http on a bare
+  # domain) is genuinely unencrypted - that's why Safari's "Not Secure"
+  # warning shows up; it's accurate, not a false positive. This must come
+  # before the SPA fallback rule below.
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # SPA client-side routing fallback: serve index.html for any request that
+  # doesn't match a real file/directory, so routes like /login or
+  # /admin/home work on direct visit or refresh, not just via in-app
+  # navigation. Netlify's public/_redirects did this before; cPanel/Apache
+  # needs its own .htaccess instead.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>

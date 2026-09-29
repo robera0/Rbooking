@@ -72,7 +72,6 @@ export const ApiProvider = ({ children }) => {
     select: (data) => data?.user || null,
   });
 
-  console.log(user);
   // GET TICKETS
 
   const fetchTickets = async () => {
@@ -316,7 +315,6 @@ export const ApiProvider = ({ children }) => {
   const adminSettings = adminSettingsData?.settings;
   const availablePaymentMethods = adminSettingsData?.paymentMethods || [];
 
-  console.log("the profile is ", userProfile);
   return (
     <ApiContext.Provider
       value={{

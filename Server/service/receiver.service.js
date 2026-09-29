@@ -44,5 +44,18 @@ export const nameMatches = (receiptName, expectedName) => {
   const expectedWords = clean(expectedName);
 
   if (receiptWords.length === 0 || expectedWords.length === 0) return false;
-  return expectedWords.every((w) => receiptWords.includes(w));
+
+  // The receipt-verification API only ever returns the payer's first name
+  // (e.g. "Nahom" for "Nahom Abebe"), so requiring every word of the full
+  // expected name to appear on the receipt would always fail once an admin
+  // configures a multi-word receiver name. Compare whichever side has
+  // fewer words against the other, so a same-length or full-name receipt
+  // still matches exactly while a first-name-only receipt still matches a
+  // longer expected name (and vice versa, if the expected name was
+  // configured as just a first name).
+  const [shorter, longer] =
+    receiptWords.length <= expectedWords.length
+      ? [receiptWords, expectedWords]
+      : [expectedWords, receiptWords];
+  return shorter.every((w) => longer.includes(w));
 };

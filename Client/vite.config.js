@@ -5,7 +5,7 @@ import path from "path";
 import netlify from "@netlify/vite-plugin";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), netlify()],
+  plugins: [react(), tailwindcss(), netlify({ edgeFunctions: { enabled: false } })],
 
   optimizeDeps: {
     include: ["react", "react-dom"],

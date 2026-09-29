@@ -64,6 +64,7 @@ app.use(
         "http://localhost:5173",
         "https://paysso.netlify.app",
         "https://paysso.et",
+        "https://www.paysso.et",
       ];
 
       // Allow requests with no origin (like mobile apps or curl requests)
@@ -84,6 +85,14 @@ app.use(
 );
 app.use(cookieParser());
 app.use("/assets", express.static(path.join(process.cwd(), "assets")));
+
+// Cheap, dependency-free route so the frontend can "warm up" a sleeping/idle
+// backend instance before the user submits login, instead of that delay
+// happening invisibly during the login request itself. Registered after
+// cors() (unlike before) so the browser's cross-subdomain fetch to this
+// isn't itself blocked by CORS.
+app.get("/api/health", (req, res) => res.sendStatus(200));
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.set("trust proxy", 1);
 

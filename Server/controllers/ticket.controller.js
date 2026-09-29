@@ -4,6 +4,7 @@ import redisClient, {
   clearTicketCache,
   clearTicketInfoCache,
   safeGet,
+  safeRedis,
   REDIS_PREFIX,
 } from "../config/redis.js";
 import TicketService from "../service/ticket.service.js";
@@ -67,6 +68,7 @@ export const purchaseTicket = async (req, res) => {
     });
 
     const userTicket = await UserTicketModel.create({
+      _id: userTicketId,
       userId,
       ticketId,
       quantity,
@@ -151,7 +153,7 @@ export const getTickets = async (req, res) => {
 
     const cachedRaw = await safeGet(cacheKey);
     if (cachedRaw) {
-      await redisClient.expire(cacheKey, 3600);
+      await safeRedis(() => redisClient.expire(cacheKey, 3600));
       return res.status(200).json({
         success: true,
         events: JSON.parse(cachedRaw),
@@ -162,10 +164,12 @@ export const getTickets = async (req, res) => {
     const tickets = await TicketService.find(userId);
 
     if (tickets && tickets.length > 0) {
-      const pipeline = redisClient.pipeline();
-      pipeline.set(cacheKey, JSON.stringify(tickets));
-      pipeline.expire(cacheKey, 3600);
-      await pipeline.exec();
+      await safeRedis(() => {
+        const pipeline = redisClient.pipeline();
+        pipeline.set(cacheKey, JSON.stringify(tickets));
+        pipeline.expire(cacheKey, 3600);
+        return pipeline.exec();
+      });
     }
 
     res.status(200).json({ success: true, events: tickets });
@@ -184,7 +188,7 @@ export const getTicketsInfo = async (req, res) => {
       const cachedTicket = JSON.parse(cachedRaw);
       // Cached before qrCode existed/was backfilled - don't serve it stale.
       if (cachedTicket.qrCode) {
-        await redisClient.expire(cacheKey, 3600);
+        await safeRedis(() => redisClient.expire(cacheKey, 3600));
         return res.status(200).json({
           success: true,
           ticket: cachedTicket,
@@ -213,7 +217,7 @@ export const getTicketsInfo = async (req, res) => {
       ticket.qrCode = qrCode;
     }
 
-    await redisClient.setex(cacheKey, 3600, JSON.stringify(ticket));
+    await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(ticket)));
 
     res.status(200).json({ success: true, ticket });
   } catch (error) {
@@ -235,7 +239,7 @@ export const updateTicketStatus = async (req, res) => {
 
     await Promise.all([
       clearTicketCache(ticket.userId),
-      redisClient.del(`${REDIS_PREFIX}user:ticket:info:${id}`),
+      safeRedis(() => redisClient.del(`${REDIS_PREFIX}user:ticket:info:${id}`)),
     ]);
 
     res.status(200).json({ success: true, ticket });
@@ -430,9 +434,14 @@ export const scanTicket = catchAsync(async (req, res, next) => {
       .status(403)
       .json({ message: "Forbidden: Gate staff access required." });
   }
+  // orderNo alone is unique and fully identifies the ticket - matching on
+  // it is sufficient. (userTicketId from the QR payload is still required
+  // above for basic format validation, but isn't used as a match filter:
+  // tickets bought before a past bug fix have a QR-embedded userTicketId
+  // that never matched the ticket's real _id, so requiring it here would
+  // permanently lock those out of check-in.)
   const userTicket = await UserTicketModel.findOneAndUpdate(
     {
-      _id: userTicketId,
       orderNo: token,
       status: "paid",
       isVerified: true,

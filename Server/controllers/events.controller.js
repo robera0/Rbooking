@@ -1,5 +1,5 @@
 import multer from "multer";
-import redisClient, { REDIS_PREFIX, safeGet } from "../config/redis.js";
+import redisClient, { REDIS_PREFIX, safeGet, safeRedis } from "../config/redis.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 import EventService from "../service/event.service.js";
@@ -200,7 +200,11 @@ export const getEvents = catchAsync(async (req, res, next) => {
       source: "cache",
     });
   }
-  const query = {};
+  // Public listing: only show events the admin actually published. A
+  // "draft" event (created but never finished/published, possibly with no
+  // ticket types configured yet) was showing up here and appearing as
+  // "Sold Out" instead of just not being visible at all.
+  const query = { status: "published" };
 
   if (type) {
     query.type = {
@@ -254,7 +258,7 @@ export const getEvents = catchAsync(async (req, res, next) => {
 
     return { ...event, tickets, ticketCount: tickets.length };
   });
-  await redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets));
+  await safeRedis(() => redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets)));
 
   res.status(200).json({
     success: true,
@@ -275,7 +279,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
     });
   }
   console.log("Fetching from database...");
-  const events = await EventService.find()
+  const events = await EventService.find({ status: "published" })
     .sort({ "date.start.dateTime": -1 })
     .limit(limit);
 
@@ -298,7 +302,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
     };
   });
 
-  await redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents));
+  await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents)));
   res.status(200).json({ events: featuredEvent });
 });
 
@@ -370,7 +374,7 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
   const allTickets = await TicketModel.find({ eventId, isActive: { $ne: false } }).lean();
 
   const payloadToCache = { event, ticket: ticketInfo, tickets: allTickets };
-  await redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache));
+  await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache)));
 
   res.status(200).json({
     success: true,
@@ -384,18 +388,33 @@ export const getEventById = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
 
   const cacheKey = `${REDIS_PREFIX}event:single:${eventId}`;
-  const cachedEvent = await safeGet(cacheKey);
-  if (cachedEvent) {
-    return res
-      .status(200)
-      .json({ success: true, event: JSON.parse(cachedEvent) });
+  const cachedPayload = await safeGet(cacheKey);
+  if (cachedPayload) {
+    const parsed = JSON.parse(cachedPayload);
+    // Guard against a stale cache entry from before this endpoint started
+    // wrapping the response as {event, tickets} (it used to cache the bare
+    // event object) - treat that shape as a miss rather than returning
+    // undefined event/tickets for up to an hour after deploy.
+    if (parsed && parsed.event) {
+      return res
+        .status(200)
+        .json({ success: true, event: parsed.event, tickets: parsed.tickets });
+    }
   }
   const event = await EventService.findById(eventId);
   if (!event) {
     return res.status(404).json({ success: false, message: "Event not found" });
   }
-  await redisClient.setex(cacheKey, 3600, JSON.stringify(event));
-  res.status(200).json({ success: true, event });
+  // The real Ticket documents (with stable _id), not just the priceRanges
+  // snapshot embedded on the event - the admin edit form needs the _id to
+  // update a ticket tier by identity instead of by name (see updateEvent),
+  // otherwise renaming a tier orphans the old document instead of
+  // updating it.
+  const tickets = await TicketModel.find({ eventId }).lean();
+  await safeRedis(() =>
+    redisClient.setex(cacheKey, 3600, JSON.stringify({ event, tickets })),
+  );
+  res.status(200).json({ success: true, event, tickets });
 });
 //update event
 
@@ -503,31 +522,58 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     return res.status(404).json({ success: false, message: "Event not found" });
   }
 
-  // Sync tickets based on updated priceRanges
+  // Sync tickets based on updated priceRanges. Each entry carries the real
+  // Ticket document's _id (ticketId) when it's an existing tier - matching
+  // by _id instead of by name means renaming a tier updates that same
+  // document instead of leaving the old-named one behind as an orphaned
+  // duplicate while a brand new document gets created for the new name.
   if (priceRanges && Array.isArray(priceRanges)) {
     try {
       const eventIdObj = new mongoose.Types.ObjectId(eventId);
-      const ticketOps = priceRanges.map((pr) => {
-        return {
-          updateOne: {
-            filter: { eventId: eventIdObj, name: pr.type },
-            update: {
-              $set: {
-                price: Number(pr.min),
-                totalQuantity: Number(pr.capacity) || 0,
-                isActive: pr.isActive !== false,
-              },
-              $setOnInsert: {
-                availableQuantity: Number(pr.capacity) || 0,
-              },
-            },
-            upsert: true,
-          },
+
+      const existingOps = [];
+      const newTickets = [];
+      for (const pr of priceRanges) {
+        const fields = {
+          name: pr.type,
+          price: Number(pr.min),
+          totalQuantity: Number(pr.capacity) || 0,
+          isActive: pr.isActive !== false,
         };
-      });
-      if (ticketOps.length > 0) {
-        await TicketModel.bulkWrite(ticketOps);
+        if (pr.ticketId) {
+          existingOps.push({
+            updateOne: {
+              filter: { _id: pr.ticketId, eventId: eventIdObj },
+              update: { $set: fields },
+            },
+          });
+        } else {
+          newTickets.push({
+            eventId: eventIdObj,
+            ...fields,
+            availableQuantity: fields.totalQuantity,
+          });
+        }
       }
+
+      if (existingOps.length > 0) {
+        await TicketModel.bulkWrite(existingOps);
+      }
+      if (newTickets.length > 0) {
+        await TicketModel.insertMany(newTickets);
+      }
+
+      // Ticket types removed from the form (not just toggled off) are
+      // simply absent from priceRanges, so the ops above never touch them -
+      // leaving them isActive:true and still purchasable forever.
+      // Deactivate anything for this event that's no longer submitted.
+      const submittedTicketIds = priceRanges
+        .map((pr) => pr.ticketId)
+        .filter(Boolean);
+      await TicketModel.updateMany(
+        { eventId: eventIdObj, _id: { $nin: submittedTicketIds } },
+        { $set: { isActive: false } },
+      );
     } catch (ticketErr) {
       console.error("Failed to sync tickets:", ticketErr);
     }

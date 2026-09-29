@@ -10,7 +10,6 @@ import {
   Loader2,
   Music,
   Flag,
-  Zap,
   CalendarDays,
   Eye,
   EyeOff,
@@ -163,29 +162,46 @@ const PillMultiSelect = ({ label, options, value, onChange }) => {
 };
 
 // ─── Pill Select (single) ──────────────────────────────────────────────────
-const PillSelect = ({ label, options, value, onChange }) => (
-  <div>
-    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-3">
-      {label}
-    </label>
-    <div className="flex flex-wrap gap-2">
-      {options.map((opt) => (
-        <button
-          key={opt}
-          type="button"
-          onClick={() => onChange(opt)}
-          className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
-            value === opt
-              ? "bg-[#FF7A00] text-black border-[#FF7A00]"
-              : "bg-transparent text-gray-500 border-white/10 hover:border-[#FF7A00] hover:text-[#FF7A00]"
-          }`}
-        >
-          {opt}
-        </button>
-      ))}
+// Ticket type: a dropdown of common tiers, plus "Other" which reveals a
+// free-text input so admins can still name their own tier.
+const TICKET_TYPE_PRESETS = ["Regular", "Early Bird", "VIP", "VVIP"];
+
+const TicketTypeSelect = ({ value, onChange }) => {
+  const isCustomValue = value && !TICKET_TYPE_PRESETS.includes(value);
+  const [showCustomInput, setShowCustomInput] = useState(isCustomValue);
+
+  return (
+    <div>
+      <CustomSelect
+        options={[
+          ...TICKET_TYPE_PRESETS.map((opt) => ({ label: opt, value: opt })),
+          { label: "Other", value: "__other__" },
+        ]}
+        value={showCustomInput ? "__other__" : value}
+        onChange={(val) => {
+          if (val === "__other__") {
+            setShowCustomInput(true);
+            onChange("");
+          } else {
+            setShowCustomInput(false);
+            onChange(val);
+          }
+        }}
+        placeholder="Ticket Type"
+      />
+      {showCustomInput && (
+        <input
+          type="text"
+          autoFocus
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Type your own ticket name..."
+          className="mt-2 w-full bg-[#0f1113] border border-white/[0.06] rounded-xl px-4 py-3 text-white text-sm hover:border-[#FF7A00]/50 focus:border-[#FF7A00]/50 outline-none transition-colors"
+        />
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 const EditEvent = () => {
@@ -212,16 +228,38 @@ const EditEvent = () => {
           address: ev.links?.venues?.address || "",
         },
         description: ev.desc || "",
-        eventDate: ev.dates?.start?.dateTime
-          ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16)
-          : "",
+        // Build the datetime-local value from localDate/localTime (the
+        // naive wall-clock strings for the venue) rather than converting
+        // the UTC `dateTime` with .toISOString() - that silently relabels
+        // the UTC hour as if it were local, shifting the displayed time by
+        // the venue's UTC offset (3h for Africa/Addis_Ababa) every time an
+        // event is opened for editing.
+        eventDate:
+          ev.dates?.start?.localDate && ev.dates?.start?.localTime
+            ? `${ev.dates.start.localDate}T${ev.dates.start.localTime.slice(0, 5)}`
+            : ev.dates?.start?.dateTime
+              ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16)
+              : "",
+        // Built from the real Ticket documents (eventData.tickets), not
+        // the priceRanges snapshot embedded on the event, so each row
+        // carries the ticket's actual _id. Without that, saving after
+        // renaming a tier can't tell the backend "update this one" and it
+        // creates a new document instead, leaving the old one behind.
         tickets:
+          eventData?.tickets?.map((t) => ({
+            ticketId: t._id,
+            name: t.name || "",
+            price: t.price || 0,
+            capacity: t.totalQuantity || 0,
+            isActive: t.isActive !== false,
+          })) ||
           ev.priceRanges?.map((pr) => ({
             name: pr.type || "",
             price: pr.min || 0,
             capacity: pr.capacity || pr.max || 0,
             isActive: pr.isActive !== false,
-          })) || [],
+          })) ||
+          [],
         policies: ev.policies || [],
         amenities: ev.amenities?.activity || [],
         existingPictures: ev.pictures || [],
@@ -234,7 +272,6 @@ const EditEvent = () => {
         familyFriendly: ev.familyFriendly || false,
         durationDays: ev.durationDays || "",
         stages: ev.stages || [],
-        category: ev.category || "",
       };
     } else {
       initialObj = {
@@ -254,7 +291,6 @@ const EditEvent = () => {
         familyFriendly: false,
         durationDays: "",
         stages: [],
-        category: "",
       };
     }
     initialFormRef.current = initialObj;
@@ -350,6 +386,7 @@ const EditEvent = () => {
   const handleSubmit = (publishStatus = null) => {
     if (!formData.eventName) return setError("Event Name is required");
     if (!formData.venue.name) return setError("Venue name is required");
+    if (!formData.eventDate) return setError("Date and time are required");
     setError("");
 
     const type = formData.type.toLowerCase();
@@ -380,6 +417,7 @@ const EditEvent = () => {
         },
       },
       priceRanges: formData.tickets.map((t) => ({
+        ticketId: t.ticketId,
         type: t.name,
         currency: "ETB",
         min: Number(t.price),
@@ -391,7 +429,14 @@ const EditEvent = () => {
         start: {
           localDate: formData.eventDate?.split("T")[0],
           localTime: formData.eventDate?.split("T")[1],
-          dateTime: formData.eventDate ? new Date(formData.eventDate) : null,
+          // formData.eventDate is a naive "YYYY-MM-DDTHH:mm" wall-clock
+          // string for the venue (Africa/Addis_Ababa, always UTC+3, no
+          // DST) - appending the offset explicitly here means this is
+          // parsed against the venue's timezone, not whatever timezone
+          // the admin's own browser happens to be in.
+          dateTime: formData.eventDate
+            ? new Date(`${formData.eventDate}:00+03:00`)
+            : null,
         },
         timezone: "Africa/Addis_Ababa",
         status: { code: "onsale" },
@@ -408,7 +453,6 @@ const EditEvent = () => {
         durationDays: Number(formData.durationDays) || 0,
         stages: formData.stages,
       }),
-      ...(type === "generic" && { category: formData.category }),
     };
 
     if (publishStatus) {
@@ -459,21 +503,29 @@ const EditEvent = () => {
         <div className="flex gap-4">
           <button
             onClick={() => handleSubmit()}
-            disabled={updateMutation.isLoading}
-            className="mt-4 md:mt-0 px-6 py-4 bg-transparent border border-[#FF7A00] text-[#FF7A00] hover:bg-[#FF7A00] hover:text-black text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
+            disabled={updateMutation.isPending}
+            className="mt-4 md:mt-0 px-6 py-4 bg-transparent border border-[#FF7A00] text-[#FF7A00] hover:bg-[#FF7A00] hover:text-black text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save size={16} strokeWidth={3} />
-            {updateMutation.isLoading ? "Saving..." : "Save Changes"}
+            {updateMutation.isPending ? (
+              <Loader2 size={16} strokeWidth={3} className="animate-spin" />
+            ) : (
+              <Save size={16} strokeWidth={3} />
+            )}
+            {updateMutation.isPending ? "Saving..." : "Save Changes"}
           </button>
 
           {eventData?.event?.status === "draft" && (
             <button
               onClick={() => handleSubmit("published")}
-              disabled={updateMutation.isLoading}
-              className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
+              disabled={updateMutation.isPending}
+              className="mt-4 md:mt-0 px-6 py-4 bg-[#FF7A00] text-black hover:bg-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Upload size={16} strokeWidth={3} />
-              Publish Event
+              {updateMutation.isPending ? (
+                <Loader2 size={16} strokeWidth={3} className="animate-spin" />
+              ) : (
+                <Upload size={16} strokeWidth={3} />
+              )}
+              {updateMutation.isPending ? "Publishing..." : "Publish Event"}
             </button>
           )}
         </div>
@@ -621,20 +673,13 @@ const EditEvent = () => {
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Ticket Name
                     </label>
-                    <CustomSelect
-                      options={[
-                        { label: "Regular", value: "Regular" },
-                        { label: "Early Bird", value: "Early Bird" },
-                        { label: "VIP", value: "VIP" },
-                        { label: "VVIP", value: "VVIP" },
-                      ]}
+                    <TicketTypeSelect
                       value={ticket.name}
                       onChange={(val) => {
                         const updated = [...formData.tickets];
                         updated[idx].name = val;
                         set({ tickets: updated });
                       }}
-                      placeholder="Ticket Type"
                     />
                   </div>
                   <div className="w-24">
@@ -710,18 +755,9 @@ const EditEvent = () => {
               {/* New ticket row */}
               <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
                 <div className="flex-1">
-                  <CustomSelect
-                    options={[
-                      { label: "Regular", value: "Regular" },
-                      { label: "Early Bird", value: "Early Bird" },
-                      { label: "VIP", value: "VIP" },
-                      { label: "VVIP", value: "VVIP" },
-                    ]}
+                  <TicketTypeSelect
                     value={newTicket.name}
-                    onChange={(val) =>
-                      setNewTicket({ ...newTicket, name: val })
-                    }
-                    placeholder="Ticket Type"
+                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
                   />
                 </div>
                 <div className="w-24">
@@ -911,26 +947,6 @@ const EditEvent = () => {
             </SectionCard>
           )}
 
-          {/* ── GENERIC SPECIFIC ── */}
-          {formData.type === "generic" && (
-            <SectionCard icon={Zap} title="Event Category" badge="Generic">
-              <PillSelect
-                label="Category"
-                options={[
-                  "Sports",
-                  "Conference",
-                  "Expo",
-                  "Community",
-                  "Corporate",
-                  "Religious",
-                  "Exhibition",
-                  "Other",
-                ]}
-                value={formData.category}
-                onChange={(v) => set({ category: v })}
-              />
-            </SectionCard>
-          )}
         </div>
 
         {/* ── SIDEBAR ── */}
@@ -1120,11 +1136,15 @@ const EditEvent = () => {
             <button
               type="button"
               onClick={handleCancelEvent}
-              disabled={updateMutation.isLoading}
-              className="w-full mt-2 px-6 py-4 bg-red-500/10 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+              disabled={updateMutation.isPending}
+              className="w-full mt-2 px-6 py-4 bg-red-500/10 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white text-[10px] md:text-xs font-black uppercase tracking-widest rounded-full transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Trash2 size={16} strokeWidth={2} />
-              {updateMutation.isLoading ? "Cancelling..." : "Cancel Event"}
+              {updateMutation.isPending ? (
+                <Loader2 size={16} strokeWidth={2} className="animate-spin" />
+              ) : (
+                <Trash2 size={16} strokeWidth={2} />
+              )}
+              {updateMutation.isPending ? "Cancelling..." : "Cancel Event"}
             </button>
           )}
         </div>
@@ -1156,16 +1176,21 @@ const EditEvent = () => {
               <button
                 type="button"
                 onClick={() => setShowCancelConfirm(false)}
-                className="flex-1 px-4 py-3 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-colors"
+                disabled={updateMutation.isPending}
+                className="flex-1 px-4 py-3 rounded-full border border-white/10 bg-transparent text-white hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Keep Event
               </button>
               <button
                 type="button"
                 onClick={confirmCancelEvent}
-                className="flex-1 px-4 py-3 rounded-full bg-red-500 text-white hover:bg-red-400 text-[10px] font-black uppercase tracking-widest transition-colors"
+                disabled={updateMutation.isPending}
+                className="flex-1 px-4 py-3 rounded-full bg-red-500 text-white hover:bg-red-400 text-[10px] font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Confirm Cancel
+                {updateMutation.isPending && (
+                  <Loader2 size={14} strokeWidth={3} className="animate-spin" />
+                )}
+                {updateMutation.isPending ? "Cancelling..." : "Confirm Cancel"}
               </button>
             </div>
           </div>

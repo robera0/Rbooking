@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
-import redisClient, {
-  clearWishListCache,
-  REDIS_PREFIX,
-} from "../config/redis.js";
+import redisClient, { clearWishListCache, safeRedis, REDIS_PREFIX } from "../config/redis.js";
 import whishListService from "../service/wishlist.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
@@ -12,18 +9,11 @@ import AppError from "../errors/AppError.js";
 export const getWishlist = catchAsync(async (req, res) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
   const cacheKey = `${REDIS_PREFIX}user:wishlist:${userId}`;
-
-  let cachedWishlist = [];
-
-  try {
-    cachedWishlist = await redisClient.smembers(cacheKey);
-  } catch (error) {
-    console.log("Redis unavailable, using database:", error.message);
-  }
-
-  if (cachedWishlist.length > 0) {
+  const cachedWishlist = await safeRedis(() => redisClient.smembers(cacheKey), []);
+  if (cachedWishlist && cachedWishlist.length > 0) {
     const populatedItems = await whishListService.findOne(userId);
-
+    // Refresh the cache rolling TTL (1 hour) to keep active users warm
+    await safeRedis(() => redisClient.expire(cacheKey, 3600));
     return res.status(200).json({
       success: true,
       wishlist: populatedItems,
@@ -38,25 +28,19 @@ export const getWishlist = catchAsync(async (req, res) => {
       message: "Wishlist not found",
     });
   }
-
-  // Try to cache, but don't fail the request if Redis is unavailable
-  try {
-    const itemIdsToCache = (wishlist.items || [])
-      .map((item) => item?.eventId?._id?.toString())
-      .filter(Boolean);
-
-    if (itemIdsToCache.length > 0) {
+  const itemIdsToCache = (wishlist?.items || [])
+    .map((item) => item?.eventId?._id?.toString())
+    .filter(Boolean);
+  // write pipeline
+  if (itemIdsToCache.length > 0) {
+    await safeRedis(() => {
       const pipeline = redisClient.pipeline();
-
       pipeline.sadd(cacheKey, ...itemIdsToCache);
       pipeline.expire(cacheKey, 3600);
-
-      await pipeline.exec();
-    } else {
-      await redisClient.unlink(cacheKey);
-    }
-  } catch (error) {
-    console.log("Could not update Redis cache:", error.message);
+      return pipeline.exec();
+    });
+  } else {
+    await safeRedis(() => redisClient.unlink(cacheKey));
   }
 
   return res.status(200).json({

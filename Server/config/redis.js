@@ -6,101 +6,60 @@ const REDIS_URL = process.env.REDIS_URL;
 // Key prefix to avoid collisions with other apps sharing the same Redis URL
 export const REDIS_PREFIX = "paysso:";
 
-// ---------- Create the real client (only if a valid URL is set) ----------
-let realClient = null;
-
-if (REDIS_URL) {
-  try {
-    realClient = new Redis(REDIS_URL, {
-      maxRetriesPerRequest: 1,
-      connectTimeout: 3000,
-      commandTimeout: 2000,
-      enableOfflineQueue: false, // fail fast when not connected
-      retryStrategy: (times) => Math.min(times * 2000, 30000), // slow, capped reconnects
-    });
-
-    let errorLogged = false;
-    realClient.on("connect", () => {
-      errorLogged = false;
-      console.log("Redis connected via ioredis");
-    });
-    realClient.on("error", (err) => {
-      // log once per outage instead of once per retry
-      if (!errorLogged) {
-        console.error("Redis unavailable, running without cache:", err.message);
-        errorLogged = true;
-      }
-    });
-  } catch (err) {
-    console.error("Invalid REDIS_URL, running without cache:", err.message);
-    realClient = null;
+const redisClient = new Redis(REDIS_URL, {
+  // Fail fast instead of letting a command hang for tens of seconds when
+  // Redis is briefly unreachable - callers should fall back to the DB.
+  maxRetriesPerRequest: 1,
+  connectTimeout: 3000,
+  commandTimeout: 2000,
+  // ioredis's default retryStrategy retries forever with backoff, which on
+  // a host with no Redis at all (or one that's simply down) means an
+  // endless reconnect-and-log loop. Cap it so it gives up after a few
+  // tries and goes quiet instead of flooding the logs indefinitely -
+  // every call is already routed through safeRedis()/the clear* helpers,
+  // so callers fall back to MongoDB regardless of whether this ever
+  // reconnects.
+  retryStrategy: (times) => {
+    if (times > 5) return null;
+    return Math.min(times * 200, 2000);
+  },
+});
+console.log("REDIS_URL:", REDIS_URL || "(not set - caching disabled, all reads/writes fall back to MongoDB)");
+redisClient.on("connect", () =>
+  console.log("Redis Connected Successfully  via ioredis"),
+);
+// Log only the first error, not every single retry attempt - once
+// retryStrategy above gives up, ioredis would otherwise keep emitting one
+// of these per failed reconnect forever.
+let loggedRedisError = false;
+redisClient.on("error", (err) => {
+  if (!loggedRedisError) {
+    console.error("Redis unavailable, continuing without cache:", err.message);
+    loggedRedisError = true;
   }
-} else {
-  console.log("REDIS_URL not set, running without cache");
-}
+});
+redisClient.on("reconnect", () => console.log("Redis Reconnected"));
+redisClient.on("ready", () => {
+  loggedRedisError = false;
+});
+export default redisClient;
 
-const isReady = () => realClient && realClient.status === "ready";
-
-// A pipeline that does nothing (used when Redis is down)
-const noopPipeline = () => {
-  const p = {
-    set: () => p,
-    setex: () => p,
-    expire: () => p,
-    del: () => p,
-    unlink: () => p,
-    exec: async () => [],
-  };
-  return p;
-};
-
-// Runs a Redis call; returns fallback if Redis is down or the call fails
-const guard = async (fn, fallback = null) => {
-  if (!isReady()) return fallback;
+// Wraps any Redis operation so a slow/unavailable Redis (or a host that
+// simply doesn't provision Redis) never fails or blocks the request -
+// callers treat a rejected/failed op as a cache miss/no-op and fall back
+// to MongoDB, which is always the source of truth for this data.
+export const safeRedis = async (fn, fallback = null) => {
   try {
     return await fn();
-  } catch {
+  } catch (err) {
+    console.error("Redis operation failed, continuing without cache:", err.message);
     return fallback;
   }
 };
 
-// ---------- Safe client: same method names, never throws ----------
-const redisClient = {
-  get: (key) => guard(() => realClient.get(key)),
-  set: (...args) => guard(() => realClient.set(...args)),
-  setex: (...args) => guard(() => realClient.setex(...args)),
-  expire: (...args) => guard(() => realClient.expire(...args)),
-  del: (...args) => guard(() => realClient.del(...args)),
-  unlink: (...args) => guard(() => realClient.unlink(...args)),
-  keys: (pattern) => guard(() => realClient.keys(pattern), []),
-  pipeline: () => {
-    if (!isReady()) return noopPipeline();
-    const p = realClient.pipeline();
-    const originalExec = p.exec.bind(p);
-    p.exec = async () => {
-      try {
-        return await originalExec();
-      } catch {
-        return [];
-      }
-    };
-    return p;
-  },
-};
-
-export default redisClient;
-
-// ---------- Helpers ----------
-
-// A failed/unavailable Redis read is treated as a cache miss
-export const safeGet = async (key) => {
-  try {
-    return await redisClient.get(key);
-  } catch (err) {
-    console.error(`Redis GET failed for ${key}:`, err.message);
-    return null;
-  }
-};
+// Wraps a Redis read so a slow/unavailable Redis never blocks the request -
+// callers treat a rejected/failed read the same as a cache miss.
+export const safeGet = async (key) => safeRedis(() => redisClient.get(key));
 
 export const clearEventsCache = async () => {
   try {

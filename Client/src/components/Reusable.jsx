@@ -288,7 +288,7 @@ export default function CheckoutModal({
                       </p>
 
                       <p className="text-xl font-black tracking-wider text-white font-mono">
-                        {method.receiverName}
+                        {method.receiverName?.split(" ")[0]}
                       </p>
                     </div>
                     <div className="flex flex-col items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">

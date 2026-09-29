@@ -363,7 +363,6 @@ const UserHome = () => {
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
         variants={containerVariants}
-        FEAT
         className="px-6 lg:px-10 py-16 md:py-24 max-w-[1380px] mx-auto z-10 relative"
       >
         <div className="flex justify-between items-end mb-8 md:mb-12 px-2">
@@ -506,12 +505,14 @@ const UserHome = () => {
                             strokeWidth={3}
                           />
                           <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
-                            {e.locale || "Ethiopia, Addis Ababa"}
+                            {e.links?.venues?.city ||
+                              e.links?.venues?.name ||
+                              "Main Venue"}
                           </span>
                         </div>
 
                         {/* Scaled Rating Badge for Desktop */}
-                        <div className="flex items-cUKenter gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
+                        <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
                           <Star
                             size={12}
                             className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"

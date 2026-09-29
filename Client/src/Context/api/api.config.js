@@ -1,11 +1,12 @@
 import axios from "axios";
 
-// Always use a relative baseURL so requests go through the same origin as
-// the frontend (Vite's dev proxy locally, Netlify's /api/* redirect in
-// production). This keeps the auth cookie first-party — iOS Safari/Chrome
-// (WebKit) blocks third-party cookies entirely, which broke login on
-// iPhone when this pointed straight at the cross-site backend domain.
-const baseURL = import.meta.env.VITE_API_URL;
+// Hosting is now cPanel: the frontend (paysso.et) and backend
+// (api.paysso.et) are separate subdomains, not separate sites, so there's
+// no same-origin proxy in front of the API the way Netlify's /api/*
+// redirect provided. Browsers - including Safari's ITP - treat same
+// registrable-domain subdomains as first-party, so a direct cross-subdomain
+// request with SameSite=None;Secure cookies works fine here without one.
+const baseURL = import.meta.env.VITE_API_URL || "";
 
 const api = axios.create({
   baseURL,

@@ -1,4 +1,8 @@
-import { generateRefreshToken, generateAccessToken } from "../service/token.js";
+import {
+  generateRefreshToken,
+  generateAccessToken,
+  verifyExchangeToken,
+} from "../service/token.js";
 import { hashPasswords, comparePassword } from "../service/password.js";
 import { UserModel } from "../models/user.model.js";
 import { ProfileModel } from "../models/profile.model.js";
@@ -9,7 +13,6 @@ import UserService from "../service/user.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import AppError from "../errors/AppError.js";
 import mongoose from "mongoose";
-import redisClient, { REDIS_PREFIX } from "../config/redis.js";
 dotenv.config();
 
 const refreshToken_SECRET = process.env.REFRESH_TOKEN_SECRET;
@@ -274,12 +277,9 @@ export const login = catchAsync(async (req, res, next) => {
 // callback redirect) for a real session. Called by the frontend right
 // after landing back on its own domain, so the cookies set here are
 // first-party - unlike setting them directly from the callback response,
-// which would bind them to the backend's own cross-site domain.
-//
-// TEMPORARY: using a signed JWT instead of Redis for the exchange code,
-// since Redis isn't reachable in production right now. Once Redis is
-// working again, swap back to the commented-out block below and remove
-// the jwt.verify block.
+// which would bind them to the backend's own cross-site domain. Signed
+// rather than stored server-side (e.g. in Redis) so this keeps working
+// even when Redis isn't available/provisioned on the current host.
 export const googleExchange = catchAsync(async (req, res, next) => {
   const { code } = req.body;
 
@@ -287,29 +287,16 @@ export const googleExchange = catchAsync(async (req, res, next) => {
     return res.status(400).json({ message: "Missing exchange code" });
   }
 
-  // --- JWT-based exchange (active) ---
-  let payload;
+  let decoded;
   try {
-    payload = jwt.verify(code, process.env.OAUTH_EXCHANGE_SECRET);
+    decoded = verifyExchangeToken(code);
   } catch (err) {
     return res
       .status(400)
       .json({ message: "Invalid or expired exchange code" });
   }
-  const { id, email, role } = payload;
 
-  // --- Previous Redis-based exchange (disabled until Redis is fixed) ---
-  // const key = `${REDIS_PREFIX}oauth_exchange:${code}`;
-  // const raw = await redisClient.get(key);
-  //
-  // if (!raw) {
-  //   return res
-  //     .status(400)
-  //     .json({ message: "Invalid or expired exchange code" });
-  // }
-  // await redisClient.del(key);
-  //
-  // const { id, email, role } = JSON.parse(raw);
+  const { id, email, role } = decoded;
 
   const user = await UserModel.findById(id);
   if (!user) {

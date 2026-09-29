@@ -4,7 +4,6 @@ import {
   useLocation,
   Outlet,
 } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import Home from "../admin/Home";
 import Main from "../user/Main";
 import UserHome from "../user/UserHome";
@@ -46,37 +45,14 @@ import TermsAndConditions from "../admin/TermsAndConditions";
 import EventQR from "../admin/EventQR";
 import api from "./Context/api/api.config";
 import GetScanner from "../admin/GateScanner";
-const pageVariants = {
-  initial: { opacity: 0, y: 15, scale: 0.99 },
-  animate: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -15, scale: 0.99 },
-};
-
-const pageTransition = {
-  type: "spring",
-  damping: 25,
-  stiffness: 150,
-  mass: 1,
-};
 const PageWrapper = ({ children }) => (
-  <motion.div
-    variants={pageVariants}
-    initial="initial"
-    animate="animate"
-    exit="exit"
-    transition={pageTransition}
-    className="min-h-screen w-full origin-top"
-  >
+  <div className="min-h-screen w-full origin-top page-fade-in">
     {children}
-  </motion.div>
+  </div>
 );
 const Root = () => {
   const location = useLocation();
-  return (
-    <AnimatePresence mode="wait">
-      <Outlet key={location.pathname} />
-    </AnimatePresence>
-  );
+  return <Outlet key={location.pathname} />;
 };
 
 const API_URL = import.meta.env.VITE_API_URL;
