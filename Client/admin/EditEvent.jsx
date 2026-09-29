@@ -361,7 +361,7 @@ const EditEvent = () => {
         name: formData.artistName,
         ...(type === "concert" && { supporting: formData.supportingArtists }),
       },
-      locale: "",
+      locale: formData.venue.city,
       desc: formData.description,
       existingPictures: formData.existingPictures,
       policies: formData.policies,
@@ -1148,8 +1148,8 @@ const EditEvent = () => {
             </div>
 
             <p className="text-sm text-gray-300 leading-relaxed mb-6">
-              This action will make the event unavailable to customers and mark
-              it as cancelled.
+              Cancelling this event stops all ticket sales and notifies ticket
+              holders. This action cannot be undone.
             </p>
 
             <div className="flex gap-3">

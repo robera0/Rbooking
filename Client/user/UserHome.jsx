@@ -363,6 +363,7 @@ const UserHome = () => {
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
         variants={containerVariants}
+        FEAT
         className="px-6 lg:px-10 py-16 md:py-24 max-w-[1380px] mx-auto z-10 relative"
       >
         <div className="flex justify-between items-end mb-8 md:mb-12 px-2">
@@ -389,6 +390,10 @@ const UserHome = () => {
               featuredEvents?.events?.map((e, i) => {
                 const isSoldOut =
                   e?.tickets?.length === 0 || isEventPassed8Hours(e);
+                const startDate = e?.dates?.start?.dateTime
+                  ? new Date(e.dates.start.dateTime)
+                  : null;
+                const tz = e?.dates?.timezone || "Africa/Addis_Ababa";
                 return (
                   <motion.div
                     initial={{ opacity: 0, y: 25, scale: 0.98 }}
@@ -465,6 +470,29 @@ const UserHome = () => {
                           strokeWidth={2.5}
                         />
                       </button>
+                      {/* Date Badge - Smoked Glass */}
+                      {startDate && (
+                        <div className="pointer-events-none absolute top-4 left-4 z-20 flex w-12 flex-col items-center rounded-2xl border border-white/15 bg-[#121417]/75 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur-xl">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-[#FF7A00]">
+                            {startDate.toLocaleString("en-US", {
+                              weekday: "short",
+                              timeZone: tz,
+                            })}
+                          </span>
+                          <span className="mt-0.5 text-xl font-black leading-none tracking-tighter text-white">
+                            {startDate.toLocaleString("en-US", {
+                              day: "numeric",
+                              timeZone: tz,
+                            })}
+                          </span>
+                          <span className="mt-0.5 text-[8px] font-bold uppercase tracking-widest text-white/80">
+                            {startDate.toLocaleString("en-US", {
+                              month: "short",
+                              timeZone: tz,
+                            })}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Metadata Section */}
