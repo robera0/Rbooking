@@ -266,7 +266,17 @@ const RegistrationPage = () => {
     }
     setFormData((prev) => ({
       ...prev,
-      paymentMethods: [...prev.paymentMethods, currentPayment],
+      paymentMethods: [
+        ...prev.paymentMethods,
+        {
+          ...currentPayment,
+          // Telebirr's receipt API only ever returns the payer's first
+          // name, so a receiver name saved with a surname attached can
+          // never match on verification - keep only the first word.
+          receiverName:
+            currentPayment.receiverName?.trim().split(/\s+/)[0] || "",
+        },
+      ],
     }));
     setCurrentPayment({
       provider: "Telebirr",
@@ -907,7 +917,7 @@ const RegistrationPage = () => {
                         receiverName: e.target.value,
                       }))
                     }
-                    placeholder="Full name registered on account"
+                    placeholder="First name only (Telebirr shows first name)"
                     className="w-full"
                   />
                 </div>

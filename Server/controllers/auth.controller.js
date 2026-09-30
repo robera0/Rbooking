@@ -44,6 +44,14 @@ export const registerAdmin = async (req, res) => {
         parsedPaymentMethods = [];
       }
     }
+    // Telebirr's receipt API only ever returns the payer's first name, so
+    // a receiver name saved with a surname attached can never match on
+    // verification. The frontend already trims this, but normalize here
+    // too in case a request bypasses it.
+    parsedPaymentMethods = parsedPaymentMethods.map((pm) => ({
+      ...pm,
+      receiverName: pm.receiverName?.trim().split(/\s+/)[0] || "",
+    }));
 
     let coverPage = "";
     if (req.file) {

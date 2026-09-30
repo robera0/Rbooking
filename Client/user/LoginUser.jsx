@@ -51,6 +51,14 @@ const LoginUser = () => {
   };
 
   const handleGoogleLogin = () => {
+    // Google login leaves the SPA entirely (redirect to Google, then to the
+    // backend's OAuth callback, then back here), so React Router's
+    // navigation state (the `from` we read above) doesn't survive the trip.
+    // Stash it in sessionStorage instead so GoogleAuthCallback can send the
+    // user back to the page they were on instead of always landing on "/".
+    if (from && from !== "/") {
+      sessionStorage.setItem("postLoginRedirect", from);
+    }
     window.location.href = `${API_URL}/api/auth/google`;
   };
 

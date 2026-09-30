@@ -59,8 +59,25 @@ const orangeTheme = createTheme({
           backgroundColor: "#1C1F22",
           borderRadius: "16px",
           border: "1px solid rgba(255,122,0,0.15)",
+          // This picker sits in a narrow sidebar card (~220-280px) at every
+          // screen size, not just small ones. MUI's default desktop layout
+          // is a CSS grid with columns auto-sized to each part's intrinsic
+          // content width, which doesn't shrink to fit a container this
+          // narrow - the toolbar (date/time text) ends up wider than its
+          // own grid cell and gets clipped by the panel's overflow-hidden.
+          // An sx prop on the picker itself can't reach this internally-
+          // rendered slot with enough specificity, so this has to be a
+          // theme styleOverride instead. Force a single stacked column.
+          display: "flex !important",
+          flexDirection: "column !important",
+          width: "100% !important",
         },
-        contentWrapper: { backgroundColor: "#1C1F22" },
+        contentWrapper: {
+          backgroundColor: "#1C1F22",
+          width: "100%",
+          minWidth: 0,
+        },
+        toolbar: { width: "100%", minWidth: 0 },
         actionBar: { display: "none" },
       },
     },
@@ -300,7 +317,7 @@ const DatePickerPanel = ({ value, onChange }) => {
   };
 
   return (
-    <div>
+    <div className="relative">
       <button
         type="button"
         onClick={open ? handleConfirm : handleOpen}
@@ -320,7 +337,14 @@ const DatePickerPanel = ({ value, onChange }) => {
       </button>
 
       {open && (
-        <div className="mt-3 rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
+        // The picker's calendar grid (7 day columns) has a natural minimum
+        // width of ~320px - narrower than this "Schedule" sidebar card
+        // (~180-280px) at every screen size. Rendering it inline and
+        // clipped to the card's width either overflows or forces an
+        // unusably cramped calendar. Floating it as an absolutely
+        // positioned popover lets it use its natural width regardless of
+        // how narrow the card is.
+        <div className="absolute z-50 top-full left-0 mt-3 w-[320px] max-w-[90vw] rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ThemeProvider theme={orangeTheme}>
               <StaticDateTimePicker
@@ -350,15 +374,6 @@ const DatePickerPanel = ({ value, onChange }) => {
                     height: "220px",
                     margin: "0 auto",
                   },
-                  "& .MuiPickersLayout-root": {
-                    width: "100%",
-                    backgroundColor: "#1C1F22",
-                  },
-                  "& .MuiPickersLayout-contentWrapper": {
-                    width: "100%",
-                    backgroundColor: "#1C1F22",
-                  },
-                  "& .MuiPickersLayout-actionBar": { display: "none" },
                 }}
               />
             </ThemeProvider>

@@ -28,7 +28,10 @@ const GoogleAuthCallback = () => {
         // reload re-runs everything fresh against the cookie that's
         // already set by this point, same as what manually refreshing
         // was already fixing.
-        window.location.href = isNewUser === "true" ? "/complete-profile" : "/";
+        const redirectTo = sessionStorage.getItem("postLoginRedirect");
+        sessionStorage.removeItem("postLoginRedirect");
+        window.location.href =
+          isNewUser === "true" ? "/complete-profile" : redirectTo || "/";
       })
       .catch(() => setStatus("error"));
     // eslint-disable-next-line react-hooks/exhaustive-deps

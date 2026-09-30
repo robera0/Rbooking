@@ -240,7 +240,7 @@ export const getEvents = catchAsync(async (req, res, next) => {
     ];
   }
   const events = await EventService.find(query).sort({
-    "date.start.localDate": -1,
+    createdAt: -1,
   });
 
   const eventIds = events.map((e) => e._id);

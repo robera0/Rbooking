@@ -27,7 +27,7 @@ const Home = () => {
   return (
     <div className="flex h-screen bg-[#121417] text-white selection:bg-[#FF7A00]/20 font-onest overflow-hidden">
       {/* Desktop Sidebar — hidden on mobile */}
-      <div className="hidden lg:block w-64 lg:w-[280px] shrink-0 bg-[#1C1F22] border-r border-white/[0.06] z-20">
+      <div className="hidden lg:block w-[220px] xl:w-[280px] shrink-0 bg-[#1C1F22] border-r border-white/[0.06] z-20">
         <SideBar />
       </div>
 
@@ -61,9 +61,17 @@ const Home = () => {
       </AnimatePresence>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col relative w-full h-full">
+      {/* min-w-0 on both flex children below: a flex item's default
+          min-width is "auto", not 0, which means it refuses to shrink
+          below its content's natural width. Without this, a wide header
+          row (e.g. a title + button that "wants" more room than is
+          actually left next to the sidebar) forces this whole column to
+          balloon out to the full viewport width instead of the ~sidebar-
+          width-less space it actually has - pushing content past the
+          visible edge instead of wrapping within it. */}
+      <div className="flex-1 min-w-0 flex flex-col relative w-full h-full">
         <Header onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
-        <main className="flex-1 overflow-y-auto scroll-hidden relative">
+        <main className="flex-1 min-w-0 overflow-y-auto scroll-hidden relative">
           <div className="w-full min-h-full px-4 sm:px-6 md:px-10 py-6 sm:py-8 lg:py-10 max-w-[1600px] mx-auto pb-32">
             <Outlet />
           </div>

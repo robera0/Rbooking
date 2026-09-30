@@ -36,9 +36,18 @@ export const updateAdminSettings = catchAsync(async (req, res) => {
   const adminId = req.user.id;
   
   if (req.body.paymentMethods) {
+    // Telebirr's receipt API only ever returns the payer's first name, so
+    // a receiver name saved with a surname attached can never match on
+    // verification. The frontend already trims this, but normalize here
+    // too in case a request bypasses it.
+    const normalizedPaymentMethods = req.body.paymentMethods.map((pm) => ({
+      ...pm,
+      receiverName: pm.receiverName?.trim().split(/\s+/)[0] || "",
+    }));
+
     const profile = await AdminProfile.findOneAndUpdate(
       { userId: adminId },
-      { $set: { paymentMethods: req.body.paymentMethods } },
+      { $set: { paymentMethods: normalizedPaymentMethods } },
       { new: true, runValidators: true }
     );
     delete req.body.paymentMethods;

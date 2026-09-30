@@ -385,7 +385,7 @@ const AdminSetting = () => {
                       setFormData({ ...formData, paymentMethods: updated });
                     }}
                     className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-white font-bold outline-none placeholder:text-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:border-none"
-                    placeholder="Enter Full Name"
+                    placeholder="First name only (Telebirr shows first name)"
                   />
                 </div>
 
@@ -467,7 +467,19 @@ const AdminSetting = () => {
       {/* Save Button */}
       <div className="flex justify-end pt-4">
         <button
-          onClick={() => updateMutation.mutate(formData)}
+          onClick={() =>
+            updateMutation.mutate({
+              ...formData,
+              // Telebirr's receipt API only ever returns the payer's first
+              // name, so a receiver name saved with a surname attached can
+              // never match on verification. Keep whatever the admin types
+              // in the field itself, but only send the first word.
+              paymentMethods: (formData.paymentMethods || []).map((m) => ({
+                ...m,
+                receiverName: m.receiverName?.trim().split(/\s+/)[0] || "",
+              })),
+            })
+          }
           disabled={updateMutation.isPending}
           className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-[#ff6b00] text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-[#ff8533] transition-colors disabled:opacity-50"
         >

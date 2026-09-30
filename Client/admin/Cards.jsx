@@ -227,6 +227,7 @@ export const EventTable = ({ search = "", filter = "" }) => {
         </div>
       )}
 
+      <div className="overflow-x-auto">
       <table className="w-full min-w-[800px] table-fixed text-sm text-left">
         <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
           <tr>
@@ -362,6 +363,7 @@ export const EventTable = ({ search = "", filter = "" }) => {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };
@@ -432,6 +434,7 @@ export const TicketTable = ({ search = "", filter = "" }) => {
   };
 
   return (
+    <div className="overflow-x-auto">
     <table className="w-full min-w-[900px] table-fixed text-sm text-left">
       <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
         <tr>
@@ -589,6 +592,7 @@ export const TicketTable = ({ search = "", filter = "" }) => {
         })}
       </tbody>
     </table>
+    </div>
   );
 };
 export const UserTable = ({ onEdit, search = "", filter = "" }) => {
@@ -678,6 +682,7 @@ export const UserTable = ({ onEdit, search = "", filter = "" }) => {
         </div>
       )}
 
+      <div className="overflow-x-auto">
       <table className="w-full min-w-[800px] table-fixed text-sm text-left">
         <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
           <tr>
@@ -802,6 +807,7 @@ export const UserTable = ({ onEdit, search = "", filter = "" }) => {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };
@@ -877,6 +883,7 @@ export const TransactionTable = ({ search = "", filter = "" }) => {
 
   return (
     <div className="w-full">
+      <div className="overflow-x-auto">
       <table className="w-full min-w-[750px] table-fixed text-sm text-left">
         <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
           <tr>
@@ -955,6 +962,7 @@ export const TransactionTable = ({ search = "", filter = "" }) => {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };
