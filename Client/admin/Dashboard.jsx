@@ -6,7 +6,9 @@ import {
   History,
   TrendingDown,
   Dot,
+  Plus,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Cards } from "./Cards";
 import GridDemo from "./Graphs";
 import RevenueChart from "./RevenueGraph";
@@ -29,11 +31,20 @@ const Dashboard = () => {
   return (
     <div className="w-full max-w-full space-y-8">
       {/* Header */}
-      <div className="space-y-2 mb-8">
-        <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none">
-          Admin <span className="text-[#FF7A00]">Dashboard</span>
-        </h1>
-        <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none">
+            Admin <span className="text-[#FF7A00]">Dashboard</span>
+          </h1>
+          <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
+        </div>
+        <Link
+          to="/admin/events/add"
+          className="flex items-center gap-2 px-5 py-3 bg-[#FF7A00] text-black font-black uppercase tracking-widest text-xs rounded-full hover:bg-white transition-colors shrink-0"
+        >
+          <Plus size={16} strokeWidth={3} />
+          Create Event
+        </Link>
       </div>
 
       <div className="flex flex-wrap flex-col md:flex-row gap-6">
