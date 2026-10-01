@@ -18,6 +18,19 @@ dotenv.config();
 const refreshToken_SECRET = process.env.REFRESH_TOKEN_SECRET;
 const isProduction = process.env.NODE_ENV === "production";
 
+// Cookies previously had no maxAge, making them session cookies that were
+// cleared on browser close regardless of the JWTs' own (longer) validity.
+// Set maxAge to match the 3-day token expiry in service/token.js so a
+// session actually lasts 3 days, closed browser or not.
+const COOKIE_MAX_AGE = 3 * 24 * 60 * 60 * 1000;
+const cookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
+  maxAge: COOKIE_MAX_AGE,
+});
+
 export const registerAdmin = async (req, res) => {
   try {
     let {
@@ -148,21 +161,9 @@ export const registerAdmin = async (req, res) => {
     baseUserDocument.refreshTokens = [{ token: refreshToken }];
     await baseUserDocument.save();
 
-    const isProduction = process.env.NODE_ENV === "production";
-
     res
-      .cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-        path: "/",
-      })
-      .cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
-        path: "/",
-      })
+      .cookie("accessToken", accessToken, cookieOptions())
+      .cookie("refreshToken", refreshToken, cookieOptions())
       .status(201)
       .json({
         success: true,
@@ -265,18 +266,8 @@ export const login = catchAsync(async (req, res, next) => {
   await user.save();
 
   res
-    .cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    })
-    .cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    })
+    .cookie("accessToken", accessToken, cookieOptions())
+    .cookie("refreshToken", refreshToken, cookieOptions())
     .status(200)
     .json({ role: user.role, message: "Logged in successfully" });
 });
@@ -323,18 +314,8 @@ export const googleExchange = catchAsync(async (req, res, next) => {
   await user.save();
 
   res
-    .cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    })
-    .cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    })
+    .cookie("accessToken", accessToken, cookieOptions())
+    .cookie("refreshToken", refreshToken, cookieOptions())
     .status(200)
     .json({ role: user.role, message: "Logged in successfully" });
 });
@@ -374,12 +355,7 @@ export const refresh = catchAsync(async (req, res, next) => {
   const newAccessToken = generateAccessToken(payload);
 
   res
-    .cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    })
+    .cookie("accessToken", newAccessToken, cookieOptions())
     .status(200)
     .json({ message: "Token refreshed" });
 });
