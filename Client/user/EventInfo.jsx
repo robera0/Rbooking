@@ -265,7 +265,6 @@ const EventInfo = () => {
   const navigate = useNavigate();
 
   const [showMap, setShowMap] = useState(false);
-  const [showTicketDropdown, setShowTicketDropdown] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [rating, setRating] = useState(0);
   const [imgIdx, setImgIdx] = useState(0);
@@ -981,64 +980,120 @@ const EventInfo = () => {
 
                 {/* TICKET BODY */}
                 <div className="px-5 sm:px-8 py-5 sm:py-7 space-y-6">
-                  <div className="flex items-end justify-between">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={ticketType}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 10 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <p className="text-[8px] font-black text-gray-600 uppercase tracking-[0.4em] mb-1">
-                          Ticket Type
-                        </p>
-                        <p className="text-lg font-black uppercase tracking-tight">
-                          {activeTicket?.name || "Standard"}
-                        </p>
-                      </motion.div>
-                    </AnimatePresence>
+                  {/* CHOOSE YOUR TICKET — selectable list. Replaces the old
+                      static "Ticket Type / Price" hero plus the separate
+                      "View Ticket Types" button that used to sit below the
+                      fold: ticket choice is now the first thing shown, and
+                      picking a row recolors this whole card (header band +
+                      CTA below) via the same ticketThemes palette. The list
+                      scrolls internally past 3 rows so the card's height
+                      stays fixed regardless of how many tiers an event has. */}
+                  <div>
+                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-[0.4em] mb-2">
+                      Choose Your Ticket
+                    </p>
+                    <div className="relative">
+                      <div className="flex flex-col gap-2 max-h-[248px] overflow-y-auto pr-0.5">
+                        {allTickets.map((t) => {
+                          const typeKey =
+                            t.name?.toLowerCase()?.trim() || "standard";
+                          const tTheme =
+                            ticketThemes[typeKey] || ticketThemes.standard;
+                          const isActive = t._id === ticketId;
+                          const rowSoldOut = (t.availableQuantity ?? 0) <= 0;
 
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={ticketType + (activeTicket?.price || "0")}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-right"
-                      >
-                        <p className="text-[8px] font-black text-gray-600 uppercase tracking-[0.4em] mb-1">
-                          Price
-                        </p>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-3xl sm:text-4xl font-black tracking-tighter">
-                            {activeTicket?.price}
-                          </span>
-                          <span
-                            className="text-[10px] font-black uppercase"
-                            style={{ color: theme?.accentColor }}
-                          >
-                            ETB
-                          </span>
-                        </div>
-                      </motion.div>
-                    </AnimatePresence>
+                          return (
+                            <button
+                              key={t._id}
+                              disabled={rowSoldOut}
+                              onClick={() =>
+                                navigate(`/events/${eventId}/tickets/${t._id}`)
+                              }
+                              className={`w-full flex items-center gap-3 px-3.5 sm:px-4 py-3 rounded-2xl border text-left transition-colors shrink-0 ${
+                                rowSoldOut
+                                  ? "opacity-50 cursor-not-allowed border-white/[0.04] bg-white/[0.01]"
+                                  : isActive
+                                  ? "bg-white/[0.04]"
+                                  : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
+                              }`}
+                              style={
+                                isActive && !rowSoldOut
+                                  ? {
+                                      borderColor: tTheme?.accentColor,
+                                      backgroundColor: `${tTheme?.accentColor}1a`,
+                                    }
+                                  : undefined
+                              }
+                            >
+                              <span
+                                className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                                style={{
+                                  borderColor: isActive
+                                    ? tTheme?.accentColor
+                                    : "#444",
+                                }}
+                              >
+                                {isActive && (
+                                  <span
+                                    className="w-1.5 h-1.5 rounded-full"
+                                    style={{
+                                      backgroundColor: tTheme?.accentColor,
+                                    }}
+                                  />
+                                )}
+                              </span>
+                              <span className="flex-1 min-w-0">
+                                <span
+                                  className={`block text-[11px] font-black uppercase tracking-wide truncate ${
+                                    isActive ? "text-white" : "text-gray-300"
+                                  }`}
+                                >
+                                  {t?.name}
+                                </span>
+                                <span
+                                  className="block text-[9px] font-bold mt-0.5"
+                                  style={{
+                                    color: rowSoldOut
+                                      ? "#777"
+                                      : isActive
+                                      ? tTheme?.accentColor
+                                      : "#666",
+                                  }}
+                                >
+                                  {rowSoldOut
+                                    ? "Sold out"
+                                    : `${t?.availableQuantity} left`}
+                                </span>
+                              </span>
+                              <span
+                                className="text-[13px] font-black shrink-0"
+                                style={{
+                                  color:
+                                    isActive && !rowSoldOut
+                                      ? tTheme?.accentColor
+                                      : "#999",
+                                }}
+                              >
+                                {t?.price}{" "}
+                                <span className="text-[8px]">ETB</span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {allTickets.length > 3 && (
+                        <div className="pointer-events-none absolute bottom-0 left-0 right-1 h-8 bg-gradient-to-t from-[#141416] to-transparent rounded-b-2xl" />
+                      )}
+                    </div>
+                    {allTickets.length > 3 && (
+                      <p className="text-center text-[8px] font-black text-gray-600 uppercase tracking-widest mt-1.5">
+                        Scroll for {allTickets.length - 3} more
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-3">
                     {[
-                      {
-                        label: "Location",
-                        value: event?.links?.venues?.name || "TBA",
-                      },
-                      {
-                        label: "Category",
-                        value:
-                          event?.classifications?.[0]?.genre?.name ||
-                          event?.type ||
-                          "Live Event",
-                      },
                       {
                         label: "Doors Open",
                         value: event?.dates?.start?.localTime
@@ -1145,101 +1200,6 @@ const EventInfo = () => {
                   </div>
                 </div>
               </motion.div>
-
-              {/* TICKET TYPE DROPDOWN */}
-              <div className="relative">
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: 1.0,
-                    duration: 0.6,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setShowTicketDropdown(!showTicketDropdown)}
-                  className="w-full py-4 rounded-2xl border border-[#FF7A00]/30 bg-[#FF7A00]/[0.07] flex items-center justify-center gap-3 hover:bg-[#FF7A00]/[0.14] transition-colors"
-                >
-                  <Ticket size={15} className="text-[#FF7A00]" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
-                    View Ticket Types
-                  </span>
-                  <motion.span
-                    animate={{ rotate: showTicketDropdown ? 90 : 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <MoveRight size={14} className="text-[#FF7A00]" />
-                  </motion.span>
-                </motion.button>
-
-                <AnimatePresence>
-                  {showTicketDropdown && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setShowTicketDropdown(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute top-full left-0 right-0 mt-3 z-20 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1a1c1e]/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                      >
-                        {allTickets.map((t) => {
-                          const typeKey =
-                            t.name?.toLowerCase()?.trim() || "standard";
-                          const tTheme =
-                            ticketThemes[typeKey] || ticketThemes.standard;
-                          const isActive = t._id === ticketId;
-
-                          return (
-                            <motion.button
-                              key={t._id}
-                              whileHover={{
-                                backgroundColor: "rgba(255,255,255,0.03)",
-                              }}
-                              onClick={() => {
-                                navigate(`/events/${eventId}/tickets/${t._id}`);
-                                setShowTicketDropdown(false);
-                              }}
-                              className={`w-full px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between border-b border-white/[0.04] last:border-0 group transition-colors ${
-                                isActive ? "bg-white/[0.04]" : ""
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className="w-1.5 h-1.5 rounded-full"
-                                  style={{
-                                    backgroundColor: tTheme?.accentColor,
-                                  }}
-                                />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-white transition-colors">
-                                  {t?.name}
-                                </span>
-                                {isActive && (
-                                  <span className="text-[8px] font-black text-[#FF7A00] uppercase tracking-widest">
-                                    ← Selected
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-white">
-                                  {t?.price} ETB
-                                </span>
-                                <span className="text-[10px] text-gray-600">
-                                  ({t?.availableQuantity} left)
-                                </span>
-                              </div>
-                            </motion.button>
-                          );
-                        })}
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
 
               {/* LIVE BADGE */}
               <motion.div
