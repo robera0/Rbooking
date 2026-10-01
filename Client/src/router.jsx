@@ -43,6 +43,7 @@ import { DashboardProvider } from "./Context/DashboardContext";
 import AdminSetting from "../admin/Setting";
 import TermsAndConditions from "../admin/TermsAndConditions";
 import EventQR from "../admin/EventQR";
+import ContactUs from "../user/ContactUs";
 import api from "./Context/api/api.config";
 import GetScanner from "../admin/GateScanner";
 const PageWrapper = ({ children }) => (
@@ -293,6 +294,14 @@ export const router = createBrowserRouter([
             element: (
               <PageWrapper>
                 <Venue />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "contact",
+            element: (
+              <PageWrapper>
+                <ContactUs />
               </PageWrapper>
             ),
           },

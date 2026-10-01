@@ -560,6 +560,16 @@ const Main = () => {
                 <p className="text-gray-500 text-sm max-w-sm">
                   The high performance ticketing engine for live entertainment.
                 </p>
+                <p className="text-gray-500 text-sm">
+                  Need help?{" "}
+                  <Link
+                    to="/contact"
+                    onClick={scrollToTop}
+                    className="text-[#FF7A00] font-bold hover:text-white transition-colors"
+                  >
+                    Contact us
+                  </Link>
+                </p>
               </div>
 
               {/* Footer Link Sections — FIXED */}
