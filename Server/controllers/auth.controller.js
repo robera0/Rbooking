@@ -66,6 +66,18 @@ export const registerAdmin = async (req, res) => {
       receiverName: pm.receiverName?.trim().split(/\s+/)[0] || "",
     }));
 
+    // Telebirr is the only provider wired up for payment verification.
+    // The frontend's signup form only offers Telebirr, but enforce it here
+    // too since this endpoint can be hit directly.
+    if (
+      parsedPaymentMethods.length === 0 ||
+      parsedPaymentMethods.some((pm) => pm.provider !== "Telebirr")
+    ) {
+      return res.status(400).json({
+        message: "A Telebirr payment method is required to register",
+      });
+    }
+
     let coverPage = "";
     if (req.file) {
       coverPage = `uploads/${req.file.filename}`;

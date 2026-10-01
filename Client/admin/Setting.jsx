@@ -328,29 +328,13 @@ const AdminSetting = () => {
                   <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">
                     Provider
                   </label>
-                  <select
-                    value={method.provider}
-                    disabled={!isEditing}
-                    onChange={(e) => {
-                      const updated = [...formData.paymentMethods];
-                      updated[idx].provider = e.target.value;
-                      setFormData({ ...formData, paymentMethods: updated });
-                    }}
-                    className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-white font-bold outline-none cursor-pointer text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:border-none"
-                  >
-                    <option className="bg-[#141313]" value="Telebirr">
-                      Telebirr
-                    </option>
-                    <option className="bg-[#141313]" value="Abyssinia Bank">
-                      Bank of Abyssinia
-                    </option>
-                    <option className="bg-[#141313]" value="CBE">
-                      CBE
-                    </option>
-                    <option className="bg-[#141313]" value="MPSA">
-                      MPSA
-                    </option>
-                  </select>
+                  {/* Telebirr is the only supported provider right now
+                      (its receipt API is the only one wired up for
+                      verification), so this is a fixed value rather than
+                      a dropdown with options that don't actually work. */}
+                  <div className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-white font-bold text-sm opacity-80">
+                    Telebirr
+                  </div>
                 </div>
 
                 {/* Account / Phone Number */}

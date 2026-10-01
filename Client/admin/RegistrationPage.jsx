@@ -383,6 +383,11 @@ const RegistrationPage = () => {
     ) {
       return toast.error("Please fill all required fields");
     }
+    if (formData.paymentMethods.length === 0) {
+      return toast.error(
+        "Please add a Telebirr payment method before continuing",
+      );
+    }
     if (formData.password !== formData.confirmPassword) {
       return toast.error("Passwords do not match");
     }
@@ -862,6 +867,10 @@ const RegistrationPage = () => {
               number="4"
               title="Payment Information"
             />
+            <p className="text-xs text-gray-500 -mt-3">
+              Add at least one Telebirr account to receive ticket payments —
+              required to create your organizer account.
+            </p>
             <div className="bg-[#1C1F22] p-5 rounded-2xl border border-white/[0.04]">
               <div className="flex flex-col md:flex-row gap-4 items-end mb-4">
                 {/* Payment Provider */}

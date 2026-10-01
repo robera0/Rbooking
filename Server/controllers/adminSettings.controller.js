@@ -36,6 +36,13 @@ export const updateAdminSettings = catchAsync(async (req, res) => {
   const adminId = req.user.id;
   
   if (req.body.paymentMethods) {
+    // Telebirr is the only provider wired up for payment verification.
+    if (req.body.paymentMethods.some((pm) => pm.provider !== "Telebirr")) {
+      return res.status(400).json({
+        message: "Only Telebirr is supported as a payment provider",
+      });
+    }
+
     // Telebirr's receipt API only ever returns the payer's first name, so
     // a receiver name saved with a surname attached can never match on
     // verification. The frontend already trims this, but normalize here
