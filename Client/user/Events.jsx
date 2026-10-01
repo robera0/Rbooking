@@ -226,6 +226,10 @@ const Events = () => {
               {filteredEvents.map((e) => {
                 const isSoldOut =
                   e.tickets?.length === 0 || isEventPassed8Hours(e);
+                const startDate = e?.dates?.start?.dateTime
+                  ? new Date(e.dates.start.dateTime)
+                  : null;
+                const tz = e?.dates?.timezone || "Africa/Addis_Ababa";
                 const isAdded = checkWishlist(e._id);
                 const baseActiveTicket = e?.priceRanges?.[0] || e?.price || "0";
                 const activeTicket = baseActiveTicket
@@ -286,27 +290,6 @@ const Events = () => {
                             </span>
                           </div>
                         </div>
-
-                        {/* Location Badge */}
-                        <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg flex items-center gap-2 group-hover:bg-[#FF7A00] transition-colors duration-500">
-                          <MapPin
-                            size={10}
-                            className={
-                              isSoldOut
-                                ? "text-gray-500"
-                                : "text-[#FF7A00] group-hover:text-black"
-                            }
-                          />
-                          <span
-                            className={`text-[8px] font-black uppercase tracking-wider ${
-                              isSoldOut
-                                ? "text-gray-500"
-                                : "text-white group-hover:text-black"
-                            }`}
-                          >
-                            {e.locale || "Main Venue"}
-                          </span>
-                        </div>
                       </Link>
 
                       {/* Wishlist Button */}
@@ -326,63 +309,110 @@ const Events = () => {
                           strokeWidth={2.5}
                         />
                       </button>
+
+                      {/* Date Badge - Smoked Glass */}
+                      {startDate && (
+                        <div className="pointer-events-none absolute top-4 left-4 z-20 flex w-12 flex-col items-center rounded-2xl border border-white/15 bg-[#121417]/75 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur-xl">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-[#FF7A00]">
+                            {startDate.toLocaleString("en-US", {
+                              weekday: "short",
+                              timeZone: tz,
+                            })}
+                          </span>
+                          <span className="mt-0.5 text-xl font-black leading-none tracking-tighter text-white">
+                            {startDate.toLocaleString("en-US", {
+                              day: "numeric",
+                              timeZone: tz,
+                            })}
+                          </span>
+                          <span className="mt-0.5 text-[8px] font-bold uppercase tracking-widest text-white/80">
+                            {startDate.toLocaleString("en-US", {
+                              month: "short",
+                              timeZone: tz,
+                            })}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="space-y-3 px-2">
-                      <div className="flex items-center justify-between">
-                        <Link
-                          to={
-                            !isSoldOut && e.tickets?.length > 0
-                              ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
-                              : `/events/${e._id}`
-                          }
-                        >
-                          <h3 className="text-xl font-black uppercase italic tracking-tighter text-white hover:text-[#FF7A00] transition-colors line-clamp-1">
-                            {e.name}
-                          </h3>
-                        </Link>
-                        <div className="flex items-center gap-1 bg-white/[0.04] px-2 py-1 rounded-md border border-white/[0.08]">
-                          <Star size={10} fill="#FF7A00" stroke="#FF7A00" />
-                          <span className="text-white text-[10px] font-black">
-                            {e.rating?.score || "4.9"}
+                    {/* Metadata Section */}
+                    <div className="mt-5 px-1 space-y-4">
+                      {/* Row 1: Location & Rating */}
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-1.5 text-[#FF7A00]">
+                          <MapPin
+                            size={12}
+                            className="md:w-3.5 md:h-3.5"
+                            strokeWidth={3}
+                          />
+                          <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
+                            {e.links?.venues?.city ||
+                              e.links?.venues?.name ||
+                              "Main Venue"}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
+                          <Star
+                            size={12}
+                            className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
+                          />
+                          <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
+                            {e?.rating?.reviews > 0 ? e.rating.score : "NEW"}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-end justify-between border-t border-white/[0.04] pt-4">
-                        <div className="flex flex-col">
-                          <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">
-                            Access From
-                          </span>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-black text-white italic">
-                              {"   "}
-                              {activeTicket?.price}
-                            </span>
-                            <span className="text-[10px] text-gray-600 font-bold">
-                              {activeTicket?.currency == "USD"
-                                ? "$"
-                                : activeTicket?.currency}{" "}
-                              /pp
-                            </span>
-                          </div>
+                      {/* Title + Price */}
+                      <div className="space-y-3 px-2">
+                        <div className="flex items-center justify-between">
+                          <Link
+                            to={
+                              !isSoldOut && e.tickets?.length > 0
+                                ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
+                                : `/events/${e._id}`
+                            }
+                          >
+                            <h3 className="text-xl font-black uppercase italic tracking-tighter text-white hover:text-[#FF7A00] transition-colors line-clamp-1">
+                              {e.name}
+                            </h3>
+                          </Link>
                         </div>
 
-                        <Link
-                          to={
-                            !isSoldOut && e.tickets?.length > 0
-                              ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
-                              : `/events/${e._id}`
-                          }
-                        >
-                          <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn">
-                            Details{" "}
-                            <ArrowRight
-                              size={14}
-                              className="group-hover/btn:translate-x-1 transition-transform"
-                            />
-                          </button>
-                        </Link>
+                        <div className="flex items-end justify-between border-t border-white/[0.04] pt-4">
+                          <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1">
+                              Access From
+                            </span>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-2xl font-black text-white italic">
+                                {activeTicket?.price}
+                              </span>
+                              <span className="text-[10px] text-gray-600 font-bold">
+                                {activeTicket?.currency == "USD"
+                                  ? "$"
+                                  : activeTicket?.currency}{" "}
+                                /pp
+                              </span>
+                            </div>
+                          </div>
+
+                          <Link
+                            to={
+                              !isSoldOut && e.tickets?.length > 0
+                                ? `/events/${e._id}/tickets/${e.tickets[0]?._id}`
+                                : `/events/${e._id}`
+                            }
+                          >
+                            <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00] hover:text-white transition-colors group/btn">
+                              Details{" "}
+                              <ArrowRight
+                                size={14}
+                                className="group-hover/btn:translate-x-1 transition-transform"
+                              />
+                            </button>
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
