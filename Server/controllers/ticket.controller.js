@@ -74,7 +74,6 @@ export const purchaseTicket = async (req, res) => {
       ticketType: ticket.name,
       quantity,
       orderNo,
-      referenceId: "",
       isVerified: isFree ? true : false,
       totalAmount,
       qrCode,
@@ -272,15 +271,6 @@ export const verifyTicket = async (req, res) => {
   if (!receiptUrl.includes("ethiotelecom") && !receiptUrl.startsWith("http")) {
     return res.status(400).json({ message: "The link is not correct" });
   }
-  const url = new URL(receiptUrl);
-  const usedUrl = url.pathname.split("/")[2];
-  const usedTicket = await UserTicketModel.findOne({ receiptNo: usedUrl });
-
-  if (usedTicket) {
-    return res
-      .status(400)
-      .json({ message: "This receipt has already been used." });
-  }
 
   try {
     // Fetch the UserTicket and populate ticket tier (to get eventId)
@@ -433,6 +423,14 @@ export const verifyTicket = async (req, res) => {
       userTicket: updatedTicket,
     });
   } catch (error) {
+    // The unique index on referenceId is what makes receipt reuse atomic:
+    // two concurrent verifications can both pass the findOne check above,
+    // but only one update can win.
+    if (error.code === 11000) {
+      return res
+        .status(400)
+        .json({ message: "This receipt has already been used." });
+    }
     console.error("verifyTicket error:", error.message);
     console.error(error);
     res.status(500).json({ success: false, message: error.message });

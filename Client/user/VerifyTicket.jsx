@@ -236,7 +236,13 @@ const VerifyTicket = () => {
                   ).toLocaleString()} ETB`,
                 },
                 { label: "Status", value: "✓ PAID & VERIFIED" },
-                { label: "Ticket Type", value: confirmedTicket?.ticketType },
+                {
+                  label: "Ticket Type",
+                  value:
+                    confirmedTicket?.ticketType ||
+                    confirmedTicket?.ticketId?.name ||
+                    "—",
+                },
               ].map(({ label, value }) => (
                 <div
                   key={label}

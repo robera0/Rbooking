@@ -27,3 +27,6 @@ dist-ssr
 *.sw?
 
 
+
+# user-uploaded files
+Server/uploads/*
