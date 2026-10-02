@@ -17,6 +17,7 @@ import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
+import { logVerificationFailure } from "../service/verificationLog.service.js";
 import EventService from "../service/event.service.js";
 import {
   getExpectedReceiver,
@@ -264,12 +265,27 @@ export const verifyTicket = async (req, res) => {
 
   const userId = req.user.id;
 
+  let loggedTicket = null;
+  const fail = async (status, reason, message, details) => {
+    await logVerificationFailure({
+      userId,
+      userTicketId,
+      receiptUrl,
+      userTicket: loggedTicket,
+      status,
+      reason,
+      message,
+      details,
+    });
+    return res.status(status).json({ message });
+  };
+
   if (!receiptUrl || !receiptUrl.trim())
-    return res.status(400).json({ message: "Receipt link is required" });
+    return fail(400, "MISSING_RECEIPT_URL", "Receipt link is required");
 
   // Basic validation: ensure it looks like a valid Telebirr receipt URL
   if (!receiptUrl.includes("ethiotelecom") && !receiptUrl.startsWith("http")) {
-    return res.status(400).json({ message: "The link is not correct" });
+    return fail(400, "INVALID_LINK", "The link is not correct");
   }
 
   try {
@@ -280,23 +296,29 @@ export const verifyTicket = async (req, res) => {
       select: "eventId name price",
     });
 
-    if (!userTicket)
-      return res.status(404).json({ message: "Ticket not found" });
+    if (!userTicket) return fail(404, "TICKET_NOT_FOUND", "Ticket not found");
+    loggedTicket = userTicket;
 
     if (userTicket.userId.toString() !== userId)
-      return res.status(403).json({ message: "Unauthorized" });
+      return fail(403, "NOT_TICKET_OWNER", "Unauthorized");
 
     if (userTicket.status === "paid")
-      return res
-        .status(400)
-        .json({ message: "This ticket has already been verified" });
+      return fail(
+        400,
+        "ALREADY_VERIFIED",
+        "This ticket has already been verified",
+      );
 
     if (userTicket.status === "cancelled")
-      return res.status(400).json({ message: "This ticket was cancelled" });
+      return fail(400, "TICKET_CANCELLED", "This ticket was cancelled");
 
     const expected = await getExpectedReceiver(userTicket);
     if (expected.message) {
-      return res.status(expected.status).json({ message: expected.message });
+      return fail(
+        expected.status,
+        "RECEIVER_ACCOUNT_UNAVAILABLE",
+        expected.message,
+      );
     }
     const { eventInfo, adminProfile } = expected;
     const EXPECTED_RECEIVER = expected.receiverName;
@@ -310,9 +332,12 @@ export const verifyTicket = async (req, res) => {
     const isValid = await verifyReceipt(receiptUrl);
 
     if (!isValid || isValid.error || !isValid.receipt) {
-      return res.status(400).json({
-        message: isValid?.error || "Receipt verification failed or invalid URL",
-      });
+      return fail(
+        400,
+        "RECEIPT_LOOKUP_FAILED",
+        isValid?.error || "Receipt verification failed or invalid URL",
+        { providerResponse: isValid?.error ?? null },
+      );
     }
 
     const receipt = isValid.receipt;
@@ -320,24 +345,35 @@ export const verifyTicket = async (req, res) => {
     const settledAmount = parseFloat(receipt.settledAmount);
 
     if (receipt.transactionStatus !== "Completed") {
-      return res.status(400).json({ message: "Transaction is not completed" });
+      return fail(
+        400,
+        "TRANSACTION_NOT_COMPLETED",
+        "Transaction is not completed",
+        { transactionStatus: receipt.transactionStatus },
+      );
     }
     if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
-      return res.status(400).json({
-        message: "Invalid receiver name on receipt",
+      return fail(400, "RECEIVER_NAME_MISMATCH", "Invalid receiver name on receipt", {
+        expectedReceiver: EXPECTED_RECEIVER,
+        receiptReceiver: receipt.creditedPartyName,
       });
     }
 
     if (settledAmount !== TOTAL_AMOUNT) {
-      return res.status(400).json({
-        message: `Invalid amount. Expected ${TOTAL_AMOUNT}, but receipt shows ${receipt.settledAmount}`,
-      });
+      return fail(
+        400,
+        "AMOUNT_MISMATCH",
+        `Invalid amount. Expected ${TOTAL_AMOUNT}, but receipt shows ${receipt.settledAmount}`,
+        { expectedAmount: TOTAL_AMOUNT, receiptAmount: receipt.settledAmount },
+      );
     }
 
     if (!receipt.receiptNo) {
-      return res
-        .status(400)
-        .json({ message: "Receipt number is missing from receipt data" });
+      return fail(
+        400,
+        "RECEIPT_NUMBER_MISSING",
+        "Receipt number is missing from receipt data",
+      );
     }
 
     const existingTicket = await UserTicketModel.findOne({
@@ -345,9 +381,10 @@ export const verifyTicket = async (req, res) => {
     });
 
     if (existingTicket) {
-      return res
-        .status(400)
-        .json({ message: "This receipt has already been used." });
+      return fail(400, "RECEIPT_ALREADY_USED", "This receipt has already been used.", {
+        receiptNo: receipt.receiptNo,
+        usedByUserTicketId: existingTicket._id.toString(),
+      });
     }
 
     // Mark ticket as paid
@@ -427,10 +464,19 @@ export const verifyTicket = async (req, res) => {
     // two concurrent verifications can both pass the findOne check above,
     // but only one update can win.
     if (error.code === 11000) {
-      return res
-        .status(400)
-        .json({ message: "This receipt has already been used." });
+      return fail(400, "RECEIPT_ALREADY_USED", "This receipt has already been used.", {
+        race: true,
+      });
     }
+    await logVerificationFailure({
+      userId,
+      userTicketId,
+      receiptUrl,
+      userTicket: loggedTicket,
+      status: 500,
+      reason: "SERVER_ERROR",
+      message: error.message,
+    });
     console.error("verifyTicket error:", error.message);
     console.error(error);
     res.status(500).json({ success: false, message: error.message });
