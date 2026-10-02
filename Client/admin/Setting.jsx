@@ -118,8 +118,6 @@ const AdminSetting = () => {
       categories: [],
       genres: [],
     },
-    activePaymentMethods: [],
-    paymentMethods: [],
   });
 
   const [editingMethodIndex, setEditingMethodIndex] = useState(null);
@@ -127,8 +125,9 @@ const AdminSetting = () => {
   useEffect(() => {
     if (adminSettings) {
       setFormData({
-        ...adminSettings,
-        paymentMethods: availablePaymentMethods || [],
+        notifications: adminSettings.notifications || formData.notifications,
+        eventClassifications:
+          adminSettings.eventClassifications || formData.eventClassifications,
       });
     }
   }, [adminSettings, availablePaymentMethods]);
@@ -181,18 +180,6 @@ const AdminSetting = () => {
     }));
   };
 
-  const togglePaymentMethod = (method) => {
-    const active = formData.activePaymentMethods;
-    if (active.includes(method)) {
-      setFormData({
-        ...formData,
-        activePaymentMethods: active.filter((m) => m !== method),
-      });
-    } else {
-      setFormData({ ...formData, activePaymentMethods: [...active, method] });
-    }
-  };
-
   return (
     <div className="space-y-10 w-full max-w-4xl pb-20 overflow-hidden">
       {/* Header */}
@@ -206,6 +193,8 @@ const AdminSetting = () => {
           gateways.
         </p>
       </div>
+
+      {typeof AdminSetting !== "undefined" && null}
 
       {/* 1. Notifications */}
       <div className="bg-[#1c1b1b] border border-[#5a4136]/40 rounded-xl p-6 md:p-8">
@@ -297,173 +286,10 @@ const AdminSetting = () => {
         </div>
       </div>
 
-      {/* 3. Payment Gateways */}
-      {/* 3. Payment Gateways */}
-      <div className="bg-[#1c1b1b] border border-[#5a4136]/40 rounded-xl p-6 md:p-8">
-        <SectionHeader
-          icon={CreditCard}
-          title="Payment Gateways"
-          desc="Manage the payment accounts that buyers will use to purchase your tickets."
-        />
-        <div className="space-y-6">
-          {(!formData.paymentMethods ||
-            formData.paymentMethods.length === 0) && (
-            <p className="text-[#8a8683] text-xs italic">
-              No payment methods added yet.
-            </p>
-          )}
-          {(formData.paymentMethods || []).map((method, idx) => {
-            const isActive = formData.activePaymentMethods.includes(
-              method.provider,
-            );
-            const isEditing = editingMethodIndex === idx;
-
-            return (
-              <div
-                key={idx}
-                className="flex flex-col lg:flex-row gap-4 lg:items-center bg-[#141313] p-5 rounded-xl border border-[#5a4136]/20"
-              >
-                {/* Provider Selector */}
-                <div className="w-full lg:w-1/4 space-y-2">
-                  <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">
-                    Provider
-                  </label>
-                  {/* Telebirr is the only supported provider right now
-                      (its receipt API is the only one wired up for
-                      verification), so this is a fixed value rather than
-                      a dropdown with options that don't actually work. */}
-                  <div className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-white font-bold text-sm opacity-80">
-                    Telebirr
-                  </div>
-                </div>
-
-                {/* Account / Phone Number */}
-                <div className="flex-1 space-y-2">
-                  <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">
-                    Account / Phone Number
-                  </label>
-                  <input
-                    value={method.accountNumber || ""}
-                    disabled={!isEditing}
-                    onChange={(e) => {
-                      const updated = [...formData.paymentMethods];
-                      updated[idx].accountNumber = e.target.value;
-                      setFormData({ ...formData, paymentMethods: updated });
-                    }}
-                    className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-[#ff6b00] font-bold outline-none placeholder:text-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:border-none"
-                    placeholder="Enter Account Number"
-                  />
-                </div>
-
-                {/* Receiver Name */}
-                <div className="flex-1 space-y-2">
-                  <label className="text-[10px] text-[#ff6b00] font-bold uppercase tracking-widest">
-                    Receiver / Holder Name
-                  </label>
-                  <input
-                    value={method.receiverName || ""}
-                    disabled={!isEditing}
-                    onChange={(e) => {
-                      const updated = [...formData.paymentMethods];
-                      updated[idx].receiverName = e.target.value;
-                      setFormData({ ...formData, paymentMethods: updated });
-                    }}
-                    className="w-full bg-transparent border border-[#5a4136]/40 rounded-lg p-2 text-white font-bold outline-none placeholder:text-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:border-none"
-                    placeholder="First name only (Telebirr shows first name)"
-                  />
-                </div>
-
-                {/* Controls */}
-                <div className="lg:mt-4 flex items-center gap-2 self-end lg:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => togglePaymentMethod(method.provider)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      isActive
-                        ? "bg-[#FF7A00]"
-                        : "bg-[#0f0f0f] border-[#5a4136]/40"
-                    }`}
-                    title={
-                      isActive
-                        ? "Active — tap to disable"
-                        : "Disabled — tap to activate"
-                    }
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        isActive ? "translate-x-5" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingMethodIndex(isEditing ? null : idx);
-                    }}
-                    className="text-gray-400 hover:text-white p-2 transition-colors"
-                  >
-                    {isEditing ? (
-                      <CheckCircle2 size={16} className="text-green-500" />
-                    ) : (
-                      <Edit2 size={16} />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = formData.paymentMethods.filter(
-                        (_, i) => i !== idx,
-                      );
-                      setFormData({ ...formData, paymentMethods: updated });
-                      if (editingMethodIndex === idx)
-                        setEditingMethodIndex(null);
-                    }}
-                    className="text-red-500 hover:text-red-400 p-2 transition-colors"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          <button
-            type="button"
-            onClick={() => {
-              const newMethods = [
-                ...(formData.paymentMethods || []),
-                { provider: "Telebirr", accountNumber: "", receiverName: "" },
-              ];
-              setFormData({
-                ...formData,
-                paymentMethods: newMethods,
-              });
-              setEditingMethodIndex(newMethods.length - 1);
-            }}
-            className="w-full py-4 border border-dashed border-[#5a4136]/40 rounded-xl text-[#e2bfb0] opacity-80 hover:opacity-100 hover:text-[#ff6b00] hover:border-[#ff6b00] transition-all text-xs font-bold flex items-center justify-center gap-2"
-          >
-            <Plus size={16} /> Add New Payment Method
-          </button>
-        </div>
-      </div>
-
       {/* Save Button */}
       <div className="flex justify-end pt-4">
         <button
-          onClick={() =>
-            updateMutation.mutate({
-              ...formData,
-              // Telebirr's receipt API only ever returns the payer's first
-              // name, so a receiver name saved with a surname attached can
-              // never match on verification. Keep whatever the admin types
-              // in the field itself, but only send the first word.
-              paymentMethods: (formData.paymentMethods || []).map((m) => ({
-                ...m,
-                receiverName: m.receiverName?.trim().split(/\s+/)[0] || "",
-              })),
-            })
-          }
+          onClick={() => updateMutation.mutate({ ...formData })}
           disabled={updateMutation.isPending}
           className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-[#ff6b00] text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-[#ff8533] transition-colors disabled:opacity-50"
         >

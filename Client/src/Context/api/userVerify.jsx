@@ -3,10 +3,9 @@ import api from "./api.config";
 import toast from "react-hot-toast";
 
 const verifyReceipt = async ({ userTicketId, receiptUrl }) => {
-  const res = await api.post(
-    `/api/auth/ticket/${userTicketId}/verify`,
-    { receiptUrl }
-  );
+  const res = await api.post(`/api/auth/ticket/${userTicketId}/verify`, {
+    receiptUrl,
+  });
   const data = res.data;
 
   return data;

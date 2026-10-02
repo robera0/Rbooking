@@ -71,6 +71,7 @@ export const purchaseTicket = async (req, res) => {
       _id: userTicketId,
       userId,
       ticketId,
+      ticketType: ticket.name,
       quantity,
       orderNo,
       isVerified: isFree ? true : false,
@@ -217,7 +218,9 @@ export const getTicketsInfo = async (req, res) => {
       ticket.qrCode = qrCode;
     }
 
-    await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(ticket)));
+    await safeRedis(() =>
+      redisClient.setex(cacheKey, 3600, JSON.stringify(ticket)),
+    );
 
     res.status(200).json({ success: true, ticket });
   } catch (error) {
@@ -271,6 +274,7 @@ export const verifyTicket = async (req, res) => {
 
   try {
     // Fetch the UserTicket and populate ticket tier (to get eventId)
+
     const userTicket = await UserTicketModel.findById(userTicketId).populate({
       path: "ticketId",
       select: "eventId name price",
@@ -300,6 +304,7 @@ export const verifyTicket = async (req, res) => {
     console.log(EXPECTED_RECEIVER, " and");
 
     // verification
+
     const TOTAL_AMOUNT = userTicket.totalAmount;
 
     const isValid = await verifyReceipt(receiptUrl);
@@ -311,14 +316,12 @@ export const verifyTicket = async (req, res) => {
     }
 
     const receipt = isValid.receipt;
+
     const settledAmount = parseFloat(receipt.settledAmount);
 
     if (receipt.transactionStatus !== "Completed") {
       return res.status(400).json({ message: "Transaction is not completed" });
     }
-
-    console.log(receipt);
-
     if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
       return res.status(400).json({
         message: "Invalid receiver name on receipt",
@@ -338,17 +341,24 @@ export const verifyTicket = async (req, res) => {
     }
 
     const existingTicket = await UserTicketModel.findOne({
-      receiptNo: receipt.receiptNo,
+      referenceId: receipt.receiptNo,
     });
+
     if (existingTicket) {
       return res
         .status(400)
         .json({ message: "This receipt has already been used." });
     }
+
     // Mark ticket as paid
     const updatedTicket = await UserTicketModel.findByIdAndUpdate(
       userTicketId,
-      { status: "paid", isVerified: true, receiptUrl },
+      {
+        status: "paid",
+        isVerified: true,
+        receiptUrl,
+        referenceId: receipt.receiptNo,
+      },
       { new: true },
     ).populate({
       path: "ticketId",
@@ -413,6 +423,14 @@ export const verifyTicket = async (req, res) => {
       userTicket: updatedTicket,
     });
   } catch (error) {
+    // The unique index on referenceId is what makes receipt reuse atomic:
+    // two concurrent verifications can both pass the findOne check above,
+    // but only one update can win.
+    if (error.code === 11000) {
+      return res
+        .status(400)
+        .json({ message: "This receipt has already been used." });
+    }
     console.error("verifyTicket error:", error.message);
     console.error(error);
     res.status(500).json({ success: false, message: error.message });
@@ -456,9 +474,15 @@ export const scanTicket = catchAsync(async (req, res, next) => {
     },
     { new: true },
   );
+  // populate ticket details (name) for UI display
+  if (userTicket) {
+    await userTicket.populate({ path: "ticketId", select: "name" });
+  }
 
   if (!userTicket) {
-    const existing = await UserTicketModel.findOne({ orderNo: token });
+    const existing = await UserTicketModel.findOne({ orderNo: token }).populate(
+      { path: "ticketId", select: "name" },
+    );
 
     if (!existing) {
       return res

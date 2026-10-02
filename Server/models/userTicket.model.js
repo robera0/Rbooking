@@ -13,7 +13,9 @@ const UserTicketSchema = new mongoose.Schema(
       ref: "Ticket",
       required: true,
     },
-
+    ticketType: {
+      type: String,
+    },
     orderNo: {
       type: String,
       required: true,
@@ -23,6 +25,7 @@ const UserTicketSchema = new mongoose.Schema(
     receiptNo: {
       source: String,
     },
+    referenceId: { type: String },
 
     isVerified: {
       type: Boolean,
@@ -88,5 +91,12 @@ const UserTicketSchema = new mongoose.Schema(
 );
 
 UserTicketSchema.index({ userId: 1, ticketId: 1 });
+// One Telebirr receipt can pay for one order. Partial so tickets without a
+// referenceId (unverified, or verified before this field existed) don't
+// collide with each other.
+UserTicketSchema.index(
+  { referenceId: 1 },
+  { unique: true, partialFilterExpression: { referenceId: { $type: "string" } } },
+);
 
 export const UserTicketModel = mongoose.model("UserTicket", UserTicketSchema);

@@ -41,6 +41,7 @@ import CompleteProfile from "../user/CompleteProfile";
 import { EventProvider } from "./Context/EventAdminContest";
 import { DashboardProvider } from "./Context/DashboardContext";
 import AdminSetting from "../admin/Setting";
+import PaymentSettings from "../admin/PaymentSettings";
 import TermsAndConditions from "../admin/TermsAndConditions";
 import EventQR from "../admin/EventQR";
 import ContactUs from "../user/ContactUs";
@@ -240,6 +241,14 @@ export const router = createBrowserRouter([
             element: (
               <PageWrapper>
                 <AdminAccount />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "payment-settings",
+            element: (
+              <PageWrapper>
+                <PaymentSettings />
               </PageWrapper>
             ),
           },

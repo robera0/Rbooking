@@ -111,6 +111,13 @@ const SideBar = ({ action, onClose }) => {
             icon={<UsersRound size={20} />}
             onNavigate={onClose}
           />
+          {/* Payment Settings (inserted between Admin Profile and Organizer Settings) */}
+          <SideMenu
+            path="/admin/payment-settings"
+            name="Payment Settings"
+            icon={<CreditCard size={20} />}
+            onNavigate={onClose}
+          />
           {/*Setting */}
           <SideMenu
             path="/admin/setting"
