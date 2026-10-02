@@ -382,11 +382,9 @@ export const TicketTable = ({ search = "", filter = "" }) => {
   });
 
   const filteredTransactions = transactions.filter((txn) => {
-    const userObj = txn.user?.[0];
+    const userObj = Array.isArray(txn.user) ? txn.user[0] : txn.user || null;
     const custName = (
-      userObj?.fullName ||
-      userObj?.username ||
-      "Guest"
+      txn.customerName || userObj?.fullName || userObj?.username || "Guest"
     ).toLowerCase();
     const idKey = (txn.orderNo || txn._id || "").toLowerCase();
 
@@ -489,7 +487,7 @@ export const TicketTable = ({ search = "", filter = "" }) => {
         )}
         {filteredTransactions.map((txn, idx) => {
           const rowKey = getRowKey(txn, idx);
-          const userObj = txn.user?.[0];
+                const userObj = Array.isArray(txn.user) ? txn.user[0] : txn.user || null;
           const ticket = txn.ticket;
           const event = txn.event;
           const status = txn.status?.toLowerCase() || "pending";
@@ -524,10 +522,10 @@ export const TicketTable = ({ search = "", filter = "" }) => {
               {/* Customer */}
               <td className="px-6 py-4">
                 <p className="font-bold text-white truncate">
-                  {userObj?.fullName || userObj?.username || "Guest"}
+                  {txn.customerName || userObj?.fullName || userObj?.username || "Guest"}
                 </p>
                 <p className="text-[11px] text-gray-500 truncate">
-                  {userObj?.email || ""}
+                  {userObj?.email || txn.customerEmail || ""}
                 </p>
               </td>
 

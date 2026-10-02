@@ -68,6 +68,31 @@ class TicketService {
           ],
         },
       },
+      // unwind user array to a single object (makes accessing name easier)
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      // lookup user profile (stores fullName)
+      {
+        $lookup: {
+          from: "userprofiles",
+          localField: "userId",
+          foreignField: "userId",
+          as: "profile",
+        },
+      },
+      { $unwind: { path: "$profile", preserveNullAndEmptyArrays: true } },
+      // add a convenient customerName field (firstName + lastName)
+      {
+        $addFields: {
+          customerName: {
+            $trim: {
+              input: {
+                $ifNull: ["$profile.fullName", { $concat: [ { $ifNull: ["$user.firstName", ""] }, " ", { $ifNull: ["$user.lastName", ""] } ] }, "$user.username"]
+              },
+            },
+          },
+          customerEmail: { $ifNull: ["$user.email", ""] },
+        },
+      },
 
       {
         $lookup: {
@@ -99,6 +124,7 @@ class TicketService {
       {
         $match: {
           "event.adminId": new mongoose.Types.ObjectId(adminId),
+          status: { $ne: "expired" },
         },
       },
 
