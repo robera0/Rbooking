@@ -7,7 +7,10 @@ import {
   CheckCheck,
   Menu,
   X,
+  Power,
 } from "lucide-react";
+import api from "@/Context/api/api.config";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { SearchInput } from "./Cards";
 import { AnimatePresence, motion } from "framer-motion";
@@ -52,6 +55,17 @@ const Header = ({ onMenuToggle }) => {
   const [notifDrop, setNotifDrop] = useState(false);
   const { userProfile, notifications, readNotification } = eventService();
   const { API_URL } = useService();
+  const queryClient = useQueryClient();
+  const handleLogout = async () => {
+    try {
+      await api.post(`/api/auth/logout`);
+      queryClient.clear();
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed", error);
+      window.location.href = "/login";
+    }
+  };
 
   const unreadCount =
     notifications?.notifications?.filter((n) => !n.read)?.length || 0;
@@ -225,10 +239,19 @@ const Header = ({ onMenuToggle }) => {
                   name="Security Settings"
                   path="/admin/setting"
                 />
-                <Dropdown
-                  icon={<RotateCcw size={18} strokeWidth={2.5} />}
-                  name="Activity Log"
-                />
+                <button
+                  onClick={handleLogout}
+                  className={`group w-full px-4 py-3 flex items-center justify-start text-sm transition-colors border-b border-white/[0.04] space-x-3 cursor-pointer hover:bg-red-500/10`}
+                >
+                  <div className={`text-red-400 group-hover:text-red-500`}>
+                    <Power size={18} strokeWidth={2.5} />
+                  </div>
+                  <h1
+                    className={`font-bold text-red-400 group-hover:text-red-500`}
+                  >
+                    Logout
+                  </h1>
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

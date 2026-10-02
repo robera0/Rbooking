@@ -250,7 +250,8 @@ const AdminAccount = () => {
       toast.success("Email updated", { id: "email" });
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err), { id: "email" }),
+    onError: (err) =>
+      toast.error(getFriendlyErrorMessage(err), { id: "email" }),
   });
 
   const credentialsMutation = useMutation({
@@ -274,7 +275,8 @@ const AdminAccount = () => {
       toast.success("History cleared", { id: "clear-history" });
       queryClient.invalidateQueries({ queryKey: ["notification"] });
     },
-    onError: () => toast.error("Failed to clear history", { id: "clear-history" }),
+    onError: () =>
+      toast.error("Failed to clear history", { id: "clear-history" }),
   });
 
   const handleLogout = async () => {
@@ -302,15 +304,18 @@ const AdminAccount = () => {
   const userOrg = formData.organizationName || "—";
   const userRole = formData.role || "Admin";
 
-  const auditLogs = notifications?.notifications
-    ?.slice()
-    ?.reverse()
-    ?.slice(0, 10)
-    ?.map((notif) => ({
-      action: notif.title || "Activity",
-      time: formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true }),
-      status: notif.read ? "read" : "unread",
-    })) || [];
+  const auditLogs =
+    notifications?.notifications
+      ?.slice()
+      ?.reverse()
+      ?.slice(0, 10)
+      ?.map((notif) => ({
+        action: notif.title || "Activity",
+        time: formatDistanceToNow(new Date(notif.createdAt), {
+          addSuffix: true,
+        }),
+        status: notif.read ? "read" : "unread",
+      })) || [];
 
   const containers = {
     hidden: { opacity: 0, y: 20 },
@@ -335,7 +340,6 @@ const AdminAccount = () => {
 
   return (
     <div className="w-full max-w-full space-y-10 pb-20">
-
       {/* Header */}
       <div className="space-y-2 mb-8 border-b border-white/[0.04] pb-6">
         <h1 className="text-2xl md:text-5xl uppercase tracking-tighter leading-none">
@@ -842,9 +846,11 @@ const AdminAccount = () => {
                     History
                   </h2>
                   <div className="flex flex-wrap gap-3 sm:gap-4">
-                    <button 
+                    <button
                       onClick={() => clearHistoryMutation.mutate()}
-                      disabled={clearHistoryMutation.isPending || auditLogs.length === 0}
+                      disabled={
+                        clearHistoryMutation.isPending || auditLogs.length === 0
+                      }
                       className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-[10px] uppercase tracking-widest rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Clear History
