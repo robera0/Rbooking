@@ -236,6 +236,7 @@ const VerifyTicket = () => {
                   ).toLocaleString()} ETB`,
                 },
                 { label: "Status", value: "✓ PAID & VERIFIED" },
+                { label: "Ticket Type", value: confirmedTicket?.ticketType },
               ].map(({ label, value }) => (
                 <div
                   key={label}
@@ -246,7 +247,9 @@ const VerifyTicket = () => {
                   </span>
                   <span
                     className={`text-[11px] font-bold ${
-                      label === "Status" ? "text-emerald-400" : "text-gray-300"
+                      label === "Status" || label === "Ticket Type"
+                        ? "text-emerald-400"
+                        : "text-gray-300"
                     }`}
                   >
                     {value}

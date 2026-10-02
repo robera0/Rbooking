@@ -13,7 +13,9 @@ const UserTicketSchema = new mongoose.Schema(
       ref: "Ticket",
       required: true,
     },
-
+    ticketType: {
+      type: String,
+    },
     orderNo: {
       type: String,
       required: true,
@@ -23,6 +25,7 @@ const UserTicketSchema = new mongoose.Schema(
     receiptNo: {
       source: String,
     },
+    referenceId: { type: String },
 
     isVerified: {
       type: Boolean,

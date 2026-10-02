@@ -149,7 +149,12 @@ const TicketHome = () => {
     eventService();
   const [hasAlerted, setHasAlerted] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [now, setNow] = useState(Date.now());
 
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
   if (ticketIsError && !isLoggedIn && !hasAlerted) {
     toast.error(getFriendlyErrorMessage(ticketsError), { duration: 3000 });
     setHasAlerted(true);
@@ -317,9 +322,11 @@ const TicketHome = () => {
               const status = STATUS[statusKey] || STATUS.upcoming;
 
               const isPendingUnverified =
-                t?.status?.toLowerCase().trim() === "pending" &&
-                !t?.isVerified;
-
+                t?.status?.toLowerCase().trim() === "pending" && !t?.isVerified;
+              const isExpired =
+                isPendingUnverified &&
+                t?.expiresAt &&
+                new Date(t.expiresAt).getTime() <= now;
               const infoRows = [
                 {
                   label: "Venue",
@@ -360,9 +367,7 @@ const TicketHome = () => {
                     borderColor: isPendingUnverified
                       ? "rgba(251, 146, 60, 0.2)"
                       : "rgba(255,255,255,0.08)",
-                    filter: isPendingUnverified
-                      ? "saturate(0.5)"
-                      : "none",
+                    filter: isPendingUnverified ? "saturate(0.5)" : "none",
                   }}
                 >
                   {/* ── PENDING BADGE + TIMER ── */}
@@ -436,7 +441,7 @@ const TicketHome = () => {
                           Ticket Type
                         </p>
                         <p className="text-sm font-black uppercase tracking-tight">
-                          {ticketId?.type || "General Admission"}
+                          {ticketId?.name || ""}
                         </p>
                       </div>
                       <div className="text-right">
@@ -475,25 +480,38 @@ const TicketHome = () => {
                     </div>
 
                     <button
+                      disabled={isExpired}
                       onClick={() =>
                         isPendingUnverified
                           ? navigate(`/tickets_home/verify/${t?._id}`)
                           : navigate(`/tickets_home/${t?._id}`)
                       }
-                      className="w-full py-3 rounded-xl flex items-center justify-center gap-2"
+                      className="w-full py-3 rounded-xl flex items-center justify-center gap-2 disabled:cursor-not-allowed"
                       style={{
-                        background: isPendingUnverified
+                        background: isExpired
+                          ? "linear-gradient(135deg, #52525B 0%, #3F3F46 100%)"
+                          : isPendingUnverified
                           ? "linear-gradient(135deg, #FB923C 0%, #F97316 50%, #EA580C 100%)"
                           : theme.ctaGradient,
                       }}
                     >
-                      {isPendingUnverified && (
+                      {isPendingUnverified && !isExpired && (
                         <ShieldCheck size={13} className="text-black" />
                       )}
-                      <span className="text-[10px] font-black uppercase tracking-widest text-black">
-                        {isPendingUnverified ? "Verify Ticket" : "View Ticket"}
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-widest ${
+                          isExpired ? "text-gray-300" : "text-black"
+                        }`}
+                      >
+                        {isExpired
+                          ? "Expired"
+                          : isPendingUnverified
+                          ? "Verify Ticket"
+                          : "View Ticket"}
                       </span>
-                      <MoveRight size={13} className="text-black" />
+                      {!isExpired && (
+                        <MoveRight size={13} className="text-black" />
+                      )}
                     </button>
 
                     {/* trust row */}
