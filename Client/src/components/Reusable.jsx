@@ -144,6 +144,7 @@ export default function CheckoutModal({
         toast.success("Your free ticket is acquired successfully!", {
           duration: 4000,
         });
+
         navigate(`/tickets_home/${data.userTicket._id}`);
       } else {
         const { default: toast } = await import("react-hot-toast");

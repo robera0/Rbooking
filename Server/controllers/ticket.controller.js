@@ -476,9 +476,15 @@ export const scanTicket = catchAsync(async (req, res, next) => {
     },
     { new: true },
   );
+  // populate ticket details (name) for UI display
+  if (userTicket) {
+    await userTicket.populate({ path: "ticketId", select: "name" });
+  }
 
   if (!userTicket) {
-    const existing = await UserTicketModel.findOne({ orderNo: token });
+    const existing = await UserTicketModel.findOne({ orderNo: token }).populate(
+      { path: "ticketId", select: "name" },
+    );
 
     if (!existing) {
       return res

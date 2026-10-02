@@ -356,6 +356,16 @@ const GateScanner = () => {
                             {scanResult.ticket.quantity || 1}
                           </span>
                         </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400 font-medium">
+                            Ticket:
+                          </span>
+                          <span className="font-bold text-white">
+                            {scanResult.ticket.ticketId?.name ||
+                              scanResult.ticket.ticketType ||
+                              "—"}
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>
