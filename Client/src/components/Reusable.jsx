@@ -90,7 +90,7 @@ export const Toggle = ({ name, toggle, toggleOn, action }) => {
 export default function CheckoutModal({
   isOpen,
   onClose,
-  amount = 400,
+  amount,
   name,
   ticketId,
   paymentMethods = [],
@@ -165,7 +165,10 @@ export default function CheckoutModal({
       onClose();
     } catch (error) {
       import("react-hot-toast").then(({ default: toast }) =>
-        toast.error(error.message || "Purchase failed. Please try again."),
+        toast.error(
+          error?.response?.data?.message ||
+            "Purchase failed. Please try again.",
+        ),
       );
     } finally {
       setIsLoading(false);

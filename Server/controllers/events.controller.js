@@ -5,6 +5,8 @@ import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
+import path from "path";
+import { adminOwnsEvent } from "../utils/adminOwnership.js";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
 import QRCode from "qrcode";
@@ -24,14 +26,33 @@ const storage = multer.diskStorage({
   },
 
   filename: function (req, file, cb) {
-    const uniqueName =
-      Date.now() + "-" + file.originalname.replace(/\s+/g, "-");
-
-    cb(null, uniqueName);
+    // basename + allow-list so a crafted originalname can't carry path
+    // segments or odd characters into the file name on disk.
+    const safeName = path
+      .basename(file.originalname)
+      .replace(/[^a-zA-Z0-9._-]/g, "-");
+    cb(null, Date.now() + "-" + safeName);
   },
 });
 
-export const upload = multer({ storage });
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+
+// Images only, capped in size: this is also used by the public admin signup
+// route, and uploads/ is served statically, so anything else (HTML/SVG) would
+// be served back from our own origin.
+export const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024, files: 10 },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) return cb(null, true);
+    cb(new Error("Only JPEG, PNG, WebP or GIF images are allowed"));
+  },
+});
 
 export const addEvent = catchAsync(async (req, res, next) => {
   let {
@@ -168,6 +189,29 @@ export const createTickets = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   const { tickets } = req.body;
 
+  if (!Array.isArray(tickets) || tickets.length === 0) {
+    return res.status(400).json({ message: "At least one ticket is required" });
+  }
+  const invalid = tickets.find(
+    (t) =>
+      !t?.name ||
+      !Number.isFinite(Number(t.price)) ||
+      Number(t.price) < 0 ||
+      !Number.isInteger(Number(t.capacity)) ||
+      Number(t.capacity) <= 0,
+  );
+  if (invalid) {
+    return res.status(400).json({
+      message: "Each ticket needs a name, a price of 0 or more, and a whole-number capacity above 0",
+    });
+  }
+
+  const ownedEvent = await EventService.findById(eventId);
+  if (!ownedEvent) return res.status(404).json({ message: "Event not found" });
+  if (!(await adminOwnsEvent(req.user.id, ownedEvent))) {
+    return res.status(403).json({ message: "You can only add tickets to your own events" });
+  }
+
   const createdNewTickets = await TicketModel.insertMany(
     tickets.map((t) => ({
       eventId,
@@ -280,7 +324,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
   }
   console.log("Fetching from database...");
   const events = await EventService.find({ status: "published" })
-    .sort({ "date.start.dateTime": -1 })
+    .sort({ "dates.start.dateTime": -1 })
     .limit(limit);
 
   const eventIds = events.map((e) => e._id);
@@ -302,7 +346,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
     };
   });
 
-  await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents)));
+  await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvent)));
   res.status(200).json({ events: featuredEvent });
 });
 
@@ -340,10 +384,22 @@ export const generateEventQR = catchAsync(async (req, res, next) => {
 // FETCH WITH RESPECT TO ITS INDEX\
 
 export const fetchEventsId = catchAsync(async (req, res, next) => {
-  const { eventId, ticketId } = req.params;
+  const { eventId } = req.params;
+  // No ticket in the URL (e.g. arriving from the events list) means "show the
+  // event with its first in-stock ticket selected".
+  const requestedTicketId =
+    req.params.ticketId && req.params.ticketId !== "undefined"
+      ? req.params.ticketId
+      : null;
 
-  //
-  const cacheKey = `${REDIS_PREFIX}event:single:${eventId}:${ticketId}`;
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    return res.status(400).json({ message: "Invalid event ID" });
+  }
+  if (requestedTicketId && !mongoose.Types.ObjectId.isValid(requestedTicketId)) {
+    return res.status(400).json({ message: "Invalid ticket ID" });
+  }
+
+  const cacheKey = `${REDIS_PREFIX}event:single:${eventId}:${requestedTicketId || "default"}`;
 
   const cachedCombo = await safeGet(cacheKey);
   if (cachedCombo) {
@@ -357,21 +413,25 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
     });
   }
 
-  if (!ticketId || ticketId === "undefined") {
-    return res.status(400).json({ message: "Ticket ID is required" });
-  }
-
   const event = await EventService.findById(eventId);
   if (!event) {
     return res.status(404).json({ message: "Event not found" });
   }
 
-  const ticketInfo = await TicketModel.findOne({ _id: ticketId, eventId, isActive: { $ne: false } });
+  const allTickets = await TicketModel.find({
+    eventId,
+    isActive: { $ne: false },
+  })
+    .sort({ _id: 1 })
+    .lean();
+
+  const ticketInfo = requestedTicketId
+    ? allTickets.find((t) => t._id.toString() === requestedTicketId)
+    : allTickets.find((t) => t.availableQuantity > 0) || allTickets[0];
+
   if (!ticketInfo) {
     return res.status(404).json({ message: "Ticket not found for this event" });
   }
-
-  const allTickets = await TicketModel.find({ eventId, isActive: { $ne: false } }).lean();
 
   const payloadToCache = { event, ticket: ticketInfo, tickets: allTickets };
   await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache)));
@@ -512,6 +572,16 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   Object.keys(updateData).forEach(
     (key) => updateData[key] === undefined && delete updateData[key],
   );
+
+  const existingEvent = await EventService.findById(eventId);
+  if (!existingEvent) {
+    return res.status(404).json({ success: false, message: "Event not found" });
+  }
+  if (!(await adminOwnsEvent(req.user.id, existingEvent))) {
+    return res
+      .status(403)
+      .json({ success: false, message: "You can only edit your own events" });
+  }
 
   const updatedEvent = await EventService.findByIdAndUpdate(
     eventId,

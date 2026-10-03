@@ -63,7 +63,12 @@ export const safeGet = async (key) => safeRedis(() => redisClient.get(key));
 
 export const clearEventsCache = async () => {
   try {
-    const keys = await redisClient.keys(`${REDIS_PREFIX}events:*`);
+    // Two prefixes are in use: "events:" (featured) and "event:list:"
+    // (filtered lists). Clearing only the first left lists stale.
+    const keys = [
+      ...(await redisClient.keys(`${REDIS_PREFIX}events:*`)),
+      ...(await redisClient.keys(`${REDIS_PREFIX}event:list:*`)),
+    ];
     if (keys.length > 0) {
       await redisClient.del(keys);
     }

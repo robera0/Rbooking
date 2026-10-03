@@ -201,11 +201,11 @@ export const register = catchAsync(async (req, res, next) => {
   const { fullname, email, password } = req.body;
 
   if (!fullname || !email || !password) {
-    return next(new AppError(400, "Required fields are missing"));
+    return next(new AppError("Required fields are missing", 400));
   }
 
   const existingUser = await UserService.findByEmail(email);
-  if (existingUser) return next(new AppError(400, "Email already exists"));
+  if (existingUser) return next(new AppError("Email already exists", 400));
 
   const hashedPassword = await hashPasswords(password);
 
@@ -243,10 +243,21 @@ export const register = catchAsync(async (req, res, next) => {
 export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
-  const user = await UserService.findByEmail(email);
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
 
-  if (!user) {
-    return next(new AppError("User not found", 404));
+  const user = await UserService.findByEmail(String(email).trim().toLowerCase());
+
+  // Same response for "no such user", "Google-only account" and "wrong
+  // password" so the endpoint can't be used to discover which emails exist.
+  if (!user || !user.password) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  const isMatch = await comparePassword(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid credentials" });
   }
 
   if (user.status === "banned") {
@@ -254,10 +265,8 @@ export const login = catchAsync(async (req, res, next) => {
       new AppError("Your account has been banned from using Paysso", 403),
     );
   }
-
-  const isMatch = await comparePassword(password, user.password);
-  if (!isMatch) {
-    return res.status(401).json({ message: "Invalid credentials" });
+  if (user.status === "suspended") {
+    return next(new AppError("Your account is suspended", 403));
   }
 
   const payload = {
@@ -313,6 +322,9 @@ export const googleExchange = catchAsync(async (req, res, next) => {
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
+  if (user.status !== "active") {
+    return res.status(403).json({ message: "Your account is not active" });
+  }
 
   const tokenPayload = { id: user._id, email, role };
   const accessToken = generateAccessToken(tokenPayload);
@@ -351,6 +363,9 @@ export const refresh = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError("User not found", 404));
   }
+  if (user.status !== "active") {
+    return res.status(403).json({ message: "Your account is not active" });
+  }
 
   const tokenExists = user.refreshTokens.some((t) => t.token === refreshToken);
 
@@ -376,13 +391,13 @@ export const logout = catchAsync(async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    return next(new AppError(400, "Refresh token is required"));
+    return next(new AppError("Refresh token is required", 400));
   }
 
   const user = await UserService.findByRefreshToken(refreshToken);
 
   if (!user) {
-    return next(new AppError(404, "User not found or token invalid"));
+    return next(new AppError("User not found or token invalid", 404));
   }
 
   user.refreshTokens = user.refreshTokens.filter(

@@ -95,7 +95,7 @@ const Events = () => {
   ];
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [filteredEvents]);
+  }, [filteredEvents.length]);
 
   return (
     <div className="min-h-screen w-full bg-[#121417] text-white overflow-hidden pb-32">

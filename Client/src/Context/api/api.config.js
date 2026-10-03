@@ -13,6 +13,22 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// One shared refresh for all requests that 401 at the same time. Without this,
+// N parallel 401s fire N refresh calls, and the extra ones can fail and reject
+// requests that would otherwise have succeeded.
+let refreshPromise = null;
+
+const refreshSession = () => {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${baseURL}/api/auth/tokens`, {}, { withCredentials: true })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+};
+
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -23,6 +39,7 @@ api.interceptors.response.use(
     if (
       error.response &&
       error.response.status === 401 &&
+      originalRequest &&
       !originalRequest._retry &&
       !originalRequest.url.includes("/api/auth/login") &&
       !originalRequest.url.includes("/api/auth/tokens")
@@ -30,12 +47,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await axios.post(
-          `${baseURL}/api/auth/tokens`,
-          {},
-          { withCredentials: true },
-        );
-
+        await refreshSession();
         return api(originalRequest);
       } catch (refreshError) {
         return Promise.reject(refreshError);

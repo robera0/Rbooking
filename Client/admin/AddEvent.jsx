@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Plus,
   Save,
@@ -299,6 +299,21 @@ const REQUIRED_RULES = {
       : "",
   eventDate: (formData) =>
     !formData.eventDate ? "Date and time are required to publish" : "",
+  tickets: (formData) => {
+    if (!formData.tickets.length) return "Add at least one ticket type";
+    const bad = formData.tickets.find(
+      (t) =>
+        !String(t.name || "").trim() ||
+        t.price === "" ||
+        !Number.isFinite(Number(t.price)) ||
+        Number(t.price) < 0 ||
+        !Number.isInteger(Number(t.capacity)) ||
+        Number(t.capacity) <= 0,
+    );
+    return bad
+      ? "Every ticket needs a name, a price of 0 or more, and a whole-number capacity above 0"
+      : "";
+  },
 };
 
 // ─── Date Picker Panel ─────────────────────────────────────────────────────
@@ -662,6 +677,9 @@ const AddEvent = () => {
   const posterInputRef = useRef(null);
   const timerRef = useRef(null);
   const draftIdRef = useRef(null);
+  // Don't let a pending autosave fire after leaving the page: it would
+  // create a stray draft the admin never asked for.
+  useEffect(() => () => clearTimeout(timerRef.current), []);
   // Synchronous guard against double-submitting Publish - React state
   // (publishMutation.isPending) only flips on the next render, so two
   // rapid clicks (or a click landing right as the 3s autosave timer also
@@ -1100,6 +1118,11 @@ const AddEvent = () => {
           </SectionCard>
 
           <SectionCard title="Event Tickets">
+            {fieldErrors.tickets && (
+              <p className="text-red-400 text-xs font-bold">
+                {fieldErrors.tickets}
+              </p>
+            )}
             <div className="space-y-4">
               {formData.tickets.map((ticket, idx) => (
                 <div
@@ -1114,7 +1137,7 @@ const AddEvent = () => {
                       value={ticket.name}
                       onChange={(val) => {
                         const updated = [...formData.tickets];
-                        updated[idx].name = val;
+                        updated[idx] = { ...updated[idx], name: val };
                         handleChange("tickets", updated);
                       }}
                     />
@@ -1124,10 +1147,12 @@ const AddEvent = () => {
                       Price (ETB)
                     </label>
                     <input
+                      type="number"
+                      min="0"
                       value={ticket.price}
                       onChange={(e) => {
                         const updated = [...formData.tickets];
-                        updated[idx].price = e.target.value;
+                        updated[idx] = { ...updated[idx], price: e.target.value };
                         handleChange("tickets", updated);
                       }}
                       className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
@@ -1139,10 +1164,11 @@ const AddEvent = () => {
                     </label>
                     <input
                       type="number"
+                      min="1"
                       value={ticket.capacity}
                       onChange={(e) => {
                         const updated = [...formData.tickets];
-                        updated[idx].capacity = e.target.value;
+                        updated[idx] = { ...updated[idx], capacity: e.target.value };
                         handleChange("tickets", updated);
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
@@ -1156,8 +1182,10 @@ const AddEvent = () => {
                       type="button"
                       onClick={() => {
                         const updated = [...formData.tickets];
-                        updated[idx].isActive =
-                          ticket.isActive === false ? true : false;
+                        updated[idx] = {
+                          ...updated[idx],
+                          isActive: ticket.isActive === false,
+                        };
                         handleChange("tickets", updated);
                       }}
                       className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
@@ -1258,7 +1286,7 @@ const AddEvent = () => {
                       value={policy.header}
                       onChange={(e) => {
                         const updated = [...formData.policies];
-                        updated[idx].header = e.target.value;
+                        updated[idx] = { ...updated[idx], header: e.target.value };
                         handleChange("policies", updated);
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase text-xs"
@@ -1282,7 +1310,7 @@ const AddEvent = () => {
                     value={policy.descriptions}
                     onChange={(e) => {
                       const updated = [...formData.policies];
-                      updated[idx].descriptions = e.target.value;
+                      updated[idx] = { ...updated[idx], descriptions: e.target.value };
                       handleChange("policies", updated);
                     }}
                     className="w-full bg-transparent border-none text-gray-400 text-[11px] outline-none italic resize-none"

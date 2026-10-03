@@ -39,12 +39,21 @@ const User = () => {
       const res = await api.post(`/api/auth/admin/users`, payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
       setIsAddModalOpen(false);
       setNewUserEmail("");
       setErrorMsg("");
-    }
+      // Shown once; it isn't stored anywhere in readable form.
+      if (data?.temporaryPassword) {
+        window.alert(
+          `User created. Temporary password (share it securely, shown only once):\n\n${data.temporaryPassword}`,
+        );
+      }
+    },
+    onError: (err) => {
+      setErrorMsg(err?.response?.data?.message || "Could not create the user.");
+    },
   });
 
   const updateMutation = useMutation({
@@ -123,10 +132,10 @@ const User = () => {
               
               <button 
                 onClick={handleAddUser}
-                disabled={addMutation.isLoading}
+                disabled={addMutation.isPending}
                 className="w-full mt-4 py-3 bg-[#FF7A00] text-black hover:bg-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
               >
-                {addMutation.isLoading ? "Creating..." : "Confirm & Create"}
+                {addMutation.isPending ? "Creating..." : "Confirm & Create"}
               </button>
             </div>
           </div>
@@ -181,10 +190,10 @@ const User = () => {
               
               <button 
                 onClick={handleUpdateUser}
-                disabled={updateMutation.isLoading}
+                disabled={updateMutation.isPending}
                 className="w-full mt-4 py-3 bg-[#FF7A00] text-black hover:bg-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
               >
-                {updateMutation.isLoading ? "Saving Changes..." : "Save Changes"}
+                {updateMutation.isPending ? "Saving Changes..." : "Save Changes"}
               </button>
             </div>
           </div>

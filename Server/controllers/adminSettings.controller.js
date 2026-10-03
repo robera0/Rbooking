@@ -71,9 +71,21 @@ export const updateAdminSettings = catchAsync(async (req, res) => {
     }
   }
 
+  // Never write the raw body: it could overwrite adminId or any other field.
+  const allowed = Object.keys(AdminSettingsModel.schema.paths).filter(
+    (k) => !["_id", "__v", "adminId", "createdAt", "updatedAt"].includes(k),
+  );
+  const safeUpdate = Object.fromEntries(
+    Object.entries(req.body).filter(
+      ([k]) =>
+        allowed.includes(k) ||
+        allowed.some((a) => a.startsWith(k + ".") || k.startsWith(a + ".")),
+    ),
+  );
+
   const updatedSettings = await AdminSettingsModel.findOneAndUpdate(
     { adminId },
-    { $set: req.body },
+    { $set: safeUpdate },
     { new: true, runValidators: true, upsert: true }
   );
 

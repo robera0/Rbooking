@@ -17,6 +17,7 @@ export const authenticateTokenMiddleware = (req, res, next) => {
 
     next();
   } catch (error) {
-    return res.status(403).json({ message: error.message });
+    // 401 (not 403) so the client's interceptor knows to try a token refresh.
+    return res.status(401).json({ message: error.message });
   }
 };

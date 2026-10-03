@@ -80,7 +80,6 @@ const Wishlist = () => {
   const items = (wishlist?.wishlist?.items || []).filter(
     (item) => item?.eventId?._id,
   );
-  console.log(items);
 
   const sortedItems = selected
     ? [...items].sort((a, b) => {
@@ -303,18 +302,18 @@ const Wishlist = () => {
                           onClick={(e) =>
                             handleWishlistToggle(w._id, ticket._id, e)
                           }
-                          disabled={wishlistMutation.isLoading && isMutating}
+                          disabled={wishlistMutation.isPending && isMutating}
                           className={`w-12 h-12 rounded-xl flex items-center justify-center border border-white/10 transition-all ${
                             isAdded
                               ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white"
                               : "bg-white/[0.02] text-gray-400 hover:text-white hover:border-white/20"
                           } ${
-                            wishlistMutation.isLoading && isMutating
+                            wishlistMutation.isPending && isMutating
                               ? "opacity-50 cursor-not-allowed"
                               : ""
                           }`}
                         >
-                          {wishlistMutation.isLoading && isMutating ? (
+                          {wishlistMutation.isPending && isMutating ? (
                             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                           ) : (
                             <Trash2 size={18} />

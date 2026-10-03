@@ -17,7 +17,7 @@ export const useVerify = () => {
   return useMutation({
     mutationFn: (verifyTicket) => verifyReceipt(verifyTicket),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket"] });
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
 
       toast.success("Ticket Verified  successfully", {
         duration: 3000,

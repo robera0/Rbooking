@@ -18,7 +18,7 @@ class UserService {
   static async suspendUsers(userIds) {
     return await UserModel.updateMany(
       { _id: { $in: userIds } },
-      { $set: { status: "suspended" } },
+      { $set: { status: "suspended", refreshTokens: [] } },
     );
   }
   static async updatePasswordByUserId(userId, password) {

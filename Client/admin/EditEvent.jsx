@@ -376,8 +376,8 @@ const EditEvent = () => {
           border: "1px solid #FF7A00",
         },
       });
-      queryClient.invalidateQueries(["adminEvents"]);
-      queryClient.invalidateQueries(["events"]);
+      queryClient.invalidateQueries({ queryKey: ["adminEvents"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
       setIsSaved(true);
       setTimeout(() => navigate("/admin/events"), 2000);
     },

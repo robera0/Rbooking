@@ -218,11 +218,11 @@ export const EventTable = ({ search = "", filter = "" }) => {
           </p>
           <button
             onClick={() => deleteMutation.mutate(selected)}
-            disabled={deleteMutation.isLoading}
+            disabled={deleteMutation.isPending}
             className="flex items-center gap-2 bg-red-500 text-white hover:bg-white hover:text-red-500 px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-colors duration-300 shadow-lg active:scale-95 disabled:opacity-50"
           >
             <Trash2 size={16} strokeWidth={2.5} />{" "}
-            {deleteMutation.isLoading ? "Deleting..." : "Delete Selected"}
+            {deleteMutation.isPending ? "Deleting..." : "Delete Selected"}
           </button>
         </div>
       )}
@@ -663,18 +663,18 @@ export const UserTable = ({ onEdit, search = "", filter = "" }) => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => suspendMutation.mutate(selected)}
-              disabled={suspendMutation.isLoading}
+              disabled={suspendMutation.isPending}
               className="flex items-center gap-2 hover:bg-white/[0.04] text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-colors duration-300 active:scale-95 border border-white/[0.08] disabled:opacity-50"
             >
-              {suspendMutation.isLoading ? "Suspending..." : "Suspend"}
+              {suspendMutation.isPending ? "Suspending..." : "Suspend"}
             </button>
             <button
               onClick={() => deleteMutation.mutate(selected)}
-              disabled={deleteMutation.isLoading}
+              disabled={deleteMutation.isPending}
               className="flex items-center gap-2 bg-red-500 text-white hover:bg-white hover:text-red-500 px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-colors duration-300 shadow-lg active:scale-95 disabled:opacity-50"
             >
               <Trash2 size={16} strokeWidth={2.5} />{" "}
-              {deleteMutation.isLoading ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>

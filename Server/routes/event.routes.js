@@ -1,3 +1,4 @@
+import { requireAdmin } from "../middlewares/requireAdmin.js";
 import express from "express";
 import {
   featuredEvents,
@@ -19,15 +20,18 @@ eventRouter.get("/events/:eventId", getEventById);
 eventRouter.put(
   "/admin/events/:eventId",
   authenticateTokenMiddleware,
+  requireAdmin,
   upload.array("pictures", 10),
   updateEvent,
 ); 
 eventRouter.patch(
   "/auth/admin/events/:eventId",
   authenticateTokenMiddleware,
+  requireAdmin,
   upload.array("pictures", 10),
   updateEvent,
 );
+eventRouter.get("/events/:eventId/tickets", fetchEventsId);
 eventRouter.get("/events/:eventId/tickets/:ticketId", fetchEventsId);
 eventRouter.get("/events/:eventId/qr", generateEventQR);
 

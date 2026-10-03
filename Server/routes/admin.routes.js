@@ -21,7 +21,11 @@ import {
   createTickets,
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
+import { requireAdmin } from "../middlewares/requireAdmin.js";
 const adminRouter = express.Router();
+
+// Every route here is admin-only.
+adminRouter.use(authenticateTokenMiddleware, requireAdmin);
 
 adminRouter.get("/admin_users", authenticateTokenMiddleware, getAdminProfile);
 adminRouter.get("/users", authenticateTokenMiddleware, getUsers);

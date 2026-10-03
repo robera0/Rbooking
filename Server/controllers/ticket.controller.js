@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import redisClient, {
   clearTicketCache,
   clearTicketInfoCache,
+  clearEventsCache,
+  clearSingleEventCache,
   safeGet,
   safeRedis,
   REDIS_PREFIX,
@@ -17,6 +19,7 @@ import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
+import { adminOwnsEvent } from "../utils/adminOwnership.js";
 import { logVerificationFailure } from "../service/verificationLog.service.js";
 import EventService from "../service/event.service.js";
 import {
@@ -29,11 +32,14 @@ export const purchaseTicket = async (req, res) => {
 
   const userId = req.user.id;
   const { ticketId } = req.params;
-  const { quantity, phone } = req.body;
-  if (!ticketId) return res.status(400).json({ message: "Ticket ID required" });
-  if (!quantity || quantity <= 0)
+  const { phone } = req.body;
+  const quantity = Number(req.body.quantity);
+  if (!ticketId || !mongoose.Types.ObjectId.isValid(ticketId))
+    return res.status(400).json({ message: "Ticket ID required" });
+  if (!Number.isInteger(quantity) || quantity <= 0)
     return res.status(400).json({ message: "Invalid quantity" });
 
+  let reservedTicketId = null;
   try {
     const ticket = await TicketModel.findOneAndUpdate(
       {
@@ -52,6 +58,7 @@ export const purchaseTicket = async (req, res) => {
       return res.status(400).json({ message: "Not enough tickets available" });
     }
 
+    reservedTicketId = ticket._id;
     const orderNo = `ORD-${nanoid(10)}`;
     const totalAmount = ticket.price * quantity;
     const isFree = totalAmount === 0;
@@ -83,7 +90,10 @@ export const purchaseTicket = async (req, res) => {
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     });
 
+    reservedTicketId = null; // order exists now; expiry job owns the stock
     await clearTicketCache(userId);
+    await clearEventsCache();
+    await clearSingleEventCache(ticket.eventId.toString());
 
     // Notify Admin of purchase
     try {
@@ -143,6 +153,14 @@ export const purchaseTicket = async (req, res) => {
 
     res.status(201).json({ success: true, userTicket });
   } catch (error) {
+    // The seats were taken before the order was created; give them back or
+    // they'd be lost (no order exists for the expiry job to restore).
+    if (reservedTicketId) {
+      await TicketModel.updateOne(
+        { _id: reservedTicketId },
+        { $inc: { availableQuantity: quantity } },
+      ).catch(() => {});
+    }
     console.error("purchaseTicket error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
@@ -188,6 +206,11 @@ export const getTicketsInfo = async (req, res) => {
     const cachedRaw = await safeGet(cacheKey);
     if (cachedRaw) {
       const cachedTicket = JSON.parse(cachedRaw);
+      // The cache is keyed by ticket only, so ownership is re-checked here.
+      const cachedOwner = String(cachedTicket.userId?._id ?? cachedTicket.userId);
+      if (cachedOwner !== String(req.user.id)) {
+        return res.status(404).json({ message: "Ticket not found" });
+      }
       // Cached before qrCode existed/was backfilled - don't serve it stale.
       if (cachedTicket.qrCode) {
         await safeRedis(() => redisClient.expire(cacheKey, 3600));
@@ -201,6 +224,12 @@ export const getTicketsInfo = async (req, res) => {
 
     let ticket = await TicketService.findById(ticketId);
     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+
+    // A ticket (and its QR, which is the entry credential) is only visible
+    // to the person who bought it.
+    if (String(ticket.userId?._id ?? ticket.userId) !== String(req.user.id)) {
+      return res.status(404).json({ message: "Ticket not found" });
+    }
 
     // Backfill: tickets purchased before qrCode was added to the schema
     // never got one persisted, so generate it now.
@@ -231,19 +260,34 @@ export const getTicketsInfo = async (req, res) => {
 
 export const updateTicketStatus = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { ticketId: id } = req.params;
     const { status } = req.body;
 
     const validStatus = ["pending", "paid", "cancelled", "refunded"];
     if (!validStatus.includes(status))
       return res.status(400).json({ message: "Invalid status" });
+    if (!mongoose.Types.ObjectId.isValid(id))
+      return res.status(400).json({ message: "Invalid ticket ID" });
+
+    // Only the admin who owns the event can change an order's status.
+    const target = await UserTicketModel.findById(id).populate({
+      path: "ticketId",
+      select: "eventId",
+      populate: { path: "eventId", select: "adminId" },
+    });
+    if (!target) return res.status(404).json({ message: "Ticket not found" });
+    if (!(await adminOwnsEvent(req.user.id, target.ticketId?.eventId))) {
+      return res
+        .status(403)
+        .json({ message: "You can only change orders for your own events" });
+    }
 
     const ticket = await TicketService.findByIdAndUpdate(id, status);
     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
 
     await Promise.all([
       clearTicketCache(ticket.userId),
-      safeRedis(() => redisClient.del(`${REDIS_PREFIX}user:ticket:info:${id}`)),
+      clearTicketInfoCache(id),
     ]);
 
     res.status(200).json({ success: true, ticket });
@@ -312,6 +356,20 @@ export const verifyTicket = async (req, res) => {
     if (userTicket.status === "cancelled")
       return fail(400, "TICKET_CANCELLED", "This ticket was cancelled");
 
+    // The 30-minute hold released these seats, so paying now could oversell.
+    if (
+      userTicket.status === "expired" ||
+      (userTicket.status === "pending" &&
+        userTicket.expiresAt &&
+        userTicket.expiresAt <= new Date())
+    ) {
+      return fail(
+        400,
+        "ORDER_EXPIRED",
+        "This order has expired. Please place a new order.",
+      );
+    }
+
     const expected = await getExpectedReceiver(userTicket);
     if (expected.message) {
       return fail(
@@ -359,7 +417,7 @@ export const verifyTicket = async (req, res) => {
       });
     }
 
-    if (settledAmount !== TOTAL_AMOUNT) {
+    if (!Number.isFinite(settledAmount) || Math.abs(settledAmount - TOTAL_AMOUNT) > 0.009) {
       return fail(
         400,
         "AMOUNT_MISMATCH",
@@ -388,8 +446,8 @@ export const verifyTicket = async (req, res) => {
     }
 
     // Mark ticket as paid
-    const updatedTicket = await UserTicketModel.findByIdAndUpdate(
-      userTicketId,
+    const updatedTicket = await UserTicketModel.findOneAndUpdate(
+      { _id: userTicketId, status: "pending" },
       {
         status: "paid",
         isVerified: true,
@@ -405,6 +463,13 @@ export const verifyTicket = async (req, res) => {
         select: "name type locale dates pictures",
       },
     });
+    if (!updatedTicket) {
+      return fail(
+        400,
+        "ORDER_NOT_PENDING",
+        "This order can no longer be verified. Please refresh and try again.",
+      );
+    }
 
     // Create the verified Transaction record
     await Transaction.create({
@@ -504,6 +569,21 @@ export const scanTicket = catchAsync(async (req, res, next) => {
   // tickets bought before a past bug fix have a QR-embedded userTicketId
   // that never matched the ticket's real _id, so requiring it here would
   // permanently lock those out of check-in.)
+  const scanTarget = await UserTicketModel.findOne({ orderNo: token }).populate({
+    path: "ticketId",
+    select: "eventId",
+    populate: { path: "eventId", select: "adminId" },
+  });
+  if (
+    scanTarget &&
+    !(await adminOwnsEvent(scannerUserId, scanTarget.ticketId?.eventId))
+  ) {
+    return res.status(403).json({
+      success: false,
+      message: "This ticket is for another organizer's event.",
+    });
+  }
+
   const userTicket = await UserTicketModel.findOneAndUpdate(
     {
       orderNo: token,

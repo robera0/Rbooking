@@ -425,7 +425,6 @@ const UserHome = () => {
                         className="block"
                         onClick={(ev) => {
                           setCommentId(e?._id);
-                          console.log(e?._id);
                         }}
                       >
                         {/* Image Container */}
@@ -454,9 +453,9 @@ const UserHome = () => {
                       {/* Wishlist Button */}
                       <button
                         onClick={(ev) =>
-                          handleWishlistToggle(e._id, e.tickets[0]?._id, ev)
+                          handleWishlistToggle(e._id, e.tickets?.[0]?._id, ev)
                         }
-                        disabled={wishlistMutation.isLoading}
+                        disabled={wishlistMutation.isPending}
                         className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
                           checkWishlist(e._id)
                             ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
@@ -527,7 +526,7 @@ const UserHome = () => {
                       <Link
                         to={
                           !isSoldOut && e?.tickets?.length > 0
-                            ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                            ? `/events/${e?._id}/tickets/${e.tickets?.[0]?._id}`
                             : `/events/${e?._id}`
                         }
                       >
@@ -555,7 +554,7 @@ const UserHome = () => {
                         <Link
                           to={
                             !isSoldOut && e?.tickets?.length > 0
-                              ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
+                              ? `/events/${e?._id}/tickets/${e.tickets?.[0]?._id}`
                               : `/events/${e?._id}`
                           }
                           className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"

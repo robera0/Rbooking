@@ -55,9 +55,23 @@ export const getWishlist = catchAsync(async (req, res) => {
 export const addWishlist = catchAsync(async (req, res, next) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
+  if (
+    !mongoose.Types.ObjectId.isValid(req.body.eventId) ||
+    !mongoose.Types.ObjectId.isValid(req.body.ticketId)
+  ) {
+    return next(new AppError("A valid eventId and ticketId are required", 400));
+  }
   const eventId = new mongoose.Types.ObjectId(req.body.eventId);
-
   const ticketId = new mongoose.Types.ObjectId(req.body.ticketId);
+
+  // One entry per event: drop any earlier entry for it (it may point at a
+  // different ticket tier) before adding, so the same event can't be saved
+  // twice and removal by event always finds it.
+  await whishListService.findOneAndUpdate(
+    { userId },
+    { $pull: { items: { eventId } } },
+    { new: true },
+  );
 
   const updatedWishlist = await whishListService.findOneAndUpdate(
     { userId },
@@ -96,16 +110,27 @@ export const addWishlist = catchAsync(async (req, res, next) => {
 export const removeWishlist = catchAsync(async (req, res, next) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
-  const ticketId = new mongoose.Types.ObjectId(req.body.ticketId);
+  const { eventId, ticketId } = req.body;
+  if (
+    !mongoose.Types.ObjectId.isValid(eventId) &&
+    !mongoose.Types.ObjectId.isValid(ticketId)
+  ) {
+    return next(new AppError("An eventId or ticketId is required", 400));
+  }
+
+  // Match by event when we have one: the client may send a different ticket
+  // tier than the one that was saved, which used to make removal a silent
+  // no-op.
+  const pullFilter = mongoose.Types.ObjectId.isValid(eventId)
+    ? { eventId: new mongoose.Types.ObjectId(eventId) }
+    : { ticketId: new mongoose.Types.ObjectId(ticketId) };
 
   const updatedWishlist = await whishListService.findOneAndUpdate(
     { userId },
 
     {
       $pull: {
-        items: {
-          ticketId,
-        },
+        items: pullFilter,
       },
     },
 
@@ -115,7 +140,7 @@ export const removeWishlist = catchAsync(async (req, res, next) => {
   );
 
   if (!updatedWishlist) {
-    next(new AppError("whishlist not found", 404));
+    return next(new AppError("whishlist not found", 404));
   }
   try {
     await clearWishListCache(userId);

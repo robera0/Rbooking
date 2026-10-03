@@ -9,6 +9,7 @@ import {
 } from "../controllers/ticket.controller.js";
 
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
+import { requireAdmin } from "../middlewares/requireAdmin.js";
 
 const ticketRouter = express.Router();
 
@@ -29,7 +30,12 @@ ticketRouter.post(
   authenticateTokenMiddleware,
   verifyTicket,
 );
-ticketRouter.patch("/ticket/:ticketId/status", updateTicketStatus);
-ticketRouter.patch("/tickets/qr", authenticateTokenMiddleware, scanTicket);
+ticketRouter.patch(
+  "/ticket/:ticketId/status",
+  authenticateTokenMiddleware,
+  requireAdmin,
+  updateTicketStatus,
+);
+ticketRouter.patch("/tickets/qr", authenticateTokenMiddleware, requireAdmin, scanTicket);
 
 export default ticketRouter;

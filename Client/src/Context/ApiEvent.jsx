@@ -79,7 +79,7 @@ export const ApiProvider = ({ children }) => {
       const res = await api.get(`/api/auth/tickets_home`);
       return res.data;
     } catch (error) {
-      throw new Error(error);
+      throw error;
     }
   };
 
@@ -101,7 +101,7 @@ export const ApiProvider = ({ children }) => {
       const res = await api.get(`/api/auth/notifications`);
       return res.data;
     } catch (error) {
-      throw new Error(error);
+      throw error;
     }
   };
 
@@ -128,7 +128,7 @@ export const ApiProvider = ({ children }) => {
       return res.data;
     } catch (error) {
       console.error("Failed to fetch event ticket:", error);
-      throw new Error(error);
+      throw error;
     }
   };
 
@@ -151,7 +151,7 @@ export const ApiProvider = ({ children }) => {
       const res = await api.get(`/api/events/${commentId}/comments`);
       return res.data;
     } catch (error) {
-      throw new Error(error);
+      throw error;
     }
   };
 
@@ -204,10 +204,7 @@ export const ApiProvider = ({ children }) => {
 
   const likeComment = async (commentId) => {
     try {
-      const res = await api.post(
-        `/api/auth/comments/${commentId}/like`,
-        { commentId }
-      );
+      const res = await api.patch(`/api/comments/${commentId}/like`);
       return res.data;
     } catch (error) {
       console.error("Failed to fetch comment :", error);
@@ -219,11 +216,11 @@ export const ApiProvider = ({ children }) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: sendComment,
+      mutationFn: likeComment,
 
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: ["likeComments"],
+          queryKey: ["comment"],
         });
       },
 
@@ -243,7 +240,11 @@ export const ApiProvider = ({ children }) => {
 
   const fetchEventById = async (eventid, ticketId) => {
     try {
-      const res = await api.get(`/api/events/${eventid}/tickets/${ticketId}`);
+      const res = await api.get(
+        ticketId
+          ? `/api/events/${eventid}/tickets/${ticketId}`
+          : `/api/events/${eventid}/tickets`,
+      );
       return res.data;
     } catch (error) {
       console.error("Failed to fetch event ticket:", error);
@@ -256,7 +257,7 @@ export const ApiProvider = ({ children }) => {
       const res = await api.get(`/api/auth/wishlist`);
       return res.data;
     } catch (error) {
-      throw new Error(error);
+      throw error;
     }
   };
   const {
@@ -277,7 +278,7 @@ export const ApiProvider = ({ children }) => {
       const response = await api.get(`/api/auth/profile`);
       return response.data;
     } catch (error) {
-      throw new Error(error);
+      throw error;
     }
   };
   const {
@@ -298,7 +299,7 @@ export const ApiProvider = ({ children }) => {
       const response = await api.get(`/api/auth/admin/settings`);
       return response.data; // Now returns { settings, availablePaymentMethods }
     } catch (error) {
-      throw new Error(error);
+      throw error;
     }
   };
 

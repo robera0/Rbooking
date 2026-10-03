@@ -1,3 +1,4 @@
+import { adminOwnsEvent } from "../utils/adminOwnership.js";
 import EventService from "../service/event.service.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
@@ -135,9 +136,25 @@ export const getTransactionLedger = catchAsync(async (req, res, next) => {
 
 export const get_transaction_by_id = catchAsync(async (req, res) => {
   const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid transaction ID" });
+  }
+
+  // Only the admin who owns the event can read its orders.
+  const owned = await UserTicketModel.findById(id).populate({
+    path: "ticketId",
+    select: "eventId",
+    populate: { path: "eventId", select: "adminId" },
+  });
+  if (!owned || !(await adminOwnsEvent(req.user.id, owned.ticketId?.eventId))) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Transaction not found" });
+  }
 
   const transaction = await TicketService.findById(id);
-
   if (!transaction) {
     return res
       .status(404)
@@ -150,7 +167,7 @@ export const get_transaction_by_id = catchAsync(async (req, res) => {
       transaction.status === "paid" ? transaction.totalAmount * 0.1 : 0,
   };
 
-  res.status(200).json({ success: true, transaction: transaction });
+  res.status(200).json({ success: true, transaction: formattedTransaction });
 });
 
 export const get_revenue_history = catchAsync(async (req, res, next) => {

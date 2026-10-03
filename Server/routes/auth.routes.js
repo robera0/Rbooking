@@ -36,8 +36,6 @@ authRouter.get(
     prompt: "select_account consent",
   }),
   async (req, res) => {
-    console.log("Google callback hit!");
-    console.log("user:", req.user);
     // The browser is still on the backend's own domain (api.paysso.et) at
     // this point, while the app itself lives on a different domain
     // (paysso.et). Setting the session cookie here would bind it to the

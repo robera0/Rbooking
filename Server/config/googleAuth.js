@@ -19,9 +19,21 @@ passport.use(
         let user = await UserModel.findOne({ googleId: profile.id });
         let isNewUser = false;
 
+        const googleEmail = profile.emails?.[0]?.value?.toLowerCase();
+        if (!googleEmail) {
+          return done(new Error("Google account has no email address"), null);
+        }
+        const emailVerified =
+          profile.emails[0].verified === true ||
+          profile.emails[0].verified === "true" ||
+          profile._json?.email_verified === true;
+        if (!user && !emailVerified) {
+          return done(new Error("Google email is not verified"), null);
+        }
+
         if (!user) {
           // also check by email in case they registered normally before
-          user = await UserModel.findOne({ email: profile.emails[0].value });
+          user = await UserModel.findOne({ email: googleEmail });
 
           if (user) {
             // user exists with same email, just link their Google ID
@@ -35,7 +47,7 @@ passport.use(
             isNewUser = true;
             user = await UserModel.create({
               googleId: profile.id,
-              email: profile.emails[0].value,
+              email: googleEmail,
               isProfileComplete: false,
             });
 
@@ -59,7 +71,6 @@ passport.use(
         // attach isNewUser to user object
 
         user.isNewUser = isNewUser;
-        console.log("EMAIL TYPE:", typeof user.email, "VALUE:", user.email);
         return done(null, user);
       } catch (err) {
         return done(err, null);

@@ -548,7 +548,7 @@ const EventInfo = () => {
         {/* Wishlist Button */}
         <button
           onClick={handleWishlistToggle}
-          disabled={wishlistMutation.isLoading}
+          disabled={wishlistMutation.isPending}
           className={`absolute top-8 right-6 lg:right-14 z-20 w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
             checkWishlist(eventId)
               ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
@@ -1123,7 +1123,7 @@ const EventInfo = () => {
                   </div>
 
                   <button
-                    disabled={isSoldOut}
+                    disabled={isSoldOut || !activeTicket}
                     onClick={() => {
                       if (!user || usererror) {
                         navigate("/login", { state: { from: location } });
