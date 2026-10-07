@@ -323,8 +323,6 @@ export const verifyTicket = async (req, res) => {
     const { eventInfo, adminProfile } = expected;
     const EXPECTED_RECEIVER = expected.receiverName;
 
-    console.log(EXPECTED_RECEIVER, " and");
-
     // verification
 
     const TOTAL_AMOUNT = userTicket.totalAmount;
@@ -353,10 +351,15 @@ export const verifyTicket = async (req, res) => {
       );
     }
     if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
-      return fail(400, "RECEIVER_NAME_MISMATCH", "Invalid receiver name on receipt", {
-        expectedReceiver: EXPECTED_RECEIVER,
-        receiptReceiver: receipt.creditedPartyName,
-      });
+      return fail(
+        400,
+        "RECEIVER_NAME_MISMATCH",
+        "Invalid receiver name on receipt",
+        {
+          expectedReceiver: EXPECTED_RECEIVER,
+          receiptReceiver: receipt.creditedPartyName,
+        },
+      );
     }
 
     if (settledAmount !== TOTAL_AMOUNT) {
@@ -381,10 +384,15 @@ export const verifyTicket = async (req, res) => {
     });
 
     if (existingTicket) {
-      return fail(400, "RECEIPT_ALREADY_USED", "This receipt has already been used.", {
-        receiptNo: receipt.receiptNo,
-        usedByUserTicketId: existingTicket._id.toString(),
-      });
+      return fail(
+        400,
+        "RECEIPT_ALREADY_USED",
+        "This receipt has already been used.",
+        {
+          receiptNo: receipt.receiptNo,
+          usedByUserTicketId: existingTicket._id.toString(),
+        },
+      );
     }
 
     // Mark ticket as paid
@@ -464,9 +472,14 @@ export const verifyTicket = async (req, res) => {
     // two concurrent verifications can both pass the findOne check above,
     // but only one update can win.
     if (error.code === 11000) {
-      return fail(400, "RECEIPT_ALREADY_USED", "This receipt has already been used.", {
-        race: true,
-      });
+      return fail(
+        400,
+        "RECEIPT_ALREADY_USED",
+        "This receipt has already been used.",
+        {
+          race: true,
+        },
+      );
     }
     await logVerificationFailure({
       userId,

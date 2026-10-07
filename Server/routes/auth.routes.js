@@ -15,6 +15,7 @@ import {
   user,
 } from "../controllers/user.controller.js";
 import { upload } from "../controllers/events.controller.js";
+import { signupClub } from "../controllers/club.controller.js";
 import passport from "../config/googleAuth.js";
 import { generateExchangeToken } from "../service/token.js";
 const authRouter = express.Router();
@@ -77,6 +78,8 @@ authRouter.get(
 authRouter.get("/user", authenticateTokenMiddleware, user);
 authRouter.post("/signup/user", register);
 authRouter.post("/signup/admin", upload.single("coverPage"), registerAdmin);
+authRouter.post("/signup/club-owner", upload.single("coverPage"), signupClub);
+
 authRouter.post("/login", login);
 authRouter.post("/google/exchange", googleExchange);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);

@@ -10,6 +10,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { eventService } from "../src/Context/ApiEvent";
 import toast from "react-hot-toast";
@@ -144,6 +145,7 @@ const FilterTab = ({ label, active, count, onClick }) => (
 
 const TicketHome = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isLoggedIn } = useService();
   const { tickets, ticketLoading, ticketsError, ticketIsError } =
     eventService();
@@ -154,6 +156,16 @@ const TicketHome = () => {
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
+  }, []);
+
+  // Ensure tickets are refetched whenever this component mounts (entering /tickets_home)
+  useEffect(() => {
+    try {
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    } catch (err) {
+      console.warn("Failed to invalidate tickets on mount:", err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   if (ticketIsError && !isLoggedIn && !hasAlerted) {
     toast.error(getFriendlyErrorMessage(ticketsError), { duration: 3000 });

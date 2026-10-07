@@ -47,10 +47,9 @@ import EventQR from "../admin/EventQR";
 import ContactUs from "../user/ContactUs";
 import api from "./Context/api/api.config";
 import GetScanner from "../admin/GateScanner";
+import ClubRegistrationPage from "../club/Clubregistrationpage ·";
 const PageWrapper = ({ children }) => (
-  <div className="min-h-screen w-full origin-top page-fade-in">
-    {children}
-  </div>
+  <div className="min-h-screen w-full origin-top page-fade-in">{children}</div>
 );
 const Root = () => {
   const location = useLocation();
@@ -86,6 +85,15 @@ export const router = createBrowserRouter([
         element: (
           <PageWrapper>
             <RegistrationPage />
+          </PageWrapper>
+        ),
+      },
+
+      {
+        path: "club/register",
+        element: (
+          <PageWrapper>
+            <ClubRegistrationPage />
           </PageWrapper>
         ),
       },

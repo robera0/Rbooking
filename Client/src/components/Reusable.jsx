@@ -141,17 +141,17 @@ export default function CheckoutModal({
 
       if (totalAmount === 0) {
         const { default: toast } = await import("react-hot-toast");
-        toast.success("Your free ticket is acquired successfully!", {
+        toast.success("to get the ticket Verify the link blow !", {
           duration: 4000,
         });
 
         navigate(`/tickets_home/${data.userTicket._id}`);
+        setTimeout(() => window.location.reload(), 50);
       } else {
         const { default: toast } = await import("react-hot-toast");
-        toast.success(
-          "Your ticket is successfully held! Please complete your payment.",
-          { duration: 9000 },
-        );
+        toast.success("Pay,then paste your Telebirr link below to verify it", {
+          duration: 9000,
+        });
 
         navigate(`/tickets_home/verify/${data.userTicket._id}`, {
           state: {

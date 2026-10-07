@@ -325,6 +325,7 @@ const VerifyTicket = () => {
       {/* Back link */}
       <Link
         to="/tickets_home"
+        onClick={() => setTimeout(() => window.location.reload(), 50)}
         className="absolute top-6 left-6 flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
       >
         <ArrowLeft size={14} />
