@@ -1,5 +1,9 @@
 import multer from "multer";
-import redisClient, { REDIS_PREFIX, safeGet, safeRedis } from "../config/redis.js";
+import redisClient, {
+  REDIS_PREFIX,
+  safeGet,
+  safeRedis,
+} from "../config/redis.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 import EventService from "../service/event.service.js";
@@ -13,9 +17,10 @@ import { AdminProfile } from "../models/adminProfile.model.js";
 import { imageUploader } from "../liberary/index.js";
 import "dotenv/config";
 
-const URL = process.env.NODE_ENV === "production"
-  ? process.env.CLIENT_URL
-  : "http://localhost:5173";
+const URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.CLIENT_URL
+    : "http://localhost:5173";
 //ADD EVENTS
 
 const storage = multer.diskStorage({
@@ -80,8 +85,9 @@ export const addEvent = catchAsync(async (req, res, next) => {
       .status(400)
       .json({ success: false, message: "Venue name  is required" });
   }
-
-  capacity = Number(capacity) || 0;
+  priceRanges = priceRanges.map((p) =>
+    p.isFree ? { ...p, min: 0, max: 0 } : p,
+  );
   familyFriendly = Boolean(familyFriendly === "true");
 
   let pictures = [];
@@ -244,7 +250,10 @@ export const getEvents = catchAsync(async (req, res, next) => {
   });
 
   const eventIds = events.map((e) => e._id);
-  const allTickets = await TicketModel.find({ eventId: { $in: eventIds }, isActive: { $ne: false } });
+  const allTickets = await TicketModel.find({
+    eventId: { $in: eventIds },
+    isActive: { $ne: false },
+  });
   // Group Tickets for an event
   const ticketsByEvent = allTickets.reduce((acc, ticket) => {
     const key = ticket?.eventId?.toString();
@@ -258,7 +267,9 @@ export const getEvents = catchAsync(async (req, res, next) => {
 
     return { ...event, tickets, ticketCount: tickets.length };
   });
-  await safeRedis(() => redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets)));
+  await safeRedis(() =>
+    redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets)),
+  );
 
   res.status(200).json({
     success: true,
@@ -285,7 +296,10 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
 
   const eventIds = events.map((e) => e._id);
 
-  const allTickets = await TicketModel.find({ eventId: { $in: eventIds }, isActive: { $ne: false } });
+  const allTickets = await TicketModel.find({
+    eventId: { $in: eventIds },
+    isActive: { $ne: false },
+  });
 
   const ticketsByEvent = allTickets.reduce((acc, ticket) => {
     const key = ticket?.eventId?.toString();
@@ -302,7 +316,9 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
     };
   });
 
-  await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents)));
+  await safeRedis(() =>
+    redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents)),
+  );
   res.status(200).json({ events: featuredEvent });
 });
 
@@ -315,7 +331,10 @@ export const generateEventQR = catchAsync(async (req, res, next) => {
   }
 
   // Auto-fetch the first ticket tier for this event
-  const firstTicket = await TicketModel.findOne({ eventId, isActive: { $ne: false } }).sort({ _id: 1 });
+  const firstTicket = await TicketModel.findOne({
+    eventId,
+    isActive: { $ne: false },
+  }).sort({ _id: 1 });
   if (!firstTicket) {
     return res.status(404).json({ message: "No tickets found for this event" });
   }
@@ -334,8 +353,6 @@ export const generateEventQR = catchAsync(async (req, res, next) => {
     url,
   });
 });
-
-
 
 // FETCH WITH RESPECT TO ITS INDEX\
 
@@ -366,15 +383,24 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
     return res.status(404).json({ message: "Event not found" });
   }
 
-  const ticketInfo = await TicketModel.findOne({ _id: ticketId, eventId, isActive: { $ne: false } });
+  const ticketInfo = await TicketModel.findOne({
+    _id: ticketId,
+    eventId,
+    isActive: { $ne: false },
+  });
   if (!ticketInfo) {
     return res.status(404).json({ message: "Ticket not found for this event" });
   }
 
-  const allTickets = await TicketModel.find({ eventId, isActive: { $ne: false } }).lean();
+  const allTickets = await TicketModel.find({
+    eventId,
+    isActive: { $ne: false },
+  }).lean();
 
   const payloadToCache = { event, ticket: ticketInfo, tickets: allTickets };
-  await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache)));
+  await safeRedis(() =>
+    redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache)),
+  );
 
   res.status(200).json({
     success: true,

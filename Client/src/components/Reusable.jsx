@@ -139,9 +139,9 @@ export default function CheckoutModal({
       });
       const data = res.data;
 
-      if (totalAmount === 0) {
+      if (Number(totalAmount) === 0) {
         const { default: toast } = await import("react-hot-toast");
-        toast.success("to get the ticket Verify the link blow !", {
+        toast.success("Free ticket confirmed — no verification required.", {
           duration: 4000,
         });
 
@@ -349,9 +349,11 @@ export default function CheckoutModal({
 }
 export const MenuBar = ({ icon, header, path, onClick }) => {
   const location = useLocation();
-  // Improved matching logic to handle root and nested paths correctly
+
   const isActive = path
-    ? location.pathname.split("/")[1] === path.replace("/", "")
+    ? path === "/"
+      ? location.pathname === "/"
+      : location.pathname === path || location.pathname.startsWith(`${path}/`)
     : false;
 
   const content = (

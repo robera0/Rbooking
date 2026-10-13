@@ -635,6 +635,8 @@ const AddEvent = () => {
     description: "",
     eventDate: "",
     tickets: [],
+    isFree: false,
+    freeCapacity: "",
     policies: [],
     links: {},
     amenities: [],
@@ -782,6 +784,21 @@ const AddEvent = () => {
     return form;
   };
 
+  // When the event is free, the paid tiers are ignored and a single free
+  // ticket carrying only the capacity is sent instead.
+  const getTicketsToSubmit = () =>
+    formData.isFree
+      ? [
+          {
+            name: "Free",
+            price: 0,
+            capacity: Number(formData.freeCapacity) || 0,
+            isActive: true,
+            isFree: true,
+          },
+        ]
+      : formData.tickets.map((t) => ({ ...t, isFree: false }));
+
   const buildPayload = (status) => {
     const type = formData.type.toLowerCase();
     const basePayload = {
@@ -804,11 +821,12 @@ const AddEvent = () => {
         },
       },
       policies: formData.policies,
-      priceRanges: formData.tickets.map((t) => ({
+      priceRanges: getTicketsToSubmit().map((t) => ({
         type: t.name,
         currency: "ETB",
-        min: Number(t.price),
-        max: Number(t.price),
+        isFree: t.isFree,
+        min: t.isFree ? 0 : Number(t.price),
+        max: t.isFree ? 0 : Number(t.price),
         capacity: Number(t.capacity),
         isActive: t.isActive !== false,
       })),
@@ -886,7 +904,7 @@ const AddEvent = () => {
     onSuccess: () => {
       createTicketsMutation.mutate({
         eventId: draftIdRef.current,
-        tickets: formData.tickets,
+        tickets: getTicketsToSubmit(),
       });
       toast.success("Event Published Successfully!", {
         duration: 2000,
@@ -916,6 +934,10 @@ const AddEvent = () => {
   const handleSubmit = () => {
     if (isPublishingRef.current) return;
     if (!validateAll()) return;
+    if (formData.isFree && !Number(formData.freeCapacity)) {
+      toast.error("Please enter the capacity for this free event.");
+      return;
+    }
     isPublishingRef.current = true;
     // Cancel any in-flight autosave timer so it can't race the publish
     // call and end up hitting the create-event endpoint a second time.
@@ -929,7 +951,6 @@ const AddEvent = () => {
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
-
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
@@ -1101,148 +1122,182 @@ const AddEvent = () => {
 
           <SectionCard title="Event Tickets">
             <div className="space-y-4">
-              {formData.tickets.map((ticket, idx) => (
-                <div
-                  key={idx}
-                  className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
-                >
-                  <div className="flex-1">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Ticket Name
-                    </label>
-                    <TicketTypeSelect
-                      value={ticket.name}
-                      onChange={(val) => {
-                        const updated = [...formData.tickets];
-                        updated[idx].name = val;
-                        handleChange("tickets", updated);
-                      }}
-                    />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Price (ETB)
-                    </label>
-                    <input
-                      value={ticket.price}
-                      onChange={(e) => {
-                        const updated = [...formData.tickets];
-                        updated[idx].price = e.target.value;
-                        handleChange("tickets", updated);
-                      }}
-                      className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
-                    />
-                  </div>
-                  <div className="w-24">
-                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Capacity
-                    </label>
-                    <input
-                      type="number"
-                      value={ticket.capacity}
-                      onChange={(e) => {
-                        const updated = [...formData.tickets];
-                        updated[idx].capacity = e.target.value;
-                        handleChange("tickets", updated);
-                      }}
-                      className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                    />
-                  </div>
-                  <div className="flex flex-col items-center ml-2">
-                    <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Visible
-                    </span>
+              <Toggle
+                label="Free Event"
+                value={formData.isFree}
+                onChange={(v) => handleChange("isFree", v)}
+              />
+
+              {formData.isFree ? (
+                <div className="bg-[#121417] p-5 rounded-xl border border-white/[0.06]">
+                  <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                    Capacity
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.freeCapacity}
+                    onChange={(e) =>
+                      handleChange("freeCapacity", e.target.value)
+                    }
+                    className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
+                    placeholder="How many people can attend?"
+                  />
+                </div>
+              ) : (
+                <>
+                  {formData.tickets.map((ticket, idx) => (
+                    <div
+                      key={idx}
+                      className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
+                    >
+                      <div className="flex-1">
+                        <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                          Ticket Name
+                        </label>
+                        <TicketTypeSelect
+                          value={ticket.name}
+                          onChange={(val) => {
+                            const updated = [...formData.tickets];
+                            updated[idx].name = val;
+                            handleChange("tickets", updated);
+                          }}
+                        />
+                      </div>
+                      <div className="w-24">
+                        <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                          Price (ETB)
+                        </label>
+                        <input
+                          value={ticket.price}
+                          onChange={(e) => {
+                            const updated = [...formData.tickets];
+                            updated[idx].price = e.target.value;
+                            handleChange("tickets", updated);
+                          }}
+                          className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
+                        />
+                      </div>
+                      <div className="w-24">
+                        <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                          Capacity
+                        </label>
+                        <input
+                          type="number"
+                          value={ticket.capacity}
+                          onChange={(e) => {
+                            const updated = [...formData.tickets];
+                            updated[idx].capacity = e.target.value;
+                            handleChange("tickets", updated);
+                          }}
+                          className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
+                        />
+                      </div>
+                      <div className="flex flex-col items-center ml-2">
+                        <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                          Visible
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...formData.tickets];
+                            updated[idx].isActive =
+                              ticket.isActive === false ? true : false;
+                            handleChange("tickets", updated);
+                          }}
+                          className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
+                            ticket.isActive !== false
+                              ? "bg-[#FF7A00]"
+                              : "bg-white/10"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all shadow ${
+                              ticket.isActive !== false
+                                ? "left-[18px]"
+                                : "left-[2px]"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          set({
+                            tickets: formData.tickets.filter(
+                              (_, i) => i !== idx,
+                            ),
+                          })
+                        }
+                        className="ml-2 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+
+                  <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
+                    <div className="flex-1">
+                      <TicketTypeSelect
+                        value={newTicket.name}
+                        onChange={(val) =>
+                          setNewTicket({ ...newTicket, name: val })
+                        }
+                      />
+                    </div>
+                    <div className="w-24">
+                      <input
+                        value={newTicket.price}
+                        onChange={(e) =>
+                          setNewTicket({ ...newTicket, price: e.target.value })
+                        }
+                        className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
+                        placeholder="Price"
+                      />
+                    </div>
+                    <div className="w-32">
+                      <input
+                        type="number"
+                        value={newTicket.capacity}
+                        onChange={(e) =>
+                          setNewTicket({
+                            ...newTicket,
+                            capacity: e.target.value,
+                          })
+                        }
+                        className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
+                        placeholder="Capacity"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
-                        const updated = [...formData.tickets];
-                        updated[idx].isActive =
-                          ticket.isActive === false ? true : false;
-                        handleChange("tickets", updated);
+                        if (
+                          newTicket.name.trim() !== "" &&
+                          newTicket.price !== "" &&
+                          newTicket.capacity !== ""
+                        ) {
+                          set({
+                            tickets: [...formData.tickets, { ...newTicket }],
+                          });
+                          setNewTicket({
+                            name: "",
+                            price: "",
+                            capacity: "",
+                            isActive: true,
+                          });
+                        } else {
+                          toast.error(
+                            "Please fill in Ticket Name, Price, and Capacity to add a ticket.",
+                          );
+                        }
                       }}
-                      className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
-                        ticket.isActive !== false
-                          ? "bg-[#FF7A00]"
-                          : "bg-white/10"
-                      }`}
+                      className="ml-2 text-[#22c55e] border border-[#22c55e] hover:text-white hover:bg-green-400 transition duration-300 rounded-full p-2"
                     >
-                      <span
-                        className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all shadow ${
-                          ticket.isActive !== false
-                            ? "left-[18px]"
-                            : "left-[2px]"
-                        }`}
-                      />
+                      <Check size={18} />
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      set({
-                        tickets: formData.tickets.filter((_, i) => i !== idx),
-                      })
-                    }
-                    className="ml-2 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-
-              <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
-                <div className="flex-1">
-                  <TicketTypeSelect
-                    value={newTicket.name}
-                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
-                  />
-                </div>
-                <div className="w-24">
-                  <input
-                    value={newTicket.price}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, price: e.target.value })
-                    }
-                    className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
-                    placeholder="Price"
-                  />
-                </div>
-                <div className="w-32">
-                  <input
-                    type="number"
-                    value={newTicket.capacity}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, capacity: e.target.value })
-                    }
-                    className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                    placeholder="Capacity"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (
-                      newTicket.name.trim() !== "" &&
-                      newTicket.price !== "" &&
-                      newTicket.capacity !== ""
-                    ) {
-                      set({ tickets: [...formData.tickets, { ...newTicket }] });
-                      setNewTicket({
-                        name: "",
-                        price: "",
-                        capacity: "",
-                        isActive: true,
-                      });
-                    } else {
-                      toast.error(
-                        "Please fill in Ticket Name, Price, and Capacity to add a ticket.",
-                      );
-                    }
-                  }}
-                  className="ml-2 text-[#22c55e] border border-[#22c55e] hover:text-white hover:bg-green-400 transition duration-300 rounded-full p-2"
-                >
-                  <Check size={18} />
-                </button>
-              </div>
+                </>
+              )}
             </div>
           </SectionCard>
 

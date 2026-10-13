@@ -48,6 +48,7 @@ import ContactUs from "../user/ContactUs";
 import api from "./Context/api/api.config";
 import GetScanner from "../admin/GateScanner";
 import ClubRegistrationPage from "../club/Clubregistrationpage ·";
+import ClubRsvpPage from "../club/ClubRsvpPage";
 const PageWrapper = ({ children }) => (
   <div className="min-h-screen w-full origin-top page-fade-in">{children}</div>
 );
@@ -311,6 +312,14 @@ export const router = createBrowserRouter([
             element: (
               <PageWrapper>
                 <Venue />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "club/rsvp",
+            element: (
+              <PageWrapper>
+                <ClubRsvpPage />
               </PageWrapper>
             ),
           },

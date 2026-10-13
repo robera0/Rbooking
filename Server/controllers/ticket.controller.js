@@ -280,14 +280,6 @@ export const verifyTicket = async (req, res) => {
     return res.status(status).json({ message });
   };
 
-  if (!receiptUrl || !receiptUrl.trim())
-    return fail(400, "MISSING_RECEIPT_URL", "Receipt link is required");
-
-  // Basic validation: ensure it looks like a valid Telebirr receipt URL
-  if (!receiptUrl.includes("ethiotelecom") && !receiptUrl.startsWith("http")) {
-    return fail(400, "INVALID_LINK", "The link is not correct");
-  }
-
   try {
     // Fetch the UserTicket and populate ticket tier (to get eventId)
 
@@ -301,6 +293,65 @@ export const verifyTicket = async (req, res) => {
 
     if (userTicket.userId.toString() !== userId)
       return fail(403, "NOT_TICKET_OWNER", "Unauthorized");
+
+    const isFreeTicket =
+      Number(userTicket.totalAmount ?? 0) === 0 ||
+      Number(userTicket.ticketId?.price ?? 0) === 0;
+
+    if (isFreeTicket && userTicket.isVerified) {
+      return res.status(200).json({
+        success: true,
+        message: "Free ticket is already confirmed.",
+        userTicket,
+      });
+    }
+
+    if (isFreeTicket) {
+      const updatedTicket = await UserTicketModel.findByIdAndUpdate(
+        userTicketId,
+        {
+          status: "paid",
+          isVerified: true,
+          receiptUrl: null,
+          referenceId: `FREE-${userTicket.orderNo}`,
+        },
+        { new: true },
+      ).populate({
+        path: "ticketId",
+        populate: {
+          path: "eventId",
+          model: "Event",
+          select: "name type locale dates pictures",
+        },
+      });
+
+      await Transaction.create({
+        user: userId,
+        event: userTicket.ticketId.eventId,
+        ticket: userTicketId,
+        isVerified: true,
+        receiptNo: `FREE-${userTicket.orderNo}`,
+      });
+
+      await clearTicketCache(userId);
+      await clearTicketInfoCache(userTicketId);
+
+      return res.status(200).json({
+        success: true,
+        message: "Free ticket confirmed successfully!",
+        userTicket: updatedTicket,
+      });
+    }
+    if (!receiptUrl || !receiptUrl.trim())
+      return fail(400, "MISSING_RECEIPT_URL", "Receipt link is required");
+
+    // Basic validation: ensure it looks like a valid Telebirr receipt URL
+    if (
+      !receiptUrl.includes("ethiotelecom") &&
+      !receiptUrl.startsWith("http")
+    ) {
+      return fail(400, "INVALID_LINK", "The link is not correct");
+    }
 
     if (userTicket.status === "paid")
       return fail(

@@ -237,10 +237,13 @@ const EditEvent = () => {
         // event is opened for editing.
         eventDate:
           ev.dates?.start?.localDate && ev.dates?.start?.localTime
-            ? `${ev.dates.start.localDate}T${ev.dates.start.localTime.slice(0, 5)}`
+            ? `${ev.dates.start.localDate}T${ev.dates.start.localTime.slice(
+                0,
+                5,
+              )}`
             : ev.dates?.start?.dateTime
-              ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16)
-              : "",
+            ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16)
+            : "",
         // Built from the real Ticket documents (eventData.tickets), not
         // the priceRanges snapshot embedded on the event, so each row
         // carries the ticket's actual _id. Without that, saving after
@@ -545,7 +548,7 @@ const EditEvent = () => {
                 options={[
                   { label: "Concert", value: "concert" },
                   { label: "Festival", value: "festival" },
-                  { label: "Generic", value: "generic" },
+                  { label: "Event", value: "generic" },
                 ]}
                 value={formData.type.toLowerCase()}
                 onChange={(val) => set({ type: val })}
@@ -758,7 +761,9 @@ const EditEvent = () => {
                 <div className="flex-1">
                   <TicketTypeSelect
                     value={newTicket.name}
-                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
+                    onChange={(val) =>
+                      setNewTicket({ ...newTicket, name: val })
+                    }
                   />
                 </div>
                 <div className="w-24">
@@ -947,7 +952,6 @@ const EditEvent = () => {
               />
             </SectionCard>
           )}
-
         </div>
 
         {/* ── SIDEBAR ── */}

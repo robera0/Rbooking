@@ -5,6 +5,7 @@ export const PriceRangeSchema = new mongoose.Schema(
   {
     type: String,
     currency: String,
+    isFree: { type: Boolean, default: false },
     min: Number,
     max: Number,
     capacity: Number,

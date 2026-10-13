@@ -95,7 +95,20 @@ const VerifyTicket = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [userTicketId]);
 
+  const isFreeTicket = Number(totalAmount ?? 0) === 0;
+
   const handleVerify = async () => {
+    if (isFreeTicket) {
+      setConfirmedTicket({
+        orderNo: orderNo || "FREE",
+        quantity: quantity ?? 1,
+        totalAmount: Number(totalAmount ?? 0),
+        ticketType: "Free Ticket",
+      });
+      setStatus("success");
+      return;
+    }
+
     if (!verifyLink.trim() || isPending) return;
     setIsLoading(true);
     setErrorMsg("");
