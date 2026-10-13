@@ -285,15 +285,16 @@ const EventInfo = () => {
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
-  const allTickets = (event_id?.tickets || []).filter((t) => t.isActive !== false);
+  const allTickets = (event_id?.tickets || []).filter(
+    (t) => t.isActive !== false,
+  );
 
   const { mutation: wishlistMutation } = useWishlistMutation();
 
   const checkWishlist = (id) => {
     return (
-      wishlist?.wishlist?.items?.some(
-        (item) => item?.eventId?._id === id,
-      ) || false
+      wishlist?.wishlist?.items?.some((item) => item?.eventId?._id === id) ||
+      false
     );
   };
 
@@ -341,7 +342,6 @@ const EventInfo = () => {
       },
     );
   };
-
 
   /* ── ticket-type colour theme ── */
   const ticketThemes = {
@@ -674,9 +674,7 @@ const EventInfo = () => {
                         >
                           <img
                             src={
-                              img.startsWith("http")
-                                ? img
-                                : `${API_URL}/${img}`
+                              img.startsWith("http") ? img : `${API_URL}/${img}`
                             }
                             onError={(e) => {
                               e.currentTarget.onerror = null;
@@ -804,7 +802,9 @@ const EventInfo = () => {
                               <div className="flex-shrink-0">
                                 <img
                                   src={
-                                    c?.userProfile?.avatarUrl?.startsWith("http")
+                                    c?.userProfile?.avatarUrl?.startsWith(
+                                      "http",
+                                    )
                                       ? c.userProfile.avatarUrl
                                       : `${API_URL}/${c?.userProfile?.avatarUrl}`
                                   }

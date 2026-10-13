@@ -100,6 +100,7 @@ const BaseEventSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["generic", "concert", "festival"],
+      default: "generic",
     },
     status: String,
     adminId: {

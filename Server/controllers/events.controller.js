@@ -291,7 +291,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
   }
   console.log("Fetching from database...");
   const events = await EventService.find({ status: "published" })
-    .sort({ "date.start.dateTime": -1 })
+    .sort({ "date.start.dateTime": 1 })
     .limit(limit);
 
   const eventIds = events.map((e) => e._id);
