@@ -6,8 +6,8 @@ import { Event } from "../models/events.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { Invitation } from "../models/invitation.model.js";
 import {
-  getOrCreateInvitation,
-  recordInvitationScan,
+  createGuestInvitations,
+  checkInInvitation,
   InvitationError,
 } from "../service/invitation.service.js";
 
@@ -21,25 +21,24 @@ after(async () => {
 
 const oid = () => new mongoose.Types.ObjectId();
 
-// Raw inserts: the real models require many unrelated fields.
 async function makeAdmin() {
   const userId = oid();
   const { insertedId } = await AdminProfile.collection.insertOne({ userId });
   return { userId, profileId: insertedId };
 }
 
-async function makeEvent(adminProfileId, { enabled = true, name = "Gala" } = {}) {
+async function makeEvent(adminId, { enabled = true, name = "Gala" } = {}) {
   const { insertedId } = await Event.collection.insertOne({
     name,
     type: "generic",
-    adminId: adminProfileId,
+    adminId,
     invitation: { enabled },
   });
   return insertedId.toString();
 }
 
 let owner;
-let otherAdmin;
+let other;
 beforeEach(async () => {
   await Promise.all([
     Event.collection.deleteMany({}),
@@ -47,112 +46,146 @@ beforeEach(async () => {
     Invitation.deleteMany({}),
   ]);
   owner = await makeAdmin();
-  otherAdmin = await makeAdmin();
+  other = await makeAdmin();
 });
 
 const failsWith = (promise, status, code) =>
-  assert.rejects(promise, (e) => e instanceof InvitationError && e.status === status && e.code === code);
-
-// ---- creating / reading an invitation --------------------------------------------
-
-test("creates an invitation for the organizer's own event", async () => {
-  const eventId = await makeEvent(owner.profileId);
-  const { invitation, eventName } = await getOrCreateInvitation(eventId, owner.userId);
-
-  assert.equal(eventName, "Gala");
-  assert.match(invitation.ticketId, /^[0-9a-f]{16}$/);
-  assert.equal(invitation.adminId.toString(), owner.profileId.toString());
-  assert.equal(await Invitation.countDocuments({ eventId }), 1);
-});
-
-test("asking again returns the same invitation", async () => {
-  const eventId = await makeEvent(owner.profileId);
-  const first = await getOrCreateInvitation(eventId, owner.userId);
-  const second = await getOrCreateInvitation(eventId, owner.userId);
-  assert.equal(second.invitation.ticketId, first.invitation.ticketId);
-});
-
-test("simultaneous requests still produce exactly one invitation", async () => {
-  const eventId = await makeEvent(owner.profileId);
-  const results = await Promise.all(
-    Array.from({ length: 10 }, () => getOrCreateInvitation(eventId, owner.userId)),
+  assert.rejects(
+    promise,
+    (e) => e instanceof InvitationError && e.status === status && e.code === code,
   );
-  assert.equal(new Set(results.map((r) => r.invitation.ticketId)).size, 1);
-  assert.equal(await Invitation.countDocuments({ eventId }), 1);
+
+const guest = { guestName: "Abebe", email: "A@x.com", phone: "0911-22 33" };
+
+// ---- creating ------------------------------------------------------------
+
+test("creates one pass per guest with a shared orderId", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const { invitations, orderId, eventName } = await createGuestInvitations(
+    eventId,
+    owner.userId,
+    { ...guest, quantity: 3 },
+  );
+  assert.equal(invitations.length, 3);
+  assert.equal(eventName, "Gala");
+  assert.equal(new Set(invitations.map((i) => i.ticketId)).size, 3);
+  assert.ok(invitations.every((i) => String(i.orderId) === String(orderId)));
+  assert.equal(invitations[0].email, "a@x.com");
+  assert.equal(invitations[0].phone, "09112233");
+  assert.equal(await Invitation.countDocuments(), 3);
 });
 
-test("works for older events that store the user id instead of the profile id", async () => {
+test("another organizer cannot create invitations and nothing is created", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  await failsWith(
+    createGuestInvitations(eventId, other.userId, { ...guest, quantity: 1 }),
+    403,
+    "NOT_YOUR_EVENT",
+  );
+  assert.equal(await Invitation.countDocuments(), 0);
+});
+
+test("legacy events owned by the user id are accepted", async () => {
   const eventId = await makeEvent(owner.userId);
-  const { invitation } = await getOrCreateInvitation(eventId, owner.userId);
-  assert.ok(invitation.ticketId);
+  const r = await createGuestInvitations(eventId, owner.userId, { ...guest, quantity: 1 });
+  assert.equal(r.invitations.length, 1);
 });
 
-test("another organizer cannot create or read an invitation for the event", async () => {
+test("user without an admin profile is rejected", async () => {
   const eventId = await makeEvent(owner.profileId);
-  await failsWith(getOrCreateInvitation(eventId, otherAdmin.userId), 403, "NOT_YOUR_EVENT");
-  assert.equal(await Invitation.countDocuments({}), 0);
+  await failsWith(
+    createGuestInvitations(eventId, oid(), { ...guest, quantity: 1 }),
+    403,
+    "ADMIN_REQUIRED",
+  );
 });
 
-test("a user without an organizer profile is refused", async () => {
+test("rejects invalid event, missing event, disabled invitations", async () => {
+  await failsWith(createGuestInvitations("nope", owner.userId, guest), 400, "INVALID_EVENT");
+  await failsWith(createGuestInvitations(String(oid()), owner.userId, guest), 404, "EVENT_NOT_FOUND");
+  const off = await makeEvent(owner.profileId, { enabled: false });
+  await failsWith(createGuestInvitations(off, owner.userId, guest), 400, "INVITATIONS_DISABLED");
+});
+
+test("validates contact and quantity", async () => {
   const eventId = await makeEvent(owner.profileId);
-  await failsWith(getOrCreateInvitation(eventId, oid()), 403, "ADMIN_REQUIRED");
+  await failsWith(
+    createGuestInvitations(eventId, owner.userId, { guestName: "x" }),
+    400,
+    "CONTACT_REQUIRED",
+  );
+  for (const quantity of [0, 21, 1.5, "abc"]) {
+    await failsWith(
+      createGuestInvitations(eventId, owner.userId, { ...guest, quantity }),
+      400,
+      "INVALID_QUANTITY",
+    );
+  }
+  assert.equal(await Invitation.countDocuments(), 0);
 });
 
-test("refuses when invitations are not enabled for the event", async () => {
-  const eventId = await makeEvent(owner.profileId, { enabled: false });
-  await failsWith(getOrCreateInvitation(eventId, owner.userId), 400, "INVITATIONS_DISABLED");
+test("quantity defaults to 1 and name defaults to Guest", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const { invitations } = await createGuestInvitations(eventId, owner.userId, { email: "a@x.com" });
+  assert.equal(invitations.length, 1);
+  assert.equal(invitations[0].guestName, "Guest");
 });
 
-test("unknown and malformed event ids", async () => {
-  await failsWith(getOrCreateInvitation(oid().toString(), owner.userId), 404, "EVENT_NOT_FOUND");
-  await failsWith(getOrCreateInvitation("not-an-id", owner.userId), 400, "INVALID_EVENT");
-});
+// ---- scanning ------------------------------------------------------------
 
-// ---- scanning ------------------------------------------------------------------------
-
-async function invitationFor(adminProfileId = owner.profileId) {
-  const eventId = await makeEvent(adminProfileId);
-  const { invitation } = await getOrCreateInvitation(eventId, owner.userId);
-  return { eventId, token: invitation.ticketId };
+async function makePass(eventId, userId) {
+  const { invitations } = await createGuestInvitations(eventId, userId, { ...guest, quantity: 1 });
+  return invitations[0].ticketId;
 }
 
-test("a valid scan returns the invitation with the event name", async () => {
-  const { token } = await invitationFor();
-  const result = await recordInvitationScan(token, owner.userId);
-  assert.equal(result.ticketId, token);
-  assert.equal(result.eventId.name, "Gala");
+test("returns null for tokens that are not invitations", async () => {
+  assert.equal(await checkInInvitation("unknown", owner.userId), null);
+  assert.equal(await checkInInvitation(undefined, owner.userId), null);
 });
 
-test("scans are counted, and a shared invitation can be scanned repeatedly", async () => {
-  const { token } = await invitationFor();
-  assert.equal((await recordInvitationScan(token, owner.userId)).scanCount, 1);
-  await recordInvitationScan(token, owner.userId);
-  const third = await recordInvitationScan(token, owner.userId);
-  assert.equal(third.scanCount, 3);
-  assert.ok(third.lastScannedAt instanceof Date);
+test("owner scan checks the guest in once, second scan is 409 and counted", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const token = await makePass(eventId, owner.userId);
+  const first = await checkInInvitation(token, owner.userId);
+  assert.equal(first.status, "ok");
+  assert.equal(first.invitation.guestName, "Abebe");
+  const second = await checkInInvitation(token, owner.userId);
+  assert.equal(second.status, "used");
+  const doc = await Invitation.findOne({ ticketId: token });
+  assert.equal(doc.scanCount, 2);
+  assert.equal(doc.isChecked, true);
 });
 
-test("concurrent scans are all counted", async () => {
-  const { token } = await invitationFor();
-  await Promise.all(Array.from({ length: 15 }, () => recordInvitationScan(token, owner.userId)));
-  const stored = await Invitation.findOne({ ticketId: token }).lean();
-  assert.equal(stored.scanCount, 15);
+test("another organizer's scan is refused and does not consume or count", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const token = await makePass(eventId, owner.userId);
+  await failsWith(checkInInvitation(token, other.userId), 403, "NOT_YOUR_EVENT");
+  const doc = await Invitation.findOne({ ticketId: token });
+  assert.equal(doc.isChecked, false);
+  assert.equal(doc.scanCount, 0);
 });
 
-test("an unknown token is not an invitation", async () => {
-  assert.equal(await recordInvitationScan("nope", owner.userId), null);
-  assert.equal(await recordInvitationScan("", owner.userId), null);
-});
-
-test("an unverified invitation is not accepted", async () => {
-  const { token } = await invitationFor();
+test("unverified invitation is invalid", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const token = await makePass(eventId, owner.userId);
   await Invitation.updateOne({ ticketId: token }, { isVerified: false });
-  assert.equal(await recordInvitationScan(token, owner.userId), null);
+  const r = await checkInInvitation(token, owner.userId);
+  assert.equal(r.status, "invalid");
 });
 
-test("another organizer cannot scan the invitation, and it is not counted", async () => {
-  const { token } = await invitationFor();
-  await failsWith(recordInvitationScan(token, otherAdmin.userId), 403, "NOT_YOUR_EVENT");
-  const stored = await Invitation.findOne({ ticketId: token }).lean();
-  assert.equal(stored.scanCount, 0);
+test("10 concurrent scans give exactly one success", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const token = await makePass(eventId, owner.userId);
+  const results = await Promise.all(
+    Array.from({ length: 10 }, () => checkInInvitation(token, owner.userId)),
+  );
+  assert.equal(results.filter((r) => r.status === "ok").length, 1);
+  assert.equal(results.filter((r) => r.status === "used").length, 9);
+});
+
+test("pass whose event was deleted cannot be used", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const token = await makePass(eventId, owner.userId);
+  await Event.collection.deleteMany({});
+  await failsWith(checkInInvitation(token, owner.userId), 403, "NOT_YOUR_EVENT");
 });

@@ -20,7 +20,10 @@ import QRCode from "qrcode";
 import { amountsMatch } from "../utils/amount.js";
 import { logVerificationFailure } from "../service/verificationLog.service.js";
 import EventService from "../service/event.service.js";
-import { recordInvitationScan, InvitationError } from "../service/invitation.service.js";
+import {
+  checkInInvitation,
+  InvitationError,
+} from "../service/invitation.service.js";
 import {
   getExpectedReceiver,
   nameMatches,
@@ -544,14 +547,33 @@ export const scanTicket = catchAsync(async (req, res, next) => {
 
   // 2) Invitation
   try {
-    const invitation = await recordInvitationScan(token, scannerUserId);
-    if (invitation) {
+    const result = await checkInInvitation(token, scannerUserId);
+    if (result?.status === "ok") {
+      const { invitation } = result;
       return res.status(200).json({
         success: true,
         type: "invitation",
         message: "Valid invitation",
-        invitation,
+        invitation: {
+          guestName: invitation.guestName,
+          email: invitation.email,
+          phone: invitation.phone,
+          checkedInAt: invitation.checkedInAt,
+        },
       });
+    }
+    if (result?.status === "used") {
+      return res.status(409).json({
+        success: false,
+        message: "Invitation already used",
+        guestName: result.invitation.guestName,
+        scannedAt: result.invitation.checkedInAt,
+      });
+    }
+    if (result?.status === "invalid") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Invitation is not valid" });
     }
   } catch (error) {
     if (error instanceof InvitationError) {

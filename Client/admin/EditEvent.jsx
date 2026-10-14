@@ -178,7 +178,9 @@ const visibleTickets = (tickets) => {
       .map((t) => (t.name || "").trim().toLowerCase()),
   );
   return tickets.filter(
-    (t) => t.isActive !== false || !liveNames.has((t.name || "").trim().toLowerCase()),
+    (t) =>
+      t.isActive !== false ||
+      !liveNames.has((t.name || "").trim().toLowerCase()),
   );
 };
 
@@ -229,10 +231,6 @@ const EditEvent = () => {
 
   const initialFormRef = useRef(null);
 
-  // True when this event already has an invitation document (returned by
-  // getEventById). Used so we don't call createInvitation again.
-  const hasExistingInvitation = !!eventData?.invitation;
-
   const [formData, setFormData] = useState(() => {
     let initialObj = {};
     if (eventData?.event) {
@@ -277,7 +275,8 @@ const EditEvent = () => {
             // Seats already taken. Capacity can't go below this.
             sold: Math.max(
               0,
-              (t.totalQuantity || 0) - (t.availableQuantity ?? t.totalQuantity ?? 0),
+              (t.totalQuantity || 0) -
+                (t.availableQuantity ?? t.totalQuantity ?? 0),
             ),
             isActive: t.isActive !== false,
           })) ||
@@ -357,7 +356,7 @@ const EditEvent = () => {
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+  }, [hasUnsavedChanges, isSaved]);
 
   const [newAmenity, setNewAmenity] = useState("");
   const [newTicket, setNewTicket] = useState({
@@ -394,22 +393,9 @@ const EditEvent = () => {
 
       formData.newPictures.forEach((img) => form.append("pictures", img));
 
+      // Invitations are created one guest at a time from the Invitation QR
+      // page, so saving the event only needs to store the on/off toggle.
       const res = await api.put(`/api/admin/events/${eventId}`, form);
-
-      // The event is saved (with invitation.enabled) at this point, so the
-      // backend check in createInvitation will pass. It is idempotent, and
-      // we skip it entirely when an invitation already exists.
-      if (payload.invitation && !hasExistingInvitation) {
-        try {
-          await api.post(`/api/auth/admin/events/${eventId}/invitation`);
-        } catch (invErr) {
-          console.error("Invitation creation failed:", invErr);
-          toast.error(
-            "Event saved, but the invitation could not be created. Save again to retry.",
-          );
-        }
-      }
-
       return res.data;
     },
     onSuccess: () => {
@@ -763,7 +749,10 @@ const EditEvent = () => {
                       value={ticket.price}
                       onChange={(e) => {
                         const updated = [...formData.tickets];
-                        updated[idx] = { ...updated[idx], price: e.target.value };
+                        updated[idx] = {
+                          ...updated[idx],
+                          price: e.target.value,
+                        };
                         set({ tickets: updated });
                       }}
                       className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
@@ -780,7 +769,10 @@ const EditEvent = () => {
                       value={ticket.capacity}
                       onChange={(e) => {
                         const updated = [...formData.tickets];
-                        updated[idx] = { ...updated[idx], capacity: e.target.value };
+                        updated[idx] = {
+                          ...updated[idx],
+                          capacity: e.target.value,
+                        };
                         set({ tickets: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
@@ -799,8 +791,10 @@ const EditEvent = () => {
                       type="button"
                       onClick={() => {
                         const updated = [...formData.tickets];
-                        updated[idx].isActive =
-                          ticket.isActive === false ? true : false;
+                        updated[idx] = {
+                          ...updated[idx],
+                          isActive: ticket.isActive === false,
+                        };
                         set({ tickets: updated });
                       }}
                       className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
@@ -905,7 +899,10 @@ const EditEvent = () => {
                       value={policy.header}
                       onChange={(e) => {
                         const updated = [...formData.policies];
-                        updated[idx] = { ...updated[idx], header: e.target.value };
+                        updated[idx] = {
+                          ...updated[idx],
+                          header: e.target.value,
+                        };
                         set({ policies: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase text-xs"
@@ -929,7 +926,10 @@ const EditEvent = () => {
                     value={policy.descriptions}
                     onChange={(e) => {
                       const updated = [...formData.policies];
-                      updated[idx] = { ...updated[idx], descriptions: e.target.value };
+                      updated[idx] = {
+                        ...updated[idx],
+                        descriptions: e.target.value,
+                      };
                       set({ policies: updated });
                     }}
                     className="w-full bg-transparent border-none text-gray-400 text-[11px] outline-none italic resize-none"
@@ -1049,44 +1049,31 @@ const EditEvent = () => {
               Invitation
             </h3>
             <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-              Generate an invitation pass for invited guests
+              Send a personal invitation pass to each guest
             </p>
             <Toggle
-              label="Create Invitation Ticket"
+              label="Enable Invitations"
               value={formData.invitation}
               onChange={(v) => set({ invitation: v })}
             />
 
-            {formData.invitation && (
+            {formData.invitation ? (
               <div className="mt-4 flex items-start gap-3 p-4 bg-[#FF7A00]/5 border border-[#FF7A00]/20 rounded-xl">
                 <ShieldCheck
                   size={16}
                   className="text-[#FF7A00] shrink-0 mt-0.5"
                 />
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                  {hasExistingInvitation ? (
-                    <>
-                      This event already has an invitation. Find and download it
-                      from the{" "}
-                      <span className="text-[#FF7A00]">Invitation QR</span>{" "}
-                      column in the Events table.
-                    </>
-                  ) : (
-                    <>
-                      Your invitation QR will be generated when you save. You
-                      can then find and download it from the{" "}
-                      <span className="text-[#FF7A00]">Invitation QR</span>{" "}
-                      column in the Events table.
-                    </>
-                  )}
+                  After you save, open the{" "}
+                  <span className="text-[#FF7A00]">Invitation QR</span> column
+                  in the Events table. Add each guest's email or phone, pick a
+                  background, and generate their pass.
                 </p>
               </div>
-            )}
-
-            {!formData.invitation && hasExistingInvitation && (
+            ) : (
               <p className="mt-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
-                Turning this off stops new invitations. The existing invitation
-                QR will still work at the gate.
+                Turning this off stops new invitations. Passes already created
+                still work at the gate.
               </p>
             )}
           </div>

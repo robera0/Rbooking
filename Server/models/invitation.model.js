@@ -23,6 +23,14 @@ const InvitationSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    guestName: { type: String, trim: true, default: "Guest" },
+    email: { type: String, trim: true, lowercase: true },
+    phone: { type: String, trim: true },
+
+    // Added: check-in status at the gate
+    isChecked: { type: Boolean, default: false },
+    checkedInAt: { type: Date },
+
     // How often this shared pass was scanned at the gate. Scanning is not
     // limited, since one pass is handed to all invited guests.
     scanCount: {
@@ -32,11 +40,13 @@ const InvitationSchema = new mongoose.Schema(
     lastScannedAt: {
       type: Date,
     },
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      index: true,
+    },
   },
   { timestamps: true },
 );
-
-// One invitation per event; also what makes concurrent requests safe.
-InvitationSchema.index({ eventId: 1 }, { unique: true });
 
 export const Invitation = mongoose.model("Invitation", InvitationSchema);
