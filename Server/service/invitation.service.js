@@ -22,30 +22,59 @@ export async function createGuestInvitations(eventId, userId, input = {}) {
     throw new InvitationError(400, "INVALID_EVENT", "Invalid event id");
   }
 
-  const guestName = String(input.guestName || "").trim() || "Guest";
-  const email = String(input.email || "").trim().toLowerCase();
+  const guestName = String(input.guestName || "").trim();
+  const email = String(input.email || "")
+    .trim()
+    .toLowerCase();
   const phone = String(input.phone || "").replace(/[\s-]/g, "");
   const quantity = Number(input.quantity ?? 1);
 
-  if (!email && !phone) {
-    throw new InvitationError(400, "CONTACT_REQUIRED", "Guest email or phone number is required");
+  if (!guestName) {
+    throw new InvitationError(400, "NAME_REQUIRED", "Guest name is required");
+  }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new InvitationError(400, "INVALID_EMAIL", "Enter a valid email");
+  }
+  if (phone && !/^\+?\d{7,15}$/.test(phone)) {
+    throw new InvitationError(
+      400,
+      "INVALID_PHONE",
+      "Enter a valid phone number",
+    );
   }
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY) {
-    throw new InvitationError(400, "INVALID_QUANTITY", `Quantity must be between 1 and ${MAX_QUANTITY}`);
+    throw new InvitationError(
+      400,
+      "INVALID_QUANTITY",
+      `Quantity must be between 1 and ${MAX_QUANTITY}`,
+    );
   }
 
-  const event = await Event.findById(eventId).select("name adminId invitation").lean();
-  if (!event) throw new InvitationError(404, "EVENT_NOT_FOUND", "Event not found");
+  const event = await Event.findById(eventId)
+    .select("name adminId invitation")
+    .lean();
+  if (!event)
+    throw new InvitationError(404, "EVENT_NOT_FOUND", "Event not found");
 
-  const adminProfile = await AdminProfile.findOne({ userId }).select("_id").lean();
+  const adminProfile = await AdminProfile.findOne({ userId })
+    .select("_id")
+    .lean();
   if (!adminProfile) {
     throw new InvitationError(403, "ADMIN_REQUIRED", "Admin profile not found");
   }
   if (!(await adminOwnsEvent(userId, event))) {
-    throw new InvitationError(403, "NOT_YOUR_EVENT", "You can only manage invitations for your own events");
+    throw new InvitationError(
+      403,
+      "NOT_YOUR_EVENT",
+      "You can only manage invitations for your own events",
+    );
   }
   if (!event.invitation?.enabled) {
-    throw new InvitationError(400, "INVITATIONS_DISABLED", "Invitations are not enabled for this event");
+    throw new InvitationError(
+      400,
+      "INVITATIONS_DISABLED",
+      "Invitations are not enabled for this event",
+    );
   }
 
   const orderId = new mongoose.Types.ObjectId();
@@ -72,9 +101,15 @@ export async function checkInInvitation(token, scannerUserId) {
   const existing = await Invitation.findOne({ ticketId: token }).lean();
   if (!existing) return null;
 
-  const event = await Event.findById(existing.eventId).select("name adminId").lean();
+  const event = await Event.findById(existing.eventId)
+    .select("name adminId")
+    .lean();
   if (!event || !(await adminOwnsEvent(scannerUserId, event))) {
-    throw new InvitationError(403, "NOT_YOUR_EVENT", "This invitation is for another organizer's event");
+    throw new InvitationError(
+      403,
+      "NOT_YOUR_EVENT",
+      "This invitation is for another organizer's event",
+    );
   }
 
   // Atomic: of any number of simultaneous scans only one gets the document.
@@ -87,7 +122,8 @@ export async function checkInInvitation(token, scannerUserId) {
     },
     { new: true },
   ).lean();
-  if (checkedIn) return { status: "ok", invitation: checkedIn, eventName: event.name };
+  if (checkedIn)
+    return { status: "ok", invitation: checkedIn, eventName: event.name };
 
   // Rejected scan: count it so reuse attempts are visible.
   const current = await Invitation.findOneAndUpdate(

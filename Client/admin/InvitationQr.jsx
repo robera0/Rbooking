@@ -155,25 +155,19 @@ const InvitationQR = () => {
 
   const setField = (field, value) => {
     setGuest((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: "", contact: "" }));
+    setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const validate = () => {
     const next = {};
+    const name = guest.guestName.trim();
     const email = guest.email.trim();
     const phone = guest.phone.replace(/[\s-]/g, "");
 
-    if (!email && !phone) {
-      next.contact = "Enter an email or a phone number";
-    }
-
-    if (email && !EMAIL_RE.test(email)) {
-      next.email = "Enter a valid email";
-    }
-
-    if (phone && !PHONE_RE.test(phone)) {
+    if (!name) next.guestName = "Guest name is required";
+    if (email && !EMAIL_RE.test(email)) next.email = "Enter a valid email";
+    if (phone && !PHONE_RE.test(phone))
       next.phone = "Enter a valid phone number";
-    }
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -326,9 +320,7 @@ const InvitationQR = () => {
         .slice(0, 40);
 
     return `Invitation-${safe(invitation?.eventName) || "event"}-${
-      safe(invitation?.guestName) ||
-      invitation?.ticketId?.slice(-6) ||
-      "ticket"
+      safe(invitation?.guestName) || invitation?.ticketId?.slice(-6) || "ticket"
     }.png`;
   };
 
@@ -518,13 +510,22 @@ const InvitationQR = () => {
               Guest Details
             </p>
 
-            <input
-              className={inputClass}
-              placeholder="Guest name (optional)"
-              value={guest.guestName}
-              onChange={(e) => setField("guestName", e.target.value)}
-              disabled={formLocked}
-            />
+            <div>
+              <input
+                className={`${inputClass} ${
+                  errors.guestName ? "border-red-500/50" : ""
+                }`}
+                placeholder="Guest name *"
+                value={guest.guestName}
+                onChange={(e) => setField("guestName", e.target.value)}
+                disabled={formLocked}
+              />
+              {errors.guestName && (
+                <p className="text-red-500 font-bold text-[10px] mt-1.5">
+                  {errors.guestName}
+                </p>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -533,7 +534,7 @@ const InvitationQR = () => {
                   className={`${inputClass} ${
                     errors.email ? "border-red-500/50" : ""
                   }`}
-                  placeholder="Email"
+                  placeholder="Email (optional)"
                   value={guest.email}
                   onChange={(e) => setField("email", e.target.value)}
                   disabled={formLocked}
@@ -552,7 +553,7 @@ const InvitationQR = () => {
                   className={`${inputClass} ${
                     errors.phone ? "border-red-500/50" : ""
                   }`}
-                  placeholder="Phone number"
+                  placeholder="Phone number (optional)"
                   value={guest.phone}
                   onChange={(e) => setField("phone", e.target.value)}
                   disabled={formLocked}
@@ -586,12 +587,8 @@ const InvitationQR = () => {
               />
             </div>
 
-            <p
-              className={`font-bold text-[10px] ${
-                errors.contact ? "text-red-500" : "text-gray-600"
-              }`}
-            >
-              {errors.contact || "An email address or phone number is required"}
+            <p className="font-bold text-[10px] text-gray-600">
+              Name is required. Email and phone are optional.
             </p>
           </div>
 
@@ -658,7 +655,9 @@ const InvitationQR = () => {
                   ) : (
                     <Download size={15} />
                   )}
-                  {busy ? "Preparing..." : `Download all ${generated.length} (zip)`}
+                  {busy
+                    ? "Preparing..."
+                    : `Download all ${generated.length} (zip)`}
                 </button>
               )}
 
