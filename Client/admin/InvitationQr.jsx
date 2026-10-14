@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import api from "../src/Context/api/api.config";
 import toast from "react-hot-toast";
+import JSZip from "jszip";
 
 // Poster size used for the downloaded PNG (4:5).
 const POSTER_W = 1080;
@@ -233,8 +234,8 @@ const InvitationQR = () => {
   };
 
   // Builds the poster for the currently selected invitation.
-  const buildPosterBlob = async () => {
-    if (!currentInvitation) {
+  const buildPosterBlob = async (invitation = invitation) => {
+    if (!invitation) {
       throw new Error("No invitation selected");
     }
 
@@ -274,7 +275,7 @@ const InvitationQR = () => {
     ctx.fillStyle = "#ffffff";
     ctx.font = "800 56px sans-serif";
     ctx.fillText(
-      fitText(ctx, currentInvitation.eventName || "", POSTER_W - 160),
+      fitText(ctx, invitation.eventName || "", POSTER_W - 160),
       POSTER_W / 2,
       185,
     );
@@ -286,7 +287,7 @@ const InvitationQR = () => {
     ctx.fillStyle = "#ffffff";
     fillRoundRect(ctx, tileX, tileY, TILE, TILE, 40);
 
-    const qrImg = await loadImage(currentInvitation.qrCode);
+    const qrImg = await loadImage(invitation.qrCode);
 
     ctx.drawImage(qrImg, tileX + 30, tileY + 30, TILE - 60, TILE - 60);
 
@@ -295,12 +296,12 @@ const InvitationQR = () => {
     ctx.font = "700 28px sans-serif";
     ctx.fillText("INVITATION PASS", POSTER_W / 2, CAPTION_Y);
 
-    if (currentInvitation.guestName) {
+    if (invitation.guestName) {
       ctx.fillStyle = "#ffffff";
       ctx.font = "800 44px sans-serif";
 
       ctx.fillText(
-        fitText(ctx, currentInvitation.guestName, POSTER_W - 160),
+        fitText(ctx, invitation.guestName, POSTER_W - 160),
         POSTER_W / 2,
         GUEST_Y,
       );
@@ -317,16 +318,16 @@ const InvitationQR = () => {
     });
   };
 
-  const posterFileName = () => {
+  const posterFileName = (invitation = invitation) => {
     const safe = (value) =>
       (value || "")
         .replace(/[^a-z0-9]+/gi, "-")
         .replace(/^-|-$/g, "")
         .slice(0, 40);
 
-    return `Invitation-${safe(currentInvitation?.eventName) || "event"}-${
-      safe(currentInvitation?.guestName) ||
-      currentInvitation?.ticketId?.slice(-6) ||
+    return `Invitation-${safe(invitation?.eventName) || "event"}-${
+      safe(invitation?.guestName) ||
+      invitation?.ticketId?.slice(-6) ||
       "ticket"
     }.png`;
   };
@@ -355,6 +356,49 @@ const InvitationQR = () => {
     } catch (err) {
       console.error("QR download error:", err);
       toast.error("Failed to download the invitation");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Builds every generated pass and saves them together as one zip.
+  const handleDownloadAll = async () => {
+    if (!generated.length || busy) return;
+
+    setBusy(true);
+
+    try {
+      const zip = new JSZip();
+
+      for (let i = 0; i < generated.length; i += 1) {
+        const blob = await buildPosterBlob(generated[i]);
+        const name = posterFileName(generated[i]).replace(
+          /\.png$/,
+          `-${i + 1}.png`,
+        );
+        zip.file(name, blob);
+      }
+
+      const archive = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(archive);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = posterFileName(generated[0]).replace(
+        /^Invitation-(.*?)-[^-]*\.png$/,
+        "Invitations-$1.zip",
+      );
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      toast.success(`${generated.length} invitations downloaded`);
+    } catch (err) {
+      console.error("QR bulk download error:", err);
+      toast.error("Failed to download the invitations");
     } finally {
       setBusy(false);
     }
@@ -601,6 +645,22 @@ const InvitationQR = () => {
                   {busy ? "Preparing..." : "Download"}
                 </button>
               </div>
+
+              {generated.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleDownloadAll}
+                  disabled={busy}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#FF7A00] px-4 py-3 text-xs font-black uppercase tracking-wider text-[#FF7A00] hover:bg-[#FF7A00]/10 transition-colors disabled:opacity-50"
+                >
+                  {busy ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Download size={15} />
+                  )}
+                  {busy ? "Preparing..." : `Download all ${generated.length} (zip)`}
+                </button>
+              )}
 
               {generated.length > 1 && (
                 <div className="flex items-center justify-between gap-3">
