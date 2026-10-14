@@ -11,14 +11,21 @@ import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
 import { Event } from "../models/events.model.js";
 import { resolveStatusUpdate } from "../utils/eventStatus.js";
-import { syncEventTickets, TicketSyncError } from "../service/ticketSync.service.js";
+import {
+  syncEventTickets,
+  TicketSyncError,
+} from "../service/ticketSync.service.js";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
 import QRCode from "qrcode";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { imageUploader } from "../liberary/index.js";
-import { getOrCreateInvitation, InvitationError } from "../service/invitation.service.js";
+import { Invitation } from "../models/invitation.model.js";
+import {
+  getOrCreateInvitation,
+  InvitationError,
+} from "../service/invitation.service.js";
 import "dotenv/config";
 
 const URL =
@@ -188,44 +195,105 @@ export const addEvent = catchAsync(async (req, res, next) => {
   });
 });
 
-export const createInvitation = catchAsync(async (req, res, next) => {
-  try {
-    const { invitation, eventName } = await getOrCreateInvitation(
-      req.params.eventId,
-      req.user.id,
-    );
+export const createInvitation = catchAsync(async (req, res) => {
+  const { eventId } = req.params;
 
-    // generate the QR from the invitation's token
-    const qrCode = await QRCode.toDataURL(
-      JSON.stringify({
-        userTicketId: invitation._id,
-        token: invitation.ticketId,
-      }),
-      {
-        width: 600,
-        margin: 2,
-        color: { dark: "#000000", light: "#ffffff" },
-      },
-    );
+  const guestName = String(req.body.guestName || "").trim();
+  const email = String(req.body.email || "")
+    .trim()
+    .toLowerCase();
+  const phone = String(req.body.phone || "").replace(/[\s-]/g, "");
+  const quantity = Number(req.body.quantity ?? 1);
 
-    // so getEventById doesn't serve a cache without the invitation
-    await clearSingleEventCache(req.params.eventId);
-
-    res.status(201).json({
-      success: true,
-      invitation: { ...invitation, qrCode },
-      eventName,
+  if (!email && !phone) {
+    return res.status(400).json({
+      success: false,
+      message: "Guest email or phone number is required",
     });
-  } catch (error) {
-    if (error instanceof InvitationError) {
-      return res
-        .status(error.status)
-        .json({ success: false, code: error.code, message: error.message });
-    }
-    throw error;
   }
-});
 
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+    return res.status(400).json({
+      success: false,
+      message: "Quantity must be between 1 and 20",
+    });
+  }
+
+  const event = await EventService.findById(eventId);
+
+  if (!event) {
+    return res.status(404).json({
+      success: false,
+      message: "Event not found",
+    });
+  }
+
+  // Preserve your existing admin authorization and invitation-enabled
+  // checks here. Resolve adminId using the same logic as your current service.
+  const adminProfile = await AdminProfile.findOne({
+    userId: req.user.id,
+  });
+
+  if (!adminProfile) {
+    return res.status(403).json({
+      success: false,
+      message: "Admin profile not found",
+    });
+  }
+
+  if (!event.invitation?.enabled) {
+    return res.status(400).json({
+      success: false,
+      message: "Invitations are not enabled for this event",
+    });
+  }
+
+  const orderId = new mongoose.Types.ObjectId();
+
+  const documents = Array.from({ length: quantity }, () => ({
+    eventId: event._id,
+    adminId: adminProfile._id,
+    orderId,
+    guestName,
+    email: email || undefined,
+    phone: phone || undefined,
+  }));
+
+  // Each document receives its own unique ticketId from the schema.
+  const invitations = await Invitation.insertMany(documents);
+
+  const results = await Promise.all(
+    invitations.map(async (invitation) => ({
+      _id: invitation._id,
+      ticketId: invitation.ticketId,
+      guestName: invitation.guestName,
+      qrCode: await QRCode.toDataURL(
+        JSON.stringify({
+          userTicketId: invitation._id,
+          token: invitation.ticketId,
+        }),
+        {
+          width: 600,
+          margin: 2,
+          color: {
+            dark: "#000000",
+            light: "#ffffff",
+          },
+        },
+      ),
+    })),
+  );
+
+  await clearSingleEventCache(eventId);
+
+  return res.status(201).json({
+    success: true,
+    orderId,
+    eventName: event.name,
+    quantity: results.length,
+    invitations: results,
+  });
+});
 export const createTickets = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   const { tickets } = req.body;
@@ -242,14 +310,14 @@ export const createTickets = catchAsync(async (req, res, next) => {
     // Matches existing tiers by name, so calling this after a draft was
     // autosaved (or twice) never creates duplicates, and never switches off
     // tiers it was not asked about.
-    await syncEventTickets(
-      eventId,
-      Array.isArray(tickets) ? tickets : [],
-      { deactivateMissing: false },
-    );
+    await syncEventTickets(eventId, Array.isArray(tickets) ? tickets : [], {
+      deactivateMissing: false,
+    });
   } catch (error) {
     if (error instanceof TicketSyncError) {
-      return res.status(error.status).json({ code: error.code, message: error.message });
+      return res
+        .status(error.status)
+        .json({ code: error.code, message: error.message });
     }
     throw error;
   }
@@ -257,7 +325,10 @@ export const createTickets = catchAsync(async (req, res, next) => {
   await clearEventsCache();
   await clearSingleEventCache(eventId);
 
-  const saved = await TicketModel.find({ eventId, isActive: { $ne: false } }).lean();
+  const saved = await TicketModel.find({
+    eventId,
+    isActive: { $ne: false },
+  }).lean();
   res.status(201).json({
     success: true,
     tickets: saved,
@@ -620,7 +691,10 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   }
 
   // A late draft autosave must not unpublish an event that was just published.
-  updateData.status = resolveStatusUpdate(existingEvent.status, updateData.status);
+  updateData.status = resolveStatusUpdate(
+    existingEvent.status,
+    updateData.status,
+  );
   if (updateData.status === undefined) delete updateData.status;
 
   // Tickets first: a bad submission (negative price, capacity below what is
