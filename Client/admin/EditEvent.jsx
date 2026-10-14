@@ -214,6 +214,10 @@ const EditEvent = () => {
 
   const initialFormRef = useRef(null);
 
+  // True when this event already has an invitation document (returned by
+  // getEventById). Used so we don't call createInvitation again.
+  const hasExistingInvitation = !!eventData?.invitation;
+
   const [formData, setFormData] = useState(() => {
     let initialObj = {};
     if (eventData?.event) {
@@ -237,10 +241,13 @@ const EditEvent = () => {
         // event is opened for editing.
         eventDate:
           ev.dates?.start?.localDate && ev.dates?.start?.localTime
-            ? `${ev.dates.start.localDate}T${ev.dates.start.localTime.slice(0, 5)}`
+            ? `${ev.dates.start.localDate}T${ev.dates.start.localTime.slice(
+                0,
+                5,
+              )}`
             : ev.dates?.start?.dateTime
-              ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16)
-              : "",
+            ? new Date(ev.dates.start.dateTime).toISOString().slice(0, 16)
+            : "",
         // Built from the real Ticket documents (eventData.tickets), not
         // the priceRanges snapshot embedded on the event, so each row
         // carries the ticket's actual _id. Without that, saving after
@@ -273,6 +280,7 @@ const EditEvent = () => {
         familyFriendly: ev.familyFriendly || false,
         durationDays: ev.durationDays || "",
         stages: ev.stages || [],
+        invitation: ev.invitation?.enabled || false,
       };
     } else {
       initialObj = {
@@ -292,6 +300,7 @@ const EditEvent = () => {
         familyFriendly: false,
         durationDays: "",
         stages: [],
+        invitation: false,
       };
     }
     initialFormRef.current = initialObj;
@@ -356,6 +365,7 @@ const EditEvent = () => {
       form.append("amenities", JSON.stringify(payload.amenities));
       form.append("musicGenre", JSON.stringify(payload.musicGenre));
       form.append("familyFriendly", payload.familyFriendly);
+      form.append("invitation", payload.invitation === true);
       form.append("existingPictures", JSON.stringify(payload.existingPictures));
       if (payload.durationDays !== undefined)
         form.append("durationDays", payload.durationDays);
@@ -365,6 +375,21 @@ const EditEvent = () => {
       formData.newPictures.forEach((img) => form.append("pictures", img));
 
       const res = await api.put(`/api/admin/events/${eventId}`, form);
+
+      // The event is saved (with invitation.enabled) at this point, so the
+      // backend check in createInvitation will pass. It is idempotent, and
+      // we skip it entirely when an invitation already exists.
+      if (payload.invitation && !hasExistingInvitation) {
+        try {
+          await api.post(`/api/auth/admin/events/${eventId}/invitation`);
+        } catch (invErr) {
+          console.error("Invitation creation failed:", invErr);
+          toast.error(
+            "Event saved, but the invitation could not be created. Save again to retry.",
+          );
+        }
+      }
+
       return res.data;
     },
     onSuccess: () => {
@@ -450,6 +475,7 @@ const EditEvent = () => {
       },
       musicGenre: type === "concert" ? formData.musicGenre : ["General"],
       familyFriendly: formData.familyFriendly,
+      invitation: formData.invitation,
       ...(type === "festival" && {
         durationDays: Number(formData.durationDays) || 0,
         stages: formData.stages,
@@ -545,7 +571,7 @@ const EditEvent = () => {
                 options={[
                   { label: "Concert", value: "concert" },
                   { label: "Festival", value: "festival" },
-                  { label: "Generic", value: "generic" },
+                  { label: "Event", value: "generic" },
                 ]}
                 value={formData.type.toLowerCase()}
                 onChange={(val) => set({ type: val })}
@@ -758,7 +784,9 @@ const EditEvent = () => {
                 <div className="flex-1">
                   <TicketTypeSelect
                     value={newTicket.name}
-                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
+                    onChange={(val) =>
+                      setNewTicket({ ...newTicket, name: val })
+                    }
                   />
                 </div>
                 <div className="w-24">
@@ -947,7 +975,6 @@ const EditEvent = () => {
               />
             </SectionCard>
           )}
-
         </div>
 
         {/* ── SIDEBAR ── */}
@@ -961,6 +988,54 @@ const EditEvent = () => {
               value={formData.eventDate}
               onChange={(val) => set({ eventDate: val })}
             />
+          </div>
+
+          {/* Invitation */}
+          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
+            <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">
+              Invitation
+            </h3>
+            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+              Generate an invitation pass for invited guests
+            </p>
+            <Toggle
+              label="Create Invitation Ticket"
+              value={formData.invitation}
+              onChange={(v) => set({ invitation: v })}
+            />
+
+            {formData.invitation && (
+              <div className="mt-4 flex items-start gap-3 p-4 bg-[#FF7A00]/5 border border-[#FF7A00]/20 rounded-xl">
+                <ShieldCheck
+                  size={16}
+                  className="text-[#FF7A00] shrink-0 mt-0.5"
+                />
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                  {hasExistingInvitation ? (
+                    <>
+                      This event already has an invitation. Find and download it
+                      from the{" "}
+                      <span className="text-[#FF7A00]">Invitation QR</span>{" "}
+                      column in the Events table.
+                    </>
+                  ) : (
+                    <>
+                      Your invitation QR will be generated when you save. You
+                      can then find and download it from the{" "}
+                      <span className="text-[#FF7A00]">Invitation QR</span>{" "}
+                      column in the Events table.
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {!formData.invitation && hasExistingInvitation && (
+              <p className="mt-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
+                Turning this off stops new invitations. The existing invitation
+                QR will still work at the gate.
+              </p>
+            )}
           </div>
 
           {/* Amenities */}

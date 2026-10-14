@@ -1,5 +1,9 @@
 import multer from "multer";
-import redisClient, { REDIS_PREFIX, safeGet, safeRedis } from "../config/redis.js";
+import redisClient, {
+  REDIS_PREFIX,
+  safeGet,
+  safeRedis,
+} from "../config/redis.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 import EventService from "../service/event.service.js";
@@ -11,11 +15,13 @@ import QRCode from "qrcode";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { imageUploader } from "../liberary/index.js";
+import { Invitation } from "../models/invitation.model.js";
 import "dotenv/config";
 
-const URL = process.env.NODE_ENV === "production"
-  ? process.env.CLIENT_URL
-  : "http://localhost:5173";
+const URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.CLIENT_URL
+    : "http://localhost:5173";
 //ADD EVENTS
 
 const storage = multer.diskStorage({
@@ -48,6 +54,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
     desc,
     links,
     stages,
+    invitation,
     durationDays,
     category,
     familyFriendly,
@@ -107,6 +114,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
   } catch (e) {
     console.error("Failed to find AdminProfile:", e);
   }
+  const invitationEnabled = invitation === true || invitation === "true";
 
   const events = {
     type: normalizedType,
@@ -128,9 +136,11 @@ export const addEvent = catchAsync(async (req, res, next) => {
     durationDays,
     category,
     familyFriendly,
+    invitation: { enabled: invitationEnabled },
   };
 
   let newEvent;
+
   try {
     newEvent = await EventService.create(events);
   } catch (err) {
@@ -160,7 +170,66 @@ export const addEvent = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     event: newEvent,
+
     message: "event created successfully",
+  });
+});
+
+export const createInvitation = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+
+  const event = await EventService.findById(eventId);
+  if (!event) {
+    return res.status(404).json({ success: false, message: "Event not found" });
+  }
+  if (!event.invitation?.enabled) {
+    return res.status(400).json({
+      success: false,
+      message: "Invitations are not enabled for this event",
+    });
+  }
+
+  const adminProfile = await AdminProfile.findOne({ userId: req.user.id });
+  if (!adminProfile) {
+    return res
+      .status(403)
+      .json({ success: false, message: "Admin profile not found" });
+  }
+
+  let invitation = await Invitation.findOne({ eventId });
+
+  if (!invitation) {
+    invitation = await Invitation.create({
+      eventId,
+      adminId: adminProfile._id,
+    });
+  }
+
+  await invitation.populate({
+    path: "eventId",
+    select: "name",
+  });
+
+  const eventName = invitation.eventId.name;
+  // generate the QR from the invitation's ticketId
+  const qrCode = await QRCode.toDataURL(
+    JSON.stringify({
+      userTicketId: invitation._id,
+      token: invitation.ticketId,
+    }),
+    {
+      width: 600,
+      margin: 2,
+      color: { dark: "#000000", light: "#ffffff" },
+    },
+  );
+
+  await clearSingleEventCache(eventId); // so getEventById doesn't serve a cache without the invitation
+
+  res.status(201).json({
+    success: true,
+    invitation: { ...invitation.toObject(), qrCode },
+    eventName,
   });
 });
 
@@ -244,7 +313,10 @@ export const getEvents = catchAsync(async (req, res, next) => {
   });
 
   const eventIds = events.map((e) => e._id);
-  const allTickets = await TicketModel.find({ eventId: { $in: eventIds }, isActive: { $ne: false } });
+  const allTickets = await TicketModel.find({
+    eventId: { $in: eventIds },
+    isActive: { $ne: false },
+  });
   // Group Tickets for an event
   const ticketsByEvent = allTickets.reduce((acc, ticket) => {
     const key = ticket?.eventId?.toString();
@@ -258,7 +330,9 @@ export const getEvents = catchAsync(async (req, res, next) => {
 
     return { ...event, tickets, ticketCount: tickets.length };
   });
-  await safeRedis(() => redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets)));
+  await safeRedis(() =>
+    redisClient.setex(cacheKey, 300, JSON.stringify(eventsWithTickets)),
+  );
 
   res.status(200).json({
     success: true,
@@ -285,7 +359,10 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
 
   const eventIds = events.map((e) => e._id);
 
-  const allTickets = await TicketModel.find({ eventId: { $in: eventIds }, isActive: { $ne: false } });
+  const allTickets = await TicketModel.find({
+    eventId: { $in: eventIds },
+    isActive: { $ne: false },
+  });
 
   const ticketsByEvent = allTickets.reduce((acc, ticket) => {
     const key = ticket?.eventId?.toString();
@@ -302,7 +379,9 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
     };
   });
 
-  await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents)));
+  await safeRedis(() =>
+    redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvent)),
+  );
   res.status(200).json({ events: featuredEvent });
 });
 
@@ -315,7 +394,10 @@ export const generateEventQR = catchAsync(async (req, res, next) => {
   }
 
   // Auto-fetch the first ticket tier for this event
-  const firstTicket = await TicketModel.findOne({ eventId, isActive: { $ne: false } }).sort({ _id: 1 });
+  const firstTicket = await TicketModel.findOne({
+    eventId,
+    isActive: { $ne: false },
+  }).sort({ _id: 1 });
   if (!firstTicket) {
     return res.status(404).json({ message: "No tickets found for this event" });
   }
@@ -334,8 +416,6 @@ export const generateEventQR = catchAsync(async (req, res, next) => {
     url,
   });
 });
-
-
 
 // FETCH WITH RESPECT TO ITS INDEX\
 
@@ -366,15 +446,24 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
     return res.status(404).json({ message: "Event not found" });
   }
 
-  const ticketInfo = await TicketModel.findOne({ _id: ticketId, eventId, isActive: { $ne: false } });
+  const ticketInfo = await TicketModel.findOne({
+    _id: ticketId,
+    eventId,
+    isActive: { $ne: false },
+  });
   if (!ticketInfo) {
     return res.status(404).json({ message: "Ticket not found for this event" });
   }
 
-  const allTickets = await TicketModel.find({ eventId, isActive: { $ne: false } }).lean();
+  const allTickets = await TicketModel.find({
+    eventId,
+    isActive: { $ne: false },
+  }).lean();
 
   const payloadToCache = { event, ticket: ticketInfo, tickets: allTickets };
-  await safeRedis(() => redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache)));
+  await safeRedis(() =>
+    redisClient.setex(cacheKey, 3600, JSON.stringify(payloadToCache)),
+  );
 
   res.status(200).json({
     success: true,
@@ -446,6 +535,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
 
     // event fields
     category,
+    invitation,
 
     // common
     familyFriendly,
@@ -506,6 +596,10 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     category,
 
     familyFriendly,
+    invitation:
+      invitation === undefined
+        ? undefined
+        : { enabled: invitation === true || invitation === "true" },
   };
 
   // Remove undefined

@@ -143,6 +143,23 @@ input.no-spinner[type="number"] {
     -moz-appearance: textfield;
   }
 }
+.event-table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.event-table-scroll::-webkit-scrollbar-track {
+  background: #1c1f22;
+  border-radius: 10px;
+}
+
+.event-table-scroll::-webkit-scrollbar-thumb {
+  background: #55585d;
+  border-radius: 10px;
+}
+
+.event-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ff7a00;
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
