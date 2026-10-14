@@ -17,7 +17,7 @@ import QRCode from "qrcode";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { imageUploader } from "../liberary/index.js";
-import { Invitation } from "../models/invitation.model.js";
+import { getOrCreateInvitation, InvitationError } from "../service/invitation.service.js";
 import "dotenv/config";
 
 const URL =
@@ -188,61 +188,41 @@ export const addEvent = catchAsync(async (req, res, next) => {
 });
 
 export const createInvitation = catchAsync(async (req, res, next) => {
-  const { eventId } = req.params;
+  try {
+    const { invitation, eventName } = await getOrCreateInvitation(
+      req.params.eventId,
+      req.user.id,
+    );
 
-  const event = await EventService.findById(eventId);
-  if (!event) {
-    return res.status(404).json({ success: false, message: "Event not found" });
-  }
-  if (!event.invitation?.enabled) {
-    return res.status(400).json({
-      success: false,
-      message: "Invitations are not enabled for this event",
+    // generate the QR from the invitation's token
+    const qrCode = await QRCode.toDataURL(
+      JSON.stringify({
+        userTicketId: invitation._id,
+        token: invitation.ticketId,
+      }),
+      {
+        width: 600,
+        margin: 2,
+        color: { dark: "#000000", light: "#ffffff" },
+      },
+    );
+
+    // so getEventById doesn't serve a cache without the invitation
+    await clearSingleEventCache(req.params.eventId);
+
+    res.status(201).json({
+      success: true,
+      invitation: { ...invitation, qrCode },
+      eventName,
     });
+  } catch (error) {
+    if (error instanceof InvitationError) {
+      return res
+        .status(error.status)
+        .json({ success: false, code: error.code, message: error.message });
+    }
+    throw error;
   }
-
-  const adminProfile = await AdminProfile.findOne({ userId: req.user.id });
-  if (!adminProfile) {
-    return res
-      .status(403)
-      .json({ success: false, message: "Admin profile not found" });
-  }
-
-  let invitation = await Invitation.findOne({ eventId });
-
-  if (!invitation) {
-    invitation = await Invitation.create({
-      eventId,
-      adminId: adminProfile._id,
-    });
-  }
-
-  await invitation.populate({
-    path: "eventId",
-    select: "name",
-  });
-
-  const eventName = invitation.eventId.name;
-  // generate the QR from the invitation's ticketId
-  const qrCode = await QRCode.toDataURL(
-    JSON.stringify({
-      userTicketId: invitation._id,
-      token: invitation.ticketId,
-    }),
-    {
-      width: 600,
-      margin: 2,
-      color: { dark: "#000000", light: "#ffffff" },
-    },
-  );
-
-  await clearSingleEventCache(eventId); // so getEventById doesn't serve a cache without the invitation
-
-  res.status(201).json({
-    success: true,
-    invitation: { ...invitation.toObject(), qrCode },
-    eventName,
-  });
 });
 
 export const createTickets = catchAsync(async (req, res, next) => {

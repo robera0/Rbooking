@@ -6,7 +6,6 @@ import {
   getEventById,
   updateEvent,
   upload,
-  createInvitation,
   generateEventQR,
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
@@ -22,7 +21,6 @@ eventRouter.put(
   upload.array("pictures", 10),
   updateEvent,
 );
-eventRouter.post("/admin/events/:eventId/invitation", createInvitation);
 eventRouter.patch(
   "/auth/admin/events/:eventId",
   authenticateTokenMiddleware,

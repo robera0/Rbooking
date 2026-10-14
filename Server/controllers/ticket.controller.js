@@ -19,7 +19,7 @@ import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
 import { logVerificationFailure } from "../service/verificationLog.service.js";
 import EventService from "../service/event.service.js";
-import { Invitation } from "../models/invitation.model.js";
+import { recordInvitationScan, InvitationError } from "../service/invitation.service.js";
 import {
   getExpectedReceiver,
   nameMatches,
@@ -544,18 +544,23 @@ export const scanTicket = catchAsync(async (req, res, next) => {
   );
 
   // 2) Invitation
-  const invitation = await Invitation.findOne({
-    ticketId: token,
-    isVerified: true,
-  }).populate({ path: "eventId", select: "name" });
-
-  if (invitation) {
-    return res.status(200).json({
-      success: true,
-      type: "invitation",
-      message: "Valid invitation",
-      invitation,
-    });
+  try {
+    const invitation = await recordInvitationScan(token, scannerUserId);
+    if (invitation) {
+      return res.status(200).json({
+        success: true,
+        type: "invitation",
+        message: "Valid invitation",
+        invitation,
+      });
+    }
+  } catch (error) {
+    if (error instanceof InvitationError) {
+      return res
+        .status(error.status)
+        .json({ success: false, message: error.message });
+    }
+    throw error;
   }
   // populate ticket details (name) for UI display
   if (userTicket) {
