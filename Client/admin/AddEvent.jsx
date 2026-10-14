@@ -344,7 +344,7 @@ const DatePickerPanel = ({ value, onChange }) => {
         // unusably cramped calendar. Floating it as an absolutely
         // positioned popover lets it use its natural width regardless of
         // how narrow the card is.
-        <div className="absolute z-50 top-full left-0 mt-3 w-[320px] max-w-[90vw] rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
+        <div className="absolute z-50 top-full right-0 mt-3 w-[320px] max-w-[90vw] rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ThemeProvider theme={orangeTheme}>
               <StaticDateTimePicker
