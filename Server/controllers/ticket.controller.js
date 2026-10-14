@@ -17,7 +17,7 @@ import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
-import { Invitation } from "../models/invitation.model.js";
+import { amountsMatch } from "../utils/amount.js";
 import { logVerificationFailure } from "../service/verificationLog.service.js";
 import EventService from "../service/event.service.js";
 import {
@@ -347,8 +347,6 @@ export const verifyTicket = async (req, res) => {
 
     const receipt = isValid.receipt;
 
-    const settledAmount = parseFloat(receipt.settledAmount);
-
     if (receipt.transactionStatus !== "Completed") {
       return fail(
         400,
@@ -369,7 +367,7 @@ export const verifyTicket = async (req, res) => {
       );
     }
 
-    if (settledAmount !== TOTAL_AMOUNT) {
+    if (!amountsMatch(receipt.settledAmount, TOTAL_AMOUNT)) {
       return fail(
         400,
         "AMOUNT_MISMATCH",
