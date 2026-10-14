@@ -484,7 +484,7 @@ const TicketHome = () => {
 
                       <button
                         type="button"
-                        onClick={() => navigate("/club/rsvp")}
+                        onClick={() => navigate("/club/rsvp/ticket")}
                         className="w-full py-3 rounded-xl flex items-center justify-center gap-2"
                         style={{ background: rsvpTheme.ctaGradient }}
                       >
