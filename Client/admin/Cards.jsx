@@ -336,8 +336,8 @@ export const EventTable = ({ search = "", filter = "" }) => {
                         {item?.status === "published"
                           ? "Active"
                           : item?.status === "draft"
-                            ? "Draft"
-                            : "Sold Out"}
+                          ? "Draft"
+                          : "Sold Out"}
                       </h1>
                     </div>
                   </td>
@@ -547,6 +547,9 @@ export const TicketTable = ({ search = "", filter = "" }) => {
                       userObj?.fullName ||
                       userObj?.username ||
                       "Guest"}
+                  </p>
+                  <p className="font-bold text-white truncate">
+                    {txn.phone || "Guest"}
                   </p>
                   <p className="text-[11px] text-gray-500 truncate">
                     {userObj?.email || txn.customerEmail || ""}
