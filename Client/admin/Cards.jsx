@@ -333,7 +333,11 @@ export const EventTable = ({ search = "", filter = "" }) => {
                   <td className="px-6 py-4 text-center">
                     <div className="w-full h-8 flex justify-center items-center app-success-soft app-success-border rounded-md border">
                       <h1 className="app-success font-black text-[10px] uppercase tracking-widest">
-                        {item?.status === "published" ? "Active" : "Sold Out"}
+                        {item?.status === "published"
+                          ? "Active"
+                          : item?.status === "draft"
+                            ? "Draft"
+                            : "Sold Out"}
                       </h1>
                     </div>
                   </td>

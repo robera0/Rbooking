@@ -20,7 +20,7 @@ import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import { CustomSelect } from "./Cards";
-import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+import { getFriendlyErrorMessage, userMessageError } from "@/lib/errorMessages";
 import api from "../src/Context/api/api.config";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -669,6 +669,10 @@ const AddEvent = () => {
   // fires) can both slip through before the disabled attribute applies,
   // each running createTickets and inserting every ticket type twice.
   const isPublishingRef = useRef(false);
+  // The draft save currently on the wire (so Publish can wait for it) and
+  // whether publishing already succeeded (so no later autosave can touch it).
+  const inFlightSaveRef = useRef(null);
+  const publishedRef = useRef(false);
 
   const hasUnsavedChanges =
     JSON.stringify(formData) !== JSON.stringify(EMPTY_FORM);
@@ -727,7 +731,18 @@ const AddEvent = () => {
     return /not found/i.test(message || "");
   };
 
-  const saveDraft = async () => {
+  const saveDraft = () => {
+    // A save that starts while publishing, or after it, could reach the server
+    // after the publish and turn the event back into a draft.
+    if (isPublishingRef.current || publishedRef.current) return Promise.resolve(null);
+    const pending = runSaveDraft().finally(() => {
+      if (inFlightSaveRef.current === pending) inFlightSaveRef.current = null;
+    });
+    inFlightSaveRef.current = pending;
+    return pending;
+  };
+
+  const runSaveDraft = async () => {
     // The server needs an event type to create a draft; until one is chosen
     // there is nothing it can save.
     if (!formData.type) return null;
@@ -861,6 +876,16 @@ const AddEvent = () => {
     return { ...basePayload, status };
   };
 
+  // Keeps the server's own message for a rejected request (4xx), so the toast
+  // says what is wrong instead of a generic "something went wrong".
+  const asError = (err, message) => {
+    const status = err.response?.status;
+    const shown = err.response?.data?.message;
+    return shown && status >= 400 && status < 500 && status !== 401 && status !== 403
+      ? userMessageError(shown)
+      : new Error(message);
+  };
+
   // Saves the event: into the SAME draft id if one exists, only POSTs fresh if none yet.
   const saveEvent = async (payload) => {
     if (draftIdRef.current) {
@@ -875,7 +900,7 @@ const AddEvent = () => {
         if (shouldCreateFreshDraft(err, message)) {
           draftIdRef.current = null;
         } else {
-          throw new Error(message);
+          throw asError(err, message);
         }
       }
     }
@@ -888,7 +913,7 @@ const AddEvent = () => {
       draftIdRef.current = data?.event?._id || data?.events?._id || null;
       return data;
     } catch (err) {
-      throw new Error(readErrorMessage(err, "Failed to create event"));
+      throw asError(err, readErrorMessage(err, "Failed to create event"));
     }
   };
 
@@ -896,7 +921,7 @@ const AddEvent = () => {
     try {
       await api.post(`/api/auth/admin/events/${eventId}/tickets`, { tickets });
     } catch (err) {
-      throw new Error(readErrorMessage(err, "Failed to save the tickets"));
+      throw asError(err, readErrorMessage(err, "Failed to save the tickets"));
     }
   };
 
@@ -906,11 +931,15 @@ const AddEvent = () => {
   // existing events/tickets instead of duplicating them.
   const publishMutation = useMutation({
     mutationFn: async (payload) => {
+      // Let a draft save that is already on the wire finish first, so it
+      // cannot land after the publish.
+      await Promise.resolve(inFlightSaveRef.current).catch(() => {});
       const data = await saveEvent(payload);
       await createTickets(draftIdRef.current, formData.tickets);
       return data;
     },
     onSuccess: () => {
+      publishedRef.current = true;
       if (formData.invitation) {
         createInvitationMutation.mutate(draftIdRef.current);
       }

@@ -10,6 +10,7 @@ import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
 import { Event } from "../models/events.model.js";
+import { resolveStatusUpdate } from "../utils/eventStatus.js";
 import { syncEventTickets, TicketSyncError } from "../service/ticketSync.service.js";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
@@ -613,9 +614,14 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     (key) => updateData[key] === undefined && delete updateData[key],
   );
 
-  if (!(await EventService.findById(eventId))) {
+  const existingEvent = await EventService.findById(eventId);
+  if (!existingEvent) {
     return res.status(404).json({ success: false, message: "Event not found" });
   }
+
+  // A late draft autosave must not unpublish an event that was just published.
+  updateData.status = resolveStatusUpdate(existingEvent.status, updateData.status);
+  if (updateData.status === undefined) delete updateData.status;
 
   // Tickets first: a bad submission (negative price, capacity below what is
   // already sold, ...) is rejected before anything about the event changes.
