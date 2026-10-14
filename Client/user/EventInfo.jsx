@@ -1130,8 +1130,14 @@ const EventInfo = () => {
                                       : "#999",
                                 }}
                               >
-                                {t?.price}{" "}
-                                <span className="text-[8px]">ETB</span>
+                                {t?.price === 0 ? (
+                                  "FREE"
+                                ) : (
+                                  <>
+                                    {t?.price}{" "}
+                                    <span className="text-[8px]">ETB</span>
+                                  </>
+                                )}
                               </span>
                             </button>
                           );

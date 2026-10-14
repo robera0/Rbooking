@@ -101,7 +101,12 @@ export default function CheckoutModal({
   const { setQuantity, API_URL } = useService();
   const navigate = useNavigate();
 
-  const quantity = Math.max(1, parseInt(quantityStr) || 1);
+  const isFree = Number(amount) === 0;
+  const MAX_FREE_QUANTITY = 4;
+  const quantity = Math.min(
+    isFree ? MAX_FREE_QUANTITY : Infinity,
+    Math.max(1, parseInt(quantityStr) || 1),
+  );
 
   const totalAmount = amount * quantity;
 
@@ -164,8 +169,12 @@ export default function CheckoutModal({
       }
       onClose();
     } catch (error) {
+      const message =
+        (error?.response?.status < 500 && error?.response?.data?.message) ||
+        error.message ||
+        "Purchase failed. Please try again.";
       import("react-hot-toast").then(({ default: toast }) =>
-        toast.error(error.message || "Purchase failed. Please try again."),
+        toast.error(message),
       );
     } finally {
       setIsLoading(false);
@@ -260,12 +269,14 @@ export default function CheckoutModal({
                 Price
               </label>
               <div className="w-full bg-white/[0.01] border border-white/5 rounded-2xl px-5 py-4 font-black italic text-gray-400">
-                {amount} ETB
+                {isFree ? "Free" : `${amount} ETB`}
               </div>
             </div>
           </div>
         </div>
 
+        {!isFree && (
+          <>
         {/* Payment Methods */}
         <div className="space-y-3 mb-10 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
@@ -318,6 +329,9 @@ export default function CheckoutModal({
           </p>
         </div>
 
+          </>
+        )}
+
         {/* Final Execution Button */}
         <div className="space-y-4">
           <button
@@ -334,7 +348,9 @@ export default function CheckoutModal({
               </>
             ) : (
               <>
-                CONFIRM & PAY {totalAmount.toLocaleString()} ETB
+                {isFree
+                  ? "GET FREE TICKET"
+                  : `CONFIRM & PAY ${totalAmount.toLocaleString()} ETB`}
                 <ChevronRight
                   size={18}
                   className="group-hover:translate-x-1 transition-transform"

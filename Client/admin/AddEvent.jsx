@@ -1162,7 +1162,7 @@ const AddEvent = () => {
                   </div>
                   <div className="w-24">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Price (ETB)
+                      Price (ETB, 0 = free)
                     </label>
                     <input
                       value={ticket.price}
@@ -1246,7 +1246,7 @@ const AddEvent = () => {
                       setNewTicket({ ...newTicket, price: e.target.value })
                     }
                     className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
-                    placeholder="Price"
+                    placeholder="Price (0 = free)"
                   />
                 </div>
                 <div className="w-32">

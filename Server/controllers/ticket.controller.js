@@ -12,6 +12,11 @@ import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
 import Transaction from "../models/transaction.model.js";
 import { nanoid } from "nanoid";
+import {
+  MAX_FREE_PER_EVENT,
+  freeTicketsHeld,
+  remainingFreeAllowance,
+} from "../service/freeTickets.service.js";
 import verifyReceipt from "../service/verifyRecipt.service.js";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
@@ -36,10 +41,26 @@ export const purchaseTicket = async (req, res) => {
   const { ticketId } = req.params;
   const { quantity, phone } = req.body;
   if (!ticketId) return res.status(400).json({ message: "Ticket ID required" });
-  if (!quantity || quantity <= 0)
+  if (!Number.isInteger(quantity) || quantity <= 0)
     return res.status(400).json({ message: "Invalid quantity" });
 
   try {
+    // Free tickets are capped per person so one account cannot take them all.
+    const tier = await TicketModel.findById(ticketId)
+      .select("price eventId")
+      .lean();
+    if (tier && tier.price === 0) {
+      const allowed = await remainingFreeAllowance(userId, tier.eventId);
+      if (quantity > allowed) {
+        return res.status(400).json({
+          message:
+            allowed === 0
+              ? `You already have the maximum of ${MAX_FREE_PER_EVENT} free tickets for this event`
+              : `You can get ${allowed} more free ticket${allowed === 1 ? "" : "s"} for this event`,
+        });
+      }
+    }
+
     const ticket = await TicketModel.findOneAndUpdate(
       {
         _id: ticketId,
@@ -87,6 +108,22 @@ export const purchaseTicket = async (req, res) => {
       status: isFree ? "paid" : "pending",
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     });
+
+    // Two simultaneous requests can both pass the check above; undo the
+    // later one if the person ended up over the limit.
+    if (isFree) {
+      const held = await freeTicketsHeld(userId, ticket.eventId);
+      if (held > MAX_FREE_PER_EVENT) {
+        await UserTicketModel.deleteOne({ _id: userTicket._id });
+        await TicketModel.updateOne(
+          { _id: ticketId },
+          { $inc: { availableQuantity: quantity } },
+        );
+        return res.status(400).json({
+          message: `You already have the maximum of ${MAX_FREE_PER_EVENT} free tickets for this event`,
+        });
+      }
+    }
 
     await clearTicketCache(userId);
 
