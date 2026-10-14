@@ -234,7 +234,7 @@ const InvitationQR = () => {
   };
 
   // Builds the poster for the currently selected invitation.
-  const buildPosterBlob = async (invitation = invitation) => {
+  const buildPosterBlob = async (invitation = currentInvitation) => {
     if (!invitation) {
       throw new Error("No invitation selected");
     }
@@ -318,7 +318,7 @@ const InvitationQR = () => {
     });
   };
 
-  const posterFileName = (invitation = invitation) => {
+  const posterFileName = (invitation = currentInvitation) => {
     const safe = (value) =>
       (value || "")
         .replace(/[^a-z0-9]+/gi, "-")

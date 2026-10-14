@@ -317,6 +317,14 @@ export const verifyTicket = async (req, res) => {
     if (userTicket.status === "cancelled")
       return fail(400, "TICKET_CANCELLED", "This ticket was cancelled");
 
+    // The seats were released when it expired, so it can no longer be paid.
+    if (userTicket.status === "expired")
+      return fail(
+        400,
+        "TICKET_EXPIRED",
+        "This order expired. Please book the ticket again.",
+      );
+
     const expected = await getExpectedReceiver(userTicket);
     if (expected.message) {
       return fail(

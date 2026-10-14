@@ -60,6 +60,7 @@ export const get_dashboard_stats = catchAsync(async (req, res, next) => {
   });
   const pendingApprovals = await UserTicketModel.countDocuments({
     status: "pending",
+    expiresAt: { $gt: new Date() },
     ticketId: { $in: adminTicketIds },
   });
 

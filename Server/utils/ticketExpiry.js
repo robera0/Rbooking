@@ -1,36 +1,51 @@
 import { UserTicketModel } from "../models/userTicket.model.js";
 import { TicketModel } from "../models/ticket.model.js";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-export async function expirePendingTickets() {
+// Match stage that hides expired orders from the organizer, including
+// pending ones whose time has run out but the sweep has not reached yet.
+export const hideExpiredMatch = (now = new Date()) => ({
+  status: { $ne: "expired" },
+  $nor: [{ status: "pending", expiresAt: { $lte: now } }],
+});
+
+// Expires pending orders whose time has run out and returns their seats to
+// the pool. Each order is flipped atomically, so seats are returned exactly
+// once even if two sweeps overlap or the buyer pays at the same moment.
+// Returns the number of orders expired.
+export async function expirePendingTickets(now = new Date()) {
   try {
-    const now = new Date();
-
-    // Find all pending tickets that have passed their expiry
-    const expiredTickets = await UserTicketModel.find({
+    const lapsed = await UserTicketModel.find({
       status: "pending",
       expiresAt: { $lte: now },
-    });
+    })
+      .select("_id")
+      .lean();
 
-    if (expiredTickets.length === 0) return;
+    let expired = 0;
+    for (const { _id } of lapsed) {
+      const order = await UserTicketModel.findOneAndUpdate(
+        { _id, status: "pending", expiresAt: { $lte: now } },
+        { $set: { status: "expired" } },
+      ).lean();
+      if (!order) continue;
 
-    for (const ticket of expiredTickets) {
-      // Restore the quantity back to the ticket pool
-      await TicketModel.findByIdAndUpdate(ticket.ticketId, {
-        $inc: { availableQuantity: ticket.quantity },
-      });
-
-      ticket.status = "expired";
-      await ticket.save();
+      await TicketModel.updateOne(
+        { _id: order.ticketId },
+        { $inc: { availableQuantity: order.quantity } },
+      );
+      expired += 1;
     }
 
-  
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     await UserTicketModel.deleteMany({
       status: "expired",
-      expiresAt: { $lte: oneDayAgo },
+      expiresAt: { $lte: new Date(now.getTime() - DAY_MS) },
     });
+
+    return expired;
   } catch (error) {
     console.error("[TicketExpiry] Error:", error.message);
+    return 0;
   }
 }
