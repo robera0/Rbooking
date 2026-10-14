@@ -5,6 +5,7 @@ import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
+import { Event } from "../models/events.model.js";
 import { syncEventTickets, TicketSyncError } from "../service/ticketSync.service.js";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
@@ -58,6 +59,16 @@ export const addEvent = catchAsync(async (req, res, next) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
   const normalizedType = type?.toLowerCase();
+
+  // The create page autosaves before an event type is chosen. Say so plainly
+  // instead of letting Mongoose fail with a 500 about a missing discriminator.
+  if (!normalizedType || !Event.discriminators?.[normalizedType]) {
+    return res.status(400).json({
+      success: false,
+      code: "INVALID_TYPE",
+      message: "Choose an event type first",
+    });
+  }
 
   artist = safeParse(artist || "{}");
   priceRanges = safeParse(priceRanges || "[]");
@@ -540,8 +551,8 @@ export const updateEvent = catchAsync(async (req, res, next) => {
         eventId,
         priceRanges.map((pr) => ({
           ticketId: pr.ticketId,
-          name: pr.type,
-          price: pr.min,
+          name: pr.type ?? pr.name,
+          price: pr.min ?? pr.price,
           capacity: pr.capacity,
           isActive: pr.isActive,
         })),
@@ -558,10 +569,15 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     }
   }
 
-  const updatedEvent = await EventService.findByIdAndUpdate(
-    eventId,
-    updateData,
-  );
+  let updatedEvent;
+  try {
+    updatedEvent = await EventService.findByIdAndUpdate(eventId, updateData);
+  } finally {
+    // Tickets may already have changed above. If saving the event itself
+    // fails, readers must still not be served the old cached tickets.
+    await clearEventsCache();
+    await clearSingleEventCache(eventId);
+  }
 
   if (!updatedEvent) {
     return res.status(404).json({ success: false, message: "Event not found" });

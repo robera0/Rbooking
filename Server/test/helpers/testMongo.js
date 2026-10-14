@@ -28,23 +28,42 @@ export async function startTestMongo() {
     { stdio: "ignore" },
   );
 
-  const uri = `mongodb://127.0.0.1:${port}/rbooking_test`;
-  for (let attempt = 0; ; attempt++) {
-    try {
-      await mongoose.connect(uri, { serverSelectionTimeoutMS: 1000 });
-      break;
-    } catch (error) {
-      if (attempt >= 30) throw error;
-      await sleep(500);
+  const cleanup = async () => {
+    await mongoose.disconnect().catch(() => {});
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = new Promise((resolve) => child.once("exit", resolve));
+      child.kill("SIGTERM");
+      await exited;
     }
+    rmSync(dir, { recursive: true, force: true });
+  };
+
+  // A missing mongod binary shows up as an "error" event, not an exception.
+  const spawnFailure = new Promise((_, reject) =>
+    child.once("error", (error) =>
+      reject(new Error(`Could not start mongod (is it installed?): ${error.message}`)),
+    ),
+  );
+
+  const uri = `mongodb://127.0.0.1:${port}/rbooking_test`;
+  const connect = async () => {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await mongoose.connect(uri, { serverSelectionTimeoutMS: 1000 });
+        return;
+      } catch (error) {
+        if (attempt >= 30) throw error;
+        await sleep(500);
+      }
+    }
+  };
+
+  try {
+    await Promise.race([connect(), spawnFailure]);
+  } catch (error) {
+    await cleanup();
+    throw error;
   }
 
-  return {
-    async stop() {
-      await mongoose.disconnect();
-      child.kill("SIGTERM");
-      await new Promise((resolve) => child.once("exit", resolve));
-      rmSync(dir, { recursive: true, force: true });
-    },
-  };
+  return { stop: cleanup };
 }
