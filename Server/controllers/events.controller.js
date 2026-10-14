@@ -23,7 +23,7 @@ import { AdminProfile } from "../models/adminProfile.model.js";
 import { imageUploader } from "../liberary/index.js";
 import { Invitation } from "../models/invitation.model.js";
 import {
-  getOrCreateInvitation,
+  createGuestInvitations,
   InvitationError,
 } from "../service/invitation.service.js";
 import "dotenv/config";
@@ -198,70 +198,19 @@ export const addEvent = catchAsync(async (req, res, next) => {
 export const createInvitation = catchAsync(async (req, res) => {
   const { eventId } = req.params;
 
-  const guestName = String(req.body.guestName || "").trim();
-  const email = String(req.body.email || "")
-    .trim()
-    .toLowerCase();
-  const phone = String(req.body.phone || "").replace(/[\s-]/g, "");
-  const quantity = Number(req.body.quantity ?? 1);
-
-  if (!email && !phone) {
-    return res.status(400).json({
-      success: false,
-      message: "Guest email or phone number is required",
-    });
+  let created;
+  try {
+    created = await createGuestInvitations(eventId, req.user.id, req.body);
+  } catch (error) {
+    if (error instanceof InvitationError) {
+      return res
+        .status(error.status)
+        .json({ success: false, message: error.message });
+    }
+    throw error;
   }
 
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
-    return res.status(400).json({
-      success: false,
-      message: "Quantity must be between 1 and 20",
-    });
-  }
-
-  const event = await EventService.findById(eventId);
-
-  if (!event) {
-    return res.status(404).json({
-      success: false,
-      message: "Event not found",
-    });
-  }
-
-  // Preserve your existing admin authorization and invitation-enabled
-  // checks here. Resolve adminId using the same logic as your current service.
-  const adminProfile = await AdminProfile.findOne({
-    userId: req.user.id,
-  });
-
-  if (!adminProfile) {
-    return res.status(403).json({
-      success: false,
-      message: "Admin profile not found",
-    });
-  }
-
-  if (!event.invitation?.enabled) {
-    return res.status(400).json({
-      success: false,
-      message: "Invitations are not enabled for this event",
-    });
-  }
-
-  const orderId = new mongoose.Types.ObjectId();
-
-  const documents = Array.from({ length: quantity }, () => ({
-    eventId: event._id,
-    adminId: adminProfile._id,
-    orderId,
-    guestName,
-    email: email || undefined,
-    phone: phone || undefined,
-  }));
-
-  // Each document receives its own unique ticketId from the schema.
-  const invitations = await Invitation.insertMany(documents);
-
+  const { invitations, orderId, eventName } = created;
   const results = await Promise.all(
     invitations.map(async (invitation) => ({
       _id: invitation._id,
@@ -275,10 +224,7 @@ export const createInvitation = catchAsync(async (req, res) => {
         {
           width: 600,
           margin: 2,
-          color: {
-            dark: "#000000",
-            light: "#ffffff",
-          },
+          color: { dark: "#000000", light: "#ffffff" },
         },
       ),
     })),
@@ -289,7 +235,7 @@ export const createInvitation = catchAsync(async (req, res) => {
   return res.status(201).json({
     success: true,
     orderId,
-    eventName: event.name,
+    eventName,
     quantity: results.length,
     invitations: results,
   });

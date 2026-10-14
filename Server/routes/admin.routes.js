@@ -39,7 +39,6 @@ adminRouter.post(
   addEvent,
 );
 adminRouter.post("/events/:eventId/invitation", createInvitation);
-adminRouter.get("/events/:eventId/invitation", createInvitation);
 // eventRouter.js
 adminRouter.post(
   "/events/:eventId/tickets",

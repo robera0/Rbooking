@@ -21,7 +21,7 @@ import { Invitation } from "../models/invitation.model.js";
 import { logVerificationFailure } from "../service/verificationLog.service.js";
 import EventService from "../service/event.service.js";
 import {
-  recordInvitationScan,
+  checkInInvitation,
   InvitationError,
 } from "../service/invitation.service.js";
 import {
@@ -549,17 +549,9 @@ export const scanTicket = catchAsync(async (req, res, next) => {
 
   // 2) Invitation
   try {
-    const invitation = await Invitation.findOneAndUpdate(
-      { ticketId: token, isVerified: true, isChecked: false },
-      {
-        $set: { isChecked: true, checkedInAt: new Date() },
-        $inc: { scanCount: 1 },
-        $currentDate: { lastScannedAt: true },
-      },
-      { new: true },
-    );
-
-    if (invitation) {
+    const result = await checkInInvitation(token, scannerUserId);
+    if (result?.status === "ok") {
+      const { invitation } = result;
       return res.status(200).json({
         success: true,
         type: "invitation",
@@ -572,27 +564,18 @@ export const scanTicket = catchAsync(async (req, res, next) => {
         },
       });
     }
-
-    // No match. Either it isn't an invitation token, or it is but can't enter.
-    const existingInvitation = await Invitation.findOne({ ticketId: token });
-    if (existingInvitation) {
-      // Count the rejected scan too, so the admin can see reuse attempts.
-      await Invitation.updateOne(
-        { _id: existingInvitation._id },
-        { $inc: { scanCount: 1 }, $currentDate: { lastScannedAt: true } },
-      );
-      if (existingInvitation.isChecked) {
-        return res.status(409).json({
-          success: false,
-          message: "Invitation already used",
-          guestName: existingInvitation.guestName,
-          scannedAt: existingInvitation.checkedInAt,
-        });
-      }
-      return res.status(403).json({
+    if (result?.status === "used") {
+      return res.status(409).json({
         success: false,
-        message: "Invitation is not valid",
+        message: "Invitation already used",
+        guestName: result.invitation.guestName,
+        scannedAt: result.invitation.checkedInAt,
       });
+    }
+    if (result?.status === "invalid") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Invitation is not valid" });
     }
   } catch (error) {
     if (error instanceof InvitationError) {

@@ -940,9 +940,6 @@ const AddEvent = () => {
     },
     onSuccess: () => {
       publishedRef.current = true;
-      if (formData.invitation) {
-        createInvitationMutation.mutate(draftIdRef.current);
-      }
       toast.success("Event Published Successfully!", {
         duration: 2000,
         style: {
@@ -954,16 +951,6 @@ const AddEvent = () => {
       setFormData(EMPTY_FORM);
       draftIdRef.current = null;
       setTimeout(() => navigate("/admin/events"), 2000);
-    },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err)),
-  });
-
-  const createInvitationMutation = useMutation({
-    mutationFn: async (eventId) => {
-      const res = await api.post(
-        `/api/auth/admin/events/${eventId}/invitation`,
-      );
-      return res.data;
     },
     onError: (err) => toast.error(getFriendlyErrorMessage(err)),
   });
@@ -1305,7 +1292,7 @@ const AddEvent = () => {
                 Invitation
               </h3>
               <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-                Generate an invitation pass for invited guests
+                Send a personal invitation pass to each guest
               </p>
               <Toggle
                 label="Create Invitation Ticket"
@@ -1316,8 +1303,8 @@ const AddEvent = () => {
               {formData.invitation && (
                 <div className="mt-4 flex items-start gap-3 p-4 bg-[#FF7A00]/5 border border-[#FF7A00]/20 rounded-xl">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                    Your invitation QR will be generated after you publish this
-                    event. You can find and download it from the{" "}
+                    After you publish this event, create a personal pass for each
+                    guest from the{" "}
                     <span className="text-[#FF7A00]">Invitation QR</span> column
                     in the Events table.
                   </p>
