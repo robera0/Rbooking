@@ -41,10 +41,30 @@ const normalizeMessage = (message = "") => {
   return "Something went wrong. Please try again.";
 };
 
+// An error whose message the server chose on purpose ("capacity cannot be
+// below the 60 already sold") and which is meant to be shown as written.
+export const userMessageError = (message) =>
+  Object.assign(new Error(message), { isUserMessage: true });
+
+// 4xx answers carry a deliberate, specific message. 401/403 stay friendly.
+const isShowableClientError = (status) =>
+  status >= 400 && status < 500 && status !== 401 && status !== 403;
+
 export function getFriendlyErrorMessage(error) {
   if (!error) return "Something went wrong. Please try again.";
 
   if (typeof error === "string") return normalizeMessage(error);
+
+  if (error.isUserMessage && error.message) return error.message;
+
+  const serverMessage = error?.response?.data?.message;
+  if (
+    isShowableClientError(error?.response?.status) &&
+    typeof serverMessage === "string" &&
+    serverMessage.trim()
+  ) {
+    return serverMessage.trim();
+  }
 
   if (error?.response?.data?.message) {
     return normalizeMessage(error.response.data.message);

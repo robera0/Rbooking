@@ -19,6 +19,7 @@ import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
 import { logVerificationFailure } from "../service/verificationLog.service.js";
 import EventService from "../service/event.service.js";
+import { recordInvitationScan, InvitationError } from "../service/invitation.service.js";
 import {
   getExpectedReceiver,
   nameMatches,
@@ -353,10 +354,15 @@ export const verifyTicket = async (req, res) => {
       );
     }
     if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
-      return fail(400, "RECEIVER_NAME_MISMATCH", "Invalid receiver name on receipt", {
-        expectedReceiver: EXPECTED_RECEIVER,
-        receiptReceiver: receipt.creditedPartyName,
-      });
+      return fail(
+        400,
+        "RECEIVER_NAME_MISMATCH",
+        "Invalid receiver name on receipt",
+        {
+          expectedReceiver: EXPECTED_RECEIVER,
+          receiptReceiver: receipt.creditedPartyName,
+        },
+      );
     }
 
     if (settledAmount !== TOTAL_AMOUNT) {
@@ -381,10 +387,15 @@ export const verifyTicket = async (req, res) => {
     });
 
     if (existingTicket) {
-      return fail(400, "RECEIPT_ALREADY_USED", "This receipt has already been used.", {
-        receiptNo: receipt.receiptNo,
-        usedByUserTicketId: existingTicket._id.toString(),
-      });
+      return fail(
+        400,
+        "RECEIPT_ALREADY_USED",
+        "This receipt has already been used.",
+        {
+          receiptNo: receipt.receiptNo,
+          usedByUserTicketId: existingTicket._id.toString(),
+        },
+      );
     }
 
     // Mark ticket as paid
@@ -464,9 +475,14 @@ export const verifyTicket = async (req, res) => {
     // two concurrent verifications can both pass the findOne check above,
     // but only one update can win.
     if (error.code === 11000) {
-      return fail(400, "RECEIPT_ALREADY_USED", "This receipt has already been used.", {
-        race: true,
-      });
+      return fail(
+        400,
+        "RECEIPT_ALREADY_USED",
+        "This receipt has already been used.",
+        {
+          race: true,
+        },
+      );
     }
     await logVerificationFailure({
       userId,
@@ -488,6 +504,12 @@ export const scanTicket = catchAsync(async (req, res, next) => {
   const scannerUserId = req.user.id;
 
   if (!userTicketId || !token) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid QR payload format.",
+    });
+  }
+  if (!token) {
     return res.status(400).json({
       success: false,
       message: "Invalid QR payload format.",
@@ -520,6 +542,26 @@ export const scanTicket = catchAsync(async (req, res, next) => {
     },
     { new: true },
   );
+
+  // 2) Invitation
+  try {
+    const invitation = await recordInvitationScan(token, scannerUserId);
+    if (invitation) {
+      return res.status(200).json({
+        success: true,
+        type: "invitation",
+        message: "Valid invitation",
+        invitation,
+      });
+    }
+  } catch (error) {
+    if (error instanceof InvitationError) {
+      return res
+        .status(error.status)
+        .json({ success: false, message: error.message });
+    }
+    throw error;
+  }
   // populate ticket details (name) for UI display
   if (userTicket) {
     await userTicket.populate({ path: "ticketId", select: "name" });

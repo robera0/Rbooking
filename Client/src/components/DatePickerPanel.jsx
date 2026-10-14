@@ -42,10 +42,21 @@ const orangeTheme = createTheme({
           backgroundColor: "#1C1F22",
           borderRadius: "16px",
           border: "1px solid rgba(255,122,0,0.15)",
+          // MUI's default desktop layout is a CSS grid whose columns are
+          // sized to each part's content, so the toolbar (date + time text)
+          // ends up wider than its cell and gets clipped. This has to be a
+          // theme override: an sx prop on the picker cannot reach this
+          // internally rendered slot with enough specificity.
+          display: "flex !important",
+          flexDirection: "column !important",
+          width: "100% !important",
         },
         contentWrapper: {
           backgroundColor: "#1C1F22",
+          width: "100%",
+          minWidth: 0,
         },
+        toolbar: { width: "100%", minWidth: 0 },
         actionBar: {
           display: "none",
         },
@@ -295,7 +306,7 @@ const DatePickerPanel = ({ value, onChange }) => {
   const handleCancel = () => setOpen(false);
 
   return (
-    <div>
+    <div className="relative">
       {/* ── Trigger button ── */}
       <button
         type="button"
@@ -315,9 +326,11 @@ const DatePickerPanel = ({ value, onChange }) => {
         </span>
       </button>
 
-      {/* ── Inline calendar + clock ── */}
+      {/* ── Calendar + clock, floating so it can use its natural width ──
+          The calendar needs ~320px, more than the narrow sidebar card it
+          opens from, so rendering it inline clips it. */}
       {open && (
-        <div className="mt-3 rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
+        <div className="absolute z-50 top-full right-0 mt-3 w-[320px] max-w-[90vw] rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ThemeProvider theme={orangeTheme}>
               <StaticDateTimePicker
@@ -349,15 +362,6 @@ const DatePickerPanel = ({ value, onChange }) => {
                     height: "220px",
                     margin: "0 auto",
                   },
-                  "& .MuiPickersLayout-root": {
-                    width: "100%",
-                    backgroundColor: "#1C1F22",
-                  },
-                  "& .MuiPickersLayout-contentWrapper": {
-                    width: "100%",
-                    backgroundColor: "#1C1F22",
-                  },
-                  "& .MuiPickersLayout-actionBar": { display: "none" },
                 }}
               />
             </ThemeProvider>

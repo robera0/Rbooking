@@ -101,6 +101,9 @@ const BaseEventSchema = new mongoose.Schema(
       enum: ["generic", "concert", "festival"],
     },
     status: String,
+    invitation: {
+      enabled: { type: Boolean, default: false },
+    },
     adminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "AdminProfile",

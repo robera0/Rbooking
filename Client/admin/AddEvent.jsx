@@ -20,7 +20,7 @@ import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import { CustomSelect } from "./Cards";
-import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+import { getFriendlyErrorMessage, userMessageError } from "@/lib/errorMessages";
 import api from "../src/Context/api/api.config";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -344,7 +344,7 @@ const DatePickerPanel = ({ value, onChange }) => {
         // unusably cramped calendar. Floating it as an absolutely
         // positioned popover lets it use its natural width regardless of
         // how narrow the card is.
-        <div className="absolute z-50 top-full left-0 mt-3 w-[320px] max-w-[90vw] rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
+        <div className="absolute z-50 top-full right-0 mt-3 w-[320px] max-w-[90vw] rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ThemeProvider theme={orangeTheme}>
               <StaticDateTimePicker
@@ -645,6 +645,7 @@ const AddEvent = () => {
     durationDays: "",
     stages: [],
     status: "draft",
+    invitation: false,
   };
 
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -668,6 +669,10 @@ const AddEvent = () => {
   // fires) can both slip through before the disabled attribute applies,
   // each running createTickets and inserting every ticket type twice.
   const isPublishingRef = useRef(false);
+  // The draft save currently on the wire (so Publish can wait for it) and
+  // whether publishing already succeeded (so no later autosave can touch it).
+  const inFlightSaveRef = useRef(null);
+  const publishedRef = useRef(false);
 
   const hasUnsavedChanges =
     JSON.stringify(formData) !== JSON.stringify(EMPTY_FORM);
@@ -726,7 +731,21 @@ const AddEvent = () => {
     return /not found/i.test(message || "");
   };
 
-  const saveDraft = async () => {
+  const saveDraft = () => {
+    // A save that starts while publishing, or after it, could reach the server
+    // after the publish and turn the event back into a draft.
+    if (isPublishingRef.current || publishedRef.current) return Promise.resolve(null);
+    const pending = runSaveDraft().finally(() => {
+      if (inFlightSaveRef.current === pending) inFlightSaveRef.current = null;
+    });
+    inFlightSaveRef.current = pending;
+    return pending;
+  };
+
+  const runSaveDraft = async () => {
+    // The server needs an event type to create a draft; until one is chosen
+    // there is nothing it can save.
+    if (!formData.type) return null;
     try {
       if (draftIdRef.current) {
         try {
@@ -754,6 +773,9 @@ const AddEvent = () => {
       return data;
     } catch (err) {
       console.error("Draft save error:", err);
+      // One toast, replaced rather than stacked, so a bad tier that blocks
+      // every autosave is visible without spamming every 3 seconds.
+      toast.error(`Draft not saved: ${err.message}`, { id: "draft-save-error" });
       return null;
     }
   };
@@ -769,6 +791,7 @@ const AddEvent = () => {
     form.append("priceRanges", JSON.stringify(data.priceRanges));
     form.append("policies", JSON.stringify(data.policies));
     form.append("dates", JSON.stringify(data.dates));
+    form.append("invitation", data.invitation === true);
     if (data.status) form.append("status", data.status);
     form.append("amenities", JSON.stringify(data.amenities));
     form.append("musicGenre", JSON.stringify(data.musicGenre));
@@ -803,6 +826,7 @@ const AddEvent = () => {
           pictures: [],
         },
       },
+      invitation: formData.invitation,
       policies: formData.policies,
       priceRanges: formData.tickets.map((t) => ({
         type: t.name,
@@ -852,42 +876,73 @@ const AddEvent = () => {
     return { ...basePayload, status };
   };
 
-  // Publishes into the SAME draft id if one exists, only POSTs fresh if none yet.
-  const publishMutation = useMutation({
-    mutationFn: async (payload) => {
-      if (draftIdRef.current) {
-        try {
-          const res = await api.patch(
-            `/api/auth/admin/events/${draftIdRef.current}`,
-            buildFormData(payload),
-          );
-          return res.data;
-        } catch (err) {
-          const message = readErrorMessage(err, "Failed to publish event");
-          if (shouldCreateFreshDraft(err, message)) {
-            draftIdRef.current = null;
-          } else {
-            throw new Error(message);
-          }
-        }
-      }
+  // Keeps the server's own message for a rejected request (4xx), so the toast
+  // says what is wrong instead of a generic "something went wrong".
+  const asError = (err, message) => {
+    const status = err.response?.status;
+    const shown = err.response?.data?.message;
+    return shown && status >= 400 && status < 500 && status !== 401 && status !== 403
+      ? userMessageError(shown)
+      : new Error(message);
+  };
+
+  // Saves the event: into the SAME draft id if one exists, only POSTs fresh if none yet.
+  const saveEvent = async (payload) => {
+    if (draftIdRef.current) {
       try {
-        const res = await api.post(
-          `/api/auth/admin/addEvents`,
+        const res = await api.patch(
+          `/api/auth/admin/events/${draftIdRef.current}`,
           buildFormData(payload),
         );
-        const data = res.data;
-        draftIdRef.current = data?.event?._id || data?.events?._id || null;
-        return data;
+        return res.data;
       } catch (err) {
-        throw new Error(readErrorMessage(err, "Failed to create event"));
+        const message = readErrorMessage(err, "Failed to publish event");
+        if (shouldCreateFreshDraft(err, message)) {
+          draftIdRef.current = null;
+        } else {
+          throw asError(err, message);
+        }
       }
+    }
+    try {
+      const res = await api.post(
+        `/api/auth/admin/addEvents`,
+        buildFormData(payload),
+      );
+      const data = res.data;
+      draftIdRef.current = data?.event?._id || data?.events?._id || null;
+      return data;
+    } catch (err) {
+      throw asError(err, readErrorMessage(err, "Failed to create event"));
+    }
+  };
+
+  const createTickets = async (eventId, tickets) => {
+    try {
+      await api.post(`/api/auth/admin/events/${eventId}/tickets`, { tickets });
+    } catch (err) {
+      throw asError(err, readErrorMessage(err, "Failed to save the tickets"));
+    }
+  };
+
+  // The tickets are part of publishing: if they fail, the admin must see the
+  // failure and keep the form, not get a success message for an event that
+  // went live without tickets. Retrying is safe because both calls match
+  // existing events/tickets instead of duplicating them.
+  const publishMutation = useMutation({
+    mutationFn: async (payload) => {
+      // Let a draft save that is already on the wire finish first, so it
+      // cannot land after the publish.
+      await Promise.resolve(inFlightSaveRef.current).catch(() => {});
+      const data = await saveEvent(payload);
+      await createTickets(draftIdRef.current, formData.tickets);
+      return data;
     },
     onSuccess: () => {
-      createTicketsMutation.mutate({
-        eventId: draftIdRef.current,
-        tickets: formData.tickets,
-      });
+      publishedRef.current = true;
+      if (formData.invitation) {
+        createInvitationMutation.mutate(draftIdRef.current);
+      }
       toast.success("Event Published Successfully!", {
         duration: 2000,
         style: {
@@ -903,11 +958,11 @@ const AddEvent = () => {
     onError: (err) => toast.error(getFriendlyErrorMessage(err)),
   });
 
-  const createTicketsMutation = useMutation({
-    mutationFn: async ({ eventId, tickets }) => {
-      const res = await api.post(`/api/auth/admin/events/${eventId}/tickets`, {
-        tickets,
-      });
+  const createInvitationMutation = useMutation({
+    mutationFn: async (eventId) => {
+      const res = await api.post(
+        `/api/auth/admin/events/${eventId}/invitation`,
+      );
       return res.data;
     },
     onError: (err) => toast.error(getFriendlyErrorMessage(err)),
@@ -929,7 +984,6 @@ const AddEvent = () => {
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
-
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
@@ -1193,7 +1247,9 @@ const AddEvent = () => {
                 <div className="flex-1">
                   <TicketTypeSelect
                     value={newTicket.name}
-                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
+                    onChange={(val) =>
+                      setNewTicket({ ...newTicket, name: val })
+                    }
                   />
                 </div>
                 <div className="w-24">
@@ -1243,6 +1299,30 @@ const AddEvent = () => {
                   <Check size={18} />
                 </button>
               </div>
+            </div>
+            <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
+              <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">
+                Invitation
+              </h3>
+              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+                Generate an invitation pass for invited guests
+              </p>
+              <Toggle
+                label="Create Invitation Ticket"
+                value={formData.invitation}
+                onChange={(v) => handleChange("invitation", v)}
+              />
+
+              {formData.invitation && (
+                <div className="mt-4 flex items-start gap-3 p-4 bg-[#FF7A00]/5 border border-[#FF7A00]/20 rounded-xl">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                    Your invitation QR will be generated after you publish this
+                    event. You can find and download it from the{" "}
+                    <span className="text-[#FF7A00]">Invitation QR</span> column
+                    in the Events table.
+                  </p>
+                </div>
+              )}
             </div>
           </SectionCard>
 
