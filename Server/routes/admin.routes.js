@@ -19,6 +19,7 @@ import {
   upload,
   addEvent,
   createTickets,
+  createInvitation,
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 const adminRouter = express.Router();
@@ -37,6 +38,8 @@ adminRouter.post(
   upload.array("pictures", 10),
   addEvent,
 );
+adminRouter.post("/events/:eventId/invitation", createInvitation);
+adminRouter.get("/events/:eventId/invitation", createInvitation);
 // eventRouter.js
 adminRouter.post(
   "/events/:eventId/tickets",

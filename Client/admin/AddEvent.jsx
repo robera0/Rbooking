@@ -645,6 +645,7 @@ const AddEvent = () => {
     durationDays: "",
     stages: [],
     status: "draft",
+    invitation: false,
   };
 
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -775,6 +776,7 @@ const AddEvent = () => {
     form.append("priceRanges", JSON.stringify(data.priceRanges));
     form.append("policies", JSON.stringify(data.policies));
     form.append("dates", JSON.stringify(data.dates));
+    form.append("invitation", data.invitation === true);
     if (data.status) form.append("status", data.status);
     form.append("amenities", JSON.stringify(data.amenities));
     form.append("musicGenre", JSON.stringify(data.musicGenre));
@@ -809,6 +811,7 @@ const AddEvent = () => {
           pictures: [],
         },
       },
+      invitation: formData.invitation,
       policies: formData.policies,
       priceRanges: formData.tickets.map((t) => ({
         type: t.name,
@@ -908,6 +911,9 @@ const AddEvent = () => {
       return data;
     },
     onSuccess: () => {
+      if (formData.invitation) {
+        createInvitationMutation.mutate(draftIdRef.current);
+      }
       toast.success("Event Published Successfully!", {
         duration: 2000,
         style: {
@@ -919,6 +925,16 @@ const AddEvent = () => {
       setFormData(EMPTY_FORM);
       draftIdRef.current = null;
       setTimeout(() => navigate("/admin/events"), 2000);
+    },
+    onError: (err) => toast.error(getFriendlyErrorMessage(err)),
+  });
+
+  const createInvitationMutation = useMutation({
+    mutationFn: async (eventId) => {
+      const res = await api.post(
+        `/api/auth/admin/events/${eventId}/invitation`,
+      );
+      return res.data;
     },
     onError: (err) => toast.error(getFriendlyErrorMessage(err)),
   });
@@ -939,7 +955,6 @@ const AddEvent = () => {
 
   return (
     <div className="w-full max-w-full space-y-8 pb-20">
-
       <div className="flex flex-wrap justify-between items-end mb-12 border-b border-white/[0.04] pb-8">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
@@ -1203,7 +1218,9 @@ const AddEvent = () => {
                 <div className="flex-1">
                   <TicketTypeSelect
                     value={newTicket.name}
-                    onChange={(val) => setNewTicket({ ...newTicket, name: val })}
+                    onChange={(val) =>
+                      setNewTicket({ ...newTicket, name: val })
+                    }
                   />
                 </div>
                 <div className="w-24">
@@ -1253,6 +1270,30 @@ const AddEvent = () => {
                   <Check size={18} />
                 </button>
               </div>
+            </div>
+            <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
+              <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">
+                Invitation
+              </h3>
+              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+                Generate an invitation pass for invited guests
+              </p>
+              <Toggle
+                label="Create Invitation Ticket"
+                value={formData.invitation}
+                onChange={(v) => handleChange("invitation", v)}
+              />
+
+              {formData.invitation && (
+                <div className="mt-4 flex items-start gap-3 p-4 bg-[#FF7A00]/5 border border-[#FF7A00]/20 rounded-xl">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                    Your invitation QR will be generated after you publish this
+                    event. You can find and download it from the{" "}
+                    <span className="text-[#FF7A00]">Invitation QR</span> column
+                    in the Events table.
+                  </p>
+                </div>
+              )}
             </div>
           </SectionCard>
 
