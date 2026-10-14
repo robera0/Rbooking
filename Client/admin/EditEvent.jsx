@@ -167,6 +167,21 @@ const PillMultiSelect = ({ label, options, value, onChange }) => {
 // free-text input so admins can still name their own tier.
 const TICKET_TYPE_PRESETS = ["Regular", "Early Bird", "VIP", "VVIP"];
 
+// An event can carry switched-off leftovers with the same name as a live
+// ticket (from old autosaves). Showing both would make every save fail with
+// "more than one ticket with this name", so hide the inactive copy.
+const visibleTickets = (tickets) => {
+  if (!Array.isArray(tickets)) return tickets;
+  const liveNames = new Set(
+    tickets
+      .filter((t) => t.isActive !== false)
+      .map((t) => (t.name || "").trim().toLowerCase()),
+  );
+  return tickets.filter(
+    (t) => t.isActive !== false || !liveNames.has((t.name || "").trim().toLowerCase()),
+  );
+};
+
 const TicketTypeSelect = ({ value, onChange }) => {
   const isCustomValue = value && !TICKET_TYPE_PRESETS.includes(value);
   const [showCustomInput, setShowCustomInput] = useState(isCustomValue);
@@ -247,11 +262,16 @@ const EditEvent = () => {
         // renaming a tier can't tell the backend "update this one" and it
         // creates a new document instead, leaving the old one behind.
         tickets:
-          eventData?.tickets?.map((t) => ({
+          visibleTickets(eventData?.tickets)?.map((t) => ({
             ticketId: t._id,
             name: t.name || "",
             price: t.price || 0,
             capacity: t.totalQuantity || 0,
+            // Seats already taken. Capacity can't go below this.
+            sold: Math.max(
+              0,
+              (t.totalQuantity || 0) - (t.availableQuantity ?? t.totalQuantity ?? 0),
+            ),
             isActive: t.isActive !== false,
           })) ||
           ev.priceRanges?.map((pr) => ({
@@ -388,6 +408,29 @@ const EditEvent = () => {
     if (!formData.eventName) return setError("Event Name is required");
     if (!formData.venue.name) return setError("Venue name is required");
     if (!formData.eventDate) return setError("Date and time are required");
+
+    const badTicket = formData.tickets.find(
+      (t) =>
+        !String(t.name || "").trim() ||
+        String(t.price).trim() === "" ||
+        Number(t.price) < 0 ||
+        String(t.capacity).trim() === "" ||
+        !Number.isInteger(Number(t.capacity)) ||
+        Number(t.capacity) < 0,
+    );
+    if (badTicket) {
+      return setError(
+        "Every ticket needs a name, a price of 0 or more and a whole-number capacity",
+      );
+    }
+    const belowSold = formData.tickets.find(
+      (t) => Number(t.capacity) < (t.sold ?? 0),
+    );
+    if (belowSold) {
+      return setError(
+        `"${belowSold.name}" capacity can't be below the ${belowSold.sold} already sold`,
+      );
+    }
     setError("");
 
     const type = formData.type.toLowerCase();
@@ -421,9 +464,9 @@ const EditEvent = () => {
         ticketId: t.ticketId,
         type: t.name,
         currency: "ETB",
-        min: Number(t.price),
-        max: Number(t.price),
-        capacity: Number(t.capacity),
+        min: t.price,
+        max: t.price,
+        capacity: t.capacity,
         isActive: t.isActive !== false,
       })),
       dates: {
@@ -678,7 +721,7 @@ const EditEvent = () => {
                       value={ticket.name}
                       onChange={(val) => {
                         const updated = [...formData.tickets];
-                        updated[idx].name = val;
+                        updated[idx] = { ...updated[idx], name: val };
                         set({ tickets: updated });
                       }}
                     />
@@ -688,10 +731,13 @@ const EditEvent = () => {
                       Price (ETB)
                     </label>
                     <input
+                      type="number"
+                      min="0"
+                      step="any"
                       value={ticket.price}
                       onChange={(e) => {
                         const updated = [...formData.tickets];
-                        updated[idx].price = e.target.value;
+                        updated[idx] = { ...updated[idx], price: e.target.value };
                         set({ tickets: updated });
                       }}
                       className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
@@ -703,14 +749,21 @@ const EditEvent = () => {
                     </label>
                     <input
                       type="number"
+                      min={ticket.sold ?? 0}
+                      step="1"
                       value={ticket.capacity}
                       onChange={(e) => {
                         const updated = [...formData.tickets];
-                        updated[idx].capacity = e.target.value;
+                        updated[idx] = { ...updated[idx], capacity: e.target.value };
                         set({ tickets: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
+                    {ticket.sold > 0 && (
+                      <p className="text-[9px] text-gray-500 font-bold mt-1">
+                        {ticket.sold} sold
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-col items-center ml-2">
                     <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
@@ -824,7 +877,7 @@ const EditEvent = () => {
                       value={policy.header}
                       onChange={(e) => {
                         const updated = [...formData.policies];
-                        updated[idx].header = e.target.value;
+                        updated[idx] = { ...updated[idx], header: e.target.value };
                         set({ policies: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase text-xs"
@@ -848,7 +901,7 @@ const EditEvent = () => {
                     value={policy.descriptions}
                     onChange={(e) => {
                       const updated = [...formData.policies];
-                      updated[idx].descriptions = e.target.value;
+                      updated[idx] = { ...updated[idx], descriptions: e.target.value };
                       set({ policies: updated });
                     }}
                     className="w-full bg-transparent border-none text-gray-400 text-[11px] outline-none italic resize-none"

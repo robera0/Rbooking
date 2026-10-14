@@ -727,6 +727,9 @@ const AddEvent = () => {
   };
 
   const saveDraft = async () => {
+    // The server needs an event type to create a draft; until one is chosen
+    // there is nothing it can save.
+    if (!formData.type) return null;
     try {
       if (draftIdRef.current) {
         try {
@@ -754,6 +757,9 @@ const AddEvent = () => {
       return data;
     } catch (err) {
       console.error("Draft save error:", err);
+      // One toast, replaced rather than stacked, so a bad tier that blocks
+      // every autosave is visible without spamming every 3 seconds.
+      toast.error(`Draft not saved: ${err.message}`, { id: "draft-save-error" });
       return null;
     }
   };
@@ -852,42 +858,56 @@ const AddEvent = () => {
     return { ...basePayload, status };
   };
 
-  // Publishes into the SAME draft id if one exists, only POSTs fresh if none yet.
-  const publishMutation = useMutation({
-    mutationFn: async (payload) => {
-      if (draftIdRef.current) {
-        try {
-          const res = await api.patch(
-            `/api/auth/admin/events/${draftIdRef.current}`,
-            buildFormData(payload),
-          );
-          return res.data;
-        } catch (err) {
-          const message = readErrorMessage(err, "Failed to publish event");
-          if (shouldCreateFreshDraft(err, message)) {
-            draftIdRef.current = null;
-          } else {
-            throw new Error(message);
-          }
-        }
-      }
+  // Saves the event: into the SAME draft id if one exists, only POSTs fresh if none yet.
+  const saveEvent = async (payload) => {
+    if (draftIdRef.current) {
       try {
-        const res = await api.post(
-          `/api/auth/admin/addEvents`,
+        const res = await api.patch(
+          `/api/auth/admin/events/${draftIdRef.current}`,
           buildFormData(payload),
         );
-        const data = res.data;
-        draftIdRef.current = data?.event?._id || data?.events?._id || null;
-        return data;
+        return res.data;
       } catch (err) {
-        throw new Error(readErrorMessage(err, "Failed to create event"));
+        const message = readErrorMessage(err, "Failed to publish event");
+        if (shouldCreateFreshDraft(err, message)) {
+          draftIdRef.current = null;
+        } else {
+          throw new Error(message);
+        }
       }
+    }
+    try {
+      const res = await api.post(
+        `/api/auth/admin/addEvents`,
+        buildFormData(payload),
+      );
+      const data = res.data;
+      draftIdRef.current = data?.event?._id || data?.events?._id || null;
+      return data;
+    } catch (err) {
+      throw new Error(readErrorMessage(err, "Failed to create event"));
+    }
+  };
+
+  const createTickets = async (eventId, tickets) => {
+    try {
+      await api.post(`/api/auth/admin/events/${eventId}/tickets`, { tickets });
+    } catch (err) {
+      throw new Error(readErrorMessage(err, "Failed to save the tickets"));
+    }
+  };
+
+  // The tickets are part of publishing: if they fail, the admin must see the
+  // failure and keep the form, not get a success message for an event that
+  // went live without tickets. Retrying is safe because both calls match
+  // existing events/tickets instead of duplicating them.
+  const publishMutation = useMutation({
+    mutationFn: async (payload) => {
+      const data = await saveEvent(payload);
+      await createTickets(draftIdRef.current, formData.tickets);
+      return data;
     },
     onSuccess: () => {
-      createTicketsMutation.mutate({
-        eventId: draftIdRef.current,
-        tickets: formData.tickets,
-      });
       toast.success("Event Published Successfully!", {
         duration: 2000,
         style: {
@@ -899,16 +919,6 @@ const AddEvent = () => {
       setFormData(EMPTY_FORM);
       draftIdRef.current = null;
       setTimeout(() => navigate("/admin/events"), 2000);
-    },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err)),
-  });
-
-  const createTicketsMutation = useMutation({
-    mutationFn: async ({ eventId, tickets }) => {
-      const res = await api.post(`/api/auth/admin/events/${eventId}/tickets`, {
-        tickets,
-      });
-      return res.data;
     },
     onError: (err) => toast.error(getFriendlyErrorMessage(err)),
   });
