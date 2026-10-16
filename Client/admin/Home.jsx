@@ -14,7 +14,7 @@ const Home = () => {
     if (isUserFetching) return;
     
     // If there's an auth error or the user is loaded but NOT an admin, redirect.
-    if (usererror || (user && user.role !== "admin")) {
+    if (usererror || (user && user.role !== "admin" && user.role !== "club_owner")) {
       navigate("/");
     }
   }, [user, usererror, isUserFetching, navigate]);

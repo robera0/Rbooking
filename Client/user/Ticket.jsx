@@ -437,7 +437,7 @@ const TicketHome = () => {
                       <div className="flex items-end justify-between">
                         <div>
                           <p className="text-[7px] font-black text-gray-600 uppercase tracking-[0.4em] mb-0.5">
-                            RSVP Pass
+                            Seat Type
                           </p>
                           <p className="text-sm font-black uppercase tracking-tight">
                             {t.pass}

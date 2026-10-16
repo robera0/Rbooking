@@ -20,8 +20,8 @@ const LoginPage = () => {
       return res.data;
     },
     onSuccess: async (data) => {
-      if (data.role !== "admin") {
-         toast.error("You are not authorized as an admin");
+      if (data.role !== "admin" && data.role !== "club_owner") {
+         toast.error("You are not authorized as an admin or club owner");
          return;
       }
       setIsLoggedIn(true);

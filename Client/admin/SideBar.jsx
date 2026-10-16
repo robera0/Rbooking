@@ -10,12 +10,17 @@ import {
   Power,
   Tickets,
   X,
+  Sofa,
+  ClipboardList,
 } from "lucide-react";
 import api from "../src/Context/api/api.config";
+import { eventService } from "../src/Context/ApiEvent";
 import { useQueryClient } from "@tanstack/react-query";
 
 const SideBar = ({ action, onClose }) => {
   const queryClient = useQueryClient();
+  const { user } = eventService();
+  const isClubOwner = user?.role === "club_owner";
 
   const handleLogout = async () => {
     try {
@@ -57,25 +62,43 @@ const SideBar = ({ action, onClose }) => {
             icon={<LayoutDashboard size={20} />}
             onNavigate={onClose}
           />
-          {/*Event Mang */}
+          {!isClubOwner && (
+            <>
+              {/*Event Mang */}
+              <SideMenu
+                path="/admin/events"
+                name="Event Management"
+                icon={<UsersRound size={20} />}
+                onNavigate={onClose}
+              />
+              {/*ticket MAng */}
+              <SideMenu
+                path="/admin/orders"
+                name="Ticket Management"
+                icon={<Ticket size={20} />}
+                onNavigate={onClose}
+              />
+
+              <SideMenu
+                path="/admin/ticket/qr"
+                name="Scan Ticket"
+                icon={<Ticket size={20} />}
+                onNavigate={onClose}
+              />
+            </>
+          )}
+
           <SideMenu
-            path="/admin/events"
-            name="Event Management"
-            icon={<UsersRound size={20} />}
-            onNavigate={onClose}
-          />
-          {/*ticket MAng */}
-          <SideMenu
-            path="/admin/orders"
-            name="Ticket Management"
-            icon={<Ticket size={20} />}
+            path="/admin/club/floor"
+            name="Club Floor Plan"
+            icon={<Sofa size={20} />}
             onNavigate={onClose}
           />
 
           <SideMenu
-            path="/admin/ticket/qr"
-            name="Scan Ticket"
-            icon={<Ticket size={20} />}
+            path="/admin/club/reservations"
+            name="RSVP Table"
+            icon={<ClipboardList size={20} />}
             onNavigate={onClose}
           />
           {/* 
@@ -118,13 +141,17 @@ const SideBar = ({ action, onClose }) => {
             icon={<CreditCard size={20} />}
             onNavigate={onClose}
           />
-          {/*Setting */}
-          <SideMenu
-            path="/admin/setting"
-            name="Organizer Settings"
-            icon={<Settings size={20} />}
-            onNavigate={onClose}
-          />
+          {!isClubOwner && (
+            <>
+              {/*Setting */}
+              <SideMenu
+                path="/admin/setting"
+                name="Organizer Settings"
+                icon={<Settings size={20} />}
+                onNavigate={onClose}
+              />
+            </>
+          )}
         </div>
         <div className="px-4 pb-8 mt-auto border-t border-white/[0.04] pt-4">
           {/*Logout */}

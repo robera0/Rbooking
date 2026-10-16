@@ -16,8 +16,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
 import { Loader2 } from "lucide-react";
 import { useDashboard } from "@/Context/DashboardContext";
+import { eventService } from "../src/Context/ApiEvent";
+import ClubDashboard from "./ClubDashboard";
 const Dashboard = () => {
   const { stats, isLoading, revenueHistory } = useDashboard();
+  const { user } = eventService();
+  if (user?.role === "club_owner") {
+    return <ClubDashboard />;
+  }
   if (isLoading) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
