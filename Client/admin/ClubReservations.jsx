@@ -32,9 +32,9 @@ const seedSampleReservation = () => ({
   club: "Midnight Echo",
   cover: "",
   date: todayISO(),
-  table: "VT1",
-  seatName: "VIP Table A",
-  seatType: "table",
+  table: "PC1",
+  seatName: "VIP Couch A",
+  seatType: "couch",
   privacy: "private",
   pass: "Private",
   passPrice: "ETB 500",
@@ -58,6 +58,23 @@ const ClubReservations = () => {
   useEffect(() => {
     const seeded = localStorage.getItem("clubRsvpSeeded");
     const current = readReservations();
+
+    // Refresh the old sample that referenced a removed VIP Table.
+    const hasStaleSample = current.some(
+      (r) =>
+        r.id === "sample-rsvp-1" &&
+        (r.table === "VT1" || r.seatName === "VIP Table A"),
+    );
+    if (hasStaleSample) {
+      const sample = seedSampleReservation();
+      const updated = current.map((r) =>
+        r.id === "sample-rsvp-1" ? sample : r,
+      );
+      localStorage.setItem("clubRsvpReservations", JSON.stringify(updated));
+      setReservations(updated);
+      return;
+    }
+
     if (!seeded && current.length === 0) {
       const sample = seedSampleReservation();
       localStorage.setItem("clubRsvpReservations", JSON.stringify([sample]));

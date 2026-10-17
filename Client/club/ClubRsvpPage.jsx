@@ -30,7 +30,7 @@ const clubOptions = [
     price: 1200,
     glow: "#FF7A00",
     cover:
-      "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80",
+      "https://images.pexels.com/photos/18408870/pexels-photo-18408870.jpeg?auto=compress&cs=tinysrgb&w=1200",
     description:
       "An intimate late-night lounge with a live DJ, handcrafted cocktails, and a striped velvet VIP section.",
     openSlots: 14,
@@ -45,7 +45,7 @@ const clubOptions = [
     price: 1800,
     glow: "#A855F7",
     cover:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80",
+      "https://images.pexels.com/photos/7270006/pexels-photo-7270006.jpeg?auto=compress&cs=tinysrgb&w=1200",
     description:
       "A premium nightlife destination with a skyline terrace, private booths, and curated guest-list experiences.",
     openSlots: 9,
@@ -60,7 +60,7 @@ const clubOptions = [
     price: 1500,
     glow: "#38BDF8",
     cover:
-      "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=1200&q=80",
+      "https://images.pexels.com/photos/1398266/pexels-photo-1398266.jpeg?auto=compress&cs=tinysrgb&w=1200",
     description:
       "A warm, neon-lit dance floor and an open patio designed for elevated after-hours gatherings.",
     openSlots: 11,
@@ -75,7 +75,7 @@ const clubOptions = [
     price: 1400,
     glow: "#F59E0B",
     cover:
-      "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
+      "https://images.pexels.com/photos/6032557/pexels-photo-6032557.jpeg?auto=compress&cs=tinysrgb&w=1200",
     description:
       "A rooftop club experience with warm lighting, glow cocktails, and a soft after-hours crowd ready to dance.",
     openSlots: 12,
@@ -90,7 +90,7 @@ const clubOptions = [
     price: 1900,
     glow: "#EF4444",
     cover:
-      "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=1200&q=80",
+      "https://images.pexels.com/photos/34472354/pexels-photo-34472354.jpeg?auto=compress&cs=tinysrgb&w=1200",
     description:
       "A moody, high-energy lounge focused on late-night sets, velvet seating, and premium bottle service.",
     openSlots: 8,
@@ -105,7 +105,7 @@ const clubOptions = [
     price: 1300,
     glow: "#14B8A6",
     cover:
-      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80",
+      "https://images.pexels.com/photos/34676102/pexels-photo-34676102.jpeg?auto=compress&cs=tinysrgb&w=1200",
     description:
       "A polished nightlife lounge with curated sets, a lounge terrace, and a refined guest-experience flow.",
     openSlots: 15,
@@ -120,7 +120,7 @@ const clubOptions = [
     price: 1700,
     glow: "#F43F5E",
     cover:
-      "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.pexels.com/photos/38142960/pexels-photo-38142960.jpeg?auto=compress&cs=tinysrgb&w=1200",
     description:
       "An iconic nightlife venue known for its glowing dance floor, elevated booth service, and city-night atmosphere.",
     openSlots: 10,
@@ -220,6 +220,7 @@ function ClubRsvpPage() {
   const [activeTab, setActiveTab] = useState("explore");
   const [selectedDate, setSelectedDate] = useState("2026-10-15");
   const [partySize, setPartySize] = useState(4);
+  const [partySizeInput, setPartySizeInput] = useState("4");
   const [selectedTable, setSelectedTable] = useState(
     () => loadFloorPlan()[0]?.id || "",
   );
@@ -287,6 +288,10 @@ function ClubRsvpPage() {
   const isLast = activeIndex === steps.length - 1;
 
   const goNext = () => {
+    if (activeTab === "explore" && partySize < 1) {
+      toast.error("Enter at least 1 guest in party size");
+      return;
+    }
     if (activeTab === "floor" && !tableFits) {
       toast.error(
         `Seat ${selectedTable} seats ${selectedSeat?.seats}. Pick a bigger one.`,
@@ -398,14 +403,19 @@ function ClubRsvpPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0b0c] text-[#f4f4f5]">
-      {/* Ambient venue glow */}
+      {/* Ambient background — the selected club's cover photo */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 h-[420px] opacity-30 transition-colors duration-700"
-        style={{
-          background: `radial-gradient(60% 100% at 50% 0%, ${selectedClub.glow}55 0%, transparent 70%)`,
-        }}
-      />
+        className="pointer-events-none fixed inset-x-0 top-0 h-[420px] overflow-hidden"
+      >
+        <img
+          key={selectedClub.id}
+          src={selectedClub.cover}
+          alt=""
+          className="h-full w-full object-cover opacity-70"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0b0c]/45 via-[#0a0b0c]/75 to-[#0a0b0c]" />
+      </div>
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 pt-4 pb-32 sm:px-6 lg:pb-16">
         {/* Top bar */}
@@ -475,11 +485,10 @@ function ClubRsvpPage() {
                       : "border-[#1f2023] bg-[#111214] hover:border-white/20"
                   }`}
                 >
-                  <span
-                    className="h-9 w-9 rounded-xl shrink-0"
-                    style={{
-                      background: `linear-gradient(135deg, ${club.glow}, ${club.glow}55)`,
-                    }}
+                  <img
+                    src={club.cover}
+                    alt={club.name}
+                    className="h-9 w-9 rounded-xl shrink-0 object-cover"
                   />
                   <span className="min-w-0">
                     <span className="block text-[12px] font-black uppercase tracking-wide text-white whitespace-nowrap">
@@ -569,23 +578,38 @@ function ClubRsvpPage() {
 
                     <label className="block">
                       <span className={`${label} mb-2 block`}>
-                        Party size (1–12)
+                        Party size
                       </span>
                       <input
                         type="number"
-                        min="1"
-                        max="12"
-                        value={partySize}
-                        onChange={(e) =>
+                        inputMode="numeric"
+                        value={partySizeInput}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          setPartySizeInput(raw);
+                          const n = Number(raw);
                           setPartySize(
-                            Math.min(
-                              12,
-                              Math.max(1, Number(e.target.value) || 1),
-                            ),
-                          )
-                        }
-                        className={`no-spinner ${field}`}
+                            raw.trim() === "" || !Number.isFinite(n) ? 0 : n,
+                          );
+                        }}
+                        onBlur={() => {
+                          if (partySizeInput.trim() === "") return;
+                          const n = Math.floor(Number(partySizeInput));
+                          if (Number.isFinite(n))
+                            setPartySizeInput(String(n));
+                        }}
+                        aria-invalid={partySize <= 0}
+                        className={`no-spinner ${field} ${
+                          partySize <= 0
+                            ? "border-red-500/80 text-red-400 ring-1 ring-red-500/50 focus:border-red-500"
+                            : ""
+                        }`}
                       />
+                      {partySize <= 0 && (
+                        <span className="mt-2 block text-[10px] font-black uppercase tracking-widest text-red-400">
+                          Enter at least 1 guest
+                        </span>
+                      )}
                     </label>
                   </div>
                 </div>
@@ -671,15 +695,17 @@ function ClubRsvpPage() {
                                       <ImageIcon size={18} />
                                     </div>
                                   )}
-                                  <span
-                                    className={`absolute top-1.5 right-1.5 rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest ${
-                                      t.privacy === "private"
-                                        ? "bg-purple-500/80 text-white"
-                                        : "bg-emerald-500/80 text-white"
-                                    }`}
-                                  >
-                                    {t.privacy}
-                                  </span>
+                                  {t.type === "couch" && (
+                                    <span
+                                      className={`absolute top-1.5 right-1.5 rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest ${
+                                        t.privacy === "private"
+                                          ? "bg-purple-500/80 text-white"
+                                          : "bg-emerald-500/80 text-white"
+                                      }`}
+                                    >
+                                      {t.privacy}
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="p-2.5">
                                   <p className="text-sm font-black">

@@ -126,7 +126,11 @@ const ClubFloor = () => {
       seats: Number(form.seats),
       price: Number(form.price) || 0,
       status: form.status,
-      image: form.image || "",
+      image:
+        form.image ||
+        (form.type === "couch"
+          ? "/club/vip-lounge-couch.jpg"
+          : "/club/club-table-3.jpg"),
     };
 
     if (editingId) {
@@ -160,8 +164,7 @@ const ClubFloor = () => {
           </h1>
           <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
           <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
-            Manage shared tables, shared couches, private couches and VIP tables
-            with photos
+            Manage tables, shared couches and VIP couches with photos
           </p>
         </div>
         <button
