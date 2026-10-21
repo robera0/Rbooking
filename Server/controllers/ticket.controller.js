@@ -32,7 +32,7 @@ import {
 } from "../service/invitation.service.js";
 import {
   getExpectedReceiver,
-  nameMatches,
+  nameMatchesAny,
 } from "../service/receiver.service.js";
 
 export const purchaseTicket = async (req, res) => {
@@ -377,9 +377,7 @@ export const verifyTicket = async (req, res) => {
       );
     }
     const { eventInfo, adminProfile } = expected;
-    const EXPECTED_RECEIVER = expected.receiverName;
-
-    console.log(EXPECTED_RECEIVER, " and");
+    const EXPECTED_RECEIVERS = expected.receiverNames;
 
     // verification
 
@@ -406,13 +404,13 @@ export const verifyTicket = async (req, res) => {
         { transactionStatus: receipt.transactionStatus },
       );
     }
-    if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
+    if (!nameMatchesAny(receipt.creditedPartyName, EXPECTED_RECEIVERS)) {
       return fail(
         400,
         "RECEIVER_NAME_MISMATCH",
         "Invalid receiver name on receipt",
         {
-          expectedReceiver: EXPECTED_RECEIVER,
+          expectedReceiver: EXPECTED_RECEIVERS.join(", "),
           receiptReceiver: receipt.creditedPartyName,
         },
       );
