@@ -107,12 +107,22 @@ test("rejects invalid event, missing event, disabled invitations", async () => {
   await failsWith(createGuestInvitations(off, owner.userId, guest), 400, "INVITATIONS_DISABLED");
 });
 
-test("validates contact and quantity", async () => {
+test("validates name, contact format and quantity", async () => {
   const eventId = await makeEvent(owner.profileId);
   await failsWith(
-    createGuestInvitations(eventId, owner.userId, { guestName: "x" }),
+    createGuestInvitations(eventId, owner.userId, { email: "a@x.com" }),
     400,
-    "CONTACT_REQUIRED",
+    "NAME_REQUIRED",
+  );
+  await failsWith(
+    createGuestInvitations(eventId, owner.userId, { guestName: "x", email: "nope" }),
+    400,
+    "INVALID_EMAIL",
+  );
+  await failsWith(
+    createGuestInvitations(eventId, owner.userId, { guestName: "x", phone: "12" }),
+    400,
+    "INVALID_PHONE",
   );
   for (const quantity of [0, 21, 1.5, "abc"]) {
     await failsWith(
@@ -124,11 +134,13 @@ test("validates contact and quantity", async () => {
   assert.equal(await Invitation.countDocuments(), 0);
 });
 
-test("quantity defaults to 1 and name defaults to Guest", async () => {
+test("email and phone are optional; quantity defaults to 1", async () => {
   const eventId = await makeEvent(owner.profileId);
-  const { invitations } = await createGuestInvitations(eventId, owner.userId, { email: "a@x.com" });
+  const { invitations } = await createGuestInvitations(eventId, owner.userId, { guestName: "Abebe" });
   assert.equal(invitations.length, 1);
-  assert.equal(invitations[0].guestName, "Guest");
+  assert.equal(invitations[0].guestName, "Abebe");
+  assert.equal(invitations[0].email, undefined);
+  assert.equal(invitations[0].phone, undefined);
 });
 
 // ---- scanning ------------------------------------------------------------
