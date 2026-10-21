@@ -724,7 +724,7 @@ const EditEvent = () => {
               {formData.tickets.map((ticket, idx) => (
                 <div
                   key={idx}
-                  className="flex flex-wrap gap-4 items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-white/[0.06]"
+                  className="flex flex-wrap gap-4 items-start sm:items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-white/[0.06]"
                 >
                   <div className="basis-full sm:basis-0 sm:flex-1 min-w-0">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
@@ -821,7 +821,7 @@ const EditEvent = () => {
               ))}
 
               {/* New ticket row */}
-              <div className="flex flex-wrap gap-4 items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-dashed border-[#FF7A00]">
+              <div className="flex flex-wrap gap-4 items-start sm:items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-dashed border-[#FF7A00]">
                 <div className="basis-full sm:basis-0 sm:flex-1 min-w-0">
                   <TicketTypeSelect
                     value={newTicket.name}

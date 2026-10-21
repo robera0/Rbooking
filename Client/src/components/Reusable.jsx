@@ -250,8 +250,14 @@ export default function CheckoutModal({
                   const val = e.target.value;
                   // allow empty string while typing, digits only
                   if (val === "" || /^[0-9]+$/.test(val)) {
-                    setQuantityStr(val);
-                    setQuantity(Math.max(1, parseInt(val) || 1));
+                    // Free tickets are capped per person; show the cap
+                    // instead of a number that will be ignored.
+                    const shown =
+                      isFree && parseInt(val) > MAX_FREE_QUANTITY
+                        ? String(MAX_FREE_QUANTITY)
+                        : val;
+                    setQuantityStr(shown);
+                    setQuantity(Math.max(1, parseInt(shown) || 1));
                   }
                 }}
                 onBlur={() => {

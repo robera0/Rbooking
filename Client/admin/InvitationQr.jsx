@@ -376,10 +376,11 @@ const InvitationQR = () => {
       const link = document.createElement("a");
 
       link.href = url;
-      link.download = posterFileName(generated[0]).replace(
-        /^Invitation-(.*?)-[^-]*\.png$/,
-        "Invitations-$1.zip",
-      );
+      const eventSlug = (generated[0].eventName || "event")
+        .replace(/[^a-z0-9]+/gi, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40);
+      link.download = `Invitations-${eventSlug || "event"}.zip`;
 
       document.body.appendChild(link);
       link.click();
