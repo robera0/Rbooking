@@ -26,6 +26,7 @@ import {
 } from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
+import { sortFeaturedEvents } from "@/lib/featuredEventsSort";
 import { isEventPassed8Hours } from "@/lib/utils";
 import toast from "react-hot-toast";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
@@ -94,6 +95,7 @@ const UserHome = () => {
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
   const location = useLocation();
+  const sortedFeaturedEvents = sortFeaturedEvents(featuredEvents?.events || []);
 
   const checkWishlist = (eventId) => {
     return (
@@ -385,8 +387,8 @@ const UserHome = () => {
             ? Array.from({ length: 4 }).map((_, i) => (
                 <FeaturedEventSkeleton key={i} />
               ))
-            : featuredEvents?.events?.length > 0 &&
-              featuredEvents?.events?.map((e, i) => {
+            : sortedFeaturedEvents.length > 0 &&
+              sortedFeaturedEvents.map((e, i) => {
                 const isSoldOut =
                   e?.tickets?.length === 0 || isEventPassed8Hours(e);
                 const startDate = e?.dates?.start?.dateTime

@@ -5,6 +5,7 @@ export const PriceRangeSchema = new mongoose.Schema(
   {
     type: String,
     currency: String,
+    isFree: { type: Boolean, default: false },
     min: Number,
     max: Number,
     capacity: Number,
@@ -99,6 +100,7 @@ const BaseEventSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["generic", "concert", "festival"],
+      default: "generic",
     },
     status: String,
     invitation: {

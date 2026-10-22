@@ -1,27 +1,25 @@
-/EDIT 
-[f] sign in with normal not working 
-[f] complete profile after a new google user is signed in it shouls be normal form
-[f] make Generic property changed to "event" 
-[]create a profile after a registration // or make a username  to full name 
-[] add category in the last to be visible in event  
-[] add connect with artist at last  
-[f] change the nam of amenities to normal user friendly name 
-[] in edit change the names too 
-[] changing the cover page of admin not working after update 
-[f] the notification side to be work in admin when a user purchased a ticket when pending is verified and so on 
-[f] username is require when logging in using email
 
+The partial unique index is the key part. Two people tapping "Reserve" on the same table at the same second can't both succeed, because MongoDB rejects the second insert. Catch the duplicate-key error and return "Table just taken".
 
-// Test
-[f] admin registration working  
-[F] create event  
-[f] EDIT event
-[f] add to wishlist 
-[] purchase ticket
-[f] comment 
-[f] logout 
-[f] login with google 
-[] login with email 
-[f] history in the admin section 
-[f] change the profile section
-[] change the password and profile in admin section 
+Use a hold pattern. When a user starts a reservation it becomes pending for about 10 minutes. A cleanup job, or a scheduled updateMany, moves expired holds to expired so the table frees up.
+
+Estimate
+Piece	Time
+Tables setup per club (admin) and availability endpoint	3–4 days
+Reservation flow: pick night, table and party size, hold, confirm	4–5 days
+Status rules: cancel, expire, no-show, cancellation window	2–3 days
+Club admin dashboard: tonight's reservations, accept or decline, check-in by QR	4–5 days
+Notifications: confirmation and reminder, ideally SMS	2–3 days
+Online deposit (optional)	+5–8 days
+Testing, especially concurrency	3–4 days
+Payment
+If clubs take deposits at the door or by transfer, skip online payment in version 1 and mark paymentStatus by hand. That saves about a week.
+If you want online deposits, look at Telebirr or a local gateway like Chapa. Check their current API access and merchant onboarding before committing. Onboarding can take longer than the coding, and you'll need refund handling for cancellations.
+What I'd do
+First version: tables, holds, confirm or decline by the club admin, QR check-in, and no online payment.
+Add SMS reminders.
+Add deposits only after clubs have used the basic flow.
+
+A rule worth deciding early is the cancellation policy, for example free cancellation until 6pm on the night. It affects the status logic, the refunds and the no-show handling.
+
+Is a reservation here a table booking, or something simpler like a guest list? That one answer decides the real scope.

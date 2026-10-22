@@ -43,6 +43,10 @@ const SignUp = () => {
     navigate("/admin/register");
   };
 
+  const handleClubSelect = () => {
+    navigate("/club/register");
+  };
+
   const registerUserMutation = useMutation({
     mutationFn: async (payload) => {
       const res = await api.post(`/api/auth/signup/user`, payload);
@@ -91,7 +95,6 @@ const SignUp = () => {
   if (!roleSelection) {
     return (
       <div className="w-full flex flex-col items-center pt-8 px-6">
-
         <div className="text-white w-full flex flex-col items-center justify-center mb-10">
           <h1 className="text-2xl font-semibold mb-2">Join Paysso</h1>
           <p className="text-[#808080] text-center text-sm">
@@ -129,6 +132,24 @@ const SignUp = () => {
               </p>
             </div>
           </button>
+
+          {/*Club */}
+          <button
+            onClick={handleClubSelect}
+            className="w-full bg-[#323232] hover:bg-[#404040] transition-colors border border-transparent hover:border-[#FF7800] p-6 rounded-2xl flex items-center space-x-4 group text-left"
+          >
+            <div className="bg-[#1C1F22] p-4 rounded-full group-hover:text-[#FF7800] text-gray-400 transition-colors">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-white font-semibold text-lg">
+                As Club Owner
+              </h2>
+              <p className="text-[#808080] text-sm mt-1">
+                Create and manage your own events and tickets.
+              </p>
+            </div>
+          </button>
         </div>
 
         <div className="mt-8">
@@ -149,7 +170,6 @@ const SignUp = () => {
   // If user is selected, show the User Registration Form
   return (
     <>
-
       <div className="text-white w-full h-[98px] flex flex-col items-center justify-center pt-8 relative">
         <button
           onClick={() => setRoleSelection(null)}

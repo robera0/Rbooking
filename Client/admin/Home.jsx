@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import SideBar from "./SideBar";
 import Header from "./Header";
@@ -8,16 +8,28 @@ import { AnimatePresence, motion } from "framer-motion";
 const Home = () => {
   const { user, usererror, isUserFetching } = eventService();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (isUserFetching) return;
     
     // If there's an auth error or the user is loaded but NOT an admin, redirect.
-    if (usererror || (user && user.role !== "admin")) {
+    if (usererror || (user && user.role !== "admin" && user.role !== "club_owner")) {
       navigate("/");
     }
   }, [user, usererror, isUserFetching, navigate]);
+
+  // Club owners only get the club pages, not the organizer tools.
+  useEffect(() => {
+    if (user?.role !== "club_owner") return;
+    const allowed =
+      pathname === "/admin/home" ||
+      pathname.startsWith("/admin/club") ||
+      pathname === "/admin/profile" ||
+      pathname === "/admin/payment-settings";
+    if (!allowed) navigate("/admin/club/floor", { replace: true });
+  }, [user, pathname, navigate]);
 
   // Optionally show a blank screen or a loader while validating user
   if (isUserFetching || (!user && !usererror)) {

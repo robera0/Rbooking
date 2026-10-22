@@ -107,8 +107,9 @@ export const addEvent = catchAsync(async (req, res, next) => {
       .status(400)
       .json({ success: false, message: "Venue name  is required" });
   }
-
-  capacity = Number(capacity) || 0;
+  priceRanges = (Array.isArray(priceRanges) ? priceRanges : []).map((p) =>
+    p?.isFree ? { ...p, min: 0, max: 0 } : p,
+  );
   familyFriendly = Boolean(familyFriendly === "true");
 
   let pictures = [];
@@ -378,7 +379,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
   }
   console.log("Fetching from database...");
   const events = await EventService.find({ status: "published" })
-    .sort({ "date.start.dateTime": -1 })
+    .sort({ "date.start.dateTime": 1 })
     .limit(limit);
 
   const eventIds = events.map((e) => e._id);

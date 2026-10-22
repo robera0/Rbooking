@@ -371,9 +371,10 @@ export default function CheckoutModal({
 }
 export const MenuBar = ({ icon, header, path, onClick }) => {
   const location = useLocation();
-  // Improved matching logic to handle root and nested paths correctly
   const isActive = path
-    ? location.pathname.split("/")[1] === path.replace("/", "")
+    ? path === "/"
+      ? location.pathname === "/"
+      : location.pathname === path || location.pathname.startsWith(`${path}/`)
     : false;
 
   const content = (

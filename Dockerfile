@@ -1,4 +1,4 @@
-FROM node:20-alpine AS client
+FROM node:20-slim AS client
 WORKDIR /build
 COPY Client/package*.json ./
 RUN npm install

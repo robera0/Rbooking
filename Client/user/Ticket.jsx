@@ -10,6 +10,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { eventService } from "../src/Context/ApiEvent";
 import toast from "react-hot-toast";
@@ -144,16 +145,49 @@ const FilterTab = ({ label, active, count, onClick }) => (
 
 const TicketHome = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isLoggedIn } = useService();
   const { tickets, ticketLoading, ticketsError, ticketIsError } =
     eventService();
   const [hasAlerted, setHasAlerted] = useState(false);
   const [filter, setFilter] = useState("all");
   const [now, setNow] = useState(Date.now());
+  const [savedClubReservation, setSavedClubReservation] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("clubRsvpReservation") || "null");
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const handleStorage = () => {
+      try {
+        setSavedClubReservation(
+          JSON.parse(localStorage.getItem("clubRsvpReservation") || "null"),
+        );
+      } catch {
+        setSavedClubReservation(null);
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
+  }, []);
+
+  // Ensure tickets are refetched whenever this component mounts (entering /tickets_home)
+  useEffect(() => {
+    try {
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    } catch (err) {
+      console.warn("Failed to invalidate tickets on mount:", err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   if (ticketIsError && !isLoggedIn && !hasAlerted) {
     toast.error(getFriendlyErrorMessage(ticketsError), { duration: 3000 });
@@ -162,33 +196,49 @@ const TicketHome = () => {
 
   const allTickets = tickets?.events ? tickets?.events : [];
 
+  const combinedTickets = useMemo(() => {
+    const result = [...allTickets];
+
+    if (savedClubReservation) {
+      result.unshift({
+        ...savedClubReservation,
+        type: "club-rsvp",
+        _id: savedClubReservation.id || "club-rsvp",
+        status: savedClubReservation.status || "paid",
+      });
+    }
+
+    return result;
+  }, [allTickets, savedClubReservation]);
+
   const filtered = useMemo(() => {
-    if (!allTickets) return [];
+    if (!combinedTickets) return [];
 
     return filter === "all"
-      ? allTickets
-      : // 1. ADDED toLowerCase() and trim() HERE
-        allTickets.filter((t) => t?.status?.toLowerCase().trim() === filter);
-  }, [allTickets, filter]);
+      ? combinedTickets
+      : combinedTickets.filter(
+          (t) => t?.status?.toLowerCase().trim() === filter,
+        );
+  }, [combinedTickets, filter]);
 
   const counts = useMemo(() => {
-    if (!allTickets) {
+    if (!combinedTickets) {
       return { all: 0, paid: 0, pending: 0, cancelled: 0 };
     }
 
     return {
-      all: allTickets.length,
-      // 2. ADDED toLowerCase() and trim() TO ALL OF THESE
-      paid: allTickets.filter((t) => t?.status?.toLowerCase().trim() === "paid")
-        .length,
-      pending: allTickets.filter(
+      all: combinedTickets.length,
+      paid: combinedTickets.filter(
+        (t) => t?.status?.toLowerCase().trim() === "paid",
+      ).length,
+      pending: combinedTickets.filter(
         (t) => t?.status?.toLowerCase().trim() === "pending",
       ).length,
-      cancelled: allTickets.filter(
+      cancelled: combinedTickets.filter(
         (t) => t?.status?.toLowerCase().trim() === "cancelled",
       ).length,
     };
-  }, [allTickets]);
+  }, [combinedTickets]);
 
   return (
     <div className="relative min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-x-hidden">
@@ -220,10 +270,10 @@ const TicketHome = () => {
             My <span className="text-[#FF7A00]">Tickets</span>
           </h1>
           <p className="text-sm text-gray-500 font-medium">
-            {allTickets.length === 0
+            {combinedTickets.length === 0
               ? "No tickets purchased yet"
-              : `${allTickets.length} ticket${
-                  allTickets.length !== 1 ? "s" : ""
+              : `${combinedTickets.length} ticket${
+                  combinedTickets.length !== 1 ? "s" : ""
                 } in your collection`}
           </p>
         </motion.div>
@@ -275,7 +325,7 @@ const TicketHome = () => {
         )}
 
         {/* ── EMPTY STATE ── */}
-        {!ticketLoading && allTickets.length === 0 && (
+        {!ticketLoading && combinedTickets.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -302,16 +352,182 @@ const TicketHome = () => {
         )}
 
         {/* ── FILTERED EMPTY ── */}
-        {!ticketLoading && allTickets.length > 0 && filtered.length === 0 && (
-          <p className="text-center text-gray-600 text-sm py-16">
-            No tickets match this filter.
-          </p>
-        )}
+        {!ticketLoading &&
+          combinedTickets.length > 0 &&
+          filtered.length === 0 && (
+            <p className="text-center text-gray-600 text-sm py-16">
+              No tickets match this filter.
+            </p>
+          )}
 
         {/* ── TICKET STUBS (identical structure to EventInfo) ── */}
         {!ticketLoading && filtered.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-22">
             {filtered.map((t, idx) => {
+              if (t?.type === "club-rsvp") {
+                const rsvpTheme = t.theme ?? {
+                  bandGradient:
+                    "linear-gradient(120deg, #0EA5E9 0%, #7C3AED 38%, #F97316 100%)",
+                  accentColor: "#7DD3FC",
+                  ctaGradient:
+                    "linear-gradient(135deg, #0EA5E9 0%, #7C3AED 45%, #F97316 100%)",
+                };
+
+                return (
+                  <motion.div
+                    key={t._id || "club-rsvp"}
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: idx * 0.1,
+                      duration: 0.7,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="rounded-3xl overflow-hidden border shadow-2xl relative border-[#FF7A00]/20"
+                    style={{
+                      background:
+                        "linear-gradient(160deg, #141416 0%, #0e0e10 100%)",
+                    }}
+                  >
+                    <div
+                      className="relative px-5 pt-5 pb-4 overflow-hidden"
+                      style={{ background: rsvpTheme.bandGradient }}
+                    >
+                      <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
+                      <div className="absolute -bottom-4 -left-4 w-14 h-14 rounded-full bg-black/10" />
+
+                      <div className="relative z-10 flex items-start justify-between">
+                        <div>
+                          <p className="text-[8px] font-black uppercase tracking-[0.4em] text-black/60 mb-0.5">
+                            Paysso · Club RSVP
+                          </p>
+                          <h2 className="text-base font-black uppercase tracking-tight text-black leading-tight max-w-[180px]">
+                            {t.club}
+                          </h2>
+                        </div>
+                        <div className="h-8 w-8 rounded-xl bg-black/15 flex items-center justify-center shrink-0">
+                          <Ticket size={15} className="text-black/70" />
+                        </div>
+                      </div>
+
+                      <div className="relative z-10 flex gap-4 mt-3">
+                        <div>
+                          <p className="text-[7px] font-black uppercase tracking-[0.3em] text-black/50 mb-0.5">
+                            Date
+                          </p>
+                          <p className="text-[10px] font-black text-black">
+                            {t.date}
+                          </p>
+                        </div>
+                        <div className="w-[1px] bg-black/15" />
+                        <div>
+                          <p className="text-[7px] font-black uppercase tracking-[0.3em] text-black/50 mb-0.5">
+                            Venue
+                          </p>
+                          <p className="text-[10px] font-black text-black">
+                            {t.venue}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <TearLine />
+
+                    <div className="px-5 py-4 space-y-4">
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <p className="text-[7px] font-black text-gray-600 uppercase tracking-[0.4em] mb-0.5">
+                            Seat Type
+                          </p>
+                          <p className="text-sm font-black uppercase tracking-tight">
+                            {t.pass}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[7px] font-black text-gray-600 uppercase tracking-[0.4em] mb-0.5">
+                            Total
+                          </p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black tracking-tighter">
+                              {t.total}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between py-1.5 border-b border-white/[0.04]">
+                          <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">
+                            Table
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-300">
+                            {t.table}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-white/[0.04]">
+                          <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">
+                            Status
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-300">
+                            Paid
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-white/[0.04]">
+                          <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">
+                            Date
+                          </span>
+                          <span className="text-[10px] font-bold text-gray-300">
+                            {t.date}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate("/club/rsvp/ticket")}
+                        className="w-full py-3 rounded-xl flex items-center justify-center gap-2"
+                        style={{ background: rsvpTheme.ctaGradient }}
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-widest text-black">
+                          View RSVP
+                        </span>
+                        <MoveRight size={13} className="text-black" />
+                      </button>
+                    </div>
+
+                    <TearLine />
+
+                    <div className="px-5 py-3 flex items-center justify-between">
+                      <div className="flex items-end gap-[2px] h-7">
+                        {Array.from({ length: 20 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="rounded-sm"
+                            style={{
+                              backgroundColor: rsvpTheme.accentColor,
+                              opacity: 0.35,
+                              width: i % 3 === 0 ? "2.5px" : "1.5px",
+                              height: `${40 + (i % 5) * 8}%`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[7px] font-black text-gray-700 uppercase tracking-widest">
+                          Paysso
+                        </p>
+                        <p className="text-[8px] font-black text-gray-500 tracking-widest">
+                          #
+                          {String(t._id || "RSVP")
+                            .slice(-8)
+                            .toUpperCase()}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              }
+
               const event = t.ticketId?.eventId;
               const ticketId = t.ticketId;
               const tierKey = (ticketId?.type || "default")
@@ -481,11 +697,16 @@ const TicketHome = () => {
 
                     <button
                       disabled={isExpired}
-                      onClick={() =>
-                        isPendingUnverified
-                          ? navigate(`/tickets_home/verify/${t?._id}`)
-                          : navigate(`/tickets_home/${t?._id}`)
-                      }
+                      onClick={() => {
+                        const isFreeTicket = Number(t?.totalAmount ?? 0) === 0;
+
+                        if (isPendingUnverified && !isFreeTicket) {
+                          navigate(`/tickets_home/verify/${t?._id}`);
+                          return;
+                        }
+
+                        navigate(`/tickets_home/${t?._id}`);
+                      }}
                       className="w-full py-3 rounded-xl flex items-center justify-center gap-2 disabled:cursor-not-allowed"
                       style={{
                         background: isExpired

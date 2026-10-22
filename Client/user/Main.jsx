@@ -1,5 +1,4 @@
 import {
-  Menu,
   Heart,
   Settings,
   CreditCard,
@@ -374,6 +373,7 @@ const Main = () => {
                 { label: "Explore", path: "/event" },
                 { label: "Venues", path: "/venues" },
                 { label: "Artists", path: "/artists" },
+                { label: "Clubs", path: "/club/rsvp" },
               ].map((item) => (
                 <Link
                   key={item.label}
@@ -694,24 +694,23 @@ const Main = () => {
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
-              className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] bg-[#1A1C1E]/95 backdrop-blur-xl py-3 px-4 z-[55] border border-white/10 rounded-2xl flex justify-between"
+              className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[420px] bg-[#1A1C1E]/95 backdrop-blur-xl py-3 px-4 z-[55] border border-white/10 rounded-2xl grid grid-cols-4 gap-2"
             >
               <MenuBar icon={<House size={20} />} header="Home" path="/" />
+              <MenuBar
+                icon={<MapPin size={20} />}
+                header="Clubs"
+                path="/club/rsvp"
+              />
               <MenuBar
                 icon={<Ticket size={20} />}
                 header="Tickets"
                 path="/tickets_home"
               />
-
               <MenuBar
                 icon={<Heart size={20} />}
                 header="Wishlist"
                 path="/account/favorites"
-              />
-              <MenuBar
-                icon={<Menu size={20} />}
-                header="Menu"
-                onClick={() => openMenu(false)}
               />
             </motion.div>
           )}
