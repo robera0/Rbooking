@@ -31,12 +31,12 @@ const LoginUser = () => {
         queryClient.removeQueries({ queryKey: ["user"] });
         await queryClient.refetchQueries({ queryKey: ["user"] });
         toast.success("Logged in successfully");
-        if (data.role == "admin") {
+        if (data.role === "admin" || data.role === "club_owner") {
           window.location.href = "/admin/home";
           return;
         }
-        if (data.role == "super_admin") {
-          window.location.href = "/superadmin/*";
+        if (data.role === "super_admin") {
+          window.location.href = "/superadmin";
           return;
         }
         navigate(from, { replace: true });

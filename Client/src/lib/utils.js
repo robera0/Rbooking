@@ -8,10 +8,10 @@ export function cn(...inputs) {
 
 export const isEventPassed8Hours = (event) => {
   if (!event?.dates?.start) return false;
-  
+
   const start = event.dates.start;
   let eventDateTime;
-  
+
   if (start.dateTime) {
     eventDateTime = moment(start.dateTime);
   } else if (start.localDate) {
@@ -20,8 +20,8 @@ export const isEventPassed8Hours = (event) => {
   } else {
     return false;
   }
-  
+
   if (!eventDateTime.isValid()) return false;
-  
+
   return moment().isAfter(eventDateTime.add(8, "hours"));
 };

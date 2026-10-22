@@ -64,7 +64,7 @@ const ViewTicket = () => {
     error,
   } = useQuery({
     queryKey: ["tickets", eventId, ticketId],
-    queryFn: () => fetchTicketById(ticketId, eventId),
+    queryFn: () => fetchTicketById(ticketId),
     enabled: !!ticketId,
     retry: false,
     // Keep polling while the ticket is still pending verification so the

@@ -22,27 +22,36 @@ import {
   createInvitation,
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
+import { requireRole } from "../middlewares/requireRole.js";
+const adminOnly = requireRole("admin");
 const adminRouter = express.Router();
 
 adminRouter.get("/admin_users", authenticateTokenMiddleware, getAdminProfile);
-adminRouter.get("/users", authenticateTokenMiddleware, getUsers);
-adminRouter.post("/users", authenticateTokenMiddleware, addUser);
-adminRouter.put("/users/:userId", authenticateTokenMiddleware, updateUser);
-adminRouter.post("/users/delete", authenticateTokenMiddleware, deleteUsers);
-adminRouter.post("/users/suspend", authenticateTokenMiddleware, suspendUsers);
+adminRouter.get("/users", authenticateTokenMiddleware, adminOnly, getUsers);
+adminRouter.post("/users", authenticateTokenMiddleware, adminOnly, addUser);
+adminRouter.put("/users/:userId", authenticateTokenMiddleware, adminOnly, updateUser);
+adminRouter.post("/users/delete", authenticateTokenMiddleware, adminOnly, deleteUsers);
+adminRouter.post("/users/suspend", authenticateTokenMiddleware, adminOnly, suspendUsers);
 
-adminRouter.delete("/events/delete", authenticateTokenMiddleware, deleteEvents);
+adminRouter.delete("/events/delete", authenticateTokenMiddleware, adminOnly, deleteEvents);
 adminRouter.post(
   "/addEvents",
   authenticateTokenMiddleware,
+  adminOnly,
   upload.array("pictures", 10),
   addEvent,
 );
-adminRouter.post("/events/:eventId/invitation", createInvitation);
+adminRouter.post(
+  "/events/:eventId/invitation",
+  authenticateTokenMiddleware,
+  adminOnly,
+  createInvitation,
+);
 // eventRouter.js
 adminRouter.post(
   "/events/:eventId/tickets",
   authenticateTokenMiddleware,
+  adminOnly,
   createTickets,
 );
 

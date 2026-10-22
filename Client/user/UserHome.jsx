@@ -16,6 +16,7 @@ import {
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
+import { sortFeaturedEvents } from "@/lib/featuredEventsSort";
 import { isEventPassed8Hours } from "@/lib/utils";
 import { CalendarDemo } from "@/components/ui/calendar";
 import toast from "react-hot-toast";
@@ -81,7 +82,11 @@ const UserHome = () => {
   const location = useLocation();
 
   const list = useMemo(() => events?.events ?? [], [events]);
-  const featured = useMemo(() => featuredEvents?.events ?? [], [featuredEvents]);
+  // Sold-out and finished events sink to the bottom, the rest sort by date.
+  const featured = useMemo(
+    () => sortFeaturedEvents(featuredEvents?.events ?? []),
+    [featuredEvents],
+  );
 
   const isSoldOut = (event) =>
     event?.tickets?.length === 0 || Boolean(isEventPassed8Hours(event));

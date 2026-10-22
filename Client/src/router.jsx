@@ -35,7 +35,7 @@ import Payment from "../admin/Payment";
 import AdminAccount from "../admin/AdminAccount";
 import CreateNotification from "../admin/CreateNotification";
 import AdminViewTicket from "../admin/AdminViewTicket";
-import { ProtectedRoute } from "./components/Reusable";
+import { ProtectedRoute, SuperAdminRoute } from "./components/Reusable";
 import GoogleAuthCallback from "../user/GoogleAuthCallback";
 import RegistrationPage from "../admin/RegistrationPage";
 import CompleteProfile from "../user/CompleteProfile";
@@ -48,6 +48,11 @@ import EventQR from "../admin/EventQR";
 import ContactUs from "../user/ContactUs";
 import api from "./Context/api/api.config";
 import GetScanner from "../admin/GateScanner";
+import ClubRegistrationPage from "../club/Clubregistrationpage ·";
+import ClubRsvpPage from "../club/ClubRsvpPage";
+import ClubFloor from "../admin/ClubFloor";
+import ClubReservations from "../admin/ClubReservations";
+import ViewClubTicket from "../club/ViewClubTicket";
 const PageWrapper = ({ children }) => (
   <div className="min-h-screen w-full origin-top page-fade-in">{children}</div>
 );
@@ -82,12 +87,14 @@ export const router = createBrowserRouter([
       },
 
       // Super Admin — UI-only module with mock data (see src/superadmin/README.md).
-      // Restrict this to the super_admin role on the server too, not only here.
+      // Guarded by SuperAdminRoute here and requireRole("super_admin") on the server.
       {
         path: "superadmin/*",
         element: (
           <PageWrapper>
-            <SuperAdminLayout />
+            <SuperAdminRoute>
+              <SuperAdminLayout />
+            </SuperAdminRoute>
           </PageWrapper>
         ),
       },
@@ -96,6 +103,15 @@ export const router = createBrowserRouter([
         element: (
           <PageWrapper>
             <RegistrationPage />
+          </PageWrapper>
+        ),
+      },
+
+      {
+        path: "club/register",
+        element: (
+          <PageWrapper>
+            <ClubRegistrationPage />
           </PageWrapper>
         ),
       },
@@ -198,6 +214,26 @@ export const router = createBrowserRouter([
                 <GetScanner />
               </PageWrapper>
             ),
+          },
+          {
+            path: "club/floor",
+            element: (
+              <PageWrapper>
+                <ClubFloor />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "club/reservations",
+            element: (
+              <PageWrapper>
+                <ClubReservations />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "club",
+            element: <Navigate to="floor" replace />,
           },
           {
             path: "orders",
@@ -322,6 +358,22 @@ export const router = createBrowserRouter([
             element: (
               <PageWrapper>
                 <Venue />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "club/rsvp",
+            element: (
+              <PageWrapper>
+                <ClubRsvpPage />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "club/rsvp/ticket",
+            element: (
+              <PageWrapper>
+                <ViewClubTicket />
               </PageWrapper>
             ),
           },

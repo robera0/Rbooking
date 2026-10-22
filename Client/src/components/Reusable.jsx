@@ -65,6 +65,26 @@ export const ProtectedRoute = ({ children }) => {
 
   return children;
 };
+// Only super admins may open the super admin area. The server enforces the
+// same rule on its endpoints; this keeps everyone else out of the screens.
+export const SuperAdminRoute = ({ children }) => {
+  const { usererror, user, isUserLoading, isUserFetching } = eventService();
+  const location = useLocation();
+
+  if (isUserLoading || isUserFetching) {
+    return <div className="fixed inset-0 z-[100] bg-[#121417]" />;
+  }
+
+  if (!user || usererror) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user.role !== "super_admin") {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
 export const Toggle = ({ name, toggle, toggleOn, action }) => {
   return (
     <div className="flex w-full justify-between">
@@ -256,8 +276,14 @@ export default function CheckoutModal({
                   const val = e.target.value;
                   // allow empty string while typing, digits only
                   if (val === "" || /^[0-9]+$/.test(val)) {
-                    setQuantityStr(val);
-                    setQuantity(Math.max(1, parseInt(val) || 1));
+                    // Free tickets are capped per person; show the cap
+                    // instead of a number that will be ignored.
+                    const shown =
+                      isFree && parseInt(val) > MAX_FREE_QUANTITY
+                        ? String(MAX_FREE_QUANTITY)
+                        : val;
+                    setQuantityStr(shown);
+                    setQuantity(Math.max(1, parseInt(shown) || 1));
                   }
                 }}
                 onBlur={() => {
@@ -371,9 +397,10 @@ export default function CheckoutModal({
 }
 export const MenuBar = ({ icon, header, path, onClick }) => {
   const location = useLocation();
-  // Improved matching logic to handle root and nested paths correctly
   const isActive = path
-    ? location.pathname.split("/")[1] === path.replace("/", "")
+    ? path === "/"
+      ? location.pathname === "/"
+      : location.pathname === path || location.pathname.startsWith(`${path}/`)
     : false;
 
   const content = (

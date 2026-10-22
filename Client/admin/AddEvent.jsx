@@ -1,3 +1,4 @@
+import TicketPriceField from "./TicketPriceField";
 import React, { useState, useRef } from "react";
 import {
   Plus,
@@ -1145,9 +1146,9 @@ const AddEvent = () => {
               {formData.tickets.map((ticket, idx) => (
                 <div
                   key={idx}
-                  className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
+                  className="flex flex-wrap gap-4 items-start sm:items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-white/[0.06]"
                 >
-                  <div className="flex-1">
+                  <div className="basis-full sm:basis-0 sm:flex-1 min-w-0">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Ticket Name
                     </label>
@@ -1160,21 +1161,20 @@ const AddEvent = () => {
                       }}
                     />
                   </div>
-                  <div className="w-24">
+                  <div className="w-[calc(50%-0.5rem)] sm:w-24">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                      Price (ETB, 0 = free)
+                      Price (ETB)
                     </label>
-                    <input
+                    <TicketPriceField
                       value={ticket.price}
-                      onChange={(e) => {
+                      onChange={(price) => {
                         const updated = [...formData.tickets];
-                        updated[idx].price = e.target.value;
+                        updated[idx] = { ...updated[idx], price };
                         handleChange("tickets", updated);
                       }}
-                      className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
                     />
                   </div>
-                  <div className="w-24">
+                  <div className="w-[calc(50%-0.5rem)] sm:w-24">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Capacity
                     </label>
@@ -1189,7 +1189,7 @@ const AddEvent = () => {
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
                   </div>
-                  <div className="flex flex-col items-center ml-2">
+                  <div className="flex flex-col items-center sm:ml-2">
                     <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Visible
                     </span>
@@ -1230,8 +1230,8 @@ const AddEvent = () => {
                 </div>
               ))}
 
-              <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
-                <div className="flex-1">
+              <div className="flex flex-wrap gap-4 items-start sm:items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-dashed border-[#FF7A00]">
+                <div className="basis-full sm:basis-0 sm:flex-1 min-w-0">
                   <TicketTypeSelect
                     value={newTicket.name}
                     onChange={(val) =>
@@ -1239,17 +1239,13 @@ const AddEvent = () => {
                     }
                   />
                 </div>
-                <div className="w-24">
-                  <input
+                <div className="w-[calc(50%-0.5rem)] sm:w-24">
+                  <TicketPriceField
                     value={newTicket.price}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, price: e.target.value })
-                    }
-                    className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
-                    placeholder="Price (0 = free)"
+                    onChange={(price) => setNewTicket({ ...newTicket, price })}
                   />
                 </div>
-                <div className="w-32">
+                <div className="w-[calc(50%-0.5rem)] sm:w-32">
                   <input
                     type="number"
                     value={newTicket.capacity}

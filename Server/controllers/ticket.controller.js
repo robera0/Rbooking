@@ -17,6 +17,7 @@ import {
   freeTicketsHeld,
   remainingFreeAllowance,
 } from "../service/freeTickets.service.js";
+import { cleanReceiptUrl } from "../utils/receiptUrl.js";
 import verifyReceipt from "../service/verifyRecipt.service.js";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
@@ -31,7 +32,7 @@ import {
 } from "../service/invitation.service.js";
 import {
   getExpectedReceiver,
-  nameMatches,
+  nameMatchesAny,
 } from "../service/receiver.service.js";
 
 export const purchaseTicket = async (req, res) => {
@@ -303,7 +304,10 @@ export const updateTicketStatus = async (req, res) => {
  */
 export const verifyTicket = async (req, res) => {
   const { userTicketId } = req.params;
-  const { receiptUrl } = req.body;
+  const rawReceiptUrl = req.body.receiptUrl;
+  // Buyers often paste the link with a trailing "." or spaces; clean it
+  // before it reaches Odit.
+  const receiptUrl = cleanReceiptUrl(rawReceiptUrl);
 
   const userId = req.user.id;
 
@@ -312,7 +316,7 @@ export const verifyTicket = async (req, res) => {
     await logVerificationFailure({
       userId,
       userTicketId,
-      receiptUrl,
+      receiptUrl: rawReceiptUrl,
       userTicket: loggedTicket,
       status,
       reason,
@@ -322,12 +326,14 @@ export const verifyTicket = async (req, res) => {
     return res.status(status).json({ message });
   };
 
-  if (!receiptUrl || !receiptUrl.trim())
-    return fail(400, "MISSING_RECEIPT_URL", "Receipt link is required");
-
-  // Basic validation: ensure it looks like a valid Telebirr receipt URL
-  if (!receiptUrl.includes("ethiotelecom") && !receiptUrl.startsWith("http")) {
-    return fail(400, "INVALID_LINK", "The link is not correct");
+  if (!receiptUrl) {
+    if (typeof rawReceiptUrl !== "string" || !rawReceiptUrl.trim())
+      return fail(400, "MISSING_RECEIPT_URL", "Receipt link is required");
+    return fail(
+      400,
+      "INVALID_LINK",
+      "That doesn't look like a receipt link. Paste the link from your Telebirr payment message.",
+    );
   }
 
   try {
@@ -371,9 +377,7 @@ export const verifyTicket = async (req, res) => {
       );
     }
     const { eventInfo, adminProfile } = expected;
-    const EXPECTED_RECEIVER = expected.receiverName;
-
-    console.log(EXPECTED_RECEIVER, " and");
+    const EXPECTED_RECEIVERS = expected.receiverNames;
 
     // verification
 
@@ -400,13 +404,13 @@ export const verifyTicket = async (req, res) => {
         { transactionStatus: receipt.transactionStatus },
       );
     }
-    if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
+    if (!nameMatchesAny(receipt.creditedPartyName, EXPECTED_RECEIVERS)) {
       return fail(
         400,
         "RECEIVER_NAME_MISMATCH",
         "Invalid receiver name on receipt",
         {
-          expectedReceiver: EXPECTED_RECEIVER,
+          expectedReceiver: EXPECTED_RECEIVERS.join(", "),
           receiptReceiver: receipt.creditedPartyName,
         },
       );
@@ -534,7 +538,7 @@ export const verifyTicket = async (req, res) => {
     await logVerificationFailure({
       userId,
       userTicketId,
-      receiptUrl,
+      receiptUrl: rawReceiptUrl,
       userTicket: loggedTicket,
       status: 500,
       reason: "SERVER_ERROR",

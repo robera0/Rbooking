@@ -4,8 +4,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Clock, Ticket as TicketIcon } from "lucide-react";
+import { Clock, MoveRight, Ticket as TicketIcon } from "lucide-react";
 import { eventService } from "../src/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
@@ -117,19 +118,109 @@ const TicketCardSkeleton = () => (
   </div>
 );
 
+/* ── Saved club RSVP, kept in localStorage by the club RSVP flow ── */
+const CLUB_RSVP_KEY = "clubRsvpReservation";
+const DEFAULT_RSVP_BAND =
+  "linear-gradient(120deg, #0EA5E9 0%, #7C3AED 38%, #F97316 100%)";
+
+const readClubReservation = () => {
+  try {
+    return JSON.parse(localStorage.getItem(CLUB_RSVP_KEY) || "null");
+  } catch {
+    return null;
+  }
+};
+
+const ClubRsvpCard = ({ reservation, index, onOpen }) => {
+  const band = reservation.theme?.bandGradient ?? DEFAULT_RSVP_BAND;
+  const rows = [
+    ["Seat type", reservation.pass],
+    ["Table", reservation.table],
+    ["Total", reservation.total],
+  ].filter(([, value]) => value != null && value !== "");
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#15171A]"
+    >
+      <div className="p-4" style={{ background: band }}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-black/60">
+              Paysso · Club RSVP
+            </p>
+            <h2 className="mt-1 line-clamp-2 text-[15px] font-semibold leading-tight text-black">
+              {reservation.club}
+            </h2>
+            <p className="mt-1 line-clamp-1 text-[11px] text-black/70">
+              {[reservation.date, reservation.venue].filter(Boolean).join(" · ")}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full border border-black/20 bg-black/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-black">
+            Paid
+          </span>
+        </div>
+      </div>
+
+      <dl className="divide-y divide-white/[0.06] px-4">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between py-2.5">
+            <dt className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-500">
+              {label}
+            </dt>
+            <dd className="text-[12px] font-semibold text-gray-100">{value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="flex items-center justify-between gap-3 border-t border-white/[0.08] px-4 py-3">
+        <span className="inline-flex items-center gap-1.5 text-[10px] text-gray-600">
+          <TicketIcon size={12} />#
+          {String(reservation._id || "RSVP").slice(-8).toUpperCase()}
+        </span>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="inline-flex items-center gap-2 rounded-full bg-[#FF7A00] px-5 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-black transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] focus-visible:ring-offset-2 focus-visible:ring-offset-[#121417]"
+        >
+          View RSVP
+          <MoveRight size={13} />
+        </button>
+      </div>
+    </motion.article>
+  );
+};
+
 const TicketHome = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isLoggedIn, API_URL } = useService();
   const { tickets, ticketLoading, ticketsError, ticketIsError } =
     eventService();
   const [hasAlerted, setHasAlerted] = useState(false);
   const [filter, setFilter] = useState("all");
   const [now, setNow] = useState(Date.now());
+  const [savedClubReservation, setSavedClubReservation] =
+    useState(readClubReservation);
+
+  useEffect(() => {
+    const handleStorage = () => setSavedClubReservation(readClubReservation());
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Refetch whenever the wallet is opened so a fresh purchase shows up.
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["tickets"] });
+  }, [queryClient]);
 
   useEffect(() => {
     if (ticketIsError && !isLoggedIn && !hasAlerted) {
@@ -138,31 +229,49 @@ const TicketHome = () => {
     }
   }, [ticketIsError, isLoggedIn, hasAlerted, ticketsError]);
 
-  const allTickets = tickets?.events ? tickets.events : [];
+  const allTickets = useMemo(
+    () => (tickets?.events ? tickets.events : []),
+    [tickets],
+  );
 
-  const filtered = useMemo(() => {
-    if (!allTickets) return [];
-    return filter === "all"
-      ? allTickets
-      : allTickets.filter(
-          (ticket) => ticket?.status?.toLowerCase().trim() === filter,
-        );
-  }, [allTickets, filter]);
+  // A saved club RSVP is shown first, alongside the purchased tickets.
+  const combinedTickets = useMemo(() => {
+    if (!savedClubReservation) return allTickets;
+    return [
+      {
+        ...savedClubReservation,
+        type: "club-rsvp",
+        _id: savedClubReservation.id || "club-rsvp",
+        status: savedClubReservation.status || "paid",
+      },
+      ...allTickets,
+    ];
+  }, [allTickets, savedClubReservation]);
+
+  const filtered = useMemo(
+    () =>
+      filter === "all"
+        ? combinedTickets
+        : combinedTickets.filter(
+            (ticket) => ticket?.status?.toLowerCase().trim() === filter,
+          ),
+    [combinedTickets, filter],
+  );
 
   const counts = useMemo(
     () => ({
-      all: allTickets.length,
-      paid: allTickets.filter(
+      all: combinedTickets.length,
+      paid: combinedTickets.filter(
         (ticket) => ticket?.status?.toLowerCase().trim() === "paid",
       ).length,
-      pending: allTickets.filter(
+      pending: combinedTickets.filter(
         (ticket) => ticket?.status?.toLowerCase().trim() === "pending",
       ).length,
-      cancelled: allTickets.filter(
+      cancelled: combinedTickets.filter(
         (ticket) => ticket?.status?.toLowerCase().trim() === "cancelled",
       ).length,
     }),
-    [allTickets],
+    [combinedTickets],
   );
 
   return (
@@ -177,16 +286,16 @@ const TicketHome = () => {
             Tickets
           </h1>
           <p className="mt-3 text-sm text-gray-400">
-            {allTickets.length === 0
+            {combinedTickets.length === 0
               ? "No tickets purchased yet"
-              : `${allTickets.length} ticket${
-                  allTickets.length === 1 ? "" : "s"
+              : `${combinedTickets.length} ticket${
+                  combinedTickets.length === 1 ? "" : "s"
                 } ready when you are`}
           </p>
         </header>
 
         {/* ── Filters ────────────────────────────────────────────────── */}
-        {allTickets.length > 0 && (
+        {combinedTickets.length > 0 && (
           <div className="mt-8 flex gap-2 overflow-x-auto pb-1">
             <FilterPill
               label="All"
@@ -225,7 +334,7 @@ const TicketHome = () => {
         )}
 
         {/* ── Empty ──────────────────────────────────────────────────── */}
-        {!ticketLoading && allTickets.length === 0 && (
+        {!ticketLoading && combinedTickets.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -251,7 +360,7 @@ const TicketHome = () => {
         )}
 
         {/* ── Filtered empty ─────────────────────────────────────────── */}
-        {!ticketLoading && allTickets.length > 0 && filtered.length === 0 && (
+        {!ticketLoading && combinedTickets.length > 0 && filtered.length === 0 && (
           <p className="mt-16 text-center text-sm text-gray-500">
             No tickets match this filter.
           </p>
@@ -261,6 +370,17 @@ const TicketHome = () => {
         {!ticketLoading && filtered.length > 0 && (
           <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
             {filtered.map((ticket, index) => {
+              if (ticket?.type === "club-rsvp") {
+                return (
+                  <ClubRsvpCard
+                    key={ticket._id || "club-rsvp"}
+                    reservation={ticket}
+                    index={index}
+                    onOpen={() => navigate("/club/rsvp/ticket")}
+                  />
+                );
+              }
+
               const event = ticket?.ticketId?.eventId;
               const tier = ticket?.ticketId;
               const statusKey = (ticket?.status || "").toLowerCase().trim();
@@ -268,6 +388,9 @@ const TicketHome = () => {
 
               const isPendingUnverified =
                 statusKey === "pending" && !ticket?.isVerified;
+              // Free tickets have no payment to verify, so they open directly.
+              const isFreeTicket = Number(ticket?.totalAmount ?? 0) === 0;
+              const needsVerification = isPendingUnverified && !isFreeTicket;
               const isExpired =
                 isPendingUnverified &&
                 ticket?.expiresAt &&
@@ -362,7 +485,7 @@ const TicketHome = () => {
                       type="button"
                       disabled={isExpired}
                       onClick={() => {
-                        if (isPendingUnverified) {
+                        if (needsVerification) {
                           navigate(`/tickets_home/verify/${ticket?._id}`, {
                             state: {
                               eventId: event?._id,
@@ -381,7 +504,7 @@ const TicketHome = () => {
                     >
                       {isExpired
                         ? "Expired"
-                        : isPendingUnverified
+                        : needsVerification
                           ? "Verify ticket"
                           : "View ticket"}
                     </button>
