@@ -3,6 +3,7 @@ import { AdminProfile } from "../models/adminProfile.model.js";
 
 export const getExpectedReceiver = async (userTicket) => {
   const ticketTier = userTicket.ticketId; // must be populated with eventId
+
   if (!ticketTier || !ticketTier.eventId) {
     return { status: 404, message: "Ticket tier or event not found" };
   }

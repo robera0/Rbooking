@@ -760,8 +760,8 @@ const EventInfo = () => {
                 <span className="text-[9px] font-black uppercase tracking-[0.45em] text-[#FF7A00] mb-4 block">
                   About This Event
                 </span>
-                <p className="text-xl md:text-2xl text-gray-400 italic font-serif leading-relaxed">
-                  "{event?.desc || "No description available for this event."}"
+                <p className="max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg">
+                  {event?.desc || "No description available for this event."}
                 </p>
               </div>
             </motion.section>
@@ -1341,6 +1341,7 @@ const EventInfo = () => {
             onClose={() => setCheckoutOpen(false)}
             amount={activeTicket?.price}
             name={event?.name}
+            eventId={eventId}
             ticketId={ticketId}
             paymentMethods={event?.adminId?.paymentMethods || []}
           />

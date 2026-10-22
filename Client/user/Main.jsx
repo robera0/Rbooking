@@ -25,7 +25,7 @@ import dayjs from "dayjs";
 import {
   NotificationSidebar,
   MenuBar,
-  AccountSideMenu,
+  SideMenuPanel,
 } from "../src/components/Reusable";
 
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
@@ -363,39 +363,44 @@ const Main = () => {
                 alt="Paysso logo"
                 className="h-8 w-8 object-contain"
               />
-              <span className="hidden sm:inline text-2xl lg:text-3xl font-black italic uppercase tracking-tight group-hover:text-[#FF7A00] transition">
+              <span className="hidden sm:inline text-2xl lg:text-3xl font-black uppercase tracking-tight group-hover:text-[#FF7A00] transition">
                 Paysso
               </span>
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex gap-10">
+            <nav className="hidden md:flex gap-8">
               {[
+                { label: "Discover", path: "/" },
                 { label: "Explore", path: "/event" },
                 { label: "Venues", path: "/venues" },
                 { label: "Artists", path: "/artists" },
-              ].map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.path}
-                  onClick={() => {
-                    if (item.path === "/venues") {
-                      setType("");
-                      setDate("");
-                      setArtist("");
-                      setVenues("");
-                      setSearch("");
-                    }
-                  }}
-                  className={`text-[11px] font-black uppercase tracking-[0.25em] transition ${
-                    location.pathname === item.path
-                      ? "text-[#FF7A00]"
-                      : "text-gray-500 hover:text-gray-200"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              ].map((item) => {
+                const active = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.path}
+                    onClick={() => {
+                      if (item.path === "/venues") {
+                        setType("");
+                        setDate("");
+                        setArtist("");
+                        setVenues("");
+                        setSearch("");
+                      }
+                    }}
+                    className={`relative text-[11px] font-bold uppercase tracking-[0.18em] transition ${
+                      active ? "text-white" : "text-gray-500 hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                    {active && (
+                      <span className="absolute -bottom-1.5 left-0 h-[2px] w-full bg-[#FF7A00]" />
+                    )}
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* Actions */}
@@ -632,32 +637,10 @@ const Main = () => {
 
               {/* MENU */}
               {activeOverlay === "menu" && (
-                <motion.div
-                  initial={
-                    isMinimalMenu
-                      ? { opacity: 0, scale: 0.9, y: -20 }
-                      : { x: "-100%" }
-                  }
-                  animate={
-                    isMinimalMenu ? { opacity: 1, scale: 1, y: 0 } : { x: 0 }
-                  }
-                  exit={
-                    isMinimalMenu
-                      ? { opacity: 0, scale: 0.9, y: -20 }
-                      : { x: "-100%" }
-                  }
-                  transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                  className={
-                    isMinimalMenu
-                      ? "absolute top-20 right-6 w-72 bg-[#121417]/95 backdrop-blur-3xl border border-white/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden"
-                      : "absolute top-0 left-0 w-[85%] sm:w-[320px] lg:w-[360px] xl:w-[400px] h-full bg-[#121417] border-r border-white/5"
-                  }
-                >
-                  <AccountSideMenu
-                    setIsOpen={closeOverlay}
-                    minimal={isMinimalMenu}
-                  />
-                </motion.div>
+                <SideMenuPanel
+                  setIsOpen={closeOverlay}
+                  minimal={isMinimalMenu}
+                />
               )}
 
               {/* NOTIFICATION */}

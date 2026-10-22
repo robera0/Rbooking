@@ -10,7 +10,7 @@ import UserHome from "../user/UserHome";
 
 import Sport from "../user/Sport";
 import AccountPage from "../user/AccountPage";
-
+import SuperAdminLayout from "./superadmin/SuperAdminLayout";
 import Ticket from "../user/Ticket";
 import Account from "../user/Account";
 import ViewTicket from "../user/ViewTicket";
@@ -77,6 +77,17 @@ export const router = createBrowserRouter([
         element: (
           <PageWrapper>
             <CompleteProfile />
+          </PageWrapper>
+        ),
+      },
+
+      // Super Admin — UI-only module with mock data (see src/superadmin/README.md).
+      // Restrict this to the super_admin role on the server too, not only here.
+      {
+        path: "superadmin/*",
+        element: (
+          <PageWrapper>
+            <SuperAdminLayout />
           </PageWrapper>
         ),
       },
@@ -343,6 +354,14 @@ export const router = createBrowserRouter([
                 element: (
                   <PageWrapper>
                     <Ticket />
+                  </PageWrapper>
+                ),
+              },
+              {
+                path: ":eventId/:ticketId",
+                element: (
+                  <PageWrapper>
+                    <ViewTicket />
                   </PageWrapper>
                 ),
               },

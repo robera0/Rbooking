@@ -236,8 +236,12 @@ export const ApiProvider = ({ children }) => {
     });
   };
   // GET TICKETS BY ID
-  const fetchTicketById = async (ticketId) => {
-    const res = await api.get(`/api/auth/tickets_home/${ticketId}`);
+  // The event id rides along with the ticket id so the detail screen can be
+  // deep-linked (and the request is scoped to that event).
+  const fetchTicketById = async (ticketId, eventId) => {
+    const res = await api.get(`/api/auth/tickets_home/${ticketId}`, {
+      params: eventId ? { eventId } : undefined,
+    });
     return res.data;
   };
 

@@ -1,76 +1,42 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  Ticket,
-  ShieldCheck,
-  Star,
-  Zap,
-  MoveRight,
-  ArrowRight,
-  Clock,
-  AlertTriangle,
-} from "lucide-react";
+// src/user/Ticket.jsx
+// Posh-style ticket wallet: filter pills and compact ticket cards.
+// Maps to GET /api/auth/tickets_home and the ticket detail routes.
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { Clock, Ticket as TicketIcon } from "lucide-react";
 import { eventService } from "../src/Context/ApiEvent";
-import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
-import moment from "moment";
-import { useMemo } from "react";
-/* ── ticket-type colour themes (identical to EventInfo) ── */
-const ticketThemes = {
-  vip: {
-    bandGradient:
-      "linear-gradient(120deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%)",
-    ctaGradient:
-      "linear-gradient(135deg, #3B82F6 0%, #60A5FA 50%, #3B82F6 100%)",
-    accentColor: "#60A5FA",
-    label: "VIP",
+import {
+  eventDateLabel,
+  eventImageUrl,
+  eventVenueLabel,
+} from "./components/EventTile";
+import toast from "react-hot-toast";
+
+const STATUS_STYLES = {
+  paid: {
+    label: "Paid",
+    className: "border-emerald-500/25 bg-emerald-500/10 text-emerald-400",
   },
-  "early bird": {
-    bandGradient:
-      "linear-gradient(120deg, #22C55E 0%, #4ADE80 60%, #86EFAC 100%)",
-    ctaGradient:
-      "linear-gradient(135deg, #22C55E 0%, #4ADE80 50%, #22C55E 100%)",
-    accentColor: "#4ADE80",
-    label: "Early Bird",
+  pending: {
+    label: "Pending",
+    className: "border-orange-500/25 bg-orange-500/10 text-orange-400",
   },
-  regular: {
-    bandGradient:
-      "linear-gradient(120deg, #EAB308 0%, #FACC15 60%, #FDE047 100%)",
-    ctaGradient:
-      "linear-gradient(135deg, #EAB308 0%, #FACC15 50%, #EAB308 100%)",
-    accentColor: "#FACC15",
-    label: "Regular",
-  },
-  default: {
-    bandGradient:
-      "linear-gradient(120deg, #FF7A00 0%, #FF9D00 60%, #FFC347 100%)",
-    ctaGradient:
-      "linear-gradient(135deg, #FF7A00 0%, #FF9D00 50%, #FF7A00 100%)",
-    accentColor: "#FF7A00",
-    label: "General Admission",
+  cancelled: {
+    label: "Cancelled",
+    className: "border-red-500/25 bg-red-500/10 text-red-400",
   },
 };
 
-/* ── status dot config ── */
-const STATUS = {
-  onsale: { label: "On Sale", color: "#4ADE80" },
-  cancelled: { label: "Cancelled", color: "#F87171" },
-  postponed: { label: "Postponed", color: "#60A5FA" },
-  upcoming: { label: "Upcoming", color: "#FACC15" },
+const FALLBACK_STATUS = {
+  label: "Upcoming",
+  className: "border-white/10 bg-white/[0.04] text-gray-400",
 };
 
-/* ── TearLine (exact same as EventInfo) ── */
-const TearLine = () => (
-  <div className="relative flex items-center">
-    <div className="w-5 h-5 rounded-full -ml-2.5 bg-[#080809] shrink-0" />
-    <div className="flex-1 border-t-2 border-dashed border-white/[0.07]" />
-    <div className="w-5 h-5 rounded-full -mr-2.5 bg-[#080809] shrink-0" />
-  </div>
-);
-
-/* ── CountdownTimer ── */
+/* ── Live countdown for pending, unverified tickets ── */
 const CountdownTimer = ({ expiresAt }) => {
   const calcRemaining = useCallback(() => {
     const diff = new Date(expiresAt).getTime() - Date.now();
@@ -92,48 +58,43 @@ const CountdownTimer = ({ expiresAt }) => {
 
   if (remaining.total <= 0) {
     return (
-      <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">
+      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-red-400">
         Expired
       </span>
     );
   }
 
-  // Color shifts: >6h = yellow, >1h = orange, <1h = red
   const urgencyColor =
     remaining.h >= 6 ? "#FACC15" : remaining.h >= 1 ? "#FB923C" : "#F87171";
-
-  const pad = (n) => String(n).padStart(2, "0");
+  const pad = (value) => String(value).padStart(2, "0");
 
   return (
-    <div className="flex items-center gap-1.5">
-      <Clock size={10} style={{ color: urgencyColor }} />
-      <span
-        className="text-[10px] font-black tabular-nums tracking-wider"
-        style={{ color: urgencyColor }}
-      >
-        {pad(remaining.h)}:{pad(remaining.m)}:{pad(remaining.s)}
-      </span>
-    </div>
+    <span
+      className="inline-flex items-center gap-1.5 text-[10px] font-semibold tabular-nums"
+      style={{ color: urgencyColor }}
+    >
+      <Clock size={11} />
+      {pad(remaining.h)}:{pad(remaining.m)}:{pad(remaining.s)}
+    </span>
   );
 };
 
-/* ── Filter tab ── */
-const FilterTab = ({ label, active, count, onClick }) => (
+const FilterPill = ({ label, active, count, onClick }) => (
   <button
+    type="button"
     onClick={onClick}
-    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border ${
+    aria-pressed={active}
+    className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[0.16em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] ${
       active
-        ? "border-[#FF7A00]/40 bg-[#FF7A00]/10 text-[#FF7A00]"
-        : "border-white/[0.06] bg-white/[0.025] text-gray-500 hover:text-gray-300"
+        ? "bg-[#FF7A00] text-black"
+        : "border border-white/[0.08] bg-white/[0.02] text-gray-400 hover:border-white/20 hover:text-white"
     }`}
   >
     {label}
     {count != null && (
       <span
-        className={`text-[10px] px-1.5 py-0.5 rounded-lg font-black ${
-          active
-            ? "bg-[#FF7A00]/20 text-[#FF7A00]"
-            : "bg-white/[0.06] text-gray-600"
+        className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+          active ? "bg-black/15 text-black" : "bg-white/[0.06] text-gray-500"
         }`}
       >
         {count}
@@ -142,9 +103,23 @@ const FilterTab = ({ label, active, count, onClick }) => (
   </button>
 );
 
+const TicketCardSkeleton = () => (
+  <div className="animate-pulse overflow-hidden rounded-2xl border border-white/[0.06] bg-[#1C1F22]">
+    <div className="flex gap-4 p-4">
+      <div className="h-24 w-20 shrink-0 rounded-xl bg-white/[0.05]" />
+      <div className="flex-1 space-y-3 py-1">
+        <div className="h-2.5 w-1/3 rounded bg-white/[0.05]" />
+        <div className="h-3.5 w-3/4 rounded bg-white/[0.05]" />
+        <div className="h-2.5 w-1/2 rounded bg-white/[0.03]" />
+      </div>
+    </div>
+    <div className="h-12 border-t border-white/[0.06]" />
+  </div>
+);
+
 const TicketHome = () => {
   const navigate = useNavigate();
-  const { isLoggedIn } = useService();
+  const { isLoggedIn, API_URL } = useService();
   const { tickets, ticketLoading, ticketsError, ticketIsError } =
     eventService();
   const [hasAlerted, setHasAlerted] = useState(false);
@@ -155,432 +130,263 @@ const TicketHome = () => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-  if (ticketIsError && !isLoggedIn && !hasAlerted) {
-    toast.error(getFriendlyErrorMessage(ticketsError), { duration: 3000 });
-    setHasAlerted(true);
-  }
 
-  const allTickets = tickets?.events ? tickets?.events : [];
+  useEffect(() => {
+    if (ticketIsError && !isLoggedIn && !hasAlerted) {
+      toast.error(getFriendlyErrorMessage(ticketsError), { duration: 3000 });
+      setHasAlerted(true);
+    }
+  }, [ticketIsError, isLoggedIn, hasAlerted, ticketsError]);
+
+  const allTickets = tickets?.events ? tickets.events : [];
 
   const filtered = useMemo(() => {
     if (!allTickets) return [];
-
     return filter === "all"
       ? allTickets
-      : // 1. ADDED toLowerCase() and trim() HERE
-        allTickets.filter((t) => t?.status?.toLowerCase().trim() === filter);
+      : allTickets.filter(
+          (ticket) => ticket?.status?.toLowerCase().trim() === filter,
+        );
   }, [allTickets, filter]);
 
-  const counts = useMemo(() => {
-    if (!allTickets) {
-      return { all: 0, paid: 0, pending: 0, cancelled: 0 };
-    }
-
-    return {
+  const counts = useMemo(
+    () => ({
       all: allTickets.length,
-      // 2. ADDED toLowerCase() and trim() TO ALL OF THESE
-      paid: allTickets.filter((t) => t?.status?.toLowerCase().trim() === "paid")
-        .length,
+      paid: allTickets.filter(
+        (ticket) => ticket?.status?.toLowerCase().trim() === "paid",
+      ).length,
       pending: allTickets.filter(
-        (t) => t?.status?.toLowerCase().trim() === "pending",
+        (ticket) => ticket?.status?.toLowerCase().trim() === "pending",
       ).length,
       cancelled: allTickets.filter(
-        (t) => t?.status?.toLowerCase().trim() === "cancelled",
+        (ticket) => ticket?.status?.toLowerCase().trim() === "cancelled",
       ).length,
-    };
-  }, [allTickets]);
+    }),
+    [allTickets],
+  );
 
   return (
-    <div className="relative min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-x-hidden">
-      {/* ambient orbs */}
-      <div className="absolute w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none top-[-150px] left-[-150px] bg-[#FF7A00]/[0.07]" />
-      <div className="absolute w-[400px] h-[400px] rounded-full blur-[120px] pointer-events-none top-[40%] right-[-100px] bg-purple-600/[0.05]" />
-
-      {/* top ribbon */}
-      <div className="h-[2px] w-full flex">
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          style={{ transformOrigin: "left" }}
-          className="h-full w-[35%] bg-gradient-to-r from-[#FF7A00] to-amber-300"
-        />
-        <div className="h-full flex-1 bg-white/[0.03]" />
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 lg:px-10 pt-14 pb-28 relative">
-        {/* ── HEADER ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-10"
-        >
-          <h1 className="text-5xl  uppercase  tracking-tighter leading-none mb-2">
-            My <span className="text-[#FF7A00]">Tickets</span>
+    <div className="min-h-screen overflow-x-hidden bg-[#121417] pb-28 text-white">
+      <div className="mx-auto w-full max-w-5xl px-5 sm:px-8">
+        {/* ── Header ─────────────────────────────────────────────────── */}
+        <header className="pt-10 sm:pt-14">
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#FF7A00]">
+            Your collection
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            Tickets
           </h1>
-          <p className="text-sm text-gray-500 font-medium">
+          <p className="mt-3 text-sm text-gray-400">
             {allTickets.length === 0
               ? "No tickets purchased yet"
               : `${allTickets.length} ticket${
-                  allTickets.length !== 1 ? "s" : ""
-                } in your collection`}
+                  allTickets.length === 1 ? "" : "s"
+                } ready when you are`}
           </p>
-        </motion.div>
+        </header>
 
-        {/* ── FILTER TABS ── */}
+        {/* ── Filters ────────────────────────────────────────────────── */}
         {allTickets.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="flex gap-2 mb-10 flex-wrap"
-          >
-            <FilterTab
+          <div className="mt-8 flex gap-2 overflow-x-auto pb-1">
+            <FilterPill
               label="All"
               active={filter === "all"}
               count={counts.all}
               onClick={() => setFilter("all")}
             />
-            <FilterTab
+            <FilterPill
               label="Paid"
               active={filter === "paid"}
               count={counts.paid}
               onClick={() => setFilter("paid")}
             />
-            <FilterTab
+            <FilterPill
               label="Pending"
               active={filter === "pending"}
               count={counts.pending}
               onClick={() => setFilter("pending")}
             />
-            <FilterTab
+            <FilterPill
               label="Cancelled"
               active={filter === "cancelled"}
               count={counts.cancelled}
               onClick={() => setFilter("cancelled")}
             />
-          </motion.div>
-        )}
-
-        {/* ── LOADING ── */}
-        {ticketLoading && (
-          <div className="flex justify-center py-32">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-              className="w-10 h-10 rounded-full border-2 border-[#FF7A00] border-t-transparent"
-            />
           </div>
         )}
 
-        {/* ── EMPTY STATE ── */}
+        {/* ── Loading ────────────────────────────────────────────────── */}
+        {ticketLoading && (
+          <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <TicketCardSkeleton key={index} />
+            ))}
+          </div>
+        )}
+
+        {/* ── Empty ──────────────────────────────────────────────────── */}
         {!ticketLoading && allTickets.length === 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-28 text-center"
+            className="mt-8 flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-24 text-center"
           >
-            <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{
-                repeat: Infinity,
-                duration: 2.5,
-                ease: "easeInOut",
-              }}
-              className="w-20 h-20 rounded-3xl bg-[#FF7A00]/10 border border-[#FF7A00]/20 flex items-center justify-center mb-6"
-            >
-              <Ticket size={32} className="text-[#FF7A00]" />
-            </motion.div>
-            <h2 className="text-2xl font-black uppercase tracking-tight mb-2">
-              No Tickets Yet
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/[0.03]">
+              <TicketIcon size={26} className="text-gray-700" />
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              No tickets yet
             </h2>
-            <p className="text-gray-600 text-sm">
-              Your purchased tickets will appear here.
+            <p className="mt-2 max-w-sm text-sm text-gray-500">
+              Tickets you buy will appear here, scannable at the door.
             </p>
+            <button
+              type="button"
+              onClick={() => navigate("/event")}
+              className="mt-8 rounded-full bg-[#FF7A00] px-7 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-black transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] focus-visible:ring-offset-4 focus-visible:ring-offset-[#121417]"
+            >
+              Find events
+            </button>
           </motion.div>
         )}
 
-        {/* ── FILTERED EMPTY ── */}
+        {/* ── Filtered empty ─────────────────────────────────────────── */}
         {!ticketLoading && allTickets.length > 0 && filtered.length === 0 && (
-          <p className="text-center text-gray-600 text-sm py-16">
+          <p className="mt-16 text-center text-sm text-gray-500">
             No tickets match this filter.
           </p>
         )}
 
-        {/* ── TICKET STUBS (identical structure to EventInfo) ── */}
+        {/* ── Ticket cards ───────────────────────────────────────────── */}
         {!ticketLoading && filtered.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-22">
-            {filtered.map((t, idx) => {
-              const event = t.ticketId?.eventId;
-              const ticketId = t.ticketId;
-              const tierKey = (ticketId?.type || "default")
-                .toLowerCase()
-                .trim();
-              const theme = ticketThemes[tierKey] ?? ticketThemes.default;
-              const statusKey = event?.dates?.status?.code;
-              const status = STATUS[statusKey] || STATUS.upcoming;
+          <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {filtered.map((ticket, index) => {
+              const event = ticket?.ticketId?.eventId;
+              const tier = ticket?.ticketId;
+              const statusKey = (ticket?.status || "").toLowerCase().trim();
+              const status = STATUS_STYLES[statusKey] || FALLBACK_STATUS;
 
               const isPendingUnverified =
-                t?.status?.toLowerCase().trim() === "pending" && !t?.isVerified;
+                statusKey === "pending" && !ticket?.isVerified;
               const isExpired =
                 isPendingUnverified &&
-                t?.expiresAt &&
-                new Date(t.expiresAt).getTime() <= now;
-              const infoRows = [
-                {
-                  label: "Venue",
-                  value:
-                    event?._embedded?.venues?.[0]?.name ||
-                    event?.locale ||
-                    "TBA",
-                },
-                {
-                  label: "Status",
-                  value: status.label,
-                },
-                {
-                  label: "Doors Open",
-                  value: event?.dates?.start?.localTime
-                    ? moment(event.dates.start.localTime, "HH:mm:ss").format(
-                        "h:mm A",
-                      )
-                    : "Check venue",
-                },
-              ];
+                ticket?.expiresAt &&
+                new Date(ticket.expiresAt).getTime() <= now;
+
+              const price = tier?.price || "0";
+              const currency =
+                event?.priceRanges?.[0]?.currency || "ETB";
+              const code = tier?._id?.slice(-8).toUpperCase() || "—";
+
+              const href = event?._id
+                ? `/tickets_home/${event._id}/${ticket?._id}`
+                : `/tickets_home/${ticket?._id}`;
 
               return (
-                <motion.div
-                  key={ticketId?._id || idx}
-                  initial={{ opacity: 0, y: 40 }}
+                <motion.article
+                  key={tier?._id || index}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
-                    delay: idx * 0.1,
-                    duration: 0.7,
+                    delay: index * 0.06,
+                    duration: 0.4,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="rounded-3xl overflow-hidden border shadow-2xl relative"
-                  style={{
-                    background:
-                      "linear-gradient(160deg, #141416 0%, #0e0e10 100%)",
-                    opacity: isPendingUnverified ? 0.55 : 1,
-                    borderColor: isPendingUnverified
-                      ? "rgba(251, 146, 60, 0.2)"
-                      : "rgba(255,255,255,0.08)",
-                    filter: isPendingUnverified ? "saturate(0.5)" : "none",
-                  }}
+                  className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#15171A] transition hover:border-white/[0.14] ${
+                    isExpired ? "opacity-60" : ""
+                  }`}
                 >
-                  {/* ── PENDING BADGE + TIMER ── */}
-                  {isPendingUnverified && (
-                    <div className="absolute top-3 right-3 z-30 flex items-center gap-2 bg-black/70 backdrop-blur-md border border-orange-500/30 rounded-xl px-3 py-1.5">
-                      <AlertTriangle size={10} className="text-orange-400" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-orange-400">
-                        Pending
-                      </span>
-                      <div className="w-[1px] h-3 bg-orange-500/30" />
-                      <CountdownTimer expiresAt={t.expiresAt} />
-                    </div>
-                  )}
-                  {/* ── TOP BAND ── */}
-                  <div
-                    className="relative px-5 pt-5 pb-4 overflow-hidden"
-                    style={{ background: theme.bandGradient }}
-                  >
-                    {/* decorative circles */}
-                    <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
-                    <div className="absolute -bottom-4 -left-4 w-14 h-14 rounded-full bg-black/10" />
+                  {/* Event cover as the card backdrop, dimmed for legibility */}
+                  <img
+                    src={eventImageUrl(event, API_URL)}
+                    alt=""
+                    loading="lazy"
+                    onError={(imageEvent) => {
+                      imageEvent.currentTarget.onerror = null;
+                      imageEvent.currentTarget.src = "/datebackground.jpg";
+                    }}
+                    className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                  />
+                  <div className="absolute inset-0 bg-[#0A0C0E]/85" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#0A0C0E]/95 via-[#0A0C0E]/70 to-[#0A0C0E]/40" />
 
-                    <div className="relative z-10 flex items-start justify-between">
-                      <div>
-                        <p className="text-[8px] font-black uppercase tracking-[0.4em] text-black/60 mb-0.5">
-                          Paysso · Official Ticket
+                  <div className="relative z-10 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#FF7A00]">
+                          {eventDateLabel(event)}
                         </p>
-                        <h2 className="text-base font-black uppercase tracking-tight text-black leading-tight max-w-[180px]">
+                        <h2 className="mt-1 line-clamp-2 text-[15px] font-semibold leading-tight text-white">
                           {event?.name || "Event"}
                         </h2>
+                        <p className="mt-1 line-clamp-1 text-[11px] text-gray-400">
+                          {eventVenueLabel(event)}
+                        </p>
                       </div>
-                      <div className="h-8 w-8 rounded-xl bg-black/15 flex items-center justify-center shrink-0">
-                        <Ticket size={15} className="text-black/70" />
-                      </div>
+                      <span
+                        className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] ${status.className}`}
+                      >
+                        {status.label}
+                      </span>
                     </div>
 
-                    <div className="relative z-10 flex gap-4 mt-3">
-                      <div>
-                        <p className="text-[7px] font-black uppercase tracking-[0.3em] text-black/50 mb-0.5">
-                          Date
+                    <div className="mt-4 flex items-end justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                          Ticket
                         </p>
-                        <p className="text-[10px] font-black text-black">
-                          {event?.dates?.start?.localDate
-                            ? moment(event.dates.start.localDate).format(
-                                "ddd, MMM DD YYYY",
-                              )
-                            : "TBA"}
+                        <p className="truncate text-[12px] font-semibold text-gray-100">
+                          {tier?.name || tier?.type || "General admission"}
                         </p>
                       </div>
-                      <div className="w-[1px] bg-black/15" />
-                      <div>
-                        <p className="text-[7px] font-black uppercase tracking-[0.3em] text-black/50 mb-0.5">
-                          Type
-                        </p>
-                        <p className="text-[10px] font-black text-black">
-                          {theme.label}
-                        </p>
-                      </div>
+                      <p className="shrink-0 text-lg font-bold text-white">
+                        {price}
+                        <span className="ml-1 text-[10px] font-medium text-gray-400">
+                          {currency}
+                        </span>
+                      </p>
                     </div>
                   </div>
 
-                  {/* ── TEAR LINE 1 ── */}
-                  <TearLine />
-
-                  {/* ── TICKET BODY ── */}
-                  <div className="px-5 py-4 space-y-4">
-                    {/* type + price row */}
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-[7px] font-black text-gray-600 uppercase tracking-[0.4em] mb-0.5">
-                          Ticket Type
-                        </p>
-                        <p className="text-sm font-black uppercase tracking-tight">
-                          {ticketId?.name || ""}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[7px] font-black text-gray-600 uppercase tracking-[0.4em] mb-0.5">
-                          Price
-                        </p>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-black tracking-tighter">
-                            {ticketId?.price || "0"}
-                          </span>
-                          <span
-                            className="text-[9px] font-black uppercase"
-                            style={{ color: theme.accentColor }}
-                          >
-                            {event?.priceRanges?.[0]?.currency || "ETB"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* info rows */}
-                    <div className="space-y-1.5">
-                      {infoRows.map(({ label, value }) => (
-                        <div
-                          key={label}
-                          className="flex items-center justify-between py-1.5 border-b border-white/[0.04]"
-                        >
-                          <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">
-                            {label}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-300">
-                            {value}
-                          </span>
-                        </div>
-                      ))}
+                  <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.08] px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] text-gray-600">
+                        <TicketIcon size={12} />#{code}
+                      </span>
+                      {isPendingUnverified && (
+                        <CountdownTimer expiresAt={ticket.expiresAt} />
+                      )}
                     </div>
 
                     <button
+                      type="button"
                       disabled={isExpired}
-                      onClick={() =>
-                        isPendingUnverified
-                          ? navigate(`/tickets_home/verify/${t?._id}`)
-                          : navigate(`/tickets_home/${t?._id}`)
-                      }
-                      className="w-full py-3 rounded-xl flex items-center justify-center gap-2 disabled:cursor-not-allowed"
-                      style={{
-                        background: isExpired
-                          ? "linear-gradient(135deg, #52525B 0%, #3F3F46 100%)"
-                          : isPendingUnverified
-                          ? "linear-gradient(135deg, #FB923C 0%, #F97316 50%, #EA580C 100%)"
-                          : theme.ctaGradient,
+                      onClick={() => {
+                        if (isPendingUnverified) {
+                          navigate(`/tickets_home/verify/${ticket?._id}`, {
+                            state: {
+                              eventId: event?._id,
+                              eventName: event?.name,
+                            },
+                          });
+                          return;
+                        }
+                        navigate(href);
                       }}
+                      className={`rounded-full px-5 py-2 text-[10px] font-bold uppercase tracking-[0.16em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] focus-visible:ring-offset-2 focus-visible:ring-offset-[#121417] ${
+                        isExpired
+                          ? "cursor-not-allowed bg-white/[0.06] text-gray-500"
+                          : "bg-[#FF7A00] text-black hover:bg-white"
+                      }`}
                     >
-                      {isPendingUnverified && !isExpired && (
-                        <ShieldCheck size={13} className="text-black" />
-                      )}
-                      <span
-                        className={`text-[10px] font-black uppercase tracking-widest ${
-                          isExpired ? "text-gray-300" : "text-black"
-                        }`}
-                      >
-                        {isExpired
-                          ? "Expired"
-                          : isPendingUnverified
-                          ? "Verify Ticket"
-                          : "View Ticket"}
-                      </span>
-                      {!isExpired && (
-                        <MoveRight size={13} className="text-black" />
-                      )}
+                      {isExpired
+                        ? "Expired"
+                        : isPendingUnverified
+                          ? "Verify ticket"
+                          : "View ticket"}
                     </button>
-
-                    {/* trust row */}
-                    <div className="flex justify-around">
-                      {[
-                        { Icon: ShieldCheck, label: "Secure" },
-                        {
-                          Icon: Star,
-                          label: isPendingUnverified
-                            ? "Unverified"
-                            : "Verified",
-                        },
-                        { Icon: Zap, label: "Instant" },
-                      ].map(({ Icon, label }) => (
-                        <div
-                          key={label}
-                          className="flex flex-col items-center gap-0.5"
-                        >
-                          <Icon
-                            size={11}
-                            className={
-                              label === "Unverified"
-                                ? "text-orange-500/60"
-                                : "text-gray-600"
-                            }
-                          />
-                          <span
-                            className={`text-[6px] font-black uppercase tracking-wide ${
-                              label === "Unverified"
-                                ? "text-orange-500/60"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-
-                  {/* ── TEAR LINE 2 ── */}
-                  <TearLine />
-
-                  {/* ── BARCODE STUB ── */}
-                  <div className="px-5 py-3 flex items-center justify-between">
-                    <div className="flex items-end gap-[2px] h-7">
-                      {Array.from({ length: 20 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="rounded-sm"
-                          style={{
-                            backgroundColor: theme.accentColor,
-                            opacity: 0.35,
-                            width: i % 3 === 0 ? "2.5px" : "1.5px",
-                            height: `${40 + (i % 5) * 8}%`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[7px] font-black text-gray-700 uppercase tracking-widest">
-                        Paysso
-                      </p>
-                      <p className="text-[8px] font-black text-gray-500 tracking-widest">
-                        #{ticketId?._id?.slice(-8).toUpperCase()}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
+                </motion.article>
               );
             })}
           </div>

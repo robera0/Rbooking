@@ -53,7 +53,7 @@ const Detail = ({ icon: Icon, label, value }) => (
 );
 
 const ViewTicket = () => {
-  const { ticketId } = useParams();
+  const { eventId, ticketId } = useParams();
   const navigate = useNavigate();
   const { fetchTicketById } = eventService();
 
@@ -63,8 +63,8 @@ const ViewTicket = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["tickets", ticketId],
-    queryFn: () => fetchTicketById(ticketId),
+    queryKey: ["tickets", eventId, ticketId],
+    queryFn: () => fetchTicketById(ticketId, eventId),
     enabled: !!ticketId,
     retry: false,
     // Keep polling while the ticket is still pending verification so the

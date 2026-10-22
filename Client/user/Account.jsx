@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { LayoutGrid } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AccountSideMenu } from "@/components/Reusable";
+import { SideMenuPanel } from "@/components/Reusable";
 
 const Account = ({ children }) => {
   const [activeOverlay, setActiveOverlay] = useState(null);
@@ -61,18 +61,10 @@ const Account = ({ children }) => {
               onClick={closeOverlay}
               className="absolute inset-0 bg-black/70 backdrop-blur-xl"
             />
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="absolute top-0 left-0 w-[85%] sm:w-[320px] lg:w-[360px] h-full bg-[#121417] border-r border-white/5"
-            >
-              <AccountSideMenu
-                setIsOpen={closeOverlay}
-                minimal={isMinimalMenu}
-              />
-            </motion.div>
+            <SideMenuPanel
+              setIsOpen={closeOverlay}
+              minimal={isMinimalMenu}
+            />
           </div>
         )}
       </AnimatePresence>

@@ -75,7 +75,8 @@ const VerifyTicket = () => {
   const { API_URL } = useService();
 
   // Pull data passed from the CheckoutModal via router state
-  const { orderNo, eventName, totalAmount, quantity } = location.state || {};
+  const { orderNo, eventName, eventId, totalAmount, quantity } =
+    location.state || {};
 
   const [verifyLink, setVerifyLink] = useState("");
 
@@ -83,6 +84,15 @@ const VerifyTicket = () => {
   const [status, setStatus] = useState("idle"); // idle | success | error
   const [errorMsg, setErrorMsg] = useState("");
   const [confirmedTicket, setConfirmedTicket] = useState(null);
+
+  // The event id is carried from checkout (or the verify response) so the
+  // "View Ticket" link can address the ticket by event + ticket id.
+  const verifiedEventId =
+    confirmedTicket?.ticketId?.eventId?._id ||
+    confirmedTicket?.ticketId?.eventId ||
+    eventId ||
+    null;
+
   const {
     mutate: verifyDate,
     isPending,
@@ -287,7 +297,11 @@ const VerifyTicket = () => {
             className="flex gap-3"
           >
             <Link
-              to={`/tickets_home/${userTicketId}`}
+              to={
+                verifiedEventId
+                  ? `/tickets_home/${verifiedEventId}/${userTicketId}`
+                  : `/tickets_home/${userTicketId}`
+              }
               className="flex-1 py-4 text-center bg-[#FF7A00] text-black font-black uppercase text-[11px] tracking-widest rounded-2xl hover:bg-white transition-colors"
             >
               View Ticket
