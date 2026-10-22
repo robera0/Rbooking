@@ -338,3 +338,19 @@ body::-webkit-scrollbar {
 .page-fade-in {
   animation: page-fade-in 0.35s ease-out both;
 }
+
+/* Autoplay progress fill for the Discover hero carousel. The duration is set
+   inline (one interval per slide) so pausing it is just a play-state change. */
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.hero-progress {
+  animation-name: hero-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}

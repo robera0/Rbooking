@@ -1,80 +1,65 @@
-import React, { useState, useRef } from "react";
+// src/user/UserHome.jsx
+// Posh-inspired Discover page: editorial heading, featured hero, sticky filters
+// and a poster grid. Backed by GET /api/events and GET /api/featuredEvents.
+
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  CalendarIcon,
+  ArrowRight,
+  CalendarDays,
+  MapPin,
   Search,
   Ticket,
-  Mic2,
-  MapIcon,
-  Activity,
-  ChevronRight,
-  User,
-  ArrowRight,
-  ShieldCheck,
-  Heart,
-  Star,
-  MapPin,
-  ClockFading,
+  X,
 } from "lucide-react";
-import { useWishlistMutation } from "./api/addwishlist.api.jsx";
-import { CalendarDemo } from "@/components/ui/calendar";
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useTransform,
-} from "framer-motion";
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
+import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { sortFeaturedEvents } from "@/lib/featuredEventsSort";
 import { isEventPassed8Hours } from "@/lib/utils";
+import { CalendarDemo } from "@/components/ui/calendar";
 import toast from "react-hot-toast";
-import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import EventTile, {
+  eventDateLabel,
+  eventImageUrl,
+  eventHref,
+  eventPriceLabel,
+  eventVenueLabel,
+} from "./components/EventTile";
 
-// Skeleton for Featured Event Card
-export function FeaturedEventSkeleton() {
-  return (
-    // Base colors configured for a dark/zinc UI theme
-    <SkeletonTheme baseColor="#1c1f22" highlightColor="#2d3135">
-      <div className="group">
-        {/* Image Skeleton */}
-        <div className="relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04]">
-          <Skeleton
-            height="100%"
-            width="100%"
-            containerClassName="absolute inset-0 block h-full w-full"
-          />
-        </div>
+const CATEGORIES = [
+  { label: "All", value: "" },
+  { label: "Concerts", value: "concert" },
+  { label: "Festivals", value: "festival" },
+  { label: "Events", value: "generic" },
+];
 
-        {/* Metadata */}
-        <div className="mt-5 px-1 space-y-4">
-          {/* Location + Rating */}
-          <div className="flex justify-between items-center">
-            <Skeleton height={12} width={80} borderRadius={8} />
-            <Skeleton height={20} width={40} borderRadius={8} />
-          </div>
-          {/* Event Name */}
-          <Skeleton height={20} width="75%" borderRadius={8} />
-          {/* Price */}
-          <div className="flex justify-between items-end pt-1">
-            <div className="space-y-2">
-              <Skeleton height={12} width={60} borderRadius={8} />
-              <Skeleton height={24} width={80} borderRadius={8} />
-            </div>
-            <Skeleton height={40} width={40} borderRadius={12} />
-          </div>
-        </div>
-      </div>
-    </SkeletonTheme>
-  );
-}
+const GRID_CLASS =
+  "grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-x-6";
+
+/* How long each hero event stays on screen before the next one slides in. */
+const HERO_INTERVAL = 6000;
+const HERO_MAX_SLIDES = 5;
+
+const TileSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="aspect-[4/5] rounded-2xl bg-white/[0.04]" />
+    <div className="mt-3 space-y-2">
+      <div className="h-3.5 w-4/5 rounded bg-white/[0.05]" />
+      <div className="h-2.5 w-1/2 rounded bg-white/[0.03]" />
+      <div className="h-2.5 w-1/4 rounded bg-white/[0.03]" />
+    </div>
+  </div>
+);
+
 const UserHome = () => {
-  const [dateSlide, setDateSlide] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
   const {
     user,
     wishlist,
-    wishlistIsError,
+    events,
+    eventLoading,
     featuredEvents,
     featuredEventLoading,
   } = eventService();
@@ -84,9 +69,9 @@ const UserHome = () => {
     date,
     setDate,
     artist,
+    setArtist,
     venues,
     setVenues,
-    setArtist,
     search,
     setSearch,
     setCommentId,
@@ -95,19 +80,83 @@ const UserHome = () => {
   const { mutation: wishlistMutation } = useWishlistMutation();
   const navigate = useNavigate();
   const location = useLocation();
-  const sortedFeaturedEvents = sortFeaturedEvents(featuredEvents?.events || []);
 
-  const checkWishlist = (eventId) => {
-    return (
+  const list = useMemo(() => events?.events ?? [], [events]);
+  // Sold-out and finished events sink to the bottom, the rest sort by date.
+  const featured = useMemo(
+    () => sortFeaturedEvents(featuredEvents?.events ?? []),
+    [featuredEvents],
+  );
+
+  const isSoldOut = (event) =>
+    event?.tickets?.length === 0 || Boolean(isEventPassed8Hours(event));
+
+  // The hero only ever shows events that can still be booked. Sold-out and
+  // finished events are filtered out, then the remainder rotates on a timer.
+  const heroSlides = useMemo(() => {
+    const seen = new Set();
+    return [...featured, ...list]
+      .filter((event) => {
+        if (!event?._id || seen.has(event._id)) return false;
+        seen.add(event._id);
+        return !isSoldOut(event);
+      })
+      .slice(0, HERO_MAX_SLIDES);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [featured, list]);
+
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [heroPaused, setHeroPaused] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  const slidesKey = heroSlides.map((event) => event._id).join(",");
+
+  // Filters can change the slide list underneath us - restart from the first.
+  useEffect(() => {
+    setHeroIndex(0);
+  }, [slidesKey]);
+
+  useEffect(() => {
+    const query = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!query) return undefined;
+    const sync = () => setReduceMotion(query.matches);
+    sync();
+    query.addEventListener?.("change", sync);
+    return () => query.removeEventListener?.("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion || heroPaused || heroSlides.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        setHeroIndex((index) => (index + 1) % heroSlides.length);
+      }
+    }, HERO_INTERVAL);
+    return () => window.clearInterval(timer);
+  }, [reduceMotion, heroPaused, heroSlides.length, slidesKey]);
+
+  const hero = heroSlides[heroIndex] ?? heroSlides[0] ?? null;
+
+  const featuredRow = useMemo(() => {
+    const slideIds = new Set(heroSlides.map((event) => event._id));
+    return [...featured, ...list]
+      .filter((event) => event?._id && !slideIds.has(event._id))
+      .slice(0, 4);
+  }, [featured, list, heroSlides]);
+
+  const loading = eventLoading || featuredEventLoading;
+  const hasFilters = Boolean(type || date || artist || venues || search);
+
+  const checkWishlist = (eventId) =>
+    Boolean(
       wishlist?.wishlist?.items?.some(
         (item) => item?.eventId?._id === eventId,
-      ) || false
+      ),
     );
-  };
 
-  const handleWishlistToggle = (eventId, ticketId, e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleWishlistToggle = (event, clickEvent) => {
+    clickEvent.preventDefault();
+    clickEvent.stopPropagation();
 
     if (!user) {
       toast.error("Please sign in to save events", { id: "signin-required" });
@@ -115,676 +164,346 @@ const UserHome = () => {
       return;
     }
 
-    const isCurrentlyAdded = checkWishlist(eventId);
-
     wishlistMutation.mutate({
-      eventId: eventId,
-      ticketId: ticketId,
-      isAdding: !isCurrentlyAdded,
+      eventId: event._id,
+      ticketId: event.tickets?.[0]?._id,
+      isAdding: !checkWishlist(event._id),
     });
   };
 
-  // Scroll logic for Hero section
-  const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
-
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
-
-  // Animation Variants
-  const sectionFade = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
-    },
+  const clearFilters = () => {
+    setType("");
+    setDate("");
+    setArtist("");
+    setVenues("");
+    setSearch("");
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.1,
-      },
-    },
-  };
+  const selectedDateLabel =
+    date instanceof Date
+      ? date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+      : "Date";
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 25, scale: 0.98 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.6, ease: [0.25, 1, 0.5, 1] },
-    },
-  };
+  const renderTile = (event) => (
+    <motion.div
+      key={event._id}
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <EventTile
+        event={event}
+        apiUrl={API_URL}
+        soldOut={isSoldOut(event)}
+        isWishlisted={checkWishlist(event._id)}
+        onWishlist={handleWishlistToggle}
+        onOpen={(item) => setCommentId(item._id)}
+      />
+    </motion.div>
+  );
 
   return (
-    <div
-      ref={containerRef}
-      onClick={() => dateSlide && setDateSlide(false)}
-      className="relative min-h-screen bg-[#121417] text-white selection:bg-[#FF7A00]/20 pb-32 overflow-x-hidden"
-    >
-      {/* ================= 1. HERO SECTION ================= */}
-      <motion.section
-        style={{ opacity: heroOpacity, scale: heroScale }}
-        initial="hidden"
-        animate="visible"
-        variants={sectionFade}
-        className="relative w-full px-6 lg:px-10 pt-10 lg:pt-20 pb-24 flex flex-col lg:flex-row items-center gap-12 max-w-[1380px] mx-auto z-10"
-      >
-        <div className="w-full lg:w-1/2 space-y-6">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl  tracking-tighter leading-[0.85] uppercase ">
-            DON'T JUST <br /> WATCH. <br />{" "}
-            <span className="text-[#FF7A00]">BE THERE.</span>
-          </h1>
-          <p className="max-w-sm text-gray-500 text-[13px] md:text-sm font-medium leading-relaxed">
-            Access the exclusive pulse of the night. From warehouse raves to
-            stadium anthems, Paysso is your verified bridge to the stage.
+    <div className="min-h-screen bg-[#121417] pb-28 text-white">
+      <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12">
+        {/* ── Page heading ───────────────────────────────────────────── */}
+        <header className="pt-10 sm:pt-14">
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#FF7A00]">
+            Addis Ababa · Live events
           </p>
-          <button
-            onClick={() => navigate("/event")}
-            className="group flex items-center gap-3 px-8 py-4 bg-white text-black text-[9px] lg:text-[14px] font-black uppercase tracking-[0.2em] rounded-full transition-all hover:bg-[#FF7A00] active:scale-95 shadow-xl"
-          >
-            Discover Events Now{" "}
-            <ArrowRight
-              size={14}
-              className="group-hover:translate-x-1 transition-transform"
-            />
-          </button>
-        </div>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            Discover Events
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-gray-400">
+            The city&apos;s best nights, all in one place. Find a show, grab a
+            seat, and go.
+          </p>
+        </header>
 
-        <div className="w-full lg:w-1/2 relative flex justify-center lg:justify-end">
-          <div className="relative w-full max-w-[320px] md:max-w-[440px] aspect-[4/5] z-10">
-            <div className="w-full h-full rounded-[2.5rem] overflow-hidden border border-white/[0.06] shadow-2xl bg-[#1C1F22]">
-              <img
-                src="/1763661369611.webp"
-                className="w-full h-full object-cover brightness-100 transition-all duration-1000"
-                alt="Concert"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121417] via-transparent to-transparent" />
-            </div>
+        {/* ── Featured hero (auto-rotates through bookable events) ────── */}
+        {hero && (
+          <section
+            role="region"
+            aria-roledescription="carousel"
+            aria-label="Featured events"
+            className="mt-8"
+            onMouseEnter={() => setHeroPaused(true)}
+            onMouseLeave={() => setHeroPaused(false)}
+            onFocusCapture={() => setHeroPaused(true)}
+            onBlurCapture={() => setHeroPaused(false)}
+          >
             <motion.div
-              initial={{ scale: 0, x: 20 }}
-              animate={{ scale: 1, x: 0 }}
-              transition={{ delay: 0.8 }}
-              className="absolute -top-4 -right-4 md:-top-6 md:-right-6 w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-[#121417] overflow-hidden shadow-2xl z-30"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-[#1C1F22]"
             >
-              <img
-                src="/Login.jpg"
-                className="w-full h-full object-cover"
-                alt="Artist 1"
-                loading="lazy"
-              />
-            </motion.div>
-            <motion.div
-              initial={{ scale: 0, x: -20 }}
-              animate={{ scale: 1, x: 0 }}
-              transition={{ delay: 1 }}
-              className="absolute top-1/2 -left-6 md:-left-8 w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-[#121417] overflow-hidden shadow-2xl z-30 hidden sm:block"
-            >
-              <img
-                src="/1308183.jpeg"
-                className="w-full h-full object-cover"
-                alt="Artist 2"
-                loading="lazy"
-              />
-            </motion.div>
-          </div>
-          <div className="absolute -bottom-6 -left-2 sm:left-6 bg-white p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl flex items-center gap-4 md:gap-5 -rotate-2 hover:rotate-0 transition-all z-20">
-            <div className="bg-[#FF7A00] p-3 md:p-3.5 rounded-xl text-white">
-              <ClockFading size={18} />
-            </div>
-            <div>
-              <p className="font-black text-lg md:text-xl uppercase italic text-black leading-none">
-                24 Hours
-              </p>
-              <p className="text-gray-400 font-bold text-[7px] md:text-[8px] uppercase tracking-[0.2em] mt-1">
-                ACCESS SYSTEM
-              </p>
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ================= 2. SEARCH ENGINE (Sticky) ================= */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        variants={sectionFade}
-        className="sticky top-4 z-40 px-6 lg:px-10 -mt-8 max-w-[1380px]  mx-auto transition-all duration-300"
-      >
-        <div className="bg-[#1C1F22]/95 backdrop-blur-md border border-white/[0.08]  p-2 rounded-[2rem] md:rounded-[2.2rem] shadow-2xl flex flex-col lg:flex-row gap-2 md:gap-3">
-          <div className="flex-[1.2] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
-            <Search className="text-gray-600" size={16} />
-            <div className="flex-1">
-              <label className="block text-[7px]  lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
-                Search Events
-              </label>
-              <input
-                type="text"
-                placeholder="Event name, genre..."
-                className="bg-transparent border-none outline-none text-white font-bold w-full p-0 text-[11px] placeholder:text-gray-700"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex-[0.9] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
-            <User className="text-gray-600" size={16} />
-            <div className="flex-1">
-              <label className="block text-[7px]  lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
-                Artist
-              </label>
-              <input
-                type="text"
-                placeholder="Search talent..."
-                className="bg-transparent border-none outline-none text-white font-bold w-full p-0 text-[11px] placeholder:text-gray-700"
-                value={artist}
-                onChange={(e) => setArtist(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex-[0.9] flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all">
-            <MapIcon className="text-gray-600" size={16} />
-            <div className="flex-1">
-              <label className="block text-[7px] lg:text-[12px]  text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
-                Category / Venue
-              </label>
-              <input
-                type="text"
-                placeholder="Nearby venues..."
-                className="bg-transparent border-none outline-none text-white font-bold w-full p-0 text-[11px] placeholder:text-gray-700"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex-[0.9] relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setDateSlide(!dateSlide);
-              }}
-              className="w-full h-full flex items-center gap-4 px-5 py-3 md:py-4 bg-white/[0.02] border border-transparent hover:border-white/10 rounded-[1.5rem] md:rounded-[1.8rem] transition-all"
-            >
-              <CalendarIcon className="text-gray-600" size={16} />
-              <div className="text-left">
-                <span className="block text-[7px] lg:text-[12px] text-gray-600 font-black uppercase tracking-[0.2em] mb-0.5">
-                  Schedule
-                </span>
-                <span className="font-bold text-[11px] lg:text-[12px] block truncate text-white">
-                  {date instanceof Date
-                    ? date.toLocaleDateString()
-                    : "All Dates"}
-                </span>
-              </div>
-            </button>
-            <AnimatePresence>
-              {dateSlide && (
-                <motion.div
-                  onClick={(e) => e.stopPropagation()}
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="absolute top-[115%] left-0 bg-[#1C1F22] border border-white/[0.1] p-3 rounded-2xl shadow-2xl z-50 origin-top-left"
-                >
-                  <CalendarDemo
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          <button
-            onClick={() => navigate("/event")}
-            className="h-[56px] md:h-[64px] lg:w-[70px] bg-[#FF7A00] rounded-[1.5rem] md:rounded-[1.8rem] flex items-center justify-center hover:bg-white group transition-all shrink-0 active:scale-95 shadow-lg shadow-[#FF7A00]/10"
-          >
-            <Search
-              className="text-black group-hover:scale-110 transition-transform"
-              size={20}
-              strokeWidth={3}
-            />
-          </button>
-        </div>
-      </motion.section>
-
-      {/* ================= 3. FEATURED GIGS (Scroll Stagger) ================= */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={containerVariants}
-        className="px-6 lg:px-10 py-16 md:py-24 max-w-[1380px] mx-auto z-10 relative"
-      >
-        <div className="flex justify-between items-end mb-8 md:mb-12 px-2">
-          <motion.div variants={itemVariants} className="space-y-2">
-            <h2 className="text-2xl md:text-5xl font-black uppercase  tracking-tighter leading-none">
-              FEATURED <span className="text-[#FF7A00]">Events</span>
-            </h2>
-            <div className="w-12 md:w-16 h-1 md:h-1.5 bg-[#FF7A00]" />
-          </motion.div>
-          <Link
-            to="/event"
-            className="text-gray-600 font-black uppercase text-[8px]  lg:text-[12px] md:text-[9px] tracking-[0.3em] hover:text-white transition-all flex items-center gap-2"
-          >
-            View All <ChevronRight size={12} />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8">
-          {featuredEventLoading
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <FeaturedEventSkeleton key={i} />
-              ))
-            : sortedFeaturedEvents.length > 0 &&
-              sortedFeaturedEvents.map((e, i) => {
-                const isSoldOut =
-                  e?.tickets?.length === 0 || isEventPassed8Hours(e);
-                const startDate = e?.dates?.start?.dateTime
-                  ? new Date(e.dates.start.dateTime)
-                  : null;
-                const tz = e?.dates?.timezone || "Africa/Addis_Ababa";
-                return (
+              <div className="relative aspect-[16/11] sm:aspect-[21/9]">
+                <AnimatePresence initial={false}>
                   <motion.div
-                    initial={{ opacity: 0, y: 25, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{
-                      duration: 0.6,
-                      ease: [0.25, 1, 0.5, 1],
-                      delay: i * 0.1,
-                    }}
-                    className="group max-w-[360px] mx-auto w-full sm:max-w-none"
-                    key={e?._id}
+                    key={hero._id}
+                    initial={{ opacity: 0, scale: 1.04 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                    className="absolute inset-0"
                   >
-                    <div className="relative rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
-                      {/* Sold Out Overlay */}
-                      {isSoldOut && (
-                        <div className="absolute inset-0 z-10 bg-black/20 backdrop-blur-[2px] rounded-[1.5rem] md:rounded-[2.2rem]  flex items-center justify-center pointer-events-none">
-                          <div className="bg-red-600/90 text-white px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2 shadow-2xl border border-white/20">
-                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                            Sold Out
-                          </div>
-                        </div>
-                      )}
-
-                      <Link
-                        to={
-                          !isSoldOut && e?.tickets?.length > 0
-                            ? `/events/${e?._id}/tickets/${e?.tickets[0]?._id}`
-                            : `/events/${e?._id}`
-                        }
-                        className="block"
-                        onClick={(ev) => {
-                          setCommentId(e?._id);
-                          console.log(e?._id);
-                        }}
-                      >
-                        {/* Image Container */}
-                        <div
-                          className={`relative aspect-[4/4] md:aspect-[3/4] rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden border border-white/[0.04] bg-[#1C1F22] transition-all duration-500 ${
-                            isSoldOut ? "brightness-90" : ""
-                          }`}
-                        >
-                          <img
-                            src={
-                              e?.pictures?.[0]
-                                ? e.pictures[0].startsWith("http")
-                                  ? e.pictures[0]
-                                  : `${API_URL}/${e.pictures[0]}`
-                                : ""
-                            }
-                            className="w-full h-full object-cover brightness-95 transition-transform duration-700"
-                            alt={e?.name}
-                            loading="lazy"
-                          />
-                          {/* Hover Gradient */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      </Link>
-
-                      {/* Wishlist Button */}
-                      <button
-                        onClick={(ev) =>
-                          handleWishlistToggle(e._id, e.tickets[0]?._id, ev)
-                        }
-                        disabled={wishlistMutation.isLoading}
-                        className={`absolute top-4 right-4 z-20 w-10 h-10 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
-                          checkWishlist(e._id)
-                            ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
-                            : "bg-black/20 border-white/10 text-white hover:bg-black/40"
-                        }`}
-                      >
-                        <Heart
-                          size={18}
-                          fill={checkWishlist(e._id) ? "currentColor" : "none"}
-                          strokeWidth={2.5}
-                        />
-                      </button>
-                      {/* Date Badge - Smoked Glass */}
-                      {startDate && (
-                        <div className="pointer-events-none absolute top-4 left-4 z-20 flex w-12 flex-col items-center rounded-2xl border border-white/15 bg-[#121417]/75 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur-xl">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-[#FF7A00]">
-                            {startDate.toLocaleString("en-US", {
-                              weekday: "short",
-                              timeZone: tz,
-                            })}
-                          </span>
-                          <span className="mt-0.5 text-xl font-black leading-none tracking-tighter text-white">
-                            {startDate.toLocaleString("en-US", {
-                              day: "numeric",
-                              timeZone: tz,
-                            })}
-                          </span>
-                          <span className="mt-0.5 text-[8px] font-bold uppercase tracking-widest text-white/80">
-                            {startDate.toLocaleString("en-US", {
-                              month: "short",
-                              timeZone: tz,
-                            })}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Metadata Section */}
-                    <div className="mt-5 px-1 space-y-4">
-                      {/* Row 1: Location & Rating (Desktop Scaled) */}
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-1.5 text-[#FF7A00]">
-                          <MapPin
-                            size={12}
-                            className="md:w-3.5 md:h-3.5"
-                            strokeWidth={3}
-                          />
-                          <span className="text-[10px] md:text-[11px] font-black uppercase italic tracking-widest">
-                            {e.links?.venues?.city ||
-                              e.links?.venues?.name ||
-                              "Main Venue"}
-                          </span>
-                        </div>
-
-                        {/* Scaled Rating Badge for Desktop */}
-                        <div className="flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/[0.08] shadow-sm">
-                          <Star
-                            size={12}
-                            className="fill-[#FF7A00] text-[#FF7A00] md:w-4 md:h-4"
-                          />
-                          <span className="text-white text-[10px] md:text-[13px] font-black italic tracking-tighter">
-                            {e?.rating?.reviews > 0 ? e.rating.score : "NEW"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Row 2: Event Name */}
-                      <Link
-                        to={
-                          !isSoldOut && e?.tickets?.length > 0
-                            ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
-                            : `/events/${e?._id}`
-                        }
-                      >
-                        <h3 className="text-white font-black uppercase  text-lg  lg:text-[18px] md:text-2xl leading-[0.9] tracking-tighter hover:text-[#FF7A00] transition-colors">
-                          {e.name}
-                        </h3>
-                      </Link>
-
-                      {/* Row 3: Pricing & Action */}
-                      <div className="flex justify-between items-end pt-1">
-                        <div className="flex flex-col">
-                          <span className="text-gray-600 text-[9px] lg:text-[8px] md:text-[10px] font-black uppercase tracking-[0.25em] mb-1">
-                            Entry From
-                          </span>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
-                              {(e?.priceRanges?.[0]?.min ?? e?.price ?? 0) === 0
-                                ? "Free"
-                                : `${e?.priceRanges?.[0]?.min ?? e?.price} Birr`}
-                            </span>
-                            <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
-                              /pp
-                            </span>
-                          </div>
-                        </div>
-
-                        <Link
-                          to={
-                            !isSoldOut && e?.tickets?.length > 0
-                              ? `/events/${e?._id}/tickets/${e.tickets[0]?._id}`
-                              : `/events/${e?._id}`
-                          }
-                          className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-[#1C1F22] border border-white/[0.08] flex items-center justify-center text-white group-hover:bg-[#FF7A00] group-hover:text-black transition-all shadow-xl group-hover:shadow-[#FF7A00]/30"
-                        >
-                          <Ticket
-                            size={20}
-                            className="md:w-6 md:h-6"
-                            strokeWidth={2.5}
-                          />
-                        </Link>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-        </div>
-      </motion.section>
-
-      {/* ================= 4. RELIABILITY CARDS ================= */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={sectionFade}
-        className="px-6 lg:px-10 pb-20 max-w-[1380px] mx-auto z-10 relative"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {[
-            {
-              icon: <Activity size={24} />,
-              title: "Support",
-              desc: "Real humans. At every venue.",
-              color: "text-[#FF7A00]",
-              bg: "bg-[#FF7A00]/5",
-            },
-            {
-              icon: <ShieldCheck size={24} />,
-              title: "Verified",
-              desc: "100% Secure ticket exchange.",
-              color: "text-[#5EC750]",
-              bg: "bg-[#5EC750]/5",
-            },
-          ].map((card, i) => (
-            <div
-              key={i}
-              className="group flex items-center gap-5 p-6 md:p-8 bg-white/[0.02] border border-white/[0.04] rounded-[1.5rem] md:rounded-[2.5rem]"
-            >
-              <div
-                className={`w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center ${card.bg} ${card.color}`}
-              >
-                {card.icon}
-              </div>
-              <div>
-                <h3 className="text-sm md:text-lg font-black uppercase italic tracking-tighter text-white">
-                  {card.title}
-                </h3>
-                <p className="text-gray-600 text-[10px] md:text-[11px] font-medium leading-tight">
-                  {card.desc}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </motion.section>
-
-      {/* LIVE EXPERIENCE (Photos & Video) */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        variants={containerVariants}
-        className="px-6 lg:px-10 pb-32 max-w-[1200px] mx-auto z-10 relative"
-      >
-        <div className="flex flex-col items-center text-center space-y-16">
-          {/* Header */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            <h2 className="text-4xl md:text-6xl  uppercase  tracking-tighter leading-none">
-              EXP THE <span className="text-[#FF7A00]">PULSE</span>
-            </h2>
-            <p className="text-gray-500 text-sm md:text-base font-medium tracking-tight max-w-2xl mx-auto">
-              From the main stage to your pocket. Witness the real energy
-              captured by our global community at every sold-out venue.
-            </p>
-          </motion.div>
-
-          {/* Screenshots Grid */}
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-            {/* Left: Main Hero Screenshot */}
-            <motion.div
-              variants={itemVariants}
-              className="rounded-[2.5rem] overflow-hidden border border-white/10 relative bg-black shadow-2xl h-fit"
-            >
-              <img
-                src="/Screenshot From 2026-04-24 04-49-36.png"
-                className="w-full h-auto object-contain"
-                alt="Hero View"
-                loading="lazy"
-              />
-              <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#FF7A00]">
-                  System Milestone — 01
-                </span>
-                <p className="text-white font-bold text-lg">
-                  Cinema Mode Interface
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Right: Sub-Screenshots */}
-            <div className="flex flex-col gap-12">
-              <motion.div
-                variants={itemVariants}
-                className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
-              >
-                <img
-                  src="/Screenshot From 2026-04-24 04-50-09.png"
-                  className="w-full h-auto object-contain"
-                  alt="Wishlist"
-                  loading="lazy"
-                />
-                <div className="absolute bottom-4 left-6">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
-                    Wishlist Management
-                  </span>
-                </div>
-              </motion.div>
-              <motion.div
-                variants={itemVariants}
-                className="rounded-[2rem] overflow-hidden border border-white/10 relative bg-black shadow-xl h-fit"
-              >
-                <img
-                  src="/Login.jpg"
-                  className="w-full h-auto object-contain"
-                  alt="Account"
-                  loading="lazy"
-                />
-                <div className="absolute bottom-4 left-6">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
-                    User Profile System
-                  </span>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Video Walkthrough (Centered) */}
-          <motion.div
-            variants={itemVariants}
-            className="w-full max-w-4xl space-y-10 pt-10"
-          >
-            <div className="space-y-4">
-              <span className="text-[12px] font-black uppercase tracking-[0.4em] text-gray-600">
-                Dynamic Synchronization
-              </span>
-              <h3 className="text-3xl font-black uppercase tracking-tighter text-white italic">
-                Authentication Walkthrough
-              </h3>
-            </div>
-
-            <div className="relative w-full h-full rounded-[1.5rem] md:rounded-[2.2rem] overflow-hidden">
-              <video
-                src="/Screencast From 2026-04-24 05-03-04.mp4"
-                autoPlay
-                loop
-                muted
-                className="w-full h-full object-cover"
-              />
-
-              {/* Play Button Interface */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-12 h-12 md:w-20 md:h-20 rounded-full bg-[#FF7A00] flex items-center justify-center text-black shadow-2xl">
-                  <Activity size={24} md:size={32} strokeWidth={3} />
-                </div>
-              </div>
-
-              {/* Progress Bar (Mock) */}
-              <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 h-1 md:h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: "0%" }}
-                  whileInView={{ width: "100%" }}
-                  transition={{
-                    duration: 15,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                  className="h-full bg-gradient-to-r from-[#FF7A00] to-orange-400 shadow-[0_0_15px_rgba(255,122,0,0.5)]"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 md:mt-10 px-2 md:px-6 flex items-center justify-between">
-              <div className="flex items-center gap-3 md:gap-6">
-                <div className="flex -space-x-2 md:-space-x-3">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="w-8 h-8 md:w-12 md:h-12 rounded-full border-2 md:border-4 border-[#121417] bg-gray-800 overflow-hidden"
+                    <Link
+                      to={eventHref(hero, false)}
+                      onClick={() => setCommentId(hero._id)}
+                      className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FF7A00]"
                     >
                       <img
-                        src={`/1308183.jpeg`}
-                        className="w-full h-full object-cover"
-                        alt="User"
-                        loading="lazy"
+                        src={eventImageUrl(hero, API_URL)}
+                        alt={hero.name}
+                        onError={(imageEvent) => {
+                          imageEvent.currentTarget.onerror = null;
+                          imageEvent.currentTarget.src = "/datebackground.jpg";
+                        }}
+                        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"
                       />
-                    </div>
-                  ))}
-                </div>
-                <div className="text-left">
-                  <p className="text-white text-[10px] md:text-xs font-black uppercase tracking-tight">
-                    Sync Active
-                  </p>
-                  <p className="text-gray-500 text-[8px] md:text-[10px] font-bold md:block hidden">
-                    +2.4k community views
-                  </p>
-                </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/5" />
+
+                      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8 lg:p-10">
+                        <span className="inline-flex items-center rounded-full bg-[#FF7A00] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-black">
+                          Featured
+                        </span>
+                        <h2 className="mt-3 max-w-4xl text-xl font-semibold leading-tight tracking-tight sm:text-3xl lg:text-4xl">
+                          {hero.name}
+                        </h2>
+                        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-medium text-white/70">
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays size={14} className="text-[#FF7A00]" />
+                            {eventDateLabel(hero)}
+                          </span>
+                          <span className="inline-flex items-center gap-2">
+                            <MapPin size={14} className="text-[#FF7A00]" />
+                            {eventVenueLabel(hero)}
+                          </span>
+                          <span className="font-semibold text-[#FF7A00]">
+                            {eventPriceLabel(hero)}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                </AnimatePresence>
+
+                {heroSlides.length > 1 && (
+                  <div className="absolute right-4 top-4 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-2.5 py-2 backdrop-blur-md sm:right-6 sm:top-6">
+                    {heroSlides.map((slide, index) => {
+                      const active = index === heroIndex;
+                      return (
+                        <button
+                          key={slide._id}
+                          type="button"
+                          onClick={() => setHeroIndex(index)}
+                          aria-label={`Show ${slide.name}`}
+                          aria-current={active ? "true" : undefined}
+                          className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                            active
+                              ? "w-7 bg-white/25"
+                              : "w-1.5 bg-white/30 hover:bg-white/60"
+                          }`}
+                        >
+                          {active && !reduceMotion && (
+                            <span
+                              key={hero._id}
+                              className="hero-progress absolute inset-0 origin-left rounded-full bg-[#FF7A00]"
+                              style={{
+                                animationDuration: `${HERO_INTERVAL}ms`,
+                                animationPlayState: heroPaused
+                                  ? "paused"
+                                  : "running",
+                              }}
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              <div className="bg-white/5 border border-white/10 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl">
-                <span className="text-[#FF7A00] text-[8px] md:text-[10px] font-black uppercase tracking-widest italic animate-pulse">
-                  ● System Live
-                </span>
-              </div>
+            </motion.div>
+          </section>
+        )}
+
+        {/* ── Featured row ───────────────────────────────────────────── */}
+        {featuredRow.length > 0 && (
+          <section className="pt-10">
+            <div className="mb-4 flex items-end justify-between">
+              <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
+                Featured this week
+              </h2>
+              <Link
+                to="/event"
+                className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 transition-colors hover:text-[#FF7A00]"
+              >
+                View all <ArrowRight size={12} />
+              </Link>
             </div>
-          </motion.div>
+            <div className={GRID_CLASS}>{featuredRow.map(renderTile)}</div>
+          </section>
+        )}
+
+        {/* ── Sticky filter bar ──────────────────────────────────────── */}
+        <div className="sticky top-[64px] z-30 -mx-5 mt-10 border-y border-white/[0.06] bg-[#121417]/90 px-5 py-3 backdrop-blur-xl sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
+              {CATEGORIES.map((category) => {
+                const active = type === category.value;
+                return (
+                  <button
+                    key={category.label}
+                    type="button"
+                    onClick={() => {
+                      setType(category.value);
+                      setDate("");
+                      setArtist("");
+                      setVenues("");
+                    }}
+                    aria-pressed={active}
+                    className={`shrink-0 rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] ${
+                      active
+                        ? "bg-[#FF7A00] text-black"
+                        : "border border-white/[0.08] bg-white/[0.02] text-gray-400 hover:border-white/20 hover:text-white"
+                    }`}
+                  >
+                    {category.label}
+                  </button>
+                );
+              })}
+
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setDateOpen((open) => !open)}
+                  aria-expanded={dateOpen}
+                  aria-label="Filter by date"
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] ${
+                    date
+                      ? "bg-[#FF7A00] text-black"
+                      : "border border-white/[0.08] bg-white/[0.02] text-gray-400 hover:border-white/20 hover:text-white"
+                  }`}
+                >
+                  <CalendarDays size={13} />
+                  {selectedDateLabel}
+                </button>
+
+                <AnimatePresence>
+                  {dateOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      className="absolute left-0 top-[120%] z-50 origin-top-left rounded-2xl border border-white/[0.1] bg-[#1C1F22] p-3 shadow-2xl"
+                    >
+                      <CalendarDemo
+                        mode="single"
+                        selected={date}
+                        onSelect={(picked) => {
+                          setDate(picked);
+                          setDateOpen(false);
+                        }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {hasFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500 transition hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00]"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="relative w-full lg:w-80">
+              <Search
+                size={15}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
+              />
+              <input
+                type="search"
+                value={search || ""}
+                onChange={(inputEvent) => setSearch(inputEvent.target.value)}
+                placeholder="Search events, artists, venues"
+                aria-label="Search events"
+                className="h-11 w-full rounded-full border border-white/[0.08] bg-white/[0.02] pl-11 pr-10 text-[12px] font-semibold text-white outline-none transition placeholder:text-gray-600 focus:border-[#FF7A00]/50 focus:bg-white/[0.04]"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-500 transition hover:bg-white/10 hover:text-white"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-      </motion.section>
+
+        {/* ── All events ─────────────────────────────────────────────── */}
+        <section className="pt-8">
+          <div className="mb-5 flex items-end justify-between">
+            <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
+              All events
+            </h2>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">
+              {loading ? "Loading" : `${list.length} results`}
+            </span>
+          </div>
+
+          {loading ? (
+            <div className={GRID_CLASS}>
+              {Array.from({ length: 8 }).map((_, index) => (
+                <TileSkeleton key={index} />
+              ))}
+            </div>
+          ) : list.length > 0 ? (
+            <div className={GRID_CLASS}>{list.slice(0, 16).map(renderTile)}</div>
+          ) : (
+            <div className="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-24 text-center">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/[0.03]">
+                <Ticket size={26} className="text-gray-700" />
+              </div>
+              <h3 className="text-2xl font-black uppercase tracking-tighter">
+                No events found
+              </h3>
+              <p className="mt-2 max-w-sm text-sm text-gray-500">
+                Try a different search, or clear your filters to see everything
+                happening in the city.
+              </p>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-8 rounded-full bg-[#FF7A00] px-7 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] focus-visible:ring-offset-4 focus-visible:ring-offset-[#121417]"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
+
+          {!loading && list.length > 16 && (
+            <div className="mt-12 flex justify-center">
+              <Link
+                to="/event"
+                className="inline-flex items-center gap-2 rounded-full border border-white/[0.1] px-7 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition hover:border-[#FF7A00] hover:text-[#FF7A00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00]"
+              >
+                View all events <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 };

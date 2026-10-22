@@ -65,6 +65,26 @@ export const ProtectedRoute = ({ children }) => {
 
   return children;
 };
+// Only super admins may open the super admin area. The server enforces the
+// same rule on its endpoints; this keeps everyone else out of the screens.
+export const SuperAdminRoute = ({ children }) => {
+  const { usererror, user, isUserLoading, isUserFetching } = eventService();
+  const location = useLocation();
+
+  if (isUserLoading || isUserFetching) {
+    return <div className="fixed inset-0 z-[100] bg-[#121417]" />;
+  }
+
+  if (!user || usererror) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user.role !== "super_admin") {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
 export const Toggle = ({ name, toggle, toggleOn, action }) => {
   return (
     <div className="flex w-full justify-between">
@@ -92,6 +112,7 @@ export default function CheckoutModal({
   onClose,
   amount = 400,
   name,
+  eventId,
   ticketId,
   paymentMethods = [],
 }) {
@@ -150,7 +171,11 @@ export default function CheckoutModal({
           duration: 4000,
         });
 
-        navigate(`/tickets_home/${data.userTicket._id}`);
+        navigate(
+          eventId
+            ? `/tickets_home/${eventId}/${data.userTicket._id}`
+            : `/tickets_home/${data.userTicket._id}`,
+        );
       } else {
         const { default: toast } = await import("react-hot-toast");
         toast.success(
@@ -162,6 +187,7 @@ export default function CheckoutModal({
           state: {
             orderNo: data.userTicket.orderNo,
             eventName: name,
+            eventId,
             totalAmount,
             quantity,
           },
@@ -521,8 +547,10 @@ export const AccountMenu = ({ icon, header, path, action }) => {
 
 export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
   const { API_URL } = useService();
-  const { user, userProfile } = eventService();
+  const { user, userProfile, tickets, wishlist } = eventService();
+  const location = useLocation();
   const queryClient = useQueryClient();
+
   const handleLogout = async () => {
     try {
       await api.post(`/api/auth/logout`, {});
@@ -534,198 +562,344 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
     }
   };
 
+  const ticketCount = tickets?.events?.length ?? 0;
+  const savedCount = wishlist?.wishlist?.items?.length ?? 0;
+
+  const avatarSrc = userProfile?.user?.avatarUrl
+    ? userProfile.user.avatarUrl.startsWith("http")
+      ? userProfile.user.avatarUrl
+      : `${API_URL}/${userProfile.user.avatarUrl}`
+    : "/defaultAvater.jpg";
+
+  const displayName =
+    userProfile?.user?.fullName ||
+    user?.fullName ||
+    user?.name ||
+    "Verified user";
+  const email = userProfile?.user?.userId?.email || user?.email || "";
+
   const allItems = [
     {
-      icon: <CircleUser size={20} />,
-      label: "My Profile",
+      icon: <CircleUser size={18} />,
+      label: "My profile",
       path: "/account",
     },
     {
-      icon: <MapPin size={20} />,
+      icon: <Ticket size={18} />,
+      label: "My tickets",
+      path: "/tickets_home",
+    },
+    {
+      icon: <Heart size={18} />,
+      label: "Wishlist",
+      path: "/account/favorites",
+    },
+    {
+      icon: <MapPin size={18} />,
       label: "Venues",
       path: "/venues",
     },
     {
-      icon: <Ticket size={20} />,
-      label: "My Tickets",
-      path: "/tickets_home",
+      icon: <Search size={18} />,
+      label: "Explore",
+      path: "/event",
     },
-    {
-      icon: <Heart size={20} />,
-      label: "Wishlist",
-      path: "/account/favorites",
-    },
-    // {
-    //   icon: <CreditCard size={20} />,
-    //   label: "Payment Detail",
-    //   path: "/account/payment_detail",
-    // },
-    // {
-    //   icon: <Settings size={20} />,
-    //   label: "Settings",
-    //   path: "/account/setting",
-    // },
   ];
 
   // Navigation items shown when not logged in
   const guestNavItems = [
     {
-      icon: <MapPin size={20} />,
+      icon: <Search size={18} />,
+      label: "Explore",
+      path: "/event",
+    },
+    {
+      icon: <MapPin size={18} />,
       label: "Venues",
       path: "/venues",
     },
     {
-      icon: <User size={20} />,
+      icon: <User size={18} />,
       label: "Artists",
       path: "/artists",
-    },
-    {
-      icon: <Search size={20} />,
-      label: "Explore",
-      path: "/event",
     },
   ];
 
   const menuItems = !user
     ? guestNavItems
     : minimal
-    ? allItems.filter((item) => ["Venues", "Wishlist"].includes(item.label))
-    : allItems;
+      ? allItems.filter((item) =>
+          ["My tickets", "Wishlist"].includes(item.label),
+        )
+      : allItems;
+
+  const isActive = (path) =>
+    path === "/"
+      ? location.pathname === "/"
+      : location.pathname === path ||
+        location.pathname.startsWith(`${path}/`);
+
+  const listMotion = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.055, delayChildren: 0.08 },
+    },
+  };
+
+  const itemMotion = {
+    hidden: { opacity: 0, x: -18 },
+    show: {
+      opacity: 1,
+      x: 0,
+      transition: { type: "spring", stiffness: 380, damping: 30 },
+    },
+  };
 
   return (
-    <div
-      className={`h-full w-full flex flex-col bg-[#121417]/95 backdrop-blur-3xl transition-all ${
-        !minimal
-          ? "border-r border-white/10 shadow-[20px_0_50px_rgba(0,0,0,0.5)]"
-          : ""
-      }`}
-    >
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#0E1012]">
+      {/* Ambient orange glow */}
+      <div className="pointer-events-none absolute -left-24 -top-28 h-64 w-64 rounded-full bg-[#FF7A00]/20 blur-[90px]" />
+      <div className="pointer-events-none absolute -bottom-32 -right-20 h-64 w-64 rounded-full bg-[#FF7A00]/[0.08] blur-[90px]" />
+
       {/* Header */}
-      {!minimal ? (
-        <div className="flex items-center justify-between px-8 py-7 border-b border-white/[0.04]">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-[#FF7A00] rounded-full" />
-            <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">
-              Access Panel
-            </h2>
-          </div>
+      <div className="relative z-10 flex items-center justify-between px-5 pt-5">
+        <Link
+          to="/"
+          onClick={() => setIsOpen(false)}
+          className="flex items-center gap-2.5"
+        >
+          <img src="/P_logo.png" alt="" className="h-7 w-7 object-contain" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/80">
+            Menu
+          </span>
+        </Link>
 
-          <button
-            onClick={() => setIsOpen(false)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.03] border border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/10 transition-all active:scale-90"
-          >
-            <X size={20} strokeWidth={3} />
-          </button>
-        </div>
-      ) : (
-        <div className="px-6 py-5 border-b border-white/[0.04] bg-white/[0.02]">
-          <h3 className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500">
-            Quick Access
-          </h3>
-        </div>
-      )}
-
-      {/* Profile Section */}
-      {!minimal && user && (
-        <div className="px-8 py-10 border-b border-white/[0.04] flex flex-col items-center text-center space-y-4 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-[#FF7A00]/[0.02] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-          <div className="relative">
-            <div className="absolute inset-0 bg-[#FF7A00]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-            <img
-              src={
-                userProfile?.user?.avatarUrl
-                  ? `${API_URL}/${userProfile.user.avatarUrl}`
-                  : "/defaultAvater.jpg"
-              }
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "/defaultAvater.jpg";
-              }}
-              alt="Profile"
-              className="relative w-24 h-24 rounded-[32px] object-cover border-2 border-white/10 shadow-2xl group-hover:border-[#FF7A00]/50 transition-all duration-500"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-lg font-black uppercase italic tracking-tight text-white">
-              {userProfile?.user?.fullName || "Verified User"}
-            </h3>
-
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-              {userProfile?.user?.userId?.email}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Menu Items */}
-      <div
-        className={`p-4 ${
-          !minimal ? "py-6 px-4 space-y-1.5" : "py-3 space-y-1"
-        } scrollbar-hide overflow-y-auto`}
-      >
-        {menuItems.map((item, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
-            <Link
-              to={item.path}
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-4 px-5 py-4 rounded-[1.2rem] text-gray-400 hover:text-white hover:bg-white/[0.03] border border-transparent hover:border-white/[0.05] transition-all group"
-            >
-              <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.02] text-gray-500 group-hover:bg-[#FF7A00] group-hover:text-black transition-all duration-300">
-                {item.icon}
-              </div>
-
-              <span className="text-sm font-black uppercase italic tracking-tight">
-                {item.label}
-              </span>
-
-              <ChevronRight
-                size={14}
-                className="ml-auto opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all"
-              />
-            </Link>
-          </motion.div>
-        ))}
+        <button
+          onClick={() => setIsOpen(false)}
+          aria-label="Close menu"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-gray-400 transition hover:rotate-90 hover:border-white/20 hover:text-white active:scale-90"
+        >
+          <X size={16} />
+        </button>
       </div>
 
-      {/* Logout / Login */}
-      {!minimal && (
-        <div className="px-6 pb-8 pt-4">
-          {user ? (
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-[1.2rem] bg-red-500/5 text-red-500/70 border border-red-500/10 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 group font-black uppercase italic text-xs tracking-widest"
+      {minimal ? (
+        <p className="px-6 pt-5 text-[9px] font-bold uppercase tracking-[0.34em] text-gray-600">
+          Quick access
+        </p>
+      ) : user ? (
+        <>
+          {/* Profile card */}
+          <div className="relative z-10 mt-4 px-5">
+            <Link
+              to="/account"
+              onClick={() => setIsOpen(false)}
+              className="group flex items-center gap-4 rounded-[1.6rem] border border-white/[0.07] bg-white/[0.03] p-3.5 transition hover:border-[#FF7A00]/40 hover:bg-white/[0.05]"
             >
-              <LogOut size={16} strokeWidth={3} />
-              <span>Sign Out</span>
-            </button>
+              <span className="relative shrink-0">
+                <span className="absolute -inset-[2px] rounded-[1.25rem] bg-gradient-to-br from-[#FF7A00] via-[#FF7A00]/40 to-transparent opacity-70 blur-[1px] transition group-hover:opacity-100" />
+                <img
+                  src={avatarSrc}
+                  alt=""
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = "/defaultAvater.jpg";
+                  }}
+                  className="relative h-12 w-12 rounded-[1rem] border border-black/40 object-cover"
+                />
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">
+                  {displayName}
+                </p>
+                <p className="mt-0.5 truncate text-[11px] text-gray-500">
+                  {email}
+                </p>
+              </div>
+
+              <ChevronRight
+                size={15}
+                className="shrink-0 text-gray-600 transition group-hover:translate-x-0.5 group-hover:text-[#FF7A00]"
+              />
+            </Link>
+          </div>
+
+          {/* Quick stats */}
+          <div className="relative z-10 mt-2.5 grid grid-cols-2 gap-2 px-5">
+            <Link
+              to="/tickets_home"
+              onClick={() => setIsOpen(false)}
+              className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2.5 transition hover:border-[#FF7A00]/30 hover:bg-white/[0.04]"
+            >
+              <Ticket size={14} className="text-[#FF7A00]" />
+              <p className="mt-1.5 text-base font-semibold leading-none text-white">
+                {ticketCount}
+              </p>
+              <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                Tickets
+              </p>
+            </Link>
+
+            <Link
+              to="/account/favorites"
+              onClick={() => setIsOpen(false)}
+              className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 transition hover:border-[#FF7A00]/30 hover:bg-white/[0.04]"
+            >
+              <Heart size={14} className="text-[#FF7A00]" />
+              <p className="mt-2 text-lg font-semibold leading-none text-white">
+                {savedCount}
+              </p>
+              <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                Saved
+              </p>
+            </Link>
+          </div>
+        </>
+      ) : (
+        <div className="relative z-10 mt-6 px-5">
+          <div className="rounded-[1.6rem] border border-white/[0.07] bg-gradient-to-br from-[#FF7A00]/15 to-transparent p-5">
+            <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-[#FF7A00]">
+              Welcome
+            </p>
+            <p className="mt-2 text-base font-semibold leading-snug text-white">
+              Sign in to save events and collect tickets.
+            </p>
+            <Link
+              to="/login"
+              onClick={() => setIsOpen(false)}
+              className="mt-4 flex h-11 w-full items-center justify-center rounded-xl bg-[#FF7A00] text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:bg-white"
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <motion.nav
+        variants={listMotion}
+        initial="hidden"
+        animate="show"
+        className="relative z-10 mt-4 flex-1 overflow-y-auto px-4 pb-2"
+      >
+        <p className="px-3 pb-2 text-[9px] font-bold uppercase tracking-[0.3em] text-gray-600">
+          {user ? "Your account" : "Explore Paysso"}
+        </p>
+
+        {menuItems.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <motion.div key={item.path} variants={itemMotion}>
+              <Link
+                to={item.path}
+                onClick={() => setIsOpen(false)}
+                className={`group relative mb-0.5 flex items-center gap-3.5 rounded-2xl px-3 py-2 transition-colors ${
+                  active
+                    ? "bg-[#FF7A00]/10 text-white"
+                    : "text-gray-400 hover:bg-white/[0.04] hover:text-white"
+                }`}
+              >
+                {active && (
+                  <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-[#FF7A00]" />
+                )}
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                    active
+                      ? "bg-[#FF7A00] text-black"
+                      : "bg-white/[0.04] text-gray-500 group-hover:text-[#FF7A00]"
+                  }`}
+                >
+                  {item.icon}
+                </span>
+                <span className="text-[13px] font-semibold">{item.label}</span>
+                <ChevronRight
+                  size={14}
+                  className="ml-auto text-gray-700 transition group-hover:translate-x-0.5 group-hover:text-[#FF7A00]"
+                />
+              </Link>
+            </motion.div>
+          );
+        })}
+      </motion.nav>
+
+      {/* Footer */}
+      {!minimal && (
+        <div className="relative z-10 border-t border-white/[0.06] px-4 py-3">
+          {user ? (
+            <>
+              <button
+                onClick={handleLogout}
+                className="group flex w-full items-center gap-3.5 rounded-2xl px-3 py-2.5 text-red-400/80 transition hover:bg-red-500/10 hover:text-red-400"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 transition group-hover:bg-red-500/20">
+                  <LogOut size={16} />
+                </span>
+                <span className="text-[13px] font-semibold">Sign out</span>
+              </button>
+              <p className="mt-2 text-center text-[9px] uppercase tracking-[0.28em] text-gray-700">
+                Paysso · Addis Ababa
+              </p>
+            </>
           ) : (
             <div className="space-y-2">
               <Link
                 to="/login"
                 onClick={() => setIsOpen(false)}
-                className="w-full block text-center py-3 bg-[#FF7A00] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white transition-colors"
+                className="block h-11 w-full rounded-xl bg-[#FF7A00] text-center text-[10px] font-bold uppercase leading-[2.75rem] tracking-[0.2em] text-black transition hover:bg-white"
               >
-                Sign In
+                Sign in
               </Link>
               <Link
                 to="/sign_up"
                 onClick={() => setIsOpen(false)}
-                className="w-full block text-center py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-colors"
+                className="block h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] text-center text-[10px] font-bold uppercase leading-[2.75rem] tracking-[0.2em] text-white transition hover:bg-white/10"
               >
-                Create Account
+                Create account
               </Link>
             </div>
           )}
         </div>
       )}
     </div>
+  );
+};
+
+/* Animated drawer shell shared by the storefront header and the account page.
+   The panel springs in from the left and a light sheen sweeps across it once,
+   while the menu content staggers itself in. */
+export const SideMenuPanel = ({ setIsOpen, minimal = false }) => {
+  if (minimal) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -16, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -16, scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 320, damping: 30 }}
+        className="absolute right-6 top-20 w-72 overflow-hidden rounded-[2rem] border border-white/10 bg-[#0E1012]/95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-3xl"
+      >
+        <AccountSideMenu setIsOpen={setIsOpen} minimal />
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ x: "-100%" }}
+      animate={{ x: 0 }}
+      exit={{ x: "-100%" }}
+      transition={{ type: "spring", stiffness: 340, damping: 34, mass: 0.85 }}
+      className="absolute left-0 top-0 h-full w-[88%] max-w-[380px] overflow-hidden rounded-r-[2rem] border-r border-white/[0.07] bg-[#0E1012] shadow-[30px_0_80px_rgba(0,0,0,0.65)]"
+    >
+      <AccountSideMenu setIsOpen={setIsOpen} />
+      <motion.div
+        initial={{ x: "-140%" }}
+        animate={{ x: "140%" }}
+        transition={{ duration: 1.1, ease: [0.4, 0, 0.2, 1], delay: 0.12 }}
+        className="pointer-events-none absolute inset-y-0 z-30 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent"
+      />
+    </motion.div>
   );
 };
 

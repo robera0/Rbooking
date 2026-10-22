@@ -35,6 +35,10 @@ const LoginUser = () => {
           window.location.href = "/admin/home";
           return;
         }
+        if (data.role === "super_admin") {
+          window.location.href = "/superadmin";
+          return;
+        }
         navigate(from, { replace: true });
       }
     },

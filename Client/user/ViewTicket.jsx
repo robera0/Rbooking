@@ -53,7 +53,7 @@ const Detail = ({ icon: Icon, label, value }) => (
 );
 
 const ViewTicket = () => {
-  const { ticketId } = useParams();
+  const { eventId, ticketId } = useParams();
   const navigate = useNavigate();
   const { fetchTicketById } = eventService();
 
@@ -63,7 +63,7 @@ const ViewTicket = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["tickets", ticketId],
+    queryKey: ["tickets", eventId, ticketId],
     queryFn: () => fetchTicketById(ticketId),
     enabled: !!ticketId,
     retry: false,

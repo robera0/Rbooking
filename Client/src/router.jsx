@@ -10,7 +10,7 @@ import UserHome from "../user/UserHome";
 
 import Sport from "../user/Sport";
 import AccountPage from "../user/AccountPage";
-
+import SuperAdminLayout from "./superadmin/SuperAdminLayout";
 import Ticket from "../user/Ticket";
 import Account from "../user/Account";
 import ViewTicket from "../user/ViewTicket";
@@ -35,7 +35,7 @@ import Payment from "../admin/Payment";
 import AdminAccount from "../admin/AdminAccount";
 import CreateNotification from "../admin/CreateNotification";
 import AdminViewTicket from "../admin/AdminViewTicket";
-import { ProtectedRoute } from "./components/Reusable";
+import { ProtectedRoute, SuperAdminRoute } from "./components/Reusable";
 import GoogleAuthCallback from "../user/GoogleAuthCallback";
 import RegistrationPage from "../admin/RegistrationPage";
 import CompleteProfile from "../user/CompleteProfile";
@@ -82,6 +82,19 @@ export const router = createBrowserRouter([
         element: (
           <PageWrapper>
             <CompleteProfile />
+          </PageWrapper>
+        ),
+      },
+
+      // Super Admin — UI-only module with mock data (see src/superadmin/README.md).
+      // Guarded by SuperAdminRoute here and requireRole("super_admin") on the server.
+      {
+        path: "superadmin/*",
+        element: (
+          <PageWrapper>
+            <SuperAdminRoute>
+              <SuperAdminLayout />
+            </SuperAdminRoute>
           </PageWrapper>
         ),
       },
@@ -393,6 +406,14 @@ export const router = createBrowserRouter([
                 element: (
                   <PageWrapper>
                     <Ticket />
+                  </PageWrapper>
+                ),
+              },
+              {
+                path: ":eventId/:ticketId",
+                element: (
+                  <PageWrapper>
+                    <ViewTicket />
                   </PageWrapper>
                 ),
               },
