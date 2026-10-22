@@ -1,3 +1,7 @@
+import mongoose from "mongoose";
+
+const { ObjectId } = mongoose.Schema.Types;
+
 const tableSchema = new mongoose.Schema({
   club: { type: ObjectId, ref: "Club", required: true, index: true },
   name: String, // "VIP 3"

@@ -126,23 +126,30 @@ export const signupClub = async (req, res) => {
       isProfileComplete: true,
     });
 
-    const clubDoc = await ClubModel.create({
-      owner: new mongoose.Types.ObjectId(newUser._id),
-      name: clubName,
-      description,
-      coverPage,
-      address: {
-        country,
-        region,
-        city,
-        streetAddress,
-      },
-      openingHours: parsedOpeningHours,
-      paymentMethods: parsedPaymentMethods,
-      acceptsReservations: parsedAcceptsReservations,
-      holdMinutes: Number(holdMinutes) || 15,
-      isActive: true,
-    });
+    let clubDoc;
+    try {
+      clubDoc = await ClubModel.create({
+        owner: new mongoose.Types.ObjectId(newUser._id),
+        name: clubName,
+        description,
+        coverPage,
+        address: {
+          country,
+          region,
+          city,
+          streetAddress,
+        },
+        openingHours: parsedOpeningHours,
+        paymentMethods: parsedPaymentMethods,
+        acceptsReservations: parsedAcceptsReservations,
+        holdMinutes: Number(holdMinutes) || 15,
+        isActive: true,
+      });
+    } catch (clubError) {
+      // Do not leave a user behind whose email would then read as taken.
+      await UserModel.deleteOne({ _id: newUser._id }).catch(() => {});
+      throw clubError;
+    }
 
     const accessToken = generateAccessToken({ id: newUser._id, role: normalizedRole });
     const refreshToken = generateRefreshToken({ id: newUser._id, role: normalizedRole });

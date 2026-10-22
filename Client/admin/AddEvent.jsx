@@ -1,3 +1,4 @@
+import TicketPriceField from "./TicketPriceField";
 import React, { useState, useRef } from "react";
 import {
   Plus,
@@ -20,7 +21,7 @@ import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { eventService } from "@/Context/ApiEvent";
 import { CustomSelect } from "./Cards";
-import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+import { getFriendlyErrorMessage, userMessageError } from "@/lib/errorMessages";
 import api from "../src/Context/api/api.config";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -344,7 +345,7 @@ const DatePickerPanel = ({ value, onChange }) => {
         // unusably cramped calendar. Floating it as an absolutely
         // positioned popover lets it use its natural width regardless of
         // how narrow the card is.
-        <div className="absolute z-50 top-full left-0 mt-3 w-[320px] max-w-[90vw] rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
+        <div className="absolute z-50 top-full right-0 mt-3 w-[320px] max-w-[90vw] rounded-2xl overflow-hidden border border-[#FF7A00]/15 shadow-2xl">
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ThemeProvider theme={orangeTheme}>
               <StaticDateTimePicker
@@ -635,8 +636,6 @@ const AddEvent = () => {
     description: "",
     eventDate: "",
     tickets: [],
-    isFree: false,
-    freeCapacity: "",
     policies: [],
     links: {},
     amenities: [],
@@ -647,6 +646,7 @@ const AddEvent = () => {
     durationDays: "",
     stages: [],
     status: "draft",
+    invitation: false,
   };
 
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -670,6 +670,10 @@ const AddEvent = () => {
   // fires) can both slip through before the disabled attribute applies,
   // each running createTickets and inserting every ticket type twice.
   const isPublishingRef = useRef(false);
+  // The draft save currently on the wire (so Publish can wait for it) and
+  // whether publishing already succeeded (so no later autosave can touch it).
+  const inFlightSaveRef = useRef(null);
+  const publishedRef = useRef(false);
 
   const hasUnsavedChanges =
     JSON.stringify(formData) !== JSON.stringify(EMPTY_FORM);
@@ -728,7 +732,21 @@ const AddEvent = () => {
     return /not found/i.test(message || "");
   };
 
-  const saveDraft = async () => {
+  const saveDraft = () => {
+    // A save that starts while publishing, or after it, could reach the server
+    // after the publish and turn the event back into a draft.
+    if (isPublishingRef.current || publishedRef.current) return Promise.resolve(null);
+    const pending = runSaveDraft().finally(() => {
+      if (inFlightSaveRef.current === pending) inFlightSaveRef.current = null;
+    });
+    inFlightSaveRef.current = pending;
+    return pending;
+  };
+
+  const runSaveDraft = async () => {
+    // The server needs an event type to create a draft; until one is chosen
+    // there is nothing it can save.
+    if (!formData.type) return null;
     try {
       if (draftIdRef.current) {
         try {
@@ -756,6 +774,9 @@ const AddEvent = () => {
       return data;
     } catch (err) {
       console.error("Draft save error:", err);
+      // One toast, replaced rather than stacked, so a bad tier that blocks
+      // every autosave is visible without spamming every 3 seconds.
+      toast.error(`Draft not saved: ${err.message}`, { id: "draft-save-error" });
       return null;
     }
   };
@@ -771,6 +792,7 @@ const AddEvent = () => {
     form.append("priceRanges", JSON.stringify(data.priceRanges));
     form.append("policies", JSON.stringify(data.policies));
     form.append("dates", JSON.stringify(data.dates));
+    form.append("invitation", data.invitation === true);
     if (data.status) form.append("status", data.status);
     form.append("amenities", JSON.stringify(data.amenities));
     form.append("musicGenre", JSON.stringify(data.musicGenre));
@@ -783,21 +805,6 @@ const AddEvent = () => {
     (data.pictures || []).forEach((img) => form.append("pictures", img));
     return form;
   };
-
-  // When the event is free, the paid tiers are ignored and a single free
-  // ticket carrying only the capacity is sent instead.
-  const getTicketsToSubmit = () =>
-    formData.isFree
-      ? [
-          {
-            name: "Free",
-            price: 0,
-            capacity: Number(formData.freeCapacity) || 0,
-            isActive: true,
-            isFree: true,
-          },
-        ]
-      : formData.tickets.map((t) => ({ ...t, isFree: false }));
 
   const buildPayload = (status) => {
     const type = formData.type.toLowerCase();
@@ -820,13 +827,13 @@ const AddEvent = () => {
           pictures: [],
         },
       },
+      invitation: formData.invitation,
       policies: formData.policies,
-      priceRanges: getTicketsToSubmit().map((t) => ({
+      priceRanges: formData.tickets.map((t) => ({
         type: t.name,
         currency: "ETB",
-        isFree: t.isFree,
-        min: t.isFree ? 0 : Number(t.price),
-        max: t.isFree ? 0 : Number(t.price),
+        min: Number(t.price),
+        max: Number(t.price),
         capacity: Number(t.capacity),
         isActive: t.isActive !== false,
       })),
@@ -870,42 +877,70 @@ const AddEvent = () => {
     return { ...basePayload, status };
   };
 
-  // Publishes into the SAME draft id if one exists, only POSTs fresh if none yet.
-  const publishMutation = useMutation({
-    mutationFn: async (payload) => {
-      if (draftIdRef.current) {
-        try {
-          const res = await api.patch(
-            `/api/auth/admin/events/${draftIdRef.current}`,
-            buildFormData(payload),
-          );
-          return res.data;
-        } catch (err) {
-          const message = readErrorMessage(err, "Failed to publish event");
-          if (shouldCreateFreshDraft(err, message)) {
-            draftIdRef.current = null;
-          } else {
-            throw new Error(message);
-          }
-        }
-      }
+  // Keeps the server's own message for a rejected request (4xx), so the toast
+  // says what is wrong instead of a generic "something went wrong".
+  const asError = (err, message) => {
+    const status = err.response?.status;
+    const shown = err.response?.data?.message;
+    return shown && status >= 400 && status < 500 && status !== 401 && status !== 403
+      ? userMessageError(shown)
+      : new Error(message);
+  };
+
+  // Saves the event: into the SAME draft id if one exists, only POSTs fresh if none yet.
+  const saveEvent = async (payload) => {
+    if (draftIdRef.current) {
       try {
-        const res = await api.post(
-          `/api/auth/admin/addEvents`,
+        const res = await api.patch(
+          `/api/auth/admin/events/${draftIdRef.current}`,
           buildFormData(payload),
         );
-        const data = res.data;
-        draftIdRef.current = data?.event?._id || data?.events?._id || null;
-        return data;
+        return res.data;
       } catch (err) {
-        throw new Error(readErrorMessage(err, "Failed to create event"));
+        const message = readErrorMessage(err, "Failed to publish event");
+        if (shouldCreateFreshDraft(err, message)) {
+          draftIdRef.current = null;
+        } else {
+          throw asError(err, message);
+        }
       }
+    }
+    try {
+      const res = await api.post(
+        `/api/auth/admin/addEvents`,
+        buildFormData(payload),
+      );
+      const data = res.data;
+      draftIdRef.current = data?.event?._id || data?.events?._id || null;
+      return data;
+    } catch (err) {
+      throw asError(err, readErrorMessage(err, "Failed to create event"));
+    }
+  };
+
+  const createTickets = async (eventId, tickets) => {
+    try {
+      await api.post(`/api/auth/admin/events/${eventId}/tickets`, { tickets });
+    } catch (err) {
+      throw asError(err, readErrorMessage(err, "Failed to save the tickets"));
+    }
+  };
+
+  // The tickets are part of publishing: if they fail, the admin must see the
+  // failure and keep the form, not get a success message for an event that
+  // went live without tickets. Retrying is safe because both calls match
+  // existing events/tickets instead of duplicating them.
+  const publishMutation = useMutation({
+    mutationFn: async (payload) => {
+      // Let a draft save that is already on the wire finish first, so it
+      // cannot land after the publish.
+      await Promise.resolve(inFlightSaveRef.current).catch(() => {});
+      const data = await saveEvent(payload);
+      await createTickets(draftIdRef.current, formData.tickets);
+      return data;
     },
     onSuccess: () => {
-      createTicketsMutation.mutate({
-        eventId: draftIdRef.current,
-        tickets: getTicketsToSubmit(),
-      });
+      publishedRef.current = true;
       toast.success("Event Published Successfully!", {
         duration: 2000,
         style: {
@@ -921,23 +956,9 @@ const AddEvent = () => {
     onError: (err) => toast.error(getFriendlyErrorMessage(err)),
   });
 
-  const createTicketsMutation = useMutation({
-    mutationFn: async ({ eventId, tickets }) => {
-      const res = await api.post(`/api/auth/admin/events/${eventId}/tickets`, {
-        tickets,
-      });
-      return res.data;
-    },
-    onError: (err) => toast.error(getFriendlyErrorMessage(err)),
-  });
-
   const handleSubmit = () => {
     if (isPublishingRef.current) return;
     if (!validateAll()) return;
-    if (formData.isFree && !Number(formData.freeCapacity)) {
-      toast.error("Please enter the capacity for this free event.");
-      return;
-    }
     isPublishingRef.current = true;
     // Cancel any in-flight autosave timer so it can't race the publish
     // call and end up hitting the create-event endpoint a second time.
@@ -1122,181 +1143,168 @@ const AddEvent = () => {
 
           <SectionCard title="Event Tickets">
             <div className="space-y-4">
-              <Toggle
-                label="Free Event"
-                value={formData.isFree}
-                onChange={(v) => handleChange("isFree", v)}
-              />
-
-              {formData.isFree ? (
-                <div className="bg-[#121417] p-5 rounded-xl border border-white/[0.06]">
-                  <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                    Capacity
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.freeCapacity}
-                    onChange={(e) =>
-                      handleChange("freeCapacity", e.target.value)
-                    }
-                    className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                    placeholder="How many people can attend?"
-                  />
-                </div>
-              ) : (
-                <>
-                  {formData.tickets.map((ticket, idx) => (
-                    <div
-                      key={idx}
-                      className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
-                    >
-                      <div className="flex-1">
-                        <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                          Ticket Name
-                        </label>
-                        <TicketTypeSelect
-                          value={ticket.name}
-                          onChange={(val) => {
-                            const updated = [...formData.tickets];
-                            updated[idx].name = val;
-                            handleChange("tickets", updated);
-                          }}
-                        />
-                      </div>
-                      <div className="w-24">
-                        <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                          Price (ETB)
-                        </label>
-                        <input
-                          value={ticket.price}
-                          onChange={(e) => {
-                            const updated = [...formData.tickets];
-                            updated[idx].price = e.target.value;
-                            handleChange("tickets", updated);
-                          }}
-                          className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
-                        />
-                      </div>
-                      <div className="w-24">
-                        <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                          Capacity
-                        </label>
-                        <input
-                          type="number"
-                          value={ticket.capacity}
-                          onChange={(e) => {
-                            const updated = [...formData.tickets];
-                            updated[idx].capacity = e.target.value;
-                            handleChange("tickets", updated);
-                          }}
-                          className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                        />
-                      </div>
-                      <div className="flex flex-col items-center ml-2">
-                        <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                          Visible
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = [...formData.tickets];
-                            updated[idx].isActive =
-                              ticket.isActive === false ? true : false;
-                            handleChange("tickets", updated);
-                          }}
-                          className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
-                            ticket.isActive !== false
-                              ? "bg-[#FF7A00]"
-                              : "bg-white/10"
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all shadow ${
-                              ticket.isActive !== false
-                                ? "left-[18px]"
-                                : "left-[2px]"
-                            }`}
-                          />
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          set({
-                            tickets: formData.tickets.filter(
-                              (_, i) => i !== idx,
-                            ),
-                          })
-                        }
-                        className="ml-2 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-
-                  <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
-                    <div className="flex-1">
-                      <TicketTypeSelect
-                        value={newTicket.name}
-                        onChange={(val) =>
-                          setNewTicket({ ...newTicket, name: val })
-                        }
-                      />
-                    </div>
-                    <div className="w-24">
-                      <input
-                        value={newTicket.price}
-                        onChange={(e) =>
-                          setNewTicket({ ...newTicket, price: e.target.value })
-                        }
-                        className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
-                        placeholder="Price"
-                      />
-                    </div>
-                    <div className="w-32">
-                      <input
-                        type="number"
-                        value={newTicket.capacity}
-                        onChange={(e) =>
-                          setNewTicket({
-                            ...newTicket,
-                            capacity: e.target.value,
-                          })
-                        }
-                        className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
-                        placeholder="Capacity"
-                      />
-                    </div>
+              {formData.tickets.map((ticket, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-wrap gap-4 items-start sm:items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-white/[0.06]"
+                >
+                  <div className="basis-full sm:basis-0 sm:flex-1 min-w-0">
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Ticket Name
+                    </label>
+                    <TicketTypeSelect
+                      value={ticket.name}
+                      onChange={(val) => {
+                        const updated = [...formData.tickets];
+                        updated[idx].name = val;
+                        handleChange("tickets", updated);
+                      }}
+                    />
+                  </div>
+                  <div className="w-[calc(50%-0.5rem)] sm:w-24">
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Price (ETB)
+                    </label>
+                    <TicketPriceField
+                      value={ticket.price}
+                      onChange={(price) => {
+                        const updated = [...formData.tickets];
+                        updated[idx] = { ...updated[idx], price };
+                        handleChange("tickets", updated);
+                      }}
+                    />
+                  </div>
+                  <div className="w-[calc(50%-0.5rem)] sm:w-24">
+                    <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Capacity
+                    </label>
+                    <input
+                      type="number"
+                      value={ticket.capacity}
+                      onChange={(e) => {
+                        const updated = [...formData.tickets];
+                        updated[idx].capacity = e.target.value;
+                        handleChange("tickets", updated);
+                      }}
+                      className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
+                    />
+                  </div>
+                  <div className="flex flex-col items-center sm:ml-2">
+                    <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
+                      Visible
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
-                        if (
-                          newTicket.name.trim() !== "" &&
-                          newTicket.price !== "" &&
-                          newTicket.capacity !== ""
-                        ) {
-                          set({
-                            tickets: [...formData.tickets, { ...newTicket }],
-                          });
-                          setNewTicket({
-                            name: "",
-                            price: "",
-                            capacity: "",
-                            isActive: true,
-                          });
-                        } else {
-                          toast.error(
-                            "Please fill in Ticket Name, Price, and Capacity to add a ticket.",
-                          );
-                        }
+                        const updated = [...formData.tickets];
+                        updated[idx].isActive =
+                          ticket.isActive === false ? true : false;
+                        handleChange("tickets", updated);
                       }}
-                      className="ml-2 text-[#22c55e] border border-[#22c55e] hover:text-white hover:bg-green-400 transition duration-300 rounded-full p-2"
+                      className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
+                        ticket.isActive !== false
+                          ? "bg-[#FF7A00]"
+                          : "bg-white/10"
+                      }`}
                     >
-                      <Check size={18} />
+                      <span
+                        className={`absolute top-[2px] w-4 h-4 bg-white rounded-full transition-all shadow ${
+                          ticket.isActive !== false
+                            ? "left-[18px]"
+                            : "left-[2px]"
+                        }`}
+                      />
                     </button>
                   </div>
-                </>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      set({
+                        tickets: formData.tickets.filter((_, i) => i !== idx),
+                      })
+                    }
+                    className="ml-2 text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+
+              <div className="flex flex-wrap gap-4 items-start sm:items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-dashed border-[#FF7A00]">
+                <div className="basis-full sm:basis-0 sm:flex-1 min-w-0">
+                  <TicketTypeSelect
+                    value={newTicket.name}
+                    onChange={(val) =>
+                      setNewTicket({ ...newTicket, name: val })
+                    }
+                  />
+                </div>
+                <div className="w-[calc(50%-0.5rem)] sm:w-24">
+                  <TicketPriceField
+                    value={newTicket.price}
+                    onChange={(price) => setNewTicket({ ...newTicket, price })}
+                  />
+                </div>
+                <div className="w-[calc(50%-0.5rem)] sm:w-32">
+                  <input
+                    type="number"
+                    value={newTicket.capacity}
+                    onChange={(e) =>
+                      setNewTicket({ ...newTicket, capacity: e.target.value })
+                    }
+                    className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
+                    placeholder="Capacity"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      newTicket.name.trim() !== "" &&
+                      newTicket.price !== "" &&
+                      newTicket.capacity !== ""
+                    ) {
+                      set({ tickets: [...formData.tickets, { ...newTicket }] });
+                      setNewTicket({
+                        name: "",
+                        price: "",
+                        capacity: "",
+                        isActive: true,
+                      });
+                    } else {
+                      toast.error(
+                        "Please fill in Ticket Name, Price, and Capacity to add a ticket.",
+                      );
+                    }
+                  }}
+                  className="ml-2 text-[#22c55e] border border-[#22c55e] hover:text-white hover:bg-green-400 transition duration-300 rounded-full p-2"
+                >
+                  <Check size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
+              <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">
+                Invitation
+              </h3>
+              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+                Send a personal invitation pass to each guest
+              </p>
+              <Toggle
+                label="Create Invitation Ticket"
+                value={formData.invitation}
+                onChange={(v) => handleChange("invitation", v)}
+              />
+
+              {formData.invitation && (
+                <div className="mt-4 flex items-start gap-3 p-4 bg-[#FF7A00]/5 border border-[#FF7A00]/20 rounded-xl">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                    After you publish this event, create a personal pass for each
+                    guest from the{" "}
+                    <span className="text-[#FF7A00]">Invitation QR</span> column
+                    in the Events table.
+                  </p>
+                </div>
               )}
             </div>
           </SectionCard>

@@ -36,7 +36,9 @@ const PORT = process.env.PORT || 5002;
 const startServer = async () => {
   try {
     await connectDB();
-    // Run once on startup, then every 10 minutes
+    // Release seats held by lapsed pending orders: once now, then every minute.
+    expirePendingTickets();
+    setInterval(expirePendingTickets, 60 * 1000).unref();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

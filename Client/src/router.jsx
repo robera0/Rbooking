@@ -27,6 +27,7 @@ import EditEvent from "../admin/EditEvent";
 import TicketOrders from "../admin/TicketOrders";
 import Dashboard from "../admin/Dashboard";
 import User from "../admin/User";
+import InvitationQR from "../admin/InvitationQr";
 import LoginPage from "../admin/LoginPage";
 import Marketing from "../admin/Marketing";
 import Report from "../admin/Report";
@@ -180,6 +181,15 @@ export const router = createBrowserRouter([
             element: (
               <PageWrapper>
                 <EventQR />
+              </PageWrapper>
+            ),
+          },
+
+          {
+            path: "events/:eventId/invitation_qr",
+            element: (
+              <PageWrapper>
+                <InvitationQR />
               </PageWrapper>
             ),
           },

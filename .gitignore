@@ -30,3 +30,9 @@ dist-ssr
 
 # user-uploaded files
 Server/uploads/*
+
+# Deploy bundles of the server (local only)
+Server/Server.zip
+Server/server.zip
+Client/dist.zip
+Client/dist1.zip

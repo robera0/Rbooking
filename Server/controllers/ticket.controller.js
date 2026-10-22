@@ -12,16 +12,27 @@ import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
 import Transaction from "../models/transaction.model.js";
 import { nanoid } from "nanoid";
+import {
+  MAX_FREE_PER_EVENT,
+  freeTicketsHeld,
+  remainingFreeAllowance,
+} from "../service/freeTickets.service.js";
+import { cleanReceiptUrl } from "../utils/receiptUrl.js";
 import verifyReceipt from "../service/verifyRecipt.service.js";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
 import QRCode from "qrcode";
+import { amountsMatch } from "../utils/amount.js";
 import { logVerificationFailure } from "../service/verificationLog.service.js";
 import EventService from "../service/event.service.js";
 import {
+  checkInInvitation,
+  InvitationError,
+} from "../service/invitation.service.js";
+import {
   getExpectedReceiver,
-  nameMatches,
+  nameMatchesAny,
 } from "../service/receiver.service.js";
 
 export const purchaseTicket = async (req, res) => {
@@ -31,10 +42,26 @@ export const purchaseTicket = async (req, res) => {
   const { ticketId } = req.params;
   const { quantity, phone } = req.body;
   if (!ticketId) return res.status(400).json({ message: "Ticket ID required" });
-  if (!quantity || quantity <= 0)
+  if (!Number.isInteger(quantity) || quantity <= 0)
     return res.status(400).json({ message: "Invalid quantity" });
 
   try {
+    // Free tickets are capped per person so one account cannot take them all.
+    const tier = await TicketModel.findById(ticketId)
+      .select("price eventId")
+      .lean();
+    if (tier && tier.price === 0) {
+      const allowed = await remainingFreeAllowance(userId, tier.eventId);
+      if (quantity > allowed) {
+        return res.status(400).json({
+          message:
+            allowed === 0
+              ? `You already have the maximum of ${MAX_FREE_PER_EVENT} free tickets for this event`
+              : `You can get ${allowed} more free ticket${allowed === 1 ? "" : "s"} for this event`,
+        });
+      }
+    }
+
     const ticket = await TicketModel.findOneAndUpdate(
       {
         _id: ticketId,
@@ -82,6 +109,22 @@ export const purchaseTicket = async (req, res) => {
       status: isFree ? "paid" : "pending",
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     });
+
+    // Two simultaneous requests can both pass the check above; undo the
+    // later one if the person ended up over the limit.
+    if (isFree) {
+      const held = await freeTicketsHeld(userId, ticket.eventId);
+      if (held > MAX_FREE_PER_EVENT) {
+        await UserTicketModel.deleteOne({ _id: userTicket._id });
+        await TicketModel.updateOne(
+          { _id: ticketId },
+          { $inc: { availableQuantity: quantity } },
+        );
+        return res.status(400).json({
+          message: `You already have the maximum of ${MAX_FREE_PER_EVENT} free tickets for this event`,
+        });
+      }
+    }
 
     await clearTicketCache(userId);
 
@@ -261,7 +304,10 @@ export const updateTicketStatus = async (req, res) => {
  */
 export const verifyTicket = async (req, res) => {
   const { userTicketId } = req.params;
-  const { receiptUrl } = req.body;
+  const rawReceiptUrl = req.body.receiptUrl;
+  // Buyers often paste the link with a trailing "." or spaces; clean it
+  // before it reaches Odit.
+  const receiptUrl = cleanReceiptUrl(rawReceiptUrl);
 
   const userId = req.user.id;
 
@@ -270,7 +316,7 @@ export const verifyTicket = async (req, res) => {
     await logVerificationFailure({
       userId,
       userTicketId,
-      receiptUrl,
+      receiptUrl: rawReceiptUrl,
       userTicket: loggedTicket,
       status,
       reason,
@@ -279,6 +325,16 @@ export const verifyTicket = async (req, res) => {
     });
     return res.status(status).json({ message });
   };
+
+  if (!receiptUrl) {
+    if (typeof rawReceiptUrl !== "string" || !rawReceiptUrl.trim())
+      return fail(400, "MISSING_RECEIPT_URL", "Receipt link is required");
+    return fail(
+      400,
+      "INVALID_LINK",
+      "That doesn't look like a receipt link. Paste the link from your Telebirr payment message.",
+    );
+  }
 
   try {
     // Fetch the UserTicket and populate ticket tier (to get eventId)
@@ -294,65 +350,6 @@ export const verifyTicket = async (req, res) => {
     if (userTicket.userId.toString() !== userId)
       return fail(403, "NOT_TICKET_OWNER", "Unauthorized");
 
-    const isFreeTicket =
-      Number(userTicket.totalAmount ?? 0) === 0 ||
-      Number(userTicket.ticketId?.price ?? 0) === 0;
-
-    if (isFreeTicket && userTicket.isVerified) {
-      return res.status(200).json({
-        success: true,
-        message: "Free ticket is already confirmed.",
-        userTicket,
-      });
-    }
-
-    if (isFreeTicket) {
-      const updatedTicket = await UserTicketModel.findByIdAndUpdate(
-        userTicketId,
-        {
-          status: "paid",
-          isVerified: true,
-          receiptUrl: null,
-          referenceId: `FREE-${userTicket.orderNo}`,
-        },
-        { new: true },
-      ).populate({
-        path: "ticketId",
-        populate: {
-          path: "eventId",
-          model: "Event",
-          select: "name type locale dates pictures",
-        },
-      });
-
-      await Transaction.create({
-        user: userId,
-        event: userTicket.ticketId.eventId,
-        ticket: userTicketId,
-        isVerified: true,
-        receiptNo: `FREE-${userTicket.orderNo}`,
-      });
-
-      await clearTicketCache(userId);
-      await clearTicketInfoCache(userTicketId);
-
-      return res.status(200).json({
-        success: true,
-        message: "Free ticket confirmed successfully!",
-        userTicket: updatedTicket,
-      });
-    }
-    if (!receiptUrl || !receiptUrl.trim())
-      return fail(400, "MISSING_RECEIPT_URL", "Receipt link is required");
-
-    // Basic validation: ensure it looks like a valid Telebirr receipt URL
-    if (
-      !receiptUrl.includes("ethiotelecom") &&
-      !receiptUrl.startsWith("http")
-    ) {
-      return fail(400, "INVALID_LINK", "The link is not correct");
-    }
-
     if (userTicket.status === "paid")
       return fail(
         400,
@@ -363,6 +360,14 @@ export const verifyTicket = async (req, res) => {
     if (userTicket.status === "cancelled")
       return fail(400, "TICKET_CANCELLED", "This ticket was cancelled");
 
+    // The seats were released when it expired, so it can no longer be paid.
+    if (userTicket.status === "expired")
+      return fail(
+        400,
+        "TICKET_EXPIRED",
+        "This order expired. Please book the ticket again.",
+      );
+
     const expected = await getExpectedReceiver(userTicket);
     if (expected.message) {
       return fail(
@@ -372,7 +377,7 @@ export const verifyTicket = async (req, res) => {
       );
     }
     const { eventInfo, adminProfile } = expected;
-    const EXPECTED_RECEIVER = expected.receiverName;
+    const EXPECTED_RECEIVERS = expected.receiverNames;
 
     // verification
 
@@ -391,8 +396,6 @@ export const verifyTicket = async (req, res) => {
 
     const receipt = isValid.receipt;
 
-    const settledAmount = parseFloat(receipt.settledAmount);
-
     if (receipt.transactionStatus !== "Completed") {
       return fail(
         400,
@@ -401,19 +404,19 @@ export const verifyTicket = async (req, res) => {
         { transactionStatus: receipt.transactionStatus },
       );
     }
-    if (!nameMatches(receipt.creditedPartyName, EXPECTED_RECEIVER)) {
+    if (!nameMatchesAny(receipt.creditedPartyName, EXPECTED_RECEIVERS)) {
       return fail(
         400,
         "RECEIVER_NAME_MISMATCH",
         "Invalid receiver name on receipt",
         {
-          expectedReceiver: EXPECTED_RECEIVER,
+          expectedReceiver: EXPECTED_RECEIVERS.join(", "),
           receiptReceiver: receipt.creditedPartyName,
         },
       );
     }
 
-    if (settledAmount !== TOTAL_AMOUNT) {
+    if (!amountsMatch(receipt.settledAmount, TOTAL_AMOUNT)) {
       return fail(
         400,
         "AMOUNT_MISMATCH",
@@ -535,7 +538,7 @@ export const verifyTicket = async (req, res) => {
     await logVerificationFailure({
       userId,
       userTicketId,
-      receiptUrl,
+      receiptUrl: rawReceiptUrl,
       userTicket: loggedTicket,
       status: 500,
       reason: "SERVER_ERROR",
@@ -552,6 +555,12 @@ export const scanTicket = catchAsync(async (req, res, next) => {
   const scannerUserId = req.user.id;
 
   if (!userTicketId || !token) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid QR payload format.",
+    });
+  }
+  if (!token) {
     return res.status(400).json({
       success: false,
       message: "Invalid QR payload format.",
@@ -584,6 +593,45 @@ export const scanTicket = catchAsync(async (req, res, next) => {
     },
     { new: true },
   );
+
+  // 2) Invitation
+  try {
+    const result = await checkInInvitation(token, scannerUserId);
+    if (result?.status === "ok") {
+      const { invitation } = result;
+      return res.status(200).json({
+        success: true,
+        type: "invitation",
+        message: "Valid invitation",
+        invitation: {
+          guestName: invitation.guestName,
+          email: invitation.email,
+          phone: invitation.phone,
+          checkedInAt: invitation.checkedInAt,
+        },
+      });
+    }
+    if (result?.status === "used") {
+      return res.status(409).json({
+        success: false,
+        message: "Invitation already used",
+        guestName: result.invitation.guestName,
+        scannedAt: result.invitation.checkedInAt,
+      });
+    }
+    if (result?.status === "invalid") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Invitation is not valid" });
+    }
+  } catch (error) {
+    if (error instanceof InvitationError) {
+      return res
+        .status(error.status)
+        .json({ success: false, message: error.message });
+    }
+    throw error;
+  }
   // populate ticket details (name) for UI display
   if (userTicket) {
     await userTicket.populate({ path: "ticketId", select: "name" });

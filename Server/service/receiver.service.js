@@ -2,9 +2,7 @@ import { Event } from "../models/events.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 
 export const getExpectedReceiver = async (userTicket) => {
-  
   const ticketTier = userTicket.ticketId; // must be populated with eventId
-  
   if (!ticketTier || !ticketTier.eventId) {
     return { status: 404, message: "Ticket tier or event not found" };
   }
@@ -21,17 +19,24 @@ export const getExpectedReceiver = async (userTicket) => {
   if (!adminProfile)
     return { status: 404, message: "Organizer profile not found" };
 
-  const telebirr = adminProfile.paymentMethods?.find(
-    (pm) => pm.provider?.toLowerCase() === "telebirr",
-  );
-  if (!telebirr?.receiverName) {
+  // An organizer can list several Telebirr numbers; a payment to any of
+  // them is valid, so collect every receiver name, not just the first.
+  const receiverNames = (adminProfile.paymentMethods || [])
+    .filter((pm) => pm.provider?.toLowerCase() === "telebirr" && pm.receiverName)
+    .map((pm) => pm.receiverName);
+  if (receiverNames.length === 0) {
     return {
       status: 400,
       message: "Organizer has no Telebirr payment method configured",
     };
   }
 
-  return { eventInfo, adminProfile, receiverName: telebirr.receiverName };
+  return {
+    eventInfo,
+    adminProfile,
+    receiverName: receiverNames[0],
+    receiverNames,
+  };
 };
 
 export const nameMatches = (receiptName, expectedName) => {
@@ -61,3 +66,7 @@ export const nameMatches = (receiptName, expectedName) => {
       : [expectedWords, receiptWords];
   return shorter.every((w) => longer.includes(w));
 };
+
+// True when the receipt's credited name matches any configured receiver.
+export const nameMatchesAny = (receiptName, expectedNames = []) =>
+  expectedNames.some((name) => nameMatches(receiptName, name));

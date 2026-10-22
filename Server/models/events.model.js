@@ -103,6 +103,9 @@ const BaseEventSchema = new mongoose.Schema(
       default: "generic",
     },
     status: String,
+    invitation: {
+      enabled: { type: Boolean, default: false },
+    },
     adminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "AdminProfile",
