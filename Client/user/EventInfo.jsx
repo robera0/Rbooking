@@ -33,6 +33,8 @@ import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
+import PostponedBanner from "./components/PostponedBanner";
+import { isDateTbd } from "@/lib/postponed";
 import { Navigate, useLocation } from "react-router-dom";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -564,9 +566,13 @@ const EventInfo = () => {
             <StatBadge
               icon={Calendar}
               label="Schedule"
-              value={moment(event?.dates?.start?.localDate).format(
-                "MMM DD, YYYY",
-              )}
+              value={
+                isDateTbd(event)
+                  ? "TBA"
+                  : moment(event?.dates?.start?.localDate).format(
+                      "MMM DD, YYYY",
+                    )
+              }
             />
             <motion.button
               whileHover={{ scale: 1.04, borderColor: "rgba(255,122,0,0.5)" }}
@@ -746,6 +752,9 @@ const EventInfo = () => {
                 </div>
               </motion.section>
             )}
+
+            {/* POSTPONED NOTICE */}
+            <PostponedBanner event={event} />
 
             {/* DESCRIPTION */}
             <motion.section

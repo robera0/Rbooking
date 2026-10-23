@@ -60,6 +60,9 @@ const Toggle = ({ label, value, onChange }) => (
     </span>
     <button
       type="button"
+      role="switch"
+      aria-checked={Boolean(value)}
+      aria-label={label}
       onClick={() => onChange(!value)}
       className={`w-11 h-6 rounded-full transition-all relative flex-shrink-0 ${
         value ? "bg-[#FF7A00]" : "bg-white/10"
@@ -301,6 +304,8 @@ const EditEvent = () => {
         durationDays: ev.durationDays || "",
         stages: ev.stages || [],
         invitation: ev.invitation?.enabled || false,
+        postponed: ev.dates?.status?.code === "postponed",
+        dateTbd: ev.dates?.dateTbd === true,
       };
     } else {
       initialObj = {
@@ -321,6 +326,8 @@ const EditEvent = () => {
         durationDays: "",
         stages: [],
         invitation: false,
+        postponed: false,
+        dateTbd: false,
       };
     }
     initialFormRef.current = initialObj;
@@ -328,6 +335,18 @@ const EditEvent = () => {
   });
 
   const set = (patch) => setFormData((prev) => ({ ...prev, ...patch }));
+
+  // Where the event was first scheduled: the saved original date if it was
+  // already postponed, otherwise the date it has now.
+  const originalStart =
+    eventData?.event?.dates?.postponedFrom?.localDate
+      ? eventData.event.dates.postponedFrom
+      : eventData?.event?.dates?.start;
+  const originalDateLabel = originalStart?.localDate
+    ? `${originalStart.localDate}${
+        originalStart.localTime ? ` ${originalStart.localTime.slice(0, 5)}` : ""
+      }`
+    : "";
   const [isSaved, setIsSaved] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -496,6 +515,12 @@ const EditEvent = () => {
         },
         timezone: "Africa/Addis_Ababa",
         status: { code: "onsale" },
+        // The server decides the stored status from this (and keeps the
+        // original date); a postponed event stays valid for ticket holders.
+        postponement: {
+          postponed: formData.postponed,
+          dateTbd: formData.postponed && formData.dateTbd,
+        },
       },
       amenities: {
         activity: formData.amenities,
@@ -1027,10 +1052,47 @@ const EditEvent = () => {
             <h3 className="text-white font-bold uppercase tracking-tight mb-6 text-sm flex items-center gap-2">
               <CalendarDays size={14} className="text-[#FF7A00]" /> Schedule
             </h3>
-            <DatePickerPanel
-              value={formData.eventDate}
-              onChange={(val) => set({ eventDate: val })}
+            <Toggle
+              label="Postponed"
+              value={formData.postponed}
+              onChange={(v) => set({ postponed: v, dateTbd: v ? formData.dateTbd : false })}
             />
+
+            {formData.postponed && (
+              <div className="mt-4 space-y-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest leading-relaxed text-yellow-400">
+                  Tickets already bought stay valid and work at the gate on the
+                  new date. Buyers see the event as postponed.
+                </p>
+                {originalDateLabel && (
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Original date:{" "}
+                    <span className="text-white">{originalDateLabel}</span>
+                  </p>
+                )}
+                <Toggle
+                  label="New date not decided yet"
+                  value={formData.dateTbd}
+                  onChange={(v) => set({ dateTbd: v })}
+                />
+              </div>
+            )}
+
+            <div
+              className={formData.postponed && formData.dateTbd ? "mt-4 opacity-40" : "mt-4"}
+              // inert keeps the greyed-out picker out of reach of the keyboard too
+              inert={formData.postponed && formData.dateTbd ? "" : undefined}
+            >
+              {formData.postponed && (
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  {formData.dateTbd ? "The original date stays until you set a new one" : "New date"}
+                </p>
+              )}
+              <DatePickerPanel
+                value={formData.eventDate}
+                onChange={(val) => set({ eventDate: val })}
+              />
+            </div>
           </div>
 
           {/* Invitation */}
