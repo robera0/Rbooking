@@ -201,11 +201,17 @@ export const register = catchAsync(async (req, res, next) => {
   const { fullname, email, password } = req.body;
 
   if (!fullname || !email || !password) {
-    return next(new AppError(400, "Required fields are missing"));
+    return next(new AppError("Required fields are missing", 400));
+  }
+
+  // Only plain text is accepted: an object here would reach the database
+  // query as an operator, or break the username step below.
+  if ([fullname, email, password].some((value) => typeof value !== "string")) {
+    return next(new AppError("Invalid sign up details", 400));
   }
 
   const existingUser = await UserService.findByEmail(email);
-  if (existingUser) return next(new AppError(400, "Email already exists"));
+  if (existingUser) return next(new AppError("Email already exists", 400));
 
   const hashedPassword = await hashPasswords(password);
 
@@ -215,22 +221,29 @@ export const register = catchAsync(async (req, res, next) => {
     role: "user",
   });
 
-  // Generate a unique default username from fullname or email prefix
-  const baseUsername = fullname
-    ? fullname.replace(/\s+/g, "").toLowerCase()
-    : email.split("@")[0];
-  let username = baseUsername;
-  let count = 0;
-  while (await ProfileModel.findOne({ username })) {
-    count++;
-    username = `${baseUsername}${count}`;
-  }
+  try {
+    // Generate a unique default username from fullname or email prefix
+    const baseUsername = fullname
+      ? fullname.replace(/\s+/g, "").toLowerCase()
+      : email.split("@")[0];
+    let username = baseUsername;
+    let count = 0;
+    while (await ProfileModel.findOne({ username })) {
+      count++;
+      username = `${baseUsername}${count}`;
+    }
 
-  await ProfileModel.create({
-    userId: newUser._id,
-    username,
-    fullName: fullname,
-  });
+    await ProfileModel.create({
+      userId: newUser._id,
+      username,
+      fullName: fullname,
+    });
+  } catch (error) {
+    // Do not leave an account with no profile: it would block this email
+    // from ever signing up again.
+    await UserModel.deleteOne({ _id: newUser._id });
+    throw error;
+  }
 
   res.status(201).json({
     success: true,
@@ -376,13 +389,13 @@ export const logout = catchAsync(async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    return next(new AppError(400, "Refresh token is required"));
+    return next(new AppError("Refresh token is required", 400));
   }
 
   const user = await UserService.findByRefreshToken(refreshToken);
 
   if (!user) {
-    return next(new AppError(404, "User not found or token invalid"));
+    return next(new AppError("User not found or token invalid", 404));
   }
 
   user.refreshTokens = user.refreshTokens.filter(

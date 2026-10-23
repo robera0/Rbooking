@@ -1,8 +1,12 @@
 import { UserModel } from "../models/user.model.js";
 class UserService {
-  static async create(userData) {
-    return await UserModel.create(userData)
-    ;
+  // `options` (the transaction session) is only for creating several users in
+  // one call: Model.create(array, options). Passing it along with a single
+  // document would make Mongoose treat it as a second document to save.
+  static async create(userData, options) {
+    return options
+      ? await UserModel.create(userData, options)
+      : await UserModel.create(userData);
   }
 
   static async updateById(id, userData) {
