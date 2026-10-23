@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mockup 4: Postpone</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#121417;color:#e8e8ea;font:14px/1.5 system-ui,sans-serif;padding:32px}
+h1{font-size:30px;margin:0 0 4px;text-transform:uppercase;letter-spacing:-.02em}h1 span{color:#FF7A00}h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#FF7A00;margin:0 0 14px}
+.note{color:#8b8f97;margin:0 0 22px;font-size:13px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1000px}
+.card{background:#1C1F22;border:1px solid #ffffff0a;border-radius:20px;padding:22px}label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8b8f97;margin:14px 0 6px}
+.f{height:44px;border-radius:12px;border:1px solid #ffffff14;background:#1A1D20;color:#fff;padding:0 14px;display:flex;align-items:center}
+.seg{display:flex;gap:8px}.seg span{flex:1;text-align:center;padding:10px;border-radius:12px;border:1px solid #ffffff14;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af}.seg .on{border-color:#fbbf24;color:#fbbf24;background:#fbbf241a}
+.btn{margin-top:18px;display:inline-block;background:#FF7A00;color:#000;border-radius:999px;padding:12px 24px;font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.banner{background:#fbbf241a;border:1px solid #fbbf2455;color:#fbbf24;border-radius:14px;padding:12px 16px;font-weight:700;margin-bottom:14px}
+.ticket{border:1px solid #ffffff14;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#141416,#0e0e10)}.ticket .top{background:#FF7A00;color:#000;padding:16px}.ticket .top b{font-size:18px}.ticket .body{padding:16px}
+.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #ffffff0a}.row span:first-child{color:#8b8f97;font-size:12px}.ok{color:#34d399;font-weight:800}
+.qr{height:90px;margin-top:14px;border-radius:10px;background:repeating-linear-gradient(90deg,#fff 0 3px,#0e0e10 3px 6px);opacity:.85}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+</style></head><body>
+<h1>Gospel Praise <span>Concert</span></h1>
+<p class="note">Mockup 4 of 4. Left: what the organizer does. Right: what a buyer who already has a ticket sees. Nothing to re-buy, nothing to claim.</p>
+<div class="cols">
+<div class="card"><h2>Organizer: edit event</h2>
+<label>Event status</label><div class="seg"><span>Active</span><span class="on">Postponed</span><span>Draft</span></div>
+<label>Original date</label><div class="f" style="color:#8b8f97">Fri, 30 Oct 2026 &middot; 6:00 PM</div>
+<label>New date</label><div class="f">Sun, 8 Nov 2026 &middot; 6:00 PM</div>
+<label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;color:#e8e8ea"><span style="width:16px;height:16px;border:1px solid #ffffff44;border-radius:4px;display:inline-block"></span> New date not decided yet</label>
+<p style="font-size:12px;color:#8b8f97;margin:14px 0 0">85 tickets are already sold. They stay valid and will be accepted at the gate on the new date.</p>
+<span class="btn">Save</span></div>
+<div class="card"><h2>Buyer: My Tickets</h2>
+<div class="banner">Postponed &middot; now Sun, 8 Nov 2026. Your ticket is still valid.</div>
+<div class="ticket"><div class="top"><small>PAYSSO · CONCERT</small><br><b>Gospel Praise Concert</b></div><div class="body">
+<div class="row"><span>Date</span><span>Sun, 8 Nov 2026 <s style="color:#8b8f97">Fri, 30 Oct</s></span></div>
+<div class="row"><span>Venue</span><span>Millennium Hall</span></div>
+<div class="row"><span>Ticket</span><span>Regular × 2</span></div>
+<div class="row"><span>Status</span><span class="ok">Valid for new date</span></div>
+<div class="qr"></div></div></div></div>
+</div>
+</body></html>
