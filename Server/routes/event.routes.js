@@ -9,6 +9,7 @@ import {
   generateEventQR,
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
+import { requireRole } from "../middlewares/requireRole.js";
 
 const eventRouter = express.Router();
 
@@ -18,12 +19,14 @@ eventRouter.get("/events/:eventId", getEventById);
 eventRouter.put(
   "/admin/events/:eventId",
   authenticateTokenMiddleware,
+  requireRole("admin"),
   upload.array("pictures", 10),
   updateEvent,
 );
 eventRouter.patch(
   "/auth/admin/events/:eventId",
   authenticateTokenMiddleware,
+  requireRole("admin"),
   upload.array("pictures", 10),
   updateEvent,
 );

@@ -6,6 +6,13 @@ import UserService from "../service/user.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import TicketService from "../service/ticket.service.js";
 import mongoose from "mongoose";
+import { Event } from "../models/events.model.js";
+import { adminOwnsEvent } from "../utils/adminOwnership.js";
+import {
+  salesByEvent,
+  salesBreakdown,
+  summarizeOrders,
+} from "../service/salesStats.service.js";
 
 // Events are created with `adminId` set to the admin's AdminProfile._id
 // (see events.controller.js addEvent), not their User._id, so any query
@@ -14,6 +21,11 @@ const resolveAdminScopeId = async (userId) => {
   const adminProfile = await AdminProfile.findOne({ userId });
   return adminProfile ? adminProfile._id : userId;
 };
+
+const EVENT_ID_PATTERN = /^[a-f0-9]{24}$/i;
+// Express turns ?eventId[]=x into an array and ?eventId[a]=x into an object;
+// only a single plain id is accepted.
+const isEventId = (value) => typeof value === "string" && EVENT_ID_PATTERN.test(value);
 
 // Utility function to get dates
 const getDateRanges = () => {
@@ -122,36 +134,75 @@ export const getEvents = catchAsync(async (req, res, next) => {
   const adminScopeId = await resolveAdminScopeId(userId);
 
   const events = await EventService.find({ adminId: adminScopeId });
-  res.status(200).json({ success: true, events: events });
+
+  const sales = await salesByEvent(events.map((event) => event._id));
+  const withSales = events.map((event) => ({
+    ...event,
+    sales: sales.get(event._id.toString()),
+  }));
+
+  res.status(200).json({ success: true, events: withSales });
 });
 
 export const getTransactionLedger = catchAsync(async (req, res, next) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
   const adminScopeId = await resolveAdminScopeId(userId);
 
-  const transactions = await TicketService.findTickets(adminScopeId);
-
-  res.status(200).json({ success: true, transactions: transactions });
-});
-
-export const get_transaction_by_id = catchAsync(async (req, res) => {
-  const { id } = req.params;
-
-  const transaction = await TicketService.findById(id);
-
-  if (!transaction) {
+  const { eventId } = req.query;
+  if (eventId !== undefined && !isEventId(eventId)) {
     return res
-      .status(404)
-      .json({ success: false, message: "Transaction not found" });
+      .status(400)
+      .json({ success: false, message: "eventId is not a valid event id" });
   }
 
-  const formattedTransaction = {
-    ...transaction.toObject(),
-    commissionAmount:
-      transaction.status === "paid" ? transaction.totalAmount * 0.1 : 0,
-  };
+  const transactions = await TicketService.findTickets(adminScopeId, {
+    eventId,
+  });
 
-  res.status(200).json({ success: true, transaction: transaction });
+  res.status(200).json({
+    success: true,
+    transactions,
+    summary: summarizeOrders(transactions),
+  });
+});
+
+// Tickets sold and money per ticket type, for one event or for all of the
+// organizer's events together.
+export const getSales = catchAsync(async (req, res, next) => {
+  const { eventId } = req.query;
+  if (eventId !== undefined && !isEventId(eventId)) {
+    return res
+      .status(400)
+      .json({ success: false, message: "eventId is not a valid event id" });
+  }
+
+  const adminScopeId = await resolveAdminScopeId(
+    new mongoose.Types.ObjectId(req.user.id),
+  );
+  const sales = await salesBreakdown(adminScopeId, eventId);
+
+  res.status(200).json({ success: true, ...sales });
+});
+
+// One order, for the organizer who owns its event. Anyone else gets the same
+// answer as for an order that does not exist.
+export const get_transaction_by_id = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const notFound = () =>
+    res.status(404).json({ success: false, message: "Transaction not found" });
+
+  if (!isEventId(id)) return notFound();
+
+  const transaction = await TicketService.findById(id);
+  const eventRef = transaction?.ticketId?.eventId;
+  const ownedEvent = eventRef
+    ? await Event.findById(eventRef._id ?? eventRef).select("adminId").lean()
+    : null;
+  if (!ownedEvent || !(await adminOwnsEvent(req.user.id, ownedEvent))) {
+    return notFound();
+  }
+
+  res.status(200).json({ success: true, transaction });
 });
 
 export const get_revenue_history = catchAsync(async (req, res, next) => {

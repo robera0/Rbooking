@@ -33,6 +33,7 @@ import {
 import {
   getExpectedReceiver,
   nameMatchesAny,
+  resolveReceiver,
 } from "../service/receiver.service.js";
 
 export const purchaseTicket = async (req, res) => {
@@ -449,7 +450,11 @@ export const verifyTicket = async (req, res) => {
       );
     }
 
-    // Mark ticket as paid
+    // Mark ticket as paid, remembering which Telebirr number got the money.
+    const paidTo = resolveReceiver(
+      receipt.creditedPartyName,
+      adminProfile.paymentMethods,
+    );
     const updatedTicket = await UserTicketModel.findByIdAndUpdate(
       userTicketId,
       {
@@ -457,6 +462,7 @@ export const verifyTicket = async (req, res) => {
         isVerified: true,
         receiptUrl,
         referenceId: receipt.receiptNo,
+        ...(paidTo ? { paidTo } : {}),
       },
       { new: true },
     ).populate({

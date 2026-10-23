@@ -9,6 +9,7 @@ import {
 } from "../controllers/ticket.controller.js";
 
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
+import { requireRole } from "../middlewares/requireRole.js";
 
 const ticketRouter = express.Router();
 
@@ -29,7 +30,15 @@ ticketRouter.post(
   authenticateTokenMiddleware,
   verifyTicket,
 );
-ticketRouter.patch("/ticket/:ticketId/status", updateTicketStatus);
+// Changes whether an order counts as paid, so it needs a signed-in admin.
+// (The handler still has to check that the order belongs to that admin before
+// this is wired to a screen.)
+ticketRouter.patch(
+  "/ticket/:ticketId/status",
+  authenticateTokenMiddleware,
+  requireRole("admin"),
+  updateTicketStatus,
+);
 ticketRouter.patch("/tickets/qr", authenticateTokenMiddleware, scanTicket);
 
 export default ticketRouter;

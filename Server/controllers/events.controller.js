@@ -11,6 +11,8 @@ import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
 import { Event } from "../models/events.model.js";
 import { resolveStatusUpdate } from "../utils/eventStatus.js";
+import { normalizeDatesUpdate } from "../utils/postponement.js";
+import { adminOwnsEvent } from "../utils/adminOwnership.js";
 import {
   syncEventTickets,
   TicketSyncError,
@@ -532,10 +534,27 @@ export const getEventById = catchAsync(async (req, res, next) => {
 });
 //update event
 
+// Removes the temporary files multer saved for a request we are refusing.
+const discardUploads = (files = []) =>
+  files.forEach((file) =>
+    fs.unlink(file.path, (error) => {
+      if (error) console.error("Failed to delete temp file:", file.path, error);
+    }),
+  );
+
 export const updateEvent = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
 
-  console.log(eventId);
+  // Only the organizer who owns the event may change it. Anyone else gets the
+  // same answer as for a missing event, so ids cannot be probed.
+  const ownedEvent = mongoose.isValidObjectId(eventId)
+    ? await Event.findById(eventId).select("adminId").lean()
+    : null;
+  if (!ownedEvent || !(await adminOwnsEvent(req.user.id, ownedEvent))) {
+    discardUploads(req.files);
+    return res.status(404).json({ success: false, message: "Event not found" });
+  }
+
   let {
     type,
     status,
@@ -635,6 +654,15 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   const existingEvent = await EventService.findById(eventId);
   if (!existingEvent) {
     return res.status(404).json({ success: false, message: "Event not found" });
+  }
+
+  // Postponing keeps the original date and never lets an older copy of the
+  // edit page undo it (see utils/postponement.js).
+  if (updateData.dates !== undefined) {
+    updateData.dates = normalizeDatesUpdate(
+      existingEvent.dates,
+      updateData.dates,
+    );
   }
 
   // A late draft autosave must not unpublish an event that was just published.
