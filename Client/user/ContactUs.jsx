@@ -11,8 +11,8 @@ const CONTACT_LINKS = [
   },
   {
     label: "Telegram",
-    value: "@datnigga_ting",
-    href: "https://t.me/datnigga_ting",
+    value: "@paysso_et",
+    href: "https://t.me/paysso_et",
     Icon: Send,
   },
   {

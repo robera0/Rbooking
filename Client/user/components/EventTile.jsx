@@ -84,26 +84,34 @@ const EventTile = ({
               imageEvent.currentTarget.src = FALLBACK_IMAGE;
             }}
             className={`h-full w-full object-cover transition duration-700 group-hover:scale-[1.04] ${
-              soldOut ? "opacity-60 saturate-50" : ""
+              soldOut ? "grayscale-[.6] brightness-50" : ""
             }`}
           />
 
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-black/10" />
 
           {soldOut && (
-            <span className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md">
-              Sold out
-            </span>
+            <>
+              <div className="pointer-events-none absolute inset-0 bg-black/35" />
+              {/* Red corner ribbon across the top-left of the poster */}
+              <div className="pointer-events-none absolute -left-12 top-7 z-[5] w-48 -rotate-[38deg] bg-red-600 py-1.5 text-center text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-lg shadow-black/50">
+                Sold out
+              </div>
+            </>
           )}
 
           <div className="pointer-events-none absolute inset-x-3 bottom-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/90">
+            <p
+              className={`text-[10px] font-black uppercase tracking-[0.18em] text-white/90 ${
+                soldOut ? "opacity-70" : ""
+              }`}
+            >
               {eventDateLabel(event)}
             </p>
           </div>
         </div>
 
-        <div className="mt-3 space-y-1">
+        <div className={`mt-3 space-y-1 ${soldOut ? "opacity-55" : ""}`}>
           <h3 className="line-clamp-2 text-[14px] font-black uppercase leading-tight tracking-tight text-white transition-colors group-hover:text-[#FF7A00] sm:text-[15px]">
             {event.name}
           </h3>
@@ -111,7 +119,7 @@ const EventTile = ({
             {eventVenueLabel(event)}
           </p>
           <p className="pt-0.5 text-[11px] font-black uppercase tracking-[0.16em] text-[#FF7A00]">
-            {eventPriceLabel(event)}
+            {soldOut ? "Sold out" : eventPriceLabel(event)}
           </p>
         </div>
       </Link>
