@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Html5Qrcode } from "html5-qrcode";
 import {
@@ -71,6 +72,10 @@ const GateScanner = () => {
   const [loading, setLoading] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const html5QrcodeScannerRef = useRef(null);
+  const cameraOn = isScanning || loading;
+  // Decided when the camera starts: phones (narrower than Tailwind's sm) get the full screen.
+  const [phoneFullscreen, setPhoneFullscreen] = useState(false);
+  const usePortal = cameraOn && phoneFullscreen;
   // Html5Qrcode's own "isScanning" property isn't reliable across versions,
   // so we track camera state ourselves to guarantee stop()/clear() actually run.
   const isCameraActiveRef = useRef(false);
@@ -84,9 +89,15 @@ const GateScanner = () => {
 
   const startScanner = async () => {
     setScanResult(null);
+    setPhoneFullscreen(window.matchMedia("(max-width: 639px)").matches);
     setIsScanning(true);
 
     try {
+      // Let the full-screen layout apply first, so the camera measures the
+      // screen it will fill rather than the small card it started in.
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
       const html5Qrcode = new Html5Qrcode("reader");
       html5QrcodeScannerRef.current = html5Qrcode;
 
@@ -94,7 +105,12 @@ const GateScanner = () => {
         { facingMode: "environment" },
         {
           fps: 10,
-          qrbox: { width: 220, height: 220 },
+          // A square about 70% of the shorter side, so it suits both the
+          // small card on a desktop and the full phone screen.
+          qrbox: (width, height) => {
+            const side = Math.floor(Math.min(width, height) * 0.7);
+            return { width: side, height: side };
+          },
         },
         onScanSuccess,
         onScanFailure,
@@ -193,8 +209,91 @@ const GateScanner = () => {
     // Silent handler for non-detected frames
   };
 
+  // On a phone the camera takes the whole screen while it is on. It is placed
+  // directly under <body> (a portal) so no animated parent of this page can
+  // trap it: position: fixed is measured from the nearest transformed ancestor.
+  const viewfinder = (
+    <div
+      className={`bg-[#080809] overflow-hidden flex items-center justify-center ${
+        usePortal
+          ? "fixed inset-0 z-[100] h-[100dvh] w-screen"
+          : "relative w-full aspect-square rounded-2xl border border-white/10"
+      }`}
+    >
+            <div id="reader" className="scanner-reader h-full w-full"></div>
+
+            {/* Stop button and hint, over the full-screen camera */}
+            {usePortal && isScanning && !loading && (
+              <>
+                <button
+                  type="button"
+                  onClick={stopScanner}
+                  aria-label="Stop camera"
+                  className="absolute left-4 top-4 z-20 flex h-12 items-center gap-2 rounded-full bg-black/60 px-5 text-[11px] font-black uppercase tracking-widest text-white backdrop-blur"
+                  style={{ top: "max(1rem, env(safe-area-inset-top))" }}
+                >
+                  <XCircle size={16} /> Stop
+                </button>
+                <p
+                  className="pointer-events-none absolute inset-x-0 z-20 px-6 text-center text-xs font-medium text-white/80"
+                  style={{ bottom: "max(2rem, env(safe-area-inset-bottom))" }}
+                >
+                  Align the ticket QR code inside the frame
+                </p>
+              </>
+            )}
+
+            {/* Standby / Initial State */}
+            {!isScanning && !loading && !scanResult && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0e0f11] p-6 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-4">
+                  <Camera size={28} className="text-gray-500" />
+                </div>
+                <p className="text-xs text-gray-400 font-medium mb-5 max-w-[220px]">
+                  Align attendee ticket QR code within viewfinder
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={startScanner}
+                  className="px-6 py-3.5 bg-[#FF7A00] text-black font-black uppercase text-xs tracking-widest rounded-xl hover:bg-white transition-colors"
+                >
+                  Activate Camera
+                </motion.button>
+              </div>
+            )}
+
+            {/* Verification Loading Overlay */}
+            {loading && (
+              <div className="absolute inset-0 bg-[#0e0f11]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                <Loader2 size={36} className="animate-spin text-[#FF7A00]" />
+                <p className="text-xs font-black uppercase tracking-widest text-gray-300">
+                  Verifying Ticket...
+                </p>
+              </div>
+            )}
+
+            {/* Scanning Laser Animation */}
+            {isScanning && !loading && (
+              <div className="absolute inset-0 pointer-events-none">
+                <motion.div
+                  animate={{ y: ["0%", "100%", "0%"] }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2,
+                    ease: "easeInOut",
+                  }}
+                  className="w-full h-[2px] bg-gradient-to-r from-transparent via-[#FF7A00] to-transparent shadow-[0_0_12px_#FF7A00]"
+                />
+              </div>
+            )}
+          </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#121417] text-[#F4F4F5] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+      {/* The camera feed fills its box instead of keeping its own aspect ratio. */}
+      <style>{`.scanner-reader video{width:100%!important;height:100%!important;object-fit:cover}`}</style>
       <Orb className="w-[350px] h-[350px] sm:w-[600px] sm:h-[600px] -top-[120px] -left-[120px] sm:-top-[220px] sm:-left-[220px] bg-[#FF7A00]/[0.06]" />
       <Orb className="w-[250px] h-[250px] sm:w-[400px] sm:h-[400px] -bottom-[100px] -right-[100px] sm:-bottom-[150px] sm:-right-[150px] bg-emerald-500/[0.04]" />
 
@@ -262,54 +361,7 @@ const GateScanner = () => {
           className="rounded-3xl border border-white/[0.08] bg-[#0e0f11] p-5 sm:p-8 space-y-5 sm:space-y-6 shadow-2xl"
         >
           {/* Viewfinder Box */}
-          <div className="relative w-full aspect-square bg-[#080809] rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center">
-            <div id="reader" className="w-full h-full object-cover"></div>
-
-            {/* Standby / Initial State */}
-            {!isScanning && !loading && !scanResult && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0e0f11] p-6 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-4">
-                  <Camera size={28} className="text-gray-500" />
-                </div>
-                <p className="text-xs text-gray-400 font-medium mb-5 max-w-[220px]">
-                  Align attendee ticket QR code within viewfinder
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={startScanner}
-                  className="px-6 py-3.5 bg-[#FF7A00] text-black font-black uppercase text-xs tracking-widest rounded-xl hover:bg-white transition-colors"
-                >
-                  Activate Camera
-                </motion.button>
-              </div>
-            )}
-
-            {/* Verification Loading Overlay */}
-            {loading && (
-              <div className="absolute inset-0 bg-[#0e0f11]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
-                <Loader2 size={36} className="animate-spin text-[#FF7A00]" />
-                <p className="text-xs font-black uppercase tracking-widest text-gray-300">
-                  Verifying Ticket...
-                </p>
-              </div>
-            )}
-
-            {/* Scanning Laser Animation */}
-            {isScanning && !loading && (
-              <div className="absolute inset-0 pointer-events-none">
-                <motion.div
-                  animate={{ y: ["0%", "100%", "0%"] }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 2,
-                    ease: "easeInOut",
-                  }}
-                  className="w-full h-[2px] bg-gradient-to-r from-transparent via-[#FF7A00] to-transparent shadow-[0_0_12px_#FF7A00]"
-                />
-              </div>
-            )}
-          </div>
+          {usePortal ? createPortal(viewfinder, document.body) : viewfinder}
 
           {/* Scan Result Feedback Banner */}
           <AnimatePresence>
