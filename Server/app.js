@@ -68,6 +68,11 @@ app.use(
         "https://paysso.netlify.app",
         "https://paysso.et",
         "https://www.paysso.et",
+        // Extra frontends (e.g. the super admin app), comma separated.
+        ...(process.env.CORS_EXTRA_ORIGINS || "")
+          .split(",")
+          .map((o) => o.trim())
+          .filter(Boolean),
       ];
 
       // Allow requests with no origin (like mobile apps or curl requests)
