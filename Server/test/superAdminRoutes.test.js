@@ -48,3 +48,22 @@ for (const path of ["/all_events", "/all_admins"]) {
     });
   }
 }
+
+test("/scan refuses a visitor and non-super-admin roles", async () => {
+  const post = (role) => {
+    const headers = { "content-type": "application/json" };
+    if (role) {
+      const token = jwt.sign({ id: "u1", role }, process.env.ACCESS_TOKEN_SECRET);
+      headers.cookie = `accessToken=${token}`;
+    }
+    return fetch(`${base}/scan`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ token: "ORD-X" }),
+    });
+  };
+  assert.equal((await post()).status, 401);
+  for (const role of ["user", "admin", "club_owner"]) {
+    assert.equal((await post(role)).status, 403);
+  }
+});
