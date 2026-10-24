@@ -1,9 +1,9 @@
-import { isEventPassed8Hours } from "./utils.js";
+import { isEventSoldOut } from "./soldOut.js";
 
 export const sortFeaturedEvents = (events = []) => {
   return [...events].sort((a, b) => {
-    const aSoldOut = !a?.tickets?.length || isEventPassed8Hours(a);
-    const bSoldOut = !b?.tickets?.length || isEventPassed8Hours(b);
+    const aSoldOut = isEventSoldOut(a);
+    const bSoldOut = isEventSoldOut(b);
 
     if (aSoldOut !== bSoldOut) {
       return Number(aSoldOut) - Number(bSoldOut);

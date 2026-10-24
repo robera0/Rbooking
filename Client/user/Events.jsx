@@ -15,7 +15,7 @@ import {
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
-import { isEventPassed8Hours } from "@/lib/utils";
+import { isEventSoldOut } from "@/lib/soldOut";
 import { CalendarDemo } from "@/components/ui/calendar";
 import toast from "react-hot-toast";
 import EventTile from "./components/EventTile";
@@ -277,8 +277,7 @@ const Events = () => {
                 className={GRID_CLASS}
               >
                 {filteredEvents.map((event) => {
-                  const soldOut =
-                    event.tickets?.length === 0 || isEventPassed8Hours(event);
+                  const soldOut = isEventSoldOut(event);
                   return (
                     <motion.div
                       key={event._id}

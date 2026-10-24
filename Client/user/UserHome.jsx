@@ -17,7 +17,7 @@ import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { sortFeaturedEvents } from "@/lib/featuredEventsSort";
-import { isEventPassed8Hours } from "@/lib/utils";
+import { isEventSoldOut } from "@/lib/soldOut";
 import { CalendarDemo } from "@/components/ui/calendar";
 import toast from "react-hot-toast";
 import EventTile, {
@@ -88,8 +88,7 @@ const UserHome = () => {
     [featuredEvents],
   );
 
-  const isSoldOut = (event) =>
-    event?.tickets?.length === 0 || Boolean(isEventPassed8Hours(event));
+  const isSoldOut = isEventSoldOut;
 
   // The hero only ever shows events that can still be booked. Sold-out and
   // finished events are filtered out, then the remainder rotates on a timer.
