@@ -1,3 +1,4 @@
+import { eventRequestPath, withDefaultTicket } from "../lib/eventRequest.js";
 import { createContext, useContext } from "react";
 import { useService } from "./ServiceContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -243,8 +244,8 @@ export const ApiProvider = ({ children }) => {
 
   const fetchEventById = async (eventid, ticketId) => {
     try {
-      const res = await api.get(`/api/events/${eventid}/tickets/${ticketId}`);
-      return res.data;
+      const res = await api.get(eventRequestPath(eventid, ticketId));
+      return withDefaultTicket(res.data);
     } catch (error) {
       console.error("Failed to fetch event ticket:", error);
       throw error;

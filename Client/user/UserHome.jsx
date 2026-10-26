@@ -16,7 +16,7 @@ import {
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
-import { sortFeaturedEvents } from "@/lib/featuredEventsSort";
+import { buildFeaturedRow, sortFeaturedEvents } from "@/lib/featuredEventsSort";
 import { isEventSoldOut, sinkSoldOutEvents } from "@/lib/soldOut";
 import { CalendarDemo } from "@/components/ui/calendar";
 import toast from "react-hot-toast";
@@ -137,12 +137,11 @@ const UserHome = () => {
 
   const hero = heroSlides[heroIndex] ?? heroSlides[0] ?? null;
 
-  const featuredRow = useMemo(() => {
-    const slideIds = new Set(heroSlides.map((event) => event._id));
-    return [...featured, ...list]
-      .filter((event) => event?._id && !slideIds.has(event._id))
-      .slice(0, 4);
-  }, [featured, list, heroSlides]);
+  // Only events that can still be booked, and none already in the hero.
+  const featuredRow = useMemo(
+    () => buildFeaturedRow(featured, list, heroSlides),
+    [featured, list, heroSlides],
+  );
 
   const loading = eventLoading || featuredEventLoading;
   const hasFilters = Boolean(type || date || artist || venues || search);
