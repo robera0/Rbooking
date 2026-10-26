@@ -15,6 +15,7 @@ import {
   syncEventTickets,
   TicketSyncError,
 } from "../service/ticketSync.service.js";
+import { parseShowAvailability } from "../utils/showAvailability.js";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
 import QRCode from "qrcode";
@@ -70,6 +71,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
     familyFriendly,
     capacity,
     status,
+    showAvailability,
   } = req.body;
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
@@ -158,7 +160,9 @@ export const addEvent = catchAsync(async (req, res, next) => {
     category,
     familyFriendly,
     invitation: { enabled: invitationEnabled },
+    showAvailability: parseShowAvailability(showAvailability),
   };
+  if (events.showAvailability === undefined) delete events.showAvailability;
 
   let newEvent;
 
@@ -564,6 +568,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
 
     // common
     familyFriendly,
+    showAvailability,
   } = req.body;
 
   const normalizedType = type?.toLowerCase();
@@ -621,6 +626,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     category,
 
     familyFriendly,
+    showAvailability: parseShowAvailability(showAvailability),
     invitation:
       invitation === undefined
         ? undefined

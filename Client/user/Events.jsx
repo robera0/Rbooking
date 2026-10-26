@@ -2,7 +2,7 @@
 // Posh-inspired Explore page: filter pills, search and a dense poster grid.
 // Backed by GET /api/events (filters are sent as query params).
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -15,7 +15,7 @@ import {
 import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
-import { isEventSoldOut } from "@/lib/soldOut";
+import { isEventSoldOut, sinkSoldOutEvents } from "@/lib/soldOut";
 import { CalendarDemo } from "@/components/ui/calendar";
 import toast from "react-hot-toast";
 import EventTile from "./components/EventTile";
@@ -62,7 +62,11 @@ const Events = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const filteredEvents = events?.events ?? [];
+  // Sold-out events sit at the end so the list opens on bookable ones.
+  const filteredEvents = useMemo(
+    () => sinkSoldOutEvents(events?.events),
+    [events],
+  );
   const hasFilters = Boolean(type || date || artist || venues || search);
 
   useEffect(() => {

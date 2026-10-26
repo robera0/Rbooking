@@ -647,6 +647,7 @@ const AddEvent = () => {
     stages: [],
     status: "draft",
     invitation: false,
+    showAvailability: true,
   };
 
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -793,6 +794,7 @@ const AddEvent = () => {
     form.append("policies", JSON.stringify(data.policies));
     form.append("dates", JSON.stringify(data.dates));
     form.append("invitation", data.invitation === true);
+    form.append("showAvailability", data.showAvailability !== false);
     if (data.status) form.append("status", data.status);
     form.append("amenities", JSON.stringify(data.amenities));
     form.append("musicGenre", JSON.stringify(data.musicGenre));
@@ -828,6 +830,7 @@ const AddEvent = () => {
         },
       },
       invitation: formData.invitation,
+      showAvailability: formData.showAvailability,
       policies: formData.policies,
       priceRanges: formData.tickets.map((t) => ({
         type: t.name,
@@ -1282,6 +1285,19 @@ const AddEvent = () => {
                   <Check size={18} />
                 </button>
               </div>
+            </div>
+            <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
+              <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">
+                Ticket Availability
+              </h3>
+              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+                Show buyers how many tickets are left
+              </p>
+              <Toggle
+                label="Show Available Tickets"
+                value={formData.showAvailability}
+                onChange={(v) => handleChange("showAvailability", v)}
+              />
             </div>
             <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
               <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">

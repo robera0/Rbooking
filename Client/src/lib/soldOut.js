@@ -12,3 +12,16 @@ export const isEventSoldOut = (event) => {
     tickets.every((ticket) => Number(ticket?.availableQuantity) <= 0)
   );
 };
+
+// Moves sold-out (and finished) events to the end while keeping every other
+// event in the order it already had, so people open the list on events they
+// can still book. Returns a new array.
+export const sinkSoldOutEvents = (events = []) => {
+  const list = Array.isArray(events) ? events : [];
+  const available = [];
+  const soldOut = [];
+  for (const event of list) {
+    (isEventSoldOut(event) ? soldOut : available).push(event);
+  }
+  return [...available, ...soldOut];
+};

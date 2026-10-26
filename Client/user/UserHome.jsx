@@ -17,7 +17,7 @@ import { eventService } from "@/Context/ApiEvent";
 import { useService } from "@/Context/ServiceContext";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import { sortFeaturedEvents } from "@/lib/featuredEventsSort";
-import { isEventSoldOut } from "@/lib/soldOut";
+import { isEventSoldOut, sinkSoldOutEvents } from "@/lib/soldOut";
 import { CalendarDemo } from "@/components/ui/calendar";
 import toast from "react-hot-toast";
 import EventTile, {
@@ -81,7 +81,8 @@ const UserHome = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const list = useMemo(() => events?.events ?? [], [events]);
+  // Sold-out events sit at the end so the list opens on bookable ones.
+  const list = useMemo(() => sinkSoldOutEvents(events?.events), [events]);
   // Sold-out and finished events sink to the bottom, the rest sort by date.
   const featured = useMemo(
     () => sortFeaturedEvents(featuredEvents?.events ?? []),

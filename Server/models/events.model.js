@@ -102,6 +102,8 @@ const BaseEventSchema = new mongoose.Schema(
       enum: ["generic", "concert", "festival"],
       default: "generic",
     },
+    // When off, the public page hides how many tickets are left.
+    showAvailability: { type: Boolean, default: true },
     status: String,
     invitation: {
       enabled: { type: Boolean, default: false },

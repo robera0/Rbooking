@@ -432,6 +432,8 @@ const EventInfo = () => {
     },
   };
 
+  // Organizers can hide how many tickets are left (on by default).
+  const showAvailability = event?.showAvailability !== false;
   const isSoldOut = allTickets.length === 0 || isEventPassed8Hours(event);
   const activeTicket = ticket
     ? {
@@ -1118,7 +1120,9 @@ const EventInfo = () => {
                                 >
                                   {rowSoldOut
                                     ? "Sold out"
-                                    : `${t?.availableQuantity} left`}
+                                    : showAvailability
+                                    ? `${t?.availableQuantity} left`
+                                    : "Available"}
                                 </span>
                               </span>
                               <span
@@ -1165,11 +1169,13 @@ const EventInfo = () => {
                             ).format("h:mm A")
                           : "Check venue",
                       },
-                      {
+                      showAvailability && {
                         label: "Available",
                         value: activeTicket?.availableQuantity ?? "—",
                       },
-                    ].map(({ label, value }) => (
+                    ]
+                      .filter(Boolean)
+                      .map(({ label, value }) => (
                       <div
                         key={label}
                         className="flex items-center justify-between py-2 border-b border-white/[0.04]"

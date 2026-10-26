@@ -301,6 +301,7 @@ const EditEvent = () => {
         durationDays: ev.durationDays || "",
         stages: ev.stages || [],
         invitation: ev.invitation?.enabled || false,
+        showAvailability: ev.showAvailability !== false,
       };
     } else {
       initialObj = {
@@ -321,6 +322,7 @@ const EditEvent = () => {
         durationDays: "",
         stages: [],
         invitation: false,
+        showAvailability: true,
       };
     }
     initialFormRef.current = initialObj;
@@ -386,6 +388,7 @@ const EditEvent = () => {
       form.append("musicGenre", JSON.stringify(payload.musicGenre));
       form.append("familyFriendly", payload.familyFriendly);
       form.append("invitation", payload.invitation === true);
+      form.append("showAvailability", payload.showAvailability !== false);
       form.append("existingPictures", JSON.stringify(payload.existingPictures));
       if (payload.durationDays !== undefined)
         form.append("durationDays", payload.durationDays);
@@ -506,6 +509,7 @@ const EditEvent = () => {
       musicGenre: type === "concert" ? formData.musicGenre : ["General"],
       familyFriendly: formData.familyFriendly,
       invitation: formData.invitation,
+      showAvailability: formData.showAvailability,
       ...(type === "festival" && {
         durationDays: Number(formData.durationDays) || 0,
         stages: formData.stages,
@@ -1034,6 +1038,19 @@ const EditEvent = () => {
           </div>
 
           {/* Invitation */}
+          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
+            <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">
+              Ticket Availability
+            </h3>
+            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+              Show buyers how many tickets are left
+            </p>
+            <Toggle
+              label="Show Available Tickets"
+              value={formData.showAvailability}
+              onChange={(v) => set({ showAvailability: v })}
+            />
+          </div>
           <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
             <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">
               Invitation
