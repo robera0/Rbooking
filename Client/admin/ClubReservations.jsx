@@ -229,6 +229,7 @@ const ClubReservations = () => {
                 <th className="text-left px-4 py-3">Phone</th>
                 <th className="text-left px-4 py-3">Club</th>
                 <th className="text-left px-4 py-3">Date</th>
+                <th className="text-left px-4 py-3">Arrival</th>
                 <th className="text-left px-4 py-3">Table</th>
                 <th className="text-left px-4 py-3">Guests</th>
                 <th className="text-left px-4 py-3">Type</th>
@@ -243,7 +244,7 @@ const ClubReservations = () => {
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={12}
+                    colSpan={13}
                     className="text-center px-4 py-8 text-gray-500 text-[12px]"
                   >
                     No reservations found.
@@ -269,6 +270,7 @@ const ClubReservations = () => {
                       <Calendar size={11} /> {r.date || "—"}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-gray-300">{r.arrivalTime || "—"}</td>
                   <td className="px-4 py-3 text-gray-300">
                     <span className="flex items-center gap-1">
                       <TableIcon size={11} /> {r.table || "—"}

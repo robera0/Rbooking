@@ -18,6 +18,7 @@ import { loadFloorPlan } from "../src/lib/clubFloorPlan";
 import {
   isClubOpenOnDate,
   isSeatReserved,
+  getHoursForDate,
   loadClubSettings,
   readClubReservations,
 } from "../src/lib/clubSettings";
@@ -225,6 +226,7 @@ function ClubRsvpPage() {
   const [clubSearch, setClubSearch] = useState("");
   const [activeTab, setActiveTab] = useState("explore");
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [arrivalTime, setArrivalTime] = useState("");
   const [clubSettings, setClubSettings] = useState(() => loadClubSettings());
   const [reservations, setReservations] = useState(() => readClubReservations());
   const [partySize, setPartySize] = useState(4);
@@ -267,6 +269,12 @@ function ClubRsvpPage() {
   }, []);
 
   const clubIsOpen = isClubOpenOnDate(selectedDate, clubSettings);
+  const selectedHours = getHoursForDate(selectedDate, clubSettings);
+
+  useEffect(() => {
+    if (selectedHours?.isOpen) setArrivalTime(selectedHours.opensAt || "");
+    else setArrivalTime("");
+  }, [selectedDate, selectedHours?.isOpen, selectedHours?.opensAt]);
 
   // Make sure a valid table stays selected when the plan changes.
   useEffect(() => {
@@ -343,6 +351,10 @@ function ClubRsvpPage() {
       toast.error("The club is closed on the selected day");
       return;
     }
+    if (activeTab === "explore" && !arrivalTime) {
+      toast.error("Choose your arrival time");
+      return;
+    }
     if (activeTab === "floor" && !tableFits) {
       toast.error(
         `Seat ${selectedTable} seats ${selectedSeat?.seats}. Pick a bigger one.`,
@@ -401,6 +413,7 @@ function ClubRsvpPage() {
       club: selectedClub.name,
       cover: selectedClub.cover,
       date: selectedDate,
+      arrivalTime,
       table: selectedTable,
       seatName: selectedSeat?.name || selectedTable,
       seatType: selectedSeat?.type ?? "table",
@@ -633,6 +646,21 @@ function ClubRsvpPage() {
                     </label>
 
                     <label className="block">
+                      <span className={`${label} mb-2 block`}>Arrival time</span>
+                      <input
+                        type="time"
+                        value={arrivalTime}
+                        min={selectedHours?.opensAt || undefined}
+                        className={field}
+                        disabled={!clubIsOpen}
+                        onChange={(e) => setArrivalTime(e.target.value)}
+                      />
+                      <p className="mt-2 text-[11px] text-gray-500">
+                        When should your party arrive? Club hours: {selectedHours?.opensAt || "—"}–{selectedHours?.closesAt || "—"}
+                      </p>
+                    </label>
+
+                    <label className="block">
                       <span className={`${label} mb-2 block`}>
                         Party size
                       </span>
@@ -831,6 +859,7 @@ function ClubRsvpPage() {
                   {[
                     ["Venue", selectedClub.name],
                     ["Date", selectedDate],
+                    ["Arrival", arrivalTime || "—"],
                     [
                       "Seat",
                       `${selectedSeat?.name || selectedTable} (${selectedSeat?.privacy ?? "shared"})`,

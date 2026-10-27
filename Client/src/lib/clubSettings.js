@@ -45,6 +45,12 @@ export function isClubOpenOnDate(dateValue, settings = loadClubSettings()) {
   return Boolean(settings.openingHours?.[day]?.isOpen);
 }
 
+export function getHoursForDate(dateValue, settings = loadClubSettings()) {
+  if (!dateValue) return null;
+  const day = new Date(`${dateValue}T12:00:00`).getDay();
+  return settings.openingHours?.[day] || null;
+}
+
 export function readClubReservations() {
   try {
     const parsed = JSON.parse(localStorage.getItem("clubRsvpReservations") || "[]");

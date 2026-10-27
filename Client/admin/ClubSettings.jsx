@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Clock, RotateCcw, Save } from "lucide-react";
+import { Check, Clock, Copy, RotateCcw, Save } from "lucide-react";
 import {
   CLUB_DAYS,
   defaultOpeningHours,
@@ -35,6 +35,19 @@ export default function ClubSettings() {
     window.setTimeout(() => setSaved(false), 2200);
   };
 
+  const copyToAllOpenDays = (sourceDay) => {
+    const source = settings.openingHours.find((hour) => hour.day === sourceDay);
+    if (!source) return;
+    setSettings((current) => ({
+      ...current,
+      openingHours: current.openingHours.map((hour) =>
+        hour.isOpen
+          ? { ...hour, opensAt: source.opensAt, closesAt: source.closesAt }
+          : hour,
+      ),
+    }));
+  };
+
   return (
     <form onSubmit={save} className="w-full max-w-4xl space-y-8">
       <header>
@@ -66,6 +79,14 @@ export default function ClubSettings() {
                 <input type="time" className={input} value={hour.opensAt} onChange={(e) => updateDay(hour.day, { opensAt: e.target.value })} />
                 <span className="text-xs text-gray-500">to</span>
                 <input type="time" className={input} value={hour.closesAt} onChange={(e) => updateDay(hour.day, { closesAt: e.target.value })} />
+                <button
+                  type="button"
+                  onClick={() => copyToAllOpenDays(hour.day)}
+                  title="Copy this time to every open day"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/[0.08] px-3 py-2.5 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:border-[#FF7A00]/50 hover:text-[#FF7A00]"
+                >
+                  <Copy size={12} /> <span className="hidden sm:inline">Copy to open days</span>
+                </button>
               </div>
             )}
           </div>

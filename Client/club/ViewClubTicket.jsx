@@ -6,6 +6,7 @@ import moment from "moment";
 import {
   ArrowLeft,
   Calendar,
+  Clock,
   Crown,
   Download,
   Hash,
@@ -225,6 +226,11 @@ const ViewClubTicket = () => {
                         ? moment(reservation.date).format("ddd, MMM D, YYYY")
                         : "TBA"
                     }
+                  />
+                  <Detail
+                    icon={Clock}
+                    name="Arrival time"
+                    value={reservation.arrivalTime || "Check opening hours"}
                   />
                   <Detail
                     icon={Sparkles}
