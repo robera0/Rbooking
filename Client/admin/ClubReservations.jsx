@@ -8,6 +8,7 @@ import {
   Wallet,
   Receipt,
   ClipboardList,
+  LogOut,
 } from "lucide-react";
 
 const card = "bg-[#1C1F22] border border-white/[0.06] rounded-2xl";
@@ -22,6 +23,11 @@ const readReservations = () => {
   } catch {
     return [];
   }
+};
+
+const writeReservations = (items) => {
+  localStorage.setItem("clubRsvpReservations", JSON.stringify(items));
+  window.dispatchEvent(new Event("club-reservations-updated"));
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -86,12 +92,36 @@ const ClubReservations = () => {
   useEffect(() => {
     const sync = () => setReservations(readReservations());
     window.addEventListener("storage", sync);
+    window.addEventListener("club-reservations-updated", sync);
     const id = setInterval(sync, 2000);
     return () => {
       window.removeEventListener("storage", sync);
+      window.removeEventListener("club-reservations-updated", sync);
       clearInterval(id);
     };
   }, []);
+
+  const markLeft = (reservation) => {
+    if (!window.confirm(`Mark ${reservation.customerName || "this guest"} as left? The seat will become available again.`)) return;
+    const updated = reservations.map((item) =>
+      item.id === reservation.id
+        ? { ...item, status: "left", leftAt: new Date().toISOString() }
+        : item,
+    );
+    writeReservations(updated);
+    try {
+      const latest = JSON.parse(localStorage.getItem("clubRsvpReservation") || "null");
+      if (latest?.id === reservation.id) {
+        localStorage.setItem(
+          "clubRsvpReservation",
+          JSON.stringify({ ...latest, status: "left", leftAt: new Date().toISOString() }),
+        );
+      }
+    } catch {
+      /* ignore malformed legacy reservation data */
+    }
+    setReservations(updated);
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -205,13 +235,15 @@ const ClubReservations = () => {
                 <th className="text-left px-4 py-3">Payment</th>
                 <th className="text-left px-4 py-3">Total</th>
                 <th className="text-left px-4 py-3">Receipt</th>
+                <th className="text-left px-4 py-3">Status</th>
+                <th className="text-left px-4 py-3">Action</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={12}
                     className="text-center px-4 py-8 text-gray-500 text-[12px]"
                   >
                     No reservations found.
@@ -266,6 +298,20 @@ const ClubReservations = () => {
                       </a>
                     ) : (
                       "—"
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-widest ${r.status === "left" ? "bg-gray-500/15 text-gray-400" : "bg-emerald-500/15 text-emerald-300"}`}>
+                      {r.status === "left" ? "Left" : r.status || "Active"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.status !== "left" && r.status !== "cancelled" ? (
+                      <button type="button" onClick={() => markLeft(r)} className="flex items-center gap-1.5 rounded-lg bg-[#FF7A00]/10 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-[#FF7A00] hover:bg-[#FF7A00] hover:text-black">
+                        <LogOut size={11} /> Mark left
+                      </button>
+                    ) : (
+                      <span className="text-[10px] text-gray-600">Released</span>
                     )}
                   </td>
                 </tr>

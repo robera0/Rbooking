@@ -51,6 +51,7 @@ import ClubRegistrationPage from "../club/Clubregistrationpage ·";
 import ClubRsvpPage from "../club/ClubRsvpPage";
 import ClubFloor from "../admin/ClubFloor";
 import ClubReservations from "../admin/ClubReservations";
+import ClubSettings from "../admin/ClubSettings";
 import ViewClubTicket from "../club/ViewClubTicket";
 const PageWrapper = ({ children }) => (
   <div className="min-h-screen w-full origin-top page-fade-in">{children}</div>
@@ -205,6 +206,14 @@ export const router = createBrowserRouter([
             element: (
               <PageWrapper>
                 <ClubReservations />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "club/settings",
+            element: (
+              <PageWrapper>
+                <ClubSettings />
               </PageWrapper>
             ),
           },

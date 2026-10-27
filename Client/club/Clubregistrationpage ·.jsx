@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { saveClubSettings } from "../src/lib/clubSettings";
 import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
@@ -466,6 +467,16 @@ const ClubOwnerRegistrationPage = () => {
     }
 
     const { confirmPassword, termsAccepted, privacyAccepted, ...rest } = f;
+
+    // Keep the browser-side RSVP experience in sync with the hours chosen
+    // during registration. The backend still receives the same fields below.
+    saveClubSettings({
+      openingHours: f.openingHours.map((h) =>
+        h.isOpen ? h : { ...h, opensAt: "", closesAt: "" },
+      ),
+      acceptsReservations: f.acceptsReservations,
+      holdMinutes: Number(f.holdMinutes) || 30,
+    });
 
     registerClubOwnerMutation.mutate({
       ...rest,

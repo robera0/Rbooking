@@ -15,6 +15,12 @@ import {
   Search,
 } from "lucide-react";
 import { loadFloorPlan } from "../src/lib/clubFloorPlan";
+import {
+  isClubOpenOnDate,
+  isSeatReserved,
+  loadClubSettings,
+  readClubReservations,
+} from "../src/lib/clubSettings";
 
 /* ------------------------------------------------------------------ */
 /* Data (mock). Prices are in ETB.                                     */
@@ -218,7 +224,9 @@ function ClubRsvpPage() {
   const [selectedClubId, setSelectedClubId] = useState(clubOptions[0].id);
   const [clubSearch, setClubSearch] = useState("");
   const [activeTab, setActiveTab] = useState("explore");
-  const [selectedDate, setSelectedDate] = useState("2026-10-15");
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [clubSettings, setClubSettings] = useState(() => loadClubSettings());
+  const [reservations, setReservations] = useState(() => readClubReservations());
   const [partySize, setPartySize] = useState(4);
   const [partySizeInput, setPartySizeInput] = useState("4");
   const [selectedTable, setSelectedTable] = useState(
@@ -241,13 +249,40 @@ function ClubRsvpPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const sync = () => {
+      setClubSettings(loadClubSettings());
+      setReservations(readClubReservations());
+    };
+    window.addEventListener("storage", sync);
+    window.addEventListener("club-settings-updated", sync);
+    window.addEventListener("club-reservations-updated", sync);
+    const id = window.setInterval(sync, 2000);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("club-settings-updated", sync);
+      window.removeEventListener("club-reservations-updated", sync);
+      window.clearInterval(id);
+    };
+  }, []);
+
+  const clubIsOpen = isClubOpenOnDate(selectedDate, clubSettings);
+
   // Make sure a valid table stays selected when the plan changes.
   useEffect(() => {
-    if (!floorPlan.some((t) => t.id === selectedTable)) {
-      const first = floorPlan.find((t) => t.status !== "reserved");
+    const selectedIsAvailable =
+      floorPlan.some((t) => t.id === selectedTable) &&
+      !isSeatReserved(selectedTable, selectedDate, reservations) &&
+      floorPlan.find((t) => t.id === selectedTable)?.status !== "reserved";
+    if (!selectedIsAvailable) {
+      const first = floorPlan.find(
+        (t) =>
+          t.status !== "reserved" &&
+          !isSeatReserved(t.id, selectedDate, reservations),
+      );
       if (first) setSelectedTable(first.id);
     }
-  }, [floorPlan, selectedTable]);
+  }, [floorPlan, selectedTable, selectedDate, reservations]);
 
   const visibleClubs = useMemo(() => {
     const q = clubSearch.trim().toLowerCase();
@@ -268,7 +303,12 @@ function ClubRsvpPage() {
     [floorPlan, selectedTable],
   );
 
-  const tableFits = Boolean(selectedSeat && selectedSeat.seats >= partySize);
+  const tableFits = Boolean(
+    selectedSeat &&
+      selectedSeat.status !== "reserved" &&
+      !isSeatReserved(selectedSeat.id, selectedDate, reservations) &&
+      selectedSeat.seats >= partySize,
+  );
 
   const sections = useMemo(
     () => [...new Set(floorPlan.map((t) => t.section))],
@@ -276,7 +316,10 @@ function ClubRsvpPage() {
   );
 
   const availableCount = floorPlan.filter(
-    (t) => t.status !== "reserved" && t.seats >= partySize,
+    (t) =>
+      t.status !== "reserved" &&
+      !isSeatReserved(t.id, selectedDate, reservations) &&
+      t.seats >= partySize,
   ).length;
 
   const totalEstimate =
@@ -290,6 +333,14 @@ function ClubRsvpPage() {
   const goNext = () => {
     if (activeTab === "explore" && partySize < 1) {
       toast.error("Enter at least 1 guest in party size");
+      return;
+    }
+    if (activeTab === "explore" && !clubSettings.acceptsReservations) {
+      toast.error("This club is not accepting reservations right now");
+      return;
+    }
+    if (activeTab === "explore" && !clubIsOpen) {
+      toast.error("The club is closed on the selected day");
       return;
     }
     if (activeTab === "floor" && !tableFits) {
@@ -574,6 +625,11 @@ function ClubRsvpPage() {
                         onChange={(e) => setSelectedDate(e.target.value)}
                         className={field}
                       />
+                      <p className={`mt-2 text-[11px] ${clubIsOpen ? "text-emerald-300" : "text-red-300"}`}>
+                        {clubIsOpen
+                          ? "Open for reservations"
+                          : "Closed on this day — choose another date"}
+                      </p>
                     </label>
 
                     <label className="block">
@@ -654,7 +710,9 @@ function ClubRsvpPage() {
                         {floorPlan
                           .filter((t) => t.section === section)
                           .map((t) => {
-                            const booked = t.status === "reserved";
+                            const booked =
+                              t.status === "reserved" ||
+                              isSeatReserved(t.id, selectedDate, reservations);
                             const tooSmall = !booked && t.seats < partySize;
                             const disabled = booked || tooSmall;
                             const selected = selectedTable === t.id;
