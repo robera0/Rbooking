@@ -342,6 +342,52 @@ const EventInfo = () => {
       },
     );
   };
+  const shareEvent = async (eventData) => {
+    // Guard: If eventData is React's click event or undefined, fall back gracefully
+    const isReactEvent = eventData && eventData.nativeEvent;
+    const data = isReactEvent || !eventData ? {} : eventData;
+
+    const title = data?.name || "Check out this event!";
+    const text = data?.desc || `Get your tickets for ${title} now!`;
+
+    // Cleanly extract URL string
+    const url =
+      typeof data?.links === "string" && data.links.trim() !== ""
+        ? data.links
+        : window.location.href;
+
+    const sharePayload = { title, text, url };
+
+    // 1. Try Native Web Share API (Mobile / Modern Browsers)
+    if (navigator.share) {
+      try {
+        await navigator.share(sharePayload);
+        return;
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Error sharing via native sheet:", err);
+        } else {
+          return; // User cancelled share drawer
+        }
+      }
+    }
+
+    // 2. Clipboard Fallback
+    try {
+      await navigator.clipboard.writeText(String(url));
+      toast.success("Event link copied to clipboard!", {
+        id: "share-success",
+        style: {
+          background: "#121417",
+          color: "#fff",
+          border: "1px solid rgba(255,255,255,0.08)",
+        },
+      });
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+      toast.error("Unable to copy link.", { id: "share-error" });
+    }
+  };
 
   /* ── ticket-type colour theme ── */
   const ticketThemes = {
@@ -535,7 +581,7 @@ const EventInfo = () => {
           </motion.div>
         </motion.div>
 
-        <div className="absolute right-10 top-0 bottom-0 w-[1px] bg-white/[0.04] hidden lg:block">
+        <div className="absolute space-x-12 right-10 top-0 bottom-0 w-[1px] bg-white/[0.04] hidden lg:block">
           <motion.div
             initial={{ scaleY: 0 }}
             animate={{ scaleY: 1 }}
@@ -545,22 +591,32 @@ const EventInfo = () => {
           />
         </div>
 
-        {/* Wishlist Button */}
-        <button
-          onClick={handleWishlistToggle}
-          disabled={wishlistMutation.isLoading}
-          className={`absolute top-8 right-6 lg:right-14 z-20 w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
-            checkWishlist(eventId)
-              ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
-              : "bg-black/40 border-white/10 text-white hover:bg-black/60"
-          }`}
-        >
-          <Heart
-            size={20}
-            fill={checkWishlist(eventId) ? "currentColor" : "none"}
-            strokeWidth={2.5}
-          />
-        </button>
+        <div className="absolute top-8 right-6 lg:right-14 z-20 flex items-center gap-3">
+          {/* Wishlist Button */}
+          <button
+            onClick={handleWishlistToggle}
+            disabled={wishlistMutation.isLoading}
+            className={`w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
+              checkWishlist(eventId)
+                ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
+                : "bg-black/40 border-white/10 text-white hover:bg-black/60"
+            }`}
+          >
+            <Heart
+              size={20}
+              fill={checkWishlist(eventId) ? "currentColor" : "none"}
+              strokeWidth={2.5}
+            />
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={() => shareEvent(event)}
+            className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-gray-300 hover:text-white hover:bg-black/60 flex items-center justify-center transition-all active:scale-90"
+          >
+            <Share2 size={18} />
+          </button>
+        </div>
       </div>
 
       {/* ── MAP PANEL ── */}
@@ -1074,8 +1130,14 @@ const EventInfo = () => {
                                       : "#999",
                                 }}
                               >
-                                {t?.price}{" "}
-                                <span className="text-[8px]">ETB</span>
+                                {t?.price === 0 ? (
+                                  "FREE"
+                                ) : (
+                                  <>
+                                    {t?.price}{" "}
+                                    <span className="text-[8px]">ETB</span>
+                                  </>
+                                )}
                               </span>
                             </button>
                           );

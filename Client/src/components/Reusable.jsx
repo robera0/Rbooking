@@ -101,7 +101,12 @@ export default function CheckoutModal({
   const { setQuantity, API_URL } = useService();
   const navigate = useNavigate();
 
-  const quantity = Math.max(1, parseInt(quantityStr) || 1);
+  const isFree = Number(amount) === 0;
+  const MAX_FREE_QUANTITY = 4;
+  const quantity = Math.min(
+    isFree ? MAX_FREE_QUANTITY : Infinity,
+    Math.max(1, parseInt(quantityStr) || 1),
+  );
 
   const totalAmount = amount * quantity;
 
@@ -139,19 +144,19 @@ export default function CheckoutModal({
       });
       const data = res.data;
 
-      if (Number(totalAmount) === 0) {
+      if (totalAmount === 0) {
         const { default: toast } = await import("react-hot-toast");
-        toast.success("Free ticket confirmed — no verification required.", {
+        toast.success("Your free ticket is acquired successfully!", {
           duration: 4000,
         });
 
         navigate(`/tickets_home/${data.userTicket._id}`);
-        setTimeout(() => window.location.reload(), 50);
       } else {
         const { default: toast } = await import("react-hot-toast");
-        toast.success("Pay,then paste your Telebirr link below to verify it", {
-          duration: 9000,
-        });
+        toast.success(
+          "Your ticket is successfully held! Please complete your payment.",
+          { duration: 9000 },
+        );
 
         navigate(`/tickets_home/verify/${data.userTicket._id}`, {
           state: {
@@ -164,8 +169,12 @@ export default function CheckoutModal({
       }
       onClose();
     } catch (error) {
+      const message =
+        (error?.response?.status < 500 && error?.response?.data?.message) ||
+        error.message ||
+        "Purchase failed. Please try again.";
       import("react-hot-toast").then(({ default: toast }) =>
-        toast.error(error.message || "Purchase failed. Please try again."),
+        toast.error(message),
       );
     } finally {
       setIsLoading(false);
@@ -241,8 +250,14 @@ export default function CheckoutModal({
                   const val = e.target.value;
                   // allow empty string while typing, digits only
                   if (val === "" || /^[0-9]+$/.test(val)) {
-                    setQuantityStr(val);
-                    setQuantity(Math.max(1, parseInt(val) || 1));
+                    // Free tickets are capped per person; show the cap
+                    // instead of a number that will be ignored.
+                    const shown =
+                      isFree && parseInt(val) > MAX_FREE_QUANTITY
+                        ? String(MAX_FREE_QUANTITY)
+                        : val;
+                    setQuantityStr(shown);
+                    setQuantity(Math.max(1, parseInt(shown) || 1));
                   }
                 }}
                 onBlur={() => {
@@ -260,12 +275,14 @@ export default function CheckoutModal({
                 Price
               </label>
               <div className="w-full bg-white/[0.01] border border-white/5 rounded-2xl px-5 py-4 font-black italic text-gray-400">
-                {amount} ETB
+                {isFree ? "Free" : `${amount} ETB`}
               </div>
             </div>
           </div>
         </div>
 
+        {!isFree && (
+          <>
         {/* Payment Methods */}
         <div className="space-y-3 mb-10 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
@@ -318,6 +335,9 @@ export default function CheckoutModal({
           </p>
         </div>
 
+          </>
+        )}
+
         {/* Final Execution Button */}
         <div className="space-y-4">
           <button
@@ -334,7 +354,9 @@ export default function CheckoutModal({
               </>
             ) : (
               <>
-                CONFIRM & PAY {totalAmount.toLocaleString()} ETB
+                {isFree
+                  ? "GET FREE TICKET"
+                  : `CONFIRM & PAY ${totalAmount.toLocaleString()} ETB`}
                 <ChevronRight
                   size={18}
                   className="group-hover:translate-x-1 transition-transform"
@@ -349,7 +371,6 @@ export default function CheckoutModal({
 }
 export const MenuBar = ({ icon, header, path, onClick }) => {
   const location = useLocation();
-
   const isActive = path
     ? path === "/"
       ? location.pathname === "/"

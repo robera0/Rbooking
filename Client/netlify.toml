@@ -14,7 +14,6 @@
 # in sync if the backend URL changes again.
 [[redirects]]
   from = "/api/*"
-  to ="https://paysso.onrender.com"
- # to = "https://api.paysso.et/api/:splat"
+  to = "https://api.paysso.et/api/:splat"
   status = 200
   force = true

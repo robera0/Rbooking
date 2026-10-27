@@ -50,6 +50,49 @@ const Wishlist = () => {
       ) || false
     );
   };
+  const shareEvent = async (eventData) => {
+    // If eventData is an event object passed from the click handler, or fallback to the current event context
+    const shareUrl = eventData?.links || window.location.href;
+    const shareTitle =
+      eventData?.name || event?.name || "Check out this event!";
+    const shareText =
+      eventData?.desc || `Get your tickets for ${event?.name || ""} now!`;
+
+    const sharePayload = {
+      title: shareTitle,
+      text: shareText,
+      url: shareUrl,
+    };
+
+    // Check if Web Share API is available
+    if (navigator.share) {
+      try {
+        await navigator.share(sharePayload);
+        console.log("Successfully shared via native sheet");
+      } catch (err) {
+        // Ignore AbortError when the user closes/cancels the share drawer
+        if (err.name !== "AbortError") {
+          console.error("Error sharing:", err);
+        }
+      }
+    } else {
+      // Fallback: Copy URL directly to clipboard
+      try {
+        await navigator.clipboard.writeText(sharePayload.url);
+        toast.success("Event URL copied to clipboard!", {
+          id: "copy-success",
+          style: {
+            background: "#121417",
+            color: "#fff",
+            border: "1px solid rgba(255,255,255,0.05)",
+          },
+        });
+      } catch (err) {
+        console.error("Failed to copy link:", err);
+        toast.error("Failed to copy link.", { id: "copy-error" });
+      }
+    }
+  };
 
   const handleWishlistToggle = (eventId, ticketId, e) => {
     e.preventDefault();
@@ -103,8 +146,6 @@ const Wishlist = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12 lg:py-20">
-
-
       {/* ── HEADER ── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 px-4">
         <div className="space-y-4">
@@ -321,7 +362,10 @@ const Wishlist = () => {
                           )}
                         </button>
 
-                        <button className="w-12 h-12 rounded-xl bg-white/[0.02] border border-white/10 text-gray-400 hover:text-white hover:border-white/20 flex items-center justify-center transition-all">
+                        <button
+                          onClick={shareEvent}
+                          className="w-12 h-12 rounded-xl bg-white/[0.02] border border-white/10 text-gray-400 hover:text-white hover:border-white/20 flex items-center justify-center transition-all"
+                        >
                           <Share2 size={16} />
                         </button>
                       </div>

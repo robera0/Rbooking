@@ -1,3 +1,4 @@
+import { hideExpiredMatch } from "../utils/ticketExpiry.js";
 import { TicketModel } from "../models/ticket.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
 import Transaction from "../models/transaction.model.js";
@@ -124,7 +125,7 @@ class TicketService {
       {
         $match: {
           "event.adminId": new mongoose.Types.ObjectId(adminId),
-          status: { $ne: "expired" },
+          ...hideExpiredMatch(),
         },
       },
 

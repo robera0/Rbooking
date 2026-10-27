@@ -1,3 +1,4 @@
+import TicketPriceField from "./TicketPriceField";
 import React, { useState, useRef } from "react";
 import {
   Plus,
@@ -167,6 +168,23 @@ const PillMultiSelect = ({ label, options, value, onChange }) => {
 // free-text input so admins can still name their own tier.
 const TICKET_TYPE_PRESETS = ["Regular", "Early Bird", "VIP", "VVIP"];
 
+// An event can carry switched-off leftovers with the same name as a live
+// ticket (from old autosaves). Showing both would make every save fail with
+// "more than one ticket with this name", so hide the inactive copy.
+const visibleTickets = (tickets) => {
+  if (!Array.isArray(tickets)) return tickets;
+  const liveNames = new Set(
+    tickets
+      .filter((t) => t.isActive !== false)
+      .map((t) => (t.name || "").trim().toLowerCase()),
+  );
+  return tickets.filter(
+    (t) =>
+      t.isActive !== false ||
+      !liveNames.has((t.name || "").trim().toLowerCase()),
+  );
+};
+
 const TicketTypeSelect = ({ value, onChange }) => {
   const isCustomValue = value && !TICKET_TYPE_PRESETS.includes(value);
   const [showCustomInput, setShowCustomInput] = useState(isCustomValue);
@@ -250,11 +268,17 @@ const EditEvent = () => {
         // renaming a tier can't tell the backend "update this one" and it
         // creates a new document instead, leaving the old one behind.
         tickets:
-          eventData?.tickets?.map((t) => ({
+          visibleTickets(eventData?.tickets)?.map((t) => ({
             ticketId: t._id,
             name: t.name || "",
             price: t.price || 0,
             capacity: t.totalQuantity || 0,
+            // Seats already taken. Capacity can't go below this.
+            sold: Math.max(
+              0,
+              (t.totalQuantity || 0) -
+                (t.availableQuantity ?? t.totalQuantity ?? 0),
+            ),
             isActive: t.isActive !== false,
           })) ||
           ev.priceRanges?.map((pr) => ({
@@ -276,6 +300,7 @@ const EditEvent = () => {
         familyFriendly: ev.familyFriendly || false,
         durationDays: ev.durationDays || "",
         stages: ev.stages || [],
+        invitation: ev.invitation?.enabled || false,
       };
     } else {
       initialObj = {
@@ -295,6 +320,7 @@ const EditEvent = () => {
         familyFriendly: false,
         durationDays: "",
         stages: [],
+        invitation: false,
       };
     }
     initialFormRef.current = initialObj;
@@ -331,7 +357,7 @@ const EditEvent = () => {
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+  }, [hasUnsavedChanges, isSaved]);
 
   const [newAmenity, setNewAmenity] = useState("");
   const [newTicket, setNewTicket] = useState({
@@ -359,6 +385,7 @@ const EditEvent = () => {
       form.append("amenities", JSON.stringify(payload.amenities));
       form.append("musicGenre", JSON.stringify(payload.musicGenre));
       form.append("familyFriendly", payload.familyFriendly);
+      form.append("invitation", payload.invitation === true);
       form.append("existingPictures", JSON.stringify(payload.existingPictures));
       if (payload.durationDays !== undefined)
         form.append("durationDays", payload.durationDays);
@@ -367,6 +394,8 @@ const EditEvent = () => {
 
       formData.newPictures.forEach((img) => form.append("pictures", img));
 
+      // Invitations are created one guest at a time from the Invitation QR
+      // page, so saving the event only needs to store the on/off toggle.
       const res = await api.put(`/api/admin/events/${eventId}`, form);
       return res.data;
     },
@@ -391,6 +420,29 @@ const EditEvent = () => {
     if (!formData.eventName) return setError("Event Name is required");
     if (!formData.venue.name) return setError("Venue name is required");
     if (!formData.eventDate) return setError("Date and time are required");
+
+    const badTicket = formData.tickets.find(
+      (t) =>
+        !String(t.name || "").trim() ||
+        String(t.price).trim() === "" ||
+        Number(t.price) < 0 ||
+        String(t.capacity).trim() === "" ||
+        !Number.isInteger(Number(t.capacity)) ||
+        Number(t.capacity) < 0,
+    );
+    if (badTicket) {
+      return setError(
+        "Every ticket needs a name, a price of 0 or more and a whole-number capacity",
+      );
+    }
+    const belowSold = formData.tickets.find(
+      (t) => Number(t.capacity) < (t.sold ?? 0),
+    );
+    if (belowSold) {
+      return setError(
+        `"${belowSold.name}" capacity can't be below the ${belowSold.sold} already sold`,
+      );
+    }
     setError("");
 
     const type = formData.type.toLowerCase();
@@ -424,9 +476,9 @@ const EditEvent = () => {
         ticketId: t.ticketId,
         type: t.name,
         currency: "ETB",
-        min: Number(t.price),
-        max: Number(t.price),
-        capacity: Number(t.capacity),
+        min: t.price,
+        max: t.price,
+        capacity: t.capacity,
         isActive: t.isActive !== false,
       })),
       dates: {
@@ -453,6 +505,7 @@ const EditEvent = () => {
       },
       musicGenre: type === "concert" ? formData.musicGenre : ["General"],
       familyFriendly: formData.familyFriendly,
+      invitation: formData.invitation,
       ...(type === "festival" && {
         durationDays: Number(formData.durationDays) || 0,
         stages: formData.stages,
@@ -671,9 +724,9 @@ const EditEvent = () => {
               {formData.tickets.map((ticket, idx) => (
                 <div
                   key={idx}
-                  className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-white/[0.06]"
+                  className="flex flex-wrap gap-4 items-start sm:items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-white/[0.06]"
                 >
-                  <div className="flex-1">
+                  <div className="basis-full sm:basis-0 sm:flex-1 min-w-0">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Ticket Name
                     </label>
@@ -681,41 +734,50 @@ const EditEvent = () => {
                       value={ticket.name}
                       onChange={(val) => {
                         const updated = [...formData.tickets];
-                        updated[idx].name = val;
+                        updated[idx] = { ...updated[idx], name: val };
                         set({ tickets: updated });
                       }}
                     />
                   </div>
-                  <div className="w-24">
+                  <div className="w-[calc(50%-0.5rem)] sm:w-24">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Price (ETB)
                     </label>
-                    <input
+                    <TicketPriceField
                       value={ticket.price}
-                      onChange={(e) => {
+                      onChange={(price) => {
                         const updated = [...formData.tickets];
-                        updated[idx].price = e.target.value;
+                        updated[idx] = { ...updated[idx], price };
                         set({ tickets: updated });
                       }}
-                      className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full"
                     />
                   </div>
-                  <div className="w-24">
+                  <div className="w-[calc(50%-0.5rem)] sm:w-24">
                     <label className="block text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Capacity
                     </label>
                     <input
                       type="number"
+                      min={ticket.sold ?? 0}
+                      step="1"
                       value={ticket.capacity}
                       onChange={(e) => {
                         const updated = [...formData.tickets];
-                        updated[idx].capacity = e.target.value;
+                        updated[idx] = {
+                          ...updated[idx],
+                          capacity: e.target.value,
+                        };
                         set({ tickets: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full no-spinner"
                     />
+                    {ticket.sold > 0 && (
+                      <p className="text-[9px] text-gray-500 font-bold mt-1">
+                        {ticket.sold} sold
+                      </p>
+                    )}
                   </div>
-                  <div className="flex flex-col items-center ml-2">
+                  <div className="flex flex-col items-center sm:ml-2">
                     <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">
                       Visible
                     </span>
@@ -723,8 +785,10 @@ const EditEvent = () => {
                       type="button"
                       onClick={() => {
                         const updated = [...formData.tickets];
-                        updated[idx].isActive =
-                          ticket.isActive === false ? true : false;
+                        updated[idx] = {
+                          ...updated[idx],
+                          isActive: ticket.isActive === false,
+                        };
                         set({ tickets: updated });
                       }}
                       className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${
@@ -757,8 +821,8 @@ const EditEvent = () => {
               ))}
 
               {/* New ticket row */}
-              <div className="flex gap-4 items-center bg-[#121417] p-5 rounded-xl border border-dashed border-[#FF7A00]">
-                <div className="flex-1">
+              <div className="flex flex-wrap gap-4 items-start sm:items-center bg-[#121417] p-4 sm:p-5 rounded-xl border border-dashed border-[#FF7A00]">
+                <div className="basis-full sm:basis-0 sm:flex-1 min-w-0">
                   <TicketTypeSelect
                     value={newTicket.name}
                     onChange={(val) =>
@@ -766,17 +830,13 @@ const EditEvent = () => {
                     }
                   />
                 </div>
-                <div className="w-24">
-                  <input
+                <div className="w-[calc(50%-0.5rem)] sm:w-24">
+                  <TicketPriceField
                     value={newTicket.price}
-                    onChange={(e) =>
-                      setNewTicket({ ...newTicket, price: e.target.value })
-                    }
-                    className="bg-transparent border-none text-[#FF7A00] font-black outline-none w-full placeholder:text-gray-400"
-                    placeholder="Price"
+                    onChange={(price) => setNewTicket({ ...newTicket, price })}
                   />
                 </div>
-                <div className="w-32">
+                <div className="w-[calc(50%-0.5rem)] sm:w-32">
                   <input
                     type="number"
                     value={newTicket.capacity}
@@ -829,7 +889,10 @@ const EditEvent = () => {
                       value={policy.header}
                       onChange={(e) => {
                         const updated = [...formData.policies];
-                        updated[idx].header = e.target.value;
+                        updated[idx] = {
+                          ...updated[idx],
+                          header: e.target.value,
+                        };
                         set({ policies: updated });
                       }}
                       className="bg-transparent border-none text-white font-bold outline-none w-full uppercase text-xs"
@@ -853,7 +916,10 @@ const EditEvent = () => {
                     value={policy.descriptions}
                     onChange={(e) => {
                       const updated = [...formData.policies];
-                      updated[idx].descriptions = e.target.value;
+                      updated[idx] = {
+                        ...updated[idx],
+                        descriptions: e.target.value,
+                      };
                       set({ policies: updated });
                     }}
                     className="w-full bg-transparent border-none text-gray-400 text-[11px] outline-none italic resize-none"
@@ -965,6 +1031,41 @@ const EditEvent = () => {
               value={formData.eventDate}
               onChange={(val) => set({ eventDate: val })}
             />
+          </div>
+
+          {/* Invitation */}
+          <div className="bg-[#1C1F22] border border-white/[0.04] p-8 rounded-[2rem]">
+            <h3 className="text-white font-bold uppercase tracking-tight mb-2 text-sm">
+              Invitation
+            </h3>
+            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+              Send a personal invitation pass to each guest
+            </p>
+            <Toggle
+              label="Enable Invitations"
+              value={formData.invitation}
+              onChange={(v) => set({ invitation: v })}
+            />
+
+            {formData.invitation ? (
+              <div className="mt-4 flex items-start gap-3 p-4 bg-[#FF7A00]/5 border border-[#FF7A00]/20 rounded-xl">
+                <ShieldCheck
+                  size={16}
+                  className="text-[#FF7A00] shrink-0 mt-0.5"
+                />
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                  After you save, open the{" "}
+                  <span className="text-[#FF7A00]">Invitation QR</span> column
+                  in the Events table. Add each guest's email or phone, pick a
+                  background, and generate their pass.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
+                Turning this off stops new invitations. Passes already created
+                still work at the gate.
+              </p>
+            )}
           </div>
 
           {/* Amenities */}

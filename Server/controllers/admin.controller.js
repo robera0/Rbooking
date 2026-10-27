@@ -4,6 +4,7 @@ import UserService from "../service/user.service.js";
 import EventService from "../service/event.service.js";
 import { UserModel } from "../models/user.model.js";
 import { ProfileModel } from "../models/profile.model.js";
+import { filterOwnedEventIds } from "../utils/adminOwnership.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 
 export const getAdminProfile = catchAsync(async (req, res, next) => {
@@ -39,7 +40,9 @@ export const deleteEvents = catchAsync(async (req, res, next) => {
   if (!eventIds || !Array.isArray(eventIds))
     return res.status(400).json({ success: false, message: "Invalid payload" });
 
-  await EventService.deleteMany(eventIds);
+  // Only the organizer's own events can be deleted.
+  const ownedIds = await filterOwnedEventIds(req.user.id, eventIds);
+  await EventService.deleteMany(ownedIds);
   res.status(200).json({ success: true, message: "Events deleted" });
 });
 

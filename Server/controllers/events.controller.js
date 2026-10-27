@@ -9,12 +9,23 @@ import { clearEventsCache, clearSingleEventCache } from "../config/redis.js";
 import EventService from "../service/event.service.js";
 import catchAsync from "../errors/catchAsync.js";
 import mongoose from "mongoose";
+import { Event } from "../models/events.model.js";
+import { resolveStatusUpdate } from "../utils/eventStatus.js";
+import {
+  syncEventTickets,
+  TicketSyncError,
+} from "../service/ticketSync.service.js";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
 import QRCode from "qrcode";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { imageUploader } from "../liberary/index.js";
+import { Invitation } from "../models/invitation.model.js";
+import {
+  createGuestInvitations,
+  InvitationError,
+} from "../service/invitation.service.js";
 import "dotenv/config";
 
 const URL =
@@ -53,6 +64,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
     desc,
     links,
     stages,
+    invitation,
     durationDays,
     category,
     familyFriendly,
@@ -62,6 +74,16 @@ export const addEvent = catchAsync(async (req, res, next) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
   const normalizedType = type?.toLowerCase();
+
+  // The create page autosaves before an event type is chosen. Say so plainly
+  // instead of letting Mongoose fail with a 500 about a missing discriminator.
+  if (!normalizedType || !Event.discriminators?.[normalizedType]) {
+    return res.status(400).json({
+      success: false,
+      code: "INVALID_TYPE",
+      message: "Choose an event type first",
+    });
+  }
 
   artist = safeParse(artist || "{}");
   priceRanges = safeParse(priceRanges || "[]");
@@ -85,8 +107,8 @@ export const addEvent = catchAsync(async (req, res, next) => {
       .status(400)
       .json({ success: false, message: "Venue name  is required" });
   }
-  priceRanges = priceRanges.map((p) =>
-    p.isFree ? { ...p, min: 0, max: 0 } : p,
+  priceRanges = (Array.isArray(priceRanges) ? priceRanges : []).map((p) =>
+    p?.isFree ? { ...p, min: 0, max: 0 } : p,
   );
   familyFriendly = Boolean(familyFriendly === "true");
 
@@ -113,6 +135,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
   } catch (e) {
     console.error("Failed to find AdminProfile:", e);
   }
+  const invitationEnabled = invitation === true || invitation === "true";
 
   const events = {
     type: normalizedType,
@@ -134,9 +157,11 @@ export const addEvent = catchAsync(async (req, res, next) => {
     durationDays,
     category,
     familyFriendly,
+    invitation: { enabled: invitationEnabled },
   };
 
   let newEvent;
+
   try {
     newEvent = await EventService.create(events);
   } catch (err) {
@@ -166,31 +191,94 @@ export const addEvent = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     event: newEvent,
+
     message: "event created successfully",
   });
 });
 
+export const createInvitation = catchAsync(async (req, res) => {
+  const { eventId } = req.params;
+
+  let created;
+  try {
+    created = await createGuestInvitations(eventId, req.user.id, req.body);
+  } catch (error) {
+    if (error instanceof InvitationError) {
+      return res
+        .status(error.status)
+        .json({ success: false, message: error.message });
+    }
+    throw error;
+  }
+
+  const { invitations, orderId, eventName } = created;
+  const results = await Promise.all(
+    invitations.map(async (invitation) => ({
+      _id: invitation._id,
+      ticketId: invitation.ticketId,
+      guestName: invitation.guestName,
+      qrCode: await QRCode.toDataURL(
+        JSON.stringify({
+          userTicketId: invitation._id,
+          token: invitation.ticketId,
+        }),
+        {
+          width: 600,
+          margin: 2,
+          color: { dark: "#000000", light: "#ffffff" },
+        },
+      ),
+    })),
+  );
+
+  await clearSingleEventCache(eventId);
+
+  return res.status(201).json({
+    success: true,
+    orderId,
+    eventName,
+    quantity: results.length,
+    invitations: results,
+  });
+});
 export const createTickets = catchAsync(async (req, res, next) => {
   const { eventId } = req.params;
   const { tickets } = req.body;
 
-  const createdNewTickets = await TicketModel.insertMany(
-    tickets.map((t) => ({
-      eventId,
-      name: t.name,
-      price: Number(t.price),
-      totalQuantity: Number(t.capacity),
-      availableQuantity: Number(t.capacity),
-      isActive: t.isActive !== false,
-    })),
-  );
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    return res.status(400).json({ message: "Invalid event ID" });
+  }
+
+  if (!(await EventService.findById(eventId))) {
+    return res.status(404).json({ message: "Event not found" });
+  }
+
+  try {
+    // Matches existing tiers by name, so calling this after a draft was
+    // autosaved (or twice) never creates duplicates, and never switches off
+    // tiers it was not asked about.
+    await syncEventTickets(eventId, Array.isArray(tickets) ? tickets : [], {
+      deactivateMissing: false,
+    });
+  } catch (error) {
+    if (error instanceof TicketSyncError) {
+      return res
+        .status(error.status)
+        .json({ code: error.code, message: error.message });
+    }
+    throw error;
+  }
 
   await clearEventsCache();
   await clearSingleEventCache(eventId);
 
+  const saved = await TicketModel.find({
+    eventId,
+    isActive: { $ne: false },
+  }).lean();
   res.status(201).json({
     success: true,
-    tickets: createdNewTickets,
+    tickets: saved,
   });
 });
 
@@ -317,7 +405,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
   });
 
   await safeRedis(() =>
-    redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvents)),
+    redisClient.setex(cacheKey, 3600, JSON.stringify(featuredEvent)),
   );
   res.status(200).json({ events: featuredEvent });
 });
@@ -472,6 +560,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
 
     // event fields
     category,
+    invitation,
 
     // common
     familyFriendly,
@@ -532,6 +621,10 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     category,
 
     familyFriendly,
+    invitation:
+      invitation === undefined
+        ? undefined
+        : { enabled: invitation === true || invitation === "true" },
   };
 
   // Remove undefined
@@ -539,70 +632,56 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     (key) => updateData[key] === undefined && delete updateData[key],
   );
 
-  const updatedEvent = await EventService.findByIdAndUpdate(
-    eventId,
-    updateData,
-  );
-
-  if (!updatedEvent) {
+  const existingEvent = await EventService.findById(eventId);
+  if (!existingEvent) {
     return res.status(404).json({ success: false, message: "Event not found" });
   }
 
-  // Sync tickets based on updated priceRanges. Each entry carries the real
-  // Ticket document's _id (ticketId) when it's an existing tier - matching
-  // by _id instead of by name means renaming a tier updates that same
-  // document instead of leaving the old-named one behind as an orphaned
-  // duplicate while a brand new document gets created for the new name.
-  if (priceRanges && Array.isArray(priceRanges)) {
+  // A late draft autosave must not unpublish an event that was just published.
+  updateData.status = resolveStatusUpdate(
+    existingEvent.status,
+    updateData.status,
+  );
+  if (updateData.status === undefined) delete updateData.status;
+
+  // Tickets first: a bad submission (negative price, capacity below what is
+  // already sold, ...) is rejected before anything about the event changes.
+  if (Array.isArray(priceRanges)) {
     try {
-      const eventIdObj = new mongoose.Types.ObjectId(eventId);
-
-      const existingOps = [];
-      const newTickets = [];
-      for (const pr of priceRanges) {
-        const fields = {
-          name: pr.type,
-          price: Number(pr.min),
-          totalQuantity: Number(pr.capacity) || 0,
-          isActive: pr.isActive !== false,
-        };
-        if (pr.ticketId) {
-          existingOps.push({
-            updateOne: {
-              filter: { _id: pr.ticketId, eventId: eventIdObj },
-              update: { $set: fields },
-            },
-          });
-        } else {
-          newTickets.push({
-            eventId: eventIdObj,
-            ...fields,
-            availableQuantity: fields.totalQuantity,
-          });
-        }
-      }
-
-      if (existingOps.length > 0) {
-        await TicketModel.bulkWrite(existingOps);
-      }
-      if (newTickets.length > 0) {
-        await TicketModel.insertMany(newTickets);
-      }
-
-      // Ticket types removed from the form (not just toggled off) are
-      // simply absent from priceRanges, so the ops above never touch them -
-      // leaving them isActive:true and still purchasable forever.
-      // Deactivate anything for this event that's no longer submitted.
-      const submittedTicketIds = priceRanges
-        .map((pr) => pr.ticketId)
-        .filter(Boolean);
-      await TicketModel.updateMany(
-        { eventId: eventIdObj, _id: { $nin: submittedTicketIds } },
-        { $set: { isActive: false } },
+      await syncEventTickets(
+        eventId,
+        priceRanges.map((pr) => ({
+          ticketId: pr.ticketId,
+          name: pr.type ?? pr.name,
+          price: pr.min ?? pr.price,
+          capacity: pr.capacity,
+          isActive: pr.isActive,
+        })),
       );
-    } catch (ticketErr) {
-      console.error("Failed to sync tickets:", ticketErr);
+    } catch (error) {
+      if (error instanceof TicketSyncError) {
+        return res.status(error.status).json({
+          success: false,
+          code: error.code,
+          message: error.message,
+        });
+      }
+      throw error;
     }
+  }
+
+  let updatedEvent;
+  try {
+    updatedEvent = await EventService.findByIdAndUpdate(eventId, updateData);
+  } finally {
+    // Tickets may already have changed above. If saving the event itself
+    // fails, readers must still not be served the old cached tickets.
+    await clearEventsCache();
+    await clearSingleEventCache(eventId);
+  }
+
+  if (!updatedEvent) {
+    return res.status(404).json({ success: false, message: "Event not found" });
   }
 
   await clearEventsCache();

@@ -546,7 +546,9 @@ const UserHome = () => {
                           </span>
                           <div className="flex items-baseline gap-1">
                             <span className="text-white font-black text-xl  lg:text-[24px] md:text-3xl tracking-tighter">
-                              {e?.priceRanges?.[0]?.min || e?.price || "0"} Birr
+                              {(e?.priceRanges?.[0]?.min ?? e?.price ?? 0) === 0
+                                ? "Free"
+                                : `${e?.priceRanges?.[0]?.min ?? e?.price} Birr`}
                             </span>
                             <span className="text-gray-500 text-[10px] md:text-[12px] font-bold lowercase italic">
                               /pp
