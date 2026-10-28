@@ -17,6 +17,14 @@ import {
 import api from "../src/Context/api/api.config";
 import toast from "react-hot-toast";
 import JSZip from "jszip";
+import {
+  LAYER_LABELS,
+  QR_MAX_PADDING,
+  QR_MAX_SIZE,
+  QR_MIN_SIZE,
+  TEXT_KEYS,
+  mergeLayout,
+} from "../src/lib/invitationLayout.js";
 
 // Poster size used for the downloaded PNG (4:5).
 const POSTER_W = 1080;
@@ -47,93 +55,6 @@ const WEIGHTS = [
   { label: "Extra bold", value: 800 },
   { label: "Black", value: 900 },
 ];
-
-// x / y are the CENTER of each element, in % of the poster.
-// size / padding / radius are in poster pixels (1080 x 1350 canvas).
-const DEFAULT_LAYOUT = {
-  overlay: 0.35,
-  label: {
-    visible: true,
-    text: "EVENT",
-    x: 50,
-    y: 8.1,
-    size: 26,
-    color: "#ffffff",
-    opacity: 0.75,
-    weight: 800,
-    font: "sans-serif",
-    tracking: 0.15,
-    maxWidth: 86,
-  },
-  eventName: {
-    visible: true,
-    x: 50,
-    y: 13.7,
-    size: 56,
-    color: "#ffffff",
-    opacity: 1,
-    weight: 800,
-    font: "sans-serif",
-    tracking: 0,
-    maxWidth: 86,
-  },
-  qr: {
-    visible: true,
-    x: 50,
-    y: 47.4,
-    size: 380,
-    padding: 30,
-    bg: "#ffffff",
-    radius: 40,
-  },
-  caption: {
-    visible: true,
-    text: "INVITATION PASS",
-    x: 50,
-    y: 67.4,
-    size: 28,
-    color: "#ffffff",
-    opacity: 0.85,
-    weight: 700,
-    font: "sans-serif",
-    tracking: 0.15,
-    maxWidth: 86,
-  },
-  guest: {
-    visible: true,
-    x: 50,
-    y: 73.3,
-    size: 44,
-    color: "#ffffff",
-    opacity: 1,
-    weight: 800,
-    font: "sans-serif",
-    tracking: 0,
-    maxWidth: 86,
-  },
-};
-
-const TEXT_KEYS = ["label", "eventName", "caption", "guest"];
-
-const LAYER_LABELS = {
-  label: "Label",
-  eventName: "Event name",
-  qr: "QR code",
-  caption: "Caption",
-  guest: "Guest name",
-};
-
-const mergeLayout = (saved) => {
-  const out = { overlay: DEFAULT_LAYOUT.overlay };
-
-  if (typeof saved?.overlay === "number") out.overlay = saved.overlay;
-
-  Object.keys(LAYER_LABELS).forEach((key) => {
-    out[key] = { ...DEFAULT_LAYOUT[key], ...(saved?.[key] || {}) };
-  });
-
-  return out;
-};
 
 const EMPTY_GUEST = { guestName: "", email: "", phone: "" };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -955,17 +876,20 @@ const InvitationQR = () => {
 
                 {/* Controls for the selected element */}
                 <div className="space-y-4">
-                  <label className="flex items-center gap-2 text-xs font-bold text-gray-300">
-                    <input
-                      type="checkbox"
-                      checked={sel.visible}
-                      onChange={(e) =>
-                        updateLayer(selected, { visible: e.target.checked })
-                      }
-                      className="accent-[#FF7A00] h-4 w-4"
-                    />
-                    Show {LAYER_LABELS[selected].toLowerCase()}
-                  </label>
+                  {/* The QR code is the pass itself, so it cannot be hidden. */}
+                  {selected !== "qr" && (
+                    <label className="flex items-center gap-2 text-xs font-bold text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={sel.visible}
+                        onChange={(e) =>
+                          updateLayer(selected, { visible: e.target.checked })
+                        }
+                        className="accent-[#FF7A00] h-4 w-4"
+                      />
+                      Show {LAYER_LABELS[selected].toLowerCase()}
+                    </label>
+                  )}
 
                   {(selected === "label" || selected === "caption") && (
                     <div>
@@ -1076,8 +1000,8 @@ const InvitationQR = () => {
                       <Slider
                         label="QR size"
                         value={sel.size}
-                        min={160}
-                        max={800}
+                        min={QR_MIN_SIZE}
+                        max={QR_MAX_SIZE}
                         onChange={(size) => updateLayer("qr", { size })}
                         suffix="px"
                       />
@@ -1086,7 +1010,7 @@ const InvitationQR = () => {
                         label="Inner padding"
                         value={sel.padding}
                         min={0}
-                        max={80}
+                        max={QR_MAX_PADDING}
                         onChange={(padding) => updateLayer("qr", { padding })}
                         suffix="px"
                       />
