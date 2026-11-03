@@ -5,6 +5,7 @@ import { ArrowLeft, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LoginUser from "./LoginUser";
 import SignUp from "./SignUp";
+import ForgotPassword from "./ForgotPassword";
 
 /* ── ambient orb ── */
 const Orb = ({ className }) => (
@@ -16,7 +17,7 @@ const Orb = ({ className }) => (
 const AccountPage = ({ pa, mode = "login" }) => {
   const navigate = useNavigate();
 
-  const ContentComponent = mode === "login" ? LoginUser : SignUp;
+  const ContentComponent = mode === "login" ? LoginUser : mode === "forgot" ? ForgotPassword : SignUp;
 
   return (
     <div className="relative min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-hidden font-sans selection:bg-[#FF7A00]/30">

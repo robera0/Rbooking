@@ -187,6 +187,7 @@ const LoginUser = () => {
           </label>
           <button
             type="button"
+            onClick={() => navigate("/forgot-password")}
             className="text-[11px] font-bold transition-colors hover:text-white"
             style={{ color: "#FF7A00" }}
           >

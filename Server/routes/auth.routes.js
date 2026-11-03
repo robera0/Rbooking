@@ -17,6 +17,10 @@ import {
 import { upload } from "../controllers/events.controller.js";
 import { signupClub } from "../controllers/club.controller.js";
 import passport from "../config/googleAuth.js";
+import {
+  resetPassword,
+  verifyEmail,
+} from "../controllers/forgetPassword.controller.js";
 import { generateExchangeToken } from "../service/token.js";
 const authRouter = express.Router();
 
@@ -81,6 +85,8 @@ authRouter.post("/signup/admin", upload.single("coverPage"), registerAdmin);
 authRouter.post("/signup/club-owner", upload.single("coverPage"), signupClub);
 
 authRouter.post("/login", login);
+authRouter.post("/forgot-password", verifyEmail);
+authRouter.post("/reset-password", resetPassword);
 authRouter.post("/google/exchange", googleExchange);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);
 authRouter.post("/tokens", refresh);
