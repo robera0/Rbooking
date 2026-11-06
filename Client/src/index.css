@@ -94,6 +94,31 @@ input.no-spinner[type="number"] {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Light archive scrollbar used by the previous-events overlay. */
+.archive-scrollbar {
+  scrollbar-color: #55585d #1c1f22;
+  scrollbar-width: auto;
+}
+
+.archive-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.archive-scrollbar::-webkit-scrollbar-track {
+  background: #1c1f22;
+  border-radius: 10px;
+}
+
+.archive-scrollbar::-webkit-scrollbar-thumb {
+  min-height: 72px;
+  background: #55585d;
+  border-radius: 10px;
+}
+
+.archive-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ff7a00;
+}
 .calendar-only::-webkit-clear-button {
   display: none;
 }

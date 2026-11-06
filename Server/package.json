@@ -34,6 +34,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.1.1",
     "nanoid": "^5.1.16",
+    "nodemailer": "^10.3.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "qrcode": "^1.5.4",

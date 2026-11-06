@@ -127,6 +127,22 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "forgot-password",
+        element: (
+          <PageWrapper>
+            <AccountPage mode="forgot" pa="Get back to the moments that matter." />
+          </PageWrapper>
+        ),
+      },
+      {
+        path: "reset-password",
+        element: (
+          <PageWrapper>
+            <AccountPage mode="forgot" pa="Choose a new password for your account." />
+          </PageWrapper>
+        ),
+      },
+      {
         path: "sign_up",
         element: (
           <PageWrapper>

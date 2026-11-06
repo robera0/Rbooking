@@ -16,6 +16,13 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  History,
+  Play,
+  X as Close,
+  BadgeCheck,
+  UserPlus,
+  Grid2X2,
+  Video,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -54,6 +61,28 @@ const GlitchChar = ({ char, delay }) => (
     {char}
   </motion.span>
 );
+
+const demoPreviousEvents = [
+  {
+    type: "photo",
+    title: "Last summer's crowd",
+    date: "August 2025",
+    image: "/1763661369611.webp",
+  },
+  {
+    type: "video",
+    title: "A night to remember",
+    date: "June 2025",
+    image: "/Screenshot From 2026-04-24 04-49-36.png",
+    video: "/Screencast From 2026-04-24 04-51-25.mp4",
+  },
+  {
+    type: "photo",
+    title: "Behind the scenes",
+    date: "May 2025",
+    image: "/1308183.jpeg",
+  },
+];
 
 const StatBadge = ({ icon: Icon, label, value }) => (
   <motion.div
@@ -268,6 +297,9 @@ const EventInfo = () => {
   const [commentText, setCommentText] = useState("");
   const [rating, setRating] = useState(0);
   const [imgIdx, setImgIdx] = useState(0);
+  const [showPreviousEvents, setShowPreviousEvents] = useState(false);
+  const [followingOrganizer, setFollowingOrganizer] = useState(false);
+  const [archiveFilter, setArchiveFilter] = useState("all");
   const [displayedCommentsCount, setDisplayedCommentsCount] = useState(4);
   const galleryRef = useRef(null);
 
@@ -451,6 +483,9 @@ const EventInfo = () => {
 
   const prevImg = () => setImgIdx((i) => (i === 0 ? images.length - 1 : i - 1));
   const nextImg = () => setImgIdx((i) => (i === images.length - 1 ? 0 : i + 1));
+  const visiblePreviousEvents = demoPreviousEvents.filter(
+    (item) => archiveFilter === "all" || item.type === archiveFilter,
+  );
 
   if (isLoading) return <SkeletonLoadingScreen />;
 
@@ -580,6 +615,17 @@ const EventInfo = () => {
                 {showMap ? "Close Map" : "View Map"}
               </span>
             </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.04, borderColor: "rgba(255,122,0,0.5)" }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setShowPreviousEvents(true)}
+              className="flex items-center gap-3 px-5 py-3 rounded-2xl border border-white/[0.07] bg-black/35 backdrop-blur-md cursor-pointer transition-colors"
+            >
+              <History size={15} className="text-[#FF7A00] shrink-0" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">
+                Previous Events
+              </span>
+            </motion.button>
           </motion.div>
         </motion.div>
 
@@ -647,6 +693,187 @@ const EventInfo = () => {
             >
               <X size={16} />
             </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── DEMO ORGANIZER ARCHIVE ── */}
+      <AnimatePresence>
+        {showPreviousEvents && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-8 pt-20 backdrop-blur-md sm:pt-24"
+            onClick={() => setShowPreviousEvents(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 24, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => event.stopPropagation()}
+              className="archive-scrollbar relative max-h-[calc(100vh-7rem)] w-full max-w-none overflow-y-auto px-2 py-1 sm:px-6 sm:py-4 lg:px-14"
+            >
+              <button
+                type="button"
+                onClick={() => setShowPreviousEvents(false)}
+                className="absolute right-5 top-5 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-black/30 text-white transition-all hover:bg-white/10 active:scale-90"
+                aria-label="Close previous events"
+              >
+                <Close size={18} />
+              </button>
+
+              <div className="mb-6 flex flex-col gap-5 border-b border-white/[0.07] pb-6 pr-12">
+                <div>
+                  <p className="mb-2 text-[9px] font-black uppercase tracking-[0.45em] text-[#FF7A00]">
+                    Organizer archive
+                  </p>
+                  <h2 className="text-2xl font-black uppercase tracking-tight text-white sm:text-3xl">
+                    Previous events
+                  </h2>
+                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-gray-500">
+                    See the moments, people, and energy behind the
+                    organizer&apos;s events.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-5 flex items-center gap-2">
+                {[
+                  { id: "all", label: "All posts", icon: Grid2X2 },
+                  { id: "photo", label: "Photos", icon: Grid2X2 },
+                  { id: "video", label: "Videos", icon: Video },
+                ].map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setArchiveFilter(id)}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-colors ${
+                      archiveFilter === id
+                        ? "bg-[#FF7A00] text-black"
+                        : "text-gray-500 hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    <Icon size={13} /> {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {visiblePreviousEvents.map((item) => (
+                  <article
+                    key={item.title}
+                    className="group overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025]"
+                  >
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      {item.type === "video" ? (
+                        <video
+                          src={item.video}
+                          poster={item.image}
+                          controls
+                          className="h-full w-full object-cover"
+                          aria-label={item.title}
+                        />
+                      ) : (
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      )}
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      {item.type === "video" && !item.video && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF7A00] text-black shadow-lg shadow-black/30">
+                            <Play
+                              size={18}
+                              fill="currentColor"
+                              className="ml-0.5"
+                            />
+                          </span>
+                        </div>
+                      )}
+                      <span className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-1 text-[8px] font-black uppercase tracking-widest text-white/80">
+                        {item.type === "video" ? "Video" : "Photo"}
+                      </span>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-sm font-bold text-white">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
+                        {item.date}
+                      </p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              {visiblePreviousEvents.length === 0 && (
+                <p className="rounded-2xl border border-dashed border-white/[0.08] py-12 text-center text-sm text-gray-600">
+                  No posts in this category yet.
+                </p>
+              )}
+
+              <div className="mt-7 flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 sm:flex-row sm:items-center sm:p-5">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF7A00] to-amber-300 text-xl font-black text-black">
+                  P
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="truncate text-base font-black text-white">
+                      PAYSSO Events
+                    </h3>
+                    <BadgeCheck
+                      size={15}
+                      className="shrink-0 text-[#FF7A00]"
+                      fill="currentColor"
+                      color="#121417"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    @payssoevents · Event organizer
+                  </p>
+                </div>
+                <div className="flex items-center justify-between gap-5 sm:justify-end">
+                  <div className="flex gap-5 text-left sm:text-right">
+                    <div>
+                      <p className="text-sm font-black text-white">24</p>
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-gray-600">
+                        Events
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-white">8.4K</p>
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-gray-600">
+                        Followers
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFollowingOrganizer((isFollowing) => !isFollowing)
+                    }
+                    className={`flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                      followingOrganizer
+                        ? "bg-white/[0.08] text-white"
+                        : "bg-[#FF7A00] text-black hover:bg-amber-300"
+                    }`}
+                  >
+                    {followingOrganizer ? (
+                      <Check size={14} />
+                    ) : (
+                      <UserPlus size={14} />
+                    )}
+                    {followingOrganizer ? "Following" : "Follow"}
+                  </button>
+                </div>
+              </div>
+              <p className="mt-6 text-center text-[9px] font-bold uppercase tracking-widest text-gray-700">
+                Demo organizer content
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1176,18 +1403,18 @@ const EventInfo = () => {
                     ]
                       .filter(Boolean)
                       .map(({ label, value }) => (
-                      <div
-                        key={label}
-                        className="flex items-center justify-between py-2 border-b border-white/[0.04]"
-                      >
-                        <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
-                          {label}
-                        </span>
-                        <span className="text-[11px] font-bold text-gray-300">
-                          {value}
-                        </span>
-                      </div>
-                    ))}
+                        <div
+                          key={label}
+                          className="flex items-center justify-between py-2 border-b border-white/[0.04]"
+                        >
+                          <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
+                            {label}
+                          </span>
+                          <span className="text-[11px] font-bold text-gray-300">
+                            {value}
+                          </span>
+                        </div>
+                      ))}
                   </div>
 
                   <button
