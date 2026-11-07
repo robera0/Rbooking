@@ -16,6 +16,7 @@ import {
 } from "../controllers/user.controller.js";
 import { upload } from "../controllers/events.controller.js";
 import { signupClub } from "../controllers/club.controller.js";
+import rateLimit from "express-rate-limit";
 import passport from "../config/googleAuth.js";
 import {
   resetPassword,
@@ -23,6 +24,15 @@ import {
 } from "../controllers/forgetPassword.controller.js";
 import { generateExchangeToken } from "../service/token.js";
 const authRouter = express.Router();
+
+const resetLimiter = (max) =>
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: max,
+    message: { success: false, message: "Too many attempts. Try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
 // Google OAuth
 authRouter.get(
@@ -85,8 +95,8 @@ authRouter.post("/signup/admin", upload.single("coverPage"), registerAdmin);
 authRouter.post("/signup/club-owner", upload.single("coverPage"), signupClub);
 
 authRouter.post("/login", login);
-authRouter.post("/forgot-password", verifyEmail);
-authRouter.post("/reset-password", resetPassword);
+authRouter.post("/forgot-password", resetLimiter(5), verifyEmail);
+authRouter.post("/reset-password", resetLimiter(10), resetPassword);
 authRouter.post("/google/exchange", googleExchange);
 authRouter.post("/logout", authenticateTokenMiddleware, logout);
 authRouter.post("/tokens", refresh);

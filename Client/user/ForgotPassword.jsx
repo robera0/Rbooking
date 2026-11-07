@@ -139,7 +139,7 @@ const ForgotPassword = () => {
       </div>
       {error && <p className="rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-center text-xs text-red-300">{error}</p>}
       {emailSent ? (
-        <div className="rounded-2xl border border-[#FF7A00]/20 bg-[#FF7A00]/10 px-5 py-4 text-center text-sm text-white/70">Check your email for a password reset link.</div>
+        <div className="rounded-2xl border border-[#FF7A00]/20 bg-[#FF7A00]/10 px-5 py-4 text-center text-sm text-white/70">If an account exists for that email, a reset link is on its way. Check your inbox and spam folder.</div>
       ) : (
         <form onSubmit={submitEmail} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
