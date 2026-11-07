@@ -38,6 +38,8 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    resetToken: String,
+    resetTokenExpires: Date,
   },
   { timestamps: true },
 );
@@ -46,6 +48,8 @@ userSchema.set("toJSON", {
   transform: function (doc, ret) {
     delete ret.password;
     delete ret.refreshTokens;
+    delete ret.resetToken;
+    delete ret.resetTokenExpires;
     return ret;
   },
 });
