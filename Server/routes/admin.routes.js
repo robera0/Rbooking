@@ -23,6 +23,11 @@ import {
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { requireRole } from "../middlewares/requireRole.js";
+import {
+  createPreviousEventPost,
+  getAdminPreviousEventPosts,
+  deleteAdminPreviousEventPost,
+} from "../controllers/previousEvents.controller.js";
 const adminOnly = requireRole("admin");
 const adminRouter = express.Router();
 
@@ -73,5 +78,25 @@ adminRouter.get(
   get_revenue_history,
 );
 adminRouter.get("/events", authenticateTokenMiddleware, getEvents);
+
+adminRouter.post(
+  "/previous-events",
+  authenticateTokenMiddleware,
+  adminOnly,
+  upload.single("media"),
+  createPreviousEventPost,
+);
+adminRouter.get(
+  "/previous-events",
+  authenticateTokenMiddleware,
+  adminOnly,
+  getAdminPreviousEventPosts,
+);
+adminRouter.delete(
+  "/previous-events/:postId",
+  authenticateTokenMiddleware,
+  adminOnly,
+  deleteAdminPreviousEventPost,
+);
 
 export default adminRouter;

@@ -39,6 +39,7 @@ import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import { eventService } from "@/Context/ApiEvent";
+import api from "../src/Context/api/api.config";
 import CheckoutModal from "@/components/Reusable";
 import { Navigate, useLocation } from "react-router-dom";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
@@ -61,28 +62,6 @@ const GlitchChar = ({ char, delay }) => (
     {char}
   </motion.span>
 );
-
-const demoPreviousEvents = [
-  {
-    type: "photo",
-    title: "Last summer's crowd",
-    date: "August 2025",
-    image: "/1763661369611.webp",
-  },
-  {
-    type: "video",
-    title: "A night to remember",
-    date: "June 2025",
-    image: "/Screenshot From 2026-04-24 04-49-36.png",
-    video: "/Screencast From 2026-04-24 04-51-25.mp4",
-  },
-  {
-    type: "photo",
-    title: "Behind the scenes",
-    date: "May 2025",
-    image: "/1308183.jpeg",
-  },
-];
 
 const StatBadge = ({ icon: Icon, label, value }) => (
   <motion.div
@@ -314,6 +293,15 @@ const EventInfo = () => {
     queryFn: () => fetchEventById(eventId, ticketId),
   });
 
+  const { data: previousPostsData } = useQuery({
+    queryKey: ["event-previous-events", eventId],
+    queryFn: async () => {
+      const res = await api.get(`/api/events/${eventId}/previous-events`);
+      return res.data;
+    },
+    enabled: Boolean(eventId),
+  });
+
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
@@ -483,7 +471,12 @@ const EventInfo = () => {
 
   const prevImg = () => setImgIdx((i) => (i === 0 ? images.length - 1 : i - 1));
   const nextImg = () => setImgIdx((i) => (i === images.length - 1 ? 0 : i + 1));
-  const visiblePreviousEvents = demoPreviousEvents.filter(
+  const previousEvents = (previousPostsData?.posts || []).map((post) => ({
+    ...post,
+    image: post.thumbnailUrl || post.mediaUrl,
+    video: post.type === "video" ? post.mediaUrl : undefined,
+  }));
+  const visiblePreviousEvents = previousEvents.filter(
     (item) => archiveFilter === "all" || item.type === archiveFilter,
   );
 

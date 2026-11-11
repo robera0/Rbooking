@@ -40,9 +40,9 @@ const SideBar = ({ action, onClose }) => {
       <div className="w-full h-full space-y-3 flex flex-col overflow-y-auto scroll-hidden">
         <div className="w-full h-16 sm:h-20 shrink-0 flex justify-between items-center border-b border-white/[0.06] px-4">
           <img
-            src="/P_logo.png"
+            src="/paysso-logo.png"
             alt="PaySSo Logo"
-            className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+            className="w-16 h-12 sm:w-20 sm:h-16 object-contain"
           />
           {/* Close button — mobile only */}
           {onClose && (

@@ -356,15 +356,16 @@ const Main = () => {
         <header className="sticky top-0 z-[80] border-b border-white/[0.04] bg-[#121417]/90 backdrop-blur-xl">
           <div className="max-w-[1536px] mx-auto flex items-center justify-between px-6 py-3 lg:px-12">
             {/* Logo */}
-            <Link to="/" className="group flex items-center gap-3">
+            <Link
+              to="/"
+              aria-label="PAYSSO home"
+              className="group inline-flex shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
+            >
               <img
-                src="/P_logo.png"
-                alt="Paysso logo"
-                className="h-8 w-8 object-contain"
+                src="/paysso-lockup.png"
+                alt="PAYSSO"
+                className="h-12 w-auto object-contain transition-opacity group-hover:opacity-90 sm:h-[3.25rem]"
               />
-              <span className="hidden sm:inline text-2xl lg:text-3xl font-black uppercase tracking-tight group-hover:text-[#FF7A00] transition">
-                Paysso
-              </span>
             </Link>
 
             {/* Desktop Nav */}
@@ -551,16 +552,14 @@ const Main = () => {
                 <Link
                   to="/"
                   onClick={scrollToTop}
-                  className="group flex items-center gap-3 w-fit"
+                  aria-label="PAYSSO home"
+                  className="group inline-flex w-fit items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
                 >
                   <img
-                    src="/P_logo.png"
-                    alt="Paysso logo"
-                    className="h-10 w-10 object-contain"
+                    src="/paysso-lockup.png"
+                    alt="PAYSSO"
+                    className="h-[4.5rem] w-auto object-contain transition-opacity group-hover:opacity-90 sm:h-20"
                   />
-                  <span className="hidden sm:inline text-3xl font-black italic uppercase tracking-tight group-hover:text-[#FF7A00] transition">
-                    Paysso
-                  </span>
                 </Link>
                 <p className="text-gray-500 text-sm max-w-sm">
                   The high performance ticketing engine for live entertainment.

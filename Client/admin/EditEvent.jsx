@@ -23,7 +23,7 @@ import {
   useLoaderData,
   useBlocker,
 } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
@@ -370,6 +370,97 @@ const EditEvent = () => {
   });
   const posterInputRef = useRef(null);
   const [error, setError] = useState("");
+  const [previousPhotoFiles, setPreviousPhotoFiles] = useState([]);
+  const [previousVideoFiles, setPreviousVideoFiles] = useState([]);
+  const [previousTitle, setPreviousTitle] = useState("");
+  const [previousCaption, setPreviousCaption] = useState("");
+  const [previousPublished, setPreviousPublished] = useState(true);
+  const [previousPostLoading, setPreviousPostLoading] = useState(false);
+
+  const { data: previousPosts = [], isLoading: previousPostsLoading } = useQuery({
+    queryKey: ["admin-previous-events", eventId],
+    queryFn: async () => {
+      const res = await api.get(`/api/auth/admin/previous-events?eventId=${eventId}`);
+      return res.data?.posts || [];
+    },
+    enabled: Boolean(eventId),
+  });
+
+  const addPreviousFiles = (type, fileList) => {
+    const files = Array.from(fileList || []);
+    const limit = type === "photo" ? 10 : 3;
+    const current = type === "photo" ? previousPhotoFiles : previousVideoFiles;
+    const validFiles = files.filter((file) =>
+      type === "video"
+        ? file.type.startsWith("video/")
+        : file.type.startsWith("image/"),
+    );
+    const remaining = limit - current.length;
+
+    if (validFiles.length > remaining) {
+      toast.error(`You can add up to ${limit} ${type}s.`);
+    }
+
+    const selected = validFiles.slice(0, Math.max(remaining, 0)).map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+    }));
+
+    if (type === "photo") setPreviousPhotoFiles((items) => [...items, ...selected]);
+    else setPreviousVideoFiles((items) => [...items, ...selected]);
+  };
+
+  const removePreviousFile = (type, index) => {
+    const setter = type === "photo" ? setPreviousPhotoFiles : setPreviousVideoFiles;
+    setter((items) => {
+      const removed = items[index];
+      if (removed?.url) URL.revokeObjectURL(removed.url);
+      return items.filter((_, itemIndex) => itemIndex !== index);
+    });
+  };
+
+  const addPreviousPost = async (type) => {
+    const selected = type === "photo" ? previousPhotoFiles : previousVideoFiles;
+    if (!selected.length) {
+      toast.error(`Choose at least one ${type} first`);
+      return;
+    }
+
+    try {
+      setPreviousPostLoading(true);
+      for (const item of selected) {
+        const payload = new FormData();
+        payload.append("media", item.file);
+        payload.append("type", type);
+        payload.append("eventId", eventId);
+        payload.append("title", previousTitle);
+        payload.append("caption", previousCaption);
+        payload.append("isPublished", String(previousPublished));
+        await api.post("/api/auth/admin/previous-events", payload);
+        URL.revokeObjectURL(item.url);
+      }
+      toast.success(`${selected.length} ${type}${selected.length > 1 ? "s" : ""} added`);
+      if (type === "photo") setPreviousPhotoFiles([]);
+      else setPreviousVideoFiles([]);
+      setPreviousTitle("");
+      setPreviousCaption("");
+      await queryClient.invalidateQueries({ queryKey: ["admin-previous-events", eventId] });
+    } catch (err) {
+      toast.error(getFriendlyErrorMessage(err));
+    } finally {
+      setPreviousPostLoading(false);
+    }
+  };
+
+  const deletePreviousPost = async (postId) => {
+    try {
+      await api.delete(`/api/auth/admin/previous-events/${postId}`);
+      await queryClient.invalidateQueries({ queryKey: ["admin-previous-events", eventId] });
+      toast.success("Content removed");
+    } catch (err) {
+      toast.error(getFriendlyErrorMessage(err));
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: async (payload) => {
@@ -878,6 +969,77 @@ const EditEvent = () => {
                 </button>
               </div>
             </div>
+          </SectionCard>
+
+          {/* Previous event photos and videos */}
+          <SectionCard title="Previous Event Content" badge="Organizer Posts">
+            <p className="text-[11px] leading-relaxed text-gray-500">
+              Add photos or videos from this event so guests can view them from the event page.
+            </p>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {[
+                { type: "photo", label: "Photos", files: previousPhotoFiles, limit: 10 },
+                { type: "video", label: "Videos", files: previousVideoFiles, limit: 3 },
+              ].map(({ type, label, files, limit }) => (
+                <div key={type} className="rounded-2xl border border-dashed border-[#FF7A00]/40 bg-[#121417] p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-white">{label}</p>
+                      <p className="mt-1 text-[10px] text-gray-500">{files.length} / {limit} selected</p>
+                    </div>
+                    <Upload size={18} className="text-[#FF7A00]" />
+                  </div>
+                  <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-[#1C1F22] px-4 text-center transition-colors hover:border-[#FF7A00]/50">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Choose {label.toLowerCase()}</span>
+                    <input type="file" multiple accept={type === "video" ? "video/*" : "image/*"} onChange={(event) => addPreviousFiles(type, event.target.files)} className="hidden" />
+                  </label>
+                  {files.length > 0 && (
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {files.map((item, index) => (
+                        <div key={`${item.file.name}-${index}`} className="relative aspect-square overflow-hidden rounded-lg border border-white/[0.08] bg-black">
+                          {type === "video" ? <video src={item.url} className="h-full w-full object-cover" /> : <img src={item.url} alt="Selected event" className="h-full w-full object-cover" />}
+                          <button type="button" onClick={() => removePreviousFile(type, index)} className="absolute right-1 top-1 rounded bg-black/75 px-1.5 py-0.5 text-[10px] text-white hover:bg-red-500" aria-label={`Remove ${label.toLowerCase()}`}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button type="button" onClick={() => addPreviousPost(type)} disabled={previousPostLoading || !files.length} className="mt-4 w-full rounded-xl bg-[#FF7A00] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-amber-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40">
+                    {previousPostLoading ? "Uploading..." : `Add ${label}`}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <input value={previousTitle} onChange={(event) => setPreviousTitle(event.target.value)} placeholder="Title (optional)" className="w-full rounded-xl border border-white/[0.06] bg-[#121417] px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#FF7A00]/50" />
+              <textarea value={previousCaption} onChange={(event) => setPreviousCaption(event.target.value)} placeholder="Caption (optional)" rows={1} className="w-full resize-none rounded-xl border border-white/[0.06] bg-[#121417] px-4 py-3 text-sm text-white outline-none transition-colors focus:border-[#FF7A00]/50" />
+            </div>
+            <Toggle label="Published" value={previousPublished} onChange={setPreviousPublished} />
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {previousPosts.map((post) => (
+                <div key={post._id} className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#121417]">
+                  <div className="relative aspect-video bg-black">
+                    {post.type === "video" ? (
+                      <video src={post.mediaUrl} controls className="h-full w-full object-cover" />
+                    ) : (
+                      <img src={post.mediaUrl} alt={post.title || "Previous event"} className="h-full w-full object-cover" />
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2 p-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-white">{post.title || post.type}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">{post.isPublished ? "Published" : "Hidden"}</p>
+                    </div>
+                    <button type="button" onClick={() => deletePreviousPost(post._id)} className="shrink-0 rounded-lg p-2 text-red-400 transition-colors hover:bg-red-400/10 hover:text-red-300" aria-label="Delete content">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {previousPostsLoading ? <p className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-600">Loading previous content...</p> : previousPosts.length === 0 && <p className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-600">No previous content added yet.</p>}
           </SectionCard>
 
           {/* Policies */}

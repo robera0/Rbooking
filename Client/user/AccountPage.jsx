@@ -1,5 +1,4 @@
 import React from "react";
-import { Ticket } from "lucide-react";
 import { motion } from "framer-motion";
 import { ArrowLeft, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -116,13 +115,15 @@ const AccountPage = ({ pa, mode = "login" }) => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 0.7 }}
-                className="flex items-center gap-4"
+                className="flex items-end"
               >
-                <div className="bg-[#FF7A00] p-3.5 rounded-2xl shadow-xl shadow-[#FF7A00]/25">
-                  <Ticket className="text-black w-9 h-9 rotate-[-12deg]" />
-                </div>
-                <h1 className="text-4xl font-black uppercase italic tracking-tighter text-white leading-none">
-                  PAYSSO
+                <img
+                  src="/paysso-logo.png"
+                  alt="PAYSSO logo"
+                  className="h-16 w-auto shrink-0 object-contain"
+                />
+                <h1 className="-ml-12 translate-y-[1px] text-4xl font-black uppercase leading-none tracking-tight text-white">
+                  AYSSO
                 </h1>
               </motion.div>
 

@@ -9,12 +9,14 @@ import {
   generateEventQR,
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
+import { getPublishedPreviousEventPosts } from "../controllers/previousEvents.controller.js";
 
 const eventRouter = express.Router();
 
 eventRouter.get("/events", getEvents);
 eventRouter.get("/featuredEvents", featuredEvents);
 eventRouter.get("/events/:eventId", getEventById);
+eventRouter.get("/events/:eventId/previous-events", getPublishedPreviousEventPosts);
 eventRouter.put(
   "/admin/events/:eventId",
   authenticateTokenMiddleware,

@@ -669,7 +669,7 @@ export const AccountSideMenu = ({ setIsOpen, minimal = false }) => {
           onClick={() => setIsOpen(false)}
           className="flex items-center gap-2.5"
         >
-          <img src="/P_logo.png" alt="" className="h-7 w-7 object-contain" />
+          <img src="/paysso-logo.png" alt="PAYSSO logo" className="h-9 w-9 object-contain" />
           <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/80">
             Menu
           </span>
