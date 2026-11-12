@@ -1,17 +1,12 @@
 import {
   Heart,
-  Settings,
-  CreditCard,
-  LogOut,
-  ChevronRight,
   Bell,
-  CircleUser,
   House,
   Ticket,
-  User,
   CalendarDays,
   X,
   MapPin,
+  ArrowUpRight,
 } from "lucide-react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -31,10 +26,9 @@ import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useService } from "../src/Context/ServiceContext";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import { eventService } from "@/Context/ApiEvent";
+import api from "../src/Context/api/api.config";
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import api from "../src/Context/api/api.config";
 
 // ─── MUI Orange Theme ──────────────────────────────────────────────────────
 const orangeTheme = createTheme({
@@ -224,7 +218,6 @@ const Main = () => {
     isAccountActive,
     menuOpen,
     setMenuOpen,
-    API_URL,
     setType,
     setDate,
     setArtist,
@@ -232,15 +225,39 @@ const Main = () => {
     setSearch,
   } = useService();
 
-  const [avatarFailed, setAvatarFailed] = useState(false); // add this
   const location = useLocation();
-  const { user, userIsLoading, userProfile, notifications } = eventService();
+  const { user, notifications } = eventService();
   const navigate = useNavigate();
 
   const [activeOverlay, setActiveOverlay] = useState(null);
   const [isMinimalMenu, setIsMinimalMenu] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const queryClient = useQueryClient();
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  const accountMenuItems = useMemo(
+    () => [
+      {
+        label: "My tickets",
+        path: "/tickets_home",
+        icon: <Ticket size={15} />,
+      },
+      {
+        label: "Wishlist",
+        path: "/account/favorites",
+        icon: <Heart size={15} />,
+      },
+      { label: "Venues", path: "/venues", icon: <MapPin size={15} /> },
+    ],
+    [],
+  );
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await api.post("/api/auth/logout", {});
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  }, []);
 
   useEffect(() => {
     if (user && user.role === "admin") {
@@ -250,17 +267,6 @@ const Main = () => {
 
   // Hide bottom nav on account/profile pages
   const isAccountPage = location.pathname.startsWith("/account");
-
-  const handleLogout = async () => {
-    try {
-      await api.post(`/api/auth/logout`);
-      queryClient.clear();
-      window.location.href = "/login";
-    } catch (error) {
-      console.error("Logout failed", error);
-      window.location.href = "/login";
-    }
-  };
 
   const openMenu = useCallback((minimal = false) => {
     setIsMinimalMenu(minimal);
@@ -279,24 +285,6 @@ const Main = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const DropdownItem = ({ icon, label, path }) => (
-    <Link
-      to={path}
-      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/[0.03] transition-all group"
-    >
-      <div className="text-gray-500 group-hover:text-[#FF7A00] transition-colors">
-        {icon}
-      </div>
-      <span className="text-xs font-black uppercase tracking-widest">
-        {label}
-      </span>
-      <ChevronRight
-        size={12}
-        className="ml-auto opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-[#FF7A00]"
-      />
-    </Link>
-  );
-
   /* ESC KEY SUPPORT */
   useEffect(() => {
     const handleEsc = (e) => {
@@ -308,15 +296,6 @@ const Main = () => {
 
   /* ---------------- FOOTER DATA ---------------- */
   const currentYear = new Date().getFullYear();
-
-  const profileImageSrc = useMemo(() => {
-    if (userProfile?.user?.avatarUrl) {
-      return userProfile.user.avatarUrl.startsWith("http")
-        ? userProfile.user.avatarUrl
-        : `${API_URL}/${userProfile.user.avatarUrl}`;
-    }
-    return "/defaultAvater.jpg";
-  }, [userProfile?.user?.avatarUrl, API_URL]);
 
   const footerSections = useMemo(
     () => [
@@ -351,30 +330,29 @@ const Main = () => {
 
   return (
     <LayoutGroup>
-      <div className="relative min-h-screen w-full bg-[#121417] text-white flex flex-col overflow-x-hidden">
+      <div className="relative min-h-screen w-full bg-[#121417] text-white flex flex-col [overflow-x:clip]">
         {/* ================= HEADER ================= */}
-        <header className="sticky top-0 z-[80] border-b border-white/[0.04] bg-[#121417]/90 backdrop-blur-xl">
-          <div className="max-w-[1536px] mx-auto flex items-center justify-between px-6 py-3 lg:px-12">
+        <header className="sticky top-0 z-[80] bg-[#121417]/25 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-[1536px] items-center justify-between px-6 py-3 lg:px-12">
             {/* Logo */}
             <Link
               to="/"
               aria-label="PAYSSO home"
-              className="group inline-flex shrink-0 items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
+              className="group inline-flex shrink-0 items-center self-end rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
             >
               <img
                 src="/paysso-lockup.png"
                 alt="PAYSSO"
-                className="h-12 w-auto object-contain transition-opacity group-hover:opacity-90 sm:h-[3.25rem]"
+                className="h-[2.6rem] w-auto translate-y-[2px] object-contain opacity-95 transition-opacity group-hover:opacity-100"
               />
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex gap-8">
+            <nav className="hidden flex-1 items-center justify-center gap-8 md:flex">
               {[
                 { label: "Discover", path: "/" },
                 { label: "Explore", path: "/event" },
-                { label: "Venues", path: "/venues" },
-                { label: "Artists", path: "/artists" },
+                // { label: "Venues", path: "/venues" },
                 { label: "Clubs", path: "/club/rsvp" },
               ].map((item) => {
                 const active = location.pathname === item.path;
@@ -391,34 +369,36 @@ const Main = () => {
                         setSearch("");
                       }
                     }}
-                    className={`relative text-[11px] font-bold uppercase tracking-[0.18em] transition ${
-                      active ? "text-white" : "text-gray-500 hover:text-white"
+                    className={`leading-none text-[12px] font-bold uppercase tracking-[0.18em] no-underline decoration-transparent transition-colors ${
+                      active ? "text-white" : "text-white/60 hover:text-white"
                     }`}
                   >
                     {item.label}
-                    {active && (
-                      <span className="absolute -bottom-1.5 left-0 h-[2px] w-full bg-[#FF7A00]" />
-                    )}
                   </Link>
                 );
               })}
             </nav>
 
             {/* Actions */}
-            <div className="flex items-center gap-6">
-              {/* Calendar Icon */}
+            <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
+              {/* Calendar Icon — temporarily hidden
               <button
+                type="button"
+                aria-label="Open calendar"
                 onClick={() => setActiveOverlay("calendar")}
-                className="relative text-gray-500 hover:text-[#FF7A00] transition"
+                className="relative text-gray-400 transition hover:text-[#FF7A00] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
               >
-                <CalendarDays size={20} />
+                <CalendarDays size={19} />
               </button>
+              */}
 
               {/* Notification */}
               {user && (
                 <button
+                  type="button"
+                  aria-label="Open notifications"
                   onClick={openNotification}
-                  className="relative text-gray-500 hover:text-[#FF7A00] transition"
+                  className="relative text-gray-400 transition hover:text-[#FF7A00] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
                 >
                   <Bell size={20} />
                   <span
@@ -429,111 +409,91 @@ const Main = () => {
                 </button>
               )}
 
-              {/* Profile Wrapper with Hover Menu */}
-              <div
-                className="relative flex items-center gap-3"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-              >
-                {/* Mobile Menu Trigger 
-                
-                 <button
-                  onClick={() => openMenu(false)}
-                  className="md:hidden w-8 h-8 flex items-center justify-center rounded-xl bg-white/[0.03] border border-white/10 text-gray-400"
+              {user ? (
+                <div
+                  className="relative hidden md:block"
+                  onMouseEnter={() => setAccountMenuOpen(true)}
+                  onMouseLeave={() => setAccountMenuOpen(false)}
                 >
-                  <Menu size={18} />
-                </button>
+                  <Link
+                    to="/account"
+                    className="inline-flex items-center gap-2 rounded-full px-2.5 py-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/70 no-underline decoration-transparent transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF7A00]"
+                  >
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-white/20 bg-white/[0.04]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
+                    </span>
+                    Account
+                  </Link>
 
-                */}
-
-                {/* Profile Avatar */}
+                  <AnimatePresence>
+                    {accountMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                        transition={{ duration: 0.18, ease: "easeOut" }}
+                        className="absolute right-0 top-full z-50 mt-3 w-[260px] overflow-hidden rounded-[1.4rem] border border-white/[0.08] bg-[#0E1012]/95 shadow-[0_20px_50px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+                      >
+                        <div className="border-b border-white/[0.06] px-4 py-3">
+                          <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#FF7A00]">
+                            Account center
+                          </p>
+                        </div>
+                        <div className="space-y-1 p-2">
+                          {accountMenuItems.map((item) => (
+                            <Link
+                              key={item.label}
+                              to={item.path}
+                              className="flex items-center justify-between rounded-2xl px-3 py-2.5 text-[12px] font-semibold text-gray-200 transition hover:bg-white/[0.04] hover:text-white"
+                            >
+                              <span className="flex items-center gap-2.5">
+                                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.04] text-[#FF7A00]">
+                                  {item.icon}
+                                </span>
+                                {item.label}
+                              </span>
+                              <span className="text-gray-600">›</span>
+                            </Link>
+                          ))}
+                        </div>
+                        <div className="border-t border-white/[0.06] p-2">
+                          <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-[12px] font-semibold text-red-400 transition hover:bg-red-500/10"
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                                <X size={15} />
+                              </span>
+                              Sign out
+                            </span>
+                            <span className="text-red-400">›</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
                 <Link
-                  to="/account"
-                  className="w-10 h-10 rounded-full overflow-hidden border border-white/10 hover:border-[#FF7A00] transition-colors bg-white/[0.02]"
+                  to="/login"
+                  className="rounded-full px-2 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/70 no-underline decoration-transparent transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF7A00]"
                 >
-                  <img
-                    src={profileImageSrc}
-                    alt="Profile"
-                    onError={() => setAvatarFailed(true)}
-                    className="w-full h-full object-cover"
-                  />
+                  Login
                 </Link>
+              )}
 
-                {/* Desktop Hover Dropdown */}
-                <AnimatePresence>
-                  {isHovered && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="hidden md:block absolute top-full right-0 mt-3 w-64 bg-[#121417]/98 backdrop-blur-3xl border border-white/10 rounded-3xl shadow-[0_30px_60px_rgba(0,0,0,0.6)] overflow-hidden z-[110]"
-                    >
-                      <div className="p-4 border-b border-white/[0.05] bg-white/[0.02]">
-                        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
-                          Account Center
-                        </p>
-                      </div>
-
-                      <div className="p-2">
-                        {user ? (
-                          <>
-                            <DropdownItem
-                              icon={<MapPin size={16} />}
-                              label="Venues"
-                              path="/venues"
-                            />
-                            <DropdownItem
-                              icon={<Ticket size={16} />}
-                              label="My Tickets"
-                              path="/tickets_home"
-                            />
-                            <DropdownItem
-                              icon={<Heart size={16} />}
-                              label="Wishlist"
-                              path="/account/favorites"
-                            />
-                            {/*{" "}
-                            <DropdownItem
-                              icon={<Settings size={16} />}
-                              label="Settings"
-                              path="/account/setting"
-                            />
-                            <DropdownItem
-                              icon={<CreditCard size={16} />}
-                              label="Payment Detail"
-                              path="/account/payment_detail"
-                            />{" "}
-                            */}
-                            <hr className="my-2 border-white/[0.05]" />
-                            <button
-                              onClick={handleLogout}
-                              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-500 hover:bg-red-500/10 transition-colors text-xs font-black uppercase tracking-widest"
-                            >
-                              <LogOut size={16} />
-                              Sign Out
-                            </button>
-                          </>
-                        ) : (
-                          <div className="p-2 space-y-2">
-                            <Link
-                              to="/login"
-                              className="w-full block text-center py-3 bg-[#FF7A00] text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white transition-colors"
-                            >
-                              Sign In
-                            </Link>
-                            <Link
-                              to="/sign_up"
-                              className="w-full block text-center py-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-colors"
-                            >
-                              Create Account
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <Link
+                to={
+                  user?.role === "admin" || user?.role === "club_owner"
+                    ? "/admin/events/add"
+                    : "/admin/register"
+                }
+                className="inline-flex min-h-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/[0.02] px-3 text-[10px] font-semibold text-white no-underline decoration-transparent transition-colors hover:border-[#FF7A00] hover:bg-[#FF7A00] hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF7A00] sm:px-3.5 md:min-h-9 md:px-4 md:text-xs"
+              >
+                Create event
+              </Link>
             </div>
           </div>
         </header>
@@ -545,78 +505,45 @@ const Main = () => {
           </div>
 
           {/* ================= FOOTER ================= */}
-          <footer className="border-t border-white/[0.04] bg-[#0D0F11] py-20">
-            <div className="max-w-[1536px] mx-auto px-6 lg:px-12 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-16">
-              {/* Brand */}
-              <div className="col-span-2 space-y-6">
+          <footer className="relative z-10 border-t border-white/[0.08] bg-[#0D0F11]">
+            <div className="mx-auto flex max-w-[1536px] items-center justify-between gap-6 px-6 py-5 lg:px-12">
+              <Link
+                to="/"
+                aria-label="PAYSSO home"
+                className="group inline-flex shrink-0 items-center self-end rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
+              >
+                <img
+                  src="/paysso-lockup.png"
+                  alt="PAYSSO"
+                  className="h-[2.6rem] w-auto translate-y-[2px] object-contain opacity-95 transition-opacity group-hover:opacity-100"
+                />
+              </Link>
+
+              <div className="hidden items-center gap-8 text-[12px] font-medium text-white/80 md:flex">
                 <Link
-                  to="/"
+                  to="/terms"
                   onClick={scrollToTop}
-                  aria-label="PAYSSO home"
-                  className="group inline-flex w-fit items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
+                  className="transition-colors hover:text-white"
                 >
-                  <img
-                    src="/paysso-lockup.png"
-                    alt="PAYSSO"
-                    className="h-[4.5rem] w-auto object-contain transition-opacity group-hover:opacity-90 sm:h-20"
-                  />
+                  Terms of Service
                 </Link>
-                <p className="text-gray-500 text-sm max-w-sm">
-                  The high performance ticketing engine for live entertainment.
-                </p>
-                <p className="text-gray-500 text-sm">
-                  Need help?{" "}
-                  <Link
-                    to="/contact"
-                    onClick={scrollToTop}
-                    className="text-[#FF7A00] font-bold hover:text-white transition-colors"
-                  >
-                    Contact us
-                  </Link>
-                </p>
-              </div>
-
-              {/* Footer Link Sections — FIXED */}
-              {footerSections.map((s) => (
-                <div key={s.title} className="space-y-4">
-                  <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-gray-400">
-                    {s.title}
-                  </h4>
-                  <div className="flex flex-col gap-3">
-                    {s.links.map((l) => (
-                      <Link
-                        key={l.label}
-                        to={l.path}
-                        onClick={scrollToTop}
-                        className="text-[13px] font-bold text-gray-700 hover:text-[#FF7A00] transition-colors"
-                      >
-                        {l.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Bottom Bar */}
-            <div className="max-w-[1536px] mx-auto px-6 lg:px-12 mt-16 pt-6 border-t border-white/[0.02] flex justify-between text-[10px] uppercase tracking-[0.2em] text-gray-600">
-              <span>© {currentYear} Paysso</span>
-              <div className="flex gap-6">
                 <Link
                   to="/privacy"
                   onClick={scrollToTop}
-                  className="hover:text-[#FF7A00] transition-colors"
+                  className="transition-colors hover:text-white"
                 >
-                  Privacy
-                </Link>
-                <Link
-                  to="/legal"
-                  onClick={scrollToTop}
-                  className="hover:text-[#FF7A00] transition-colors"
-                >
-                  Legal
+                  Privacy Policy
                 </Link>
               </div>
+
+              <Link
+                to="/contact"
+                onClick={scrollToTop}
+                className="inline-flex items-center gap-2 rounded-full bg-white/[0.08] px-4 py-3 text-[12px] font-semibold text-white transition-colors hover:bg-white/[0.12] md:px-5 md:text-[14px]"
+              >
+                <span>Need help? Contact us</span>
+                <ArrowUpRight size={16} className="shrink-0" />
+              </Link>
             </div>
           </footer>
         </main>

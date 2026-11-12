@@ -23,8 +23,11 @@ import {
   UserPlus,
   Grid2X2,
   Video,
+  Check,
+  Music2,
+  ExternalLink,
 } from "lucide-react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   motion,
   AnimatePresence,
@@ -73,7 +76,7 @@ const StatBadge = ({ icon: Icon, label, value }) => (
       <p className="text-[8px] font-black text-gray-600 uppercase tracking-[0.35em] leading-none mb-0.5">
         {label}
       </p>
-      <p className="text-[11px] font-bold uppercase text-white tracking-wide">
+      <p className="text-[12px] font-bold uppercase text-white tracking-wide">
         {value}
       </p>
     </div>
@@ -278,6 +281,7 @@ const EventInfo = () => {
   const [imgIdx, setImgIdx] = useState(0);
   const [showPreviousEvents, setShowPreviousEvents] = useState(false);
   const [followingOrganizer, setFollowingOrganizer] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState(ticketId || null);
   const [archiveFilter, setArchiveFilter] = useState("all");
   const [displayedCommentsCount, setDisplayedCommentsCount] = useState(4);
   const galleryRef = useRef(null);
@@ -455,11 +459,16 @@ const EventInfo = () => {
   // Organizers can hide how many tickets are left (on by default).
   const showAvailability = event?.showAvailability !== false;
   const isSoldOut = allTickets.length === 0 || isEventPassed8Hours(event);
-  const activeTicket = ticket
+  const activeTicketSource =
+    allTickets.find((t) => t._id === selectedTicketId) ||
+    ticket ||
+    allTickets[0] ||
+    null;
+  const activeTicket = activeTicketSource
     ? {
-        ...ticket,
-        price: ticket.price ?? 0,
-        type: ticket.name?.toLowerCase() ?? "standard",
+        ...activeTicketSource,
+        price: activeTicketSource.price ?? 0,
+        type: activeTicketSource.name?.toLowerCase() ?? "standard",
       }
     : null;
 
@@ -482,213 +491,901 @@ const EventInfo = () => {
 
   if (isLoading) return <SkeletonLoadingScreen />;
 
-  const titleChars = (event?.name || "").split("");
+  /* ── stacked card layout data ── */
+  const venue = event?.links?.venues || {};
+  const startMoment = moment(event?.dates?.start?.localDate);
+  const hasStartDate = startMoment.isValid();
+  const endMoment = event?.dates?.end?.localDate
+    ? moment(event.dates.end.localDate)
+    : null;
+  const eventDateLabel = hasStartDate
+    ? startMoment.format("dddd, MMMM D, YYYY")
+    : "Date to be announced";
+  const startTimeLabel = event?.dates?.start?.localTime
+    ? moment(event.dates.start.localTime, "HH:mm:ss").format("h:mm A")
+    : "";
+  const endTimeLabel =
+    endMoment && event?.dates?.end?.localTime
+      ? moment(event.dates.end.localTime, "HH:mm:ss").format("h:mm A")
+      : "";
+  let timezoneLabel = "";
+  if (event?.dates?.timezone) {
+    try {
+      timezoneLabel =
+        new Intl.DateTimeFormat("en-US", {
+          timeZone: event.dates.timezone,
+          timeZoneName: "short",
+        })
+          .formatToParts(new Date())
+          .find((part) => part.type === "timeZoneName")?.value || "";
+    } catch {
+      timezoneLabel = "";
+    }
+  }
+  const timeRangeLabel = startTimeLabel
+    ? `${startTimeLabel}${endTimeLabel ? ` – ${endTimeLabel}` : ""}${
+        timezoneLabel ? ` (${timezoneLabel})` : ""
+      }`
+    : "Time to be announced";
+
+  const totalQuantity = allTickets.reduce(
+    (sum, item) => sum + (item.totalQuantity || 0),
+    0,
+  );
+  const availableQuantity = allTickets.reduce(
+    (sum, item) => sum + (item.availableQuantity || 0),
+    0,
+  );
+  const soldPercent =
+    totalQuantity > 0
+      ? Math.min(
+          99,
+          Math.max(
+            0,
+            Math.round(
+              ((totalQuantity - availableQuantity) / totalQuantity) * 100,
+            ),
+          ),
+        )
+      : 0;
+
+  const genreChips = [
+    ...new Set(
+      [
+        ...(event?.musicGenre || []),
+        ...(event?.classifications || []).map((c) => c?.genre?.name),
+        ...(event?.classifications || []).map((c) => c?.subGenre?.name),
+      ].filter(Boolean),
+    ),
+  ].slice(0, 2);
+
+  const organizerName = event?.adminId?.organizationName || "Paysso Events";
+  const organizerInitials = organizerName
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const ratingScore = Number(event?.rating?.score || 0);
+  const ratingReviews = Number(event?.rating?.reviews || 0);
+
+  const metaBits = [
+    ...(event?.amenities?.safety || []),
+    ...(event?.amenities?.other || []),
+  ].filter(Boolean);
+  const soundLabel = genreChips.length
+    ? `Sound: ${genreChips.join(" & ")}`
+    : "";
+
+  const mapQuery = encodeURIComponent(
+    [venue.name, venue.address, venue.city].filter(Boolean).join(", "),
+  );
+  const mapEmbedUrl = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+  const mapLink = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+  const heroImageSrc = images[0]
+    ? images[0].startsWith("http")
+      ? images[0]
+      : `${API_URL}/${images[0]}`
+    : "/Login.jpg";
+
+  const descParagraphs = (
+    event?.desc || "No description available for this event."
+  )
+    .split(/\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  const venueLine = [venue?.address, venue?.city].filter(Boolean).join(", ");
+  const doorsOpenLabel = event?.dates?.start?.localTime
+    ? moment(event.dates.start.localTime, "HH:mm:ss").format("h:mm A")
+    : "";
+  const organizerEventsLabel =
+    previousEvents.length > 0
+      ? `${previousEvents.length} events hosted`
+      : "Event organizer";
+  const ratingLabel =
+    ratingReviews > 0 ? `${ratingScore.toFixed(1)} Verified Rating` : "";
 
   return (
-    <div className="min-h-screen bg-[#121417] text-[#F4F4F5] antialiased overflow-x-hidden">
-      {/* ── AMBIENT ORBS ── */}
-      <Orb className="w-[600px] h-[600px] top-[-200px] left-[-200px] bg-[#FF7A00]/[0.07]" />
-      <Orb className="w-[500px] h-[500px] top-[30%] right-[-150px] bg-purple-600/[0.05]" />
-      <Orb className="w-[400px] h-[400px] bottom-[10%] left-[20%] bg-[#FF7A00]/[0.04]" />
-
-      {/* ── TOP COLOR RIBBON ── */}
-      <div className="h-[2px] w-full flex">
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          style={{ transformOrigin: "left" }}
-          className="h-full w-[35%] bg-gradient-to-r from-[#FF7A00] to-amber-300"
+    <div className="relative flex min-h-screen flex-col bg-[#0B0C0F] text-[#F4F4F5] antialiased">
+      {/* Cover image, softly blurred, held behind the whole page. */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <img
+          src={heroImageSrc}
+          onError={(imageEvent) => {
+            imageEvent.currentTarget.onerror = null;
+            imageEvent.currentTarget.src = "/Login.jpg";
+          }}
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full scale-110 object-cover opacity-[0.15] blur-[24px] saturate-150"
         />
-        <div className="h-full flex-1 bg-white/[0.03]" />
-      </div>
-
-      {/* ── CINEMATIC HERO ── */}
-      <div className="relative w-full h-[75vh] min-h-[520px] overflow-hidden">
-        <motion.div
-          ref={heroRef}
-          style={{ scale: heroScale }}
-          className="absolute inset-0"
-        >
-          {images[0] ? (
-            <img
-              src={
-                images[0].startsWith("http")
-                  ? images[0]
-                  : `${API_URL}/${images[0]}`
-              }
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "/Login.jpg";
-              }}
-              alt={event?.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src="/Login.jpg"
-              alt={event?.name}
-              className="w-full h-full object-cover"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#080809] via-[#080809]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#080809]/80 via-transparent to-transparent" />
-        </motion.div>
-
+        {/* Fade the cover out by roughly the middle of the viewport so the
+            lower half of the page sits on the solid background. */}
         <div
-          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          className="absolute inset-0"
           style={{
-            backgroundImage:
-              "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px)",
+            background:
+              "linear-gradient(to bottom, rgba(11,12,15,0) 0%, rgba(11,12,15,0.45) 28%, #0B0C0F 58%)",
           }}
         />
-
-        <motion.div
-          style={{ opacity: heroOpacity }}
-          className="absolute inset-0 flex flex-col justify-end px-6 lg:px-14 pb-14"
-        >
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="flex items-center gap-2 mb-5"
-          >
-            <Fingerprint size={13} className="text-[#FF7A00]" />
-            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.45em]">
-              ID — {eventId?.slice(-14)?.toUpperCase()}
-            </span>
-          </motion.div>
-
-          {/* 
-            FIXED: Responsive title sizing
-            - Mobile:  text-3xl  (30px) — was text-5xl, too large and overflowed
-            - sm:      text-4xl  (36px)
-            - md:      text-5xl  (48px)
-            - lg+:     text-6xl  (60px) — was text-7xl, pulled back one step
-          */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase italic tracking-tighter leading-none max-w-5xl mb-8 perspective-1000">
-            {titleChars.map((char, i) => (
-              <GlitchChar
-                key={i}
-                char={char === " " ? "\u00A0" : char}
-                delay={0.4 + i * 0.03}
-              />
-            ))}
-          </h1>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: 0.8,
-              duration: 0.7,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="flex flex-wrap gap-3"
-          >
-            <StatBadge
-              icon={MapPin}
-              label="Venue Locale"
-              value={event?.links?.venues?.name || "TBA"}
-            />
-            <StatBadge
-              icon={Calendar}
-              label="Schedule"
-              value={moment(event?.dates?.start?.localDate).format(
-                "MMM DD, YYYY",
-              )}
-            />
-            <motion.button
-              whileHover={{ scale: 1.04, borderColor: "rgba(255,122,0,0.5)" }}
-              onClick={() => setShowMap(!showMap)}
-              className="flex items-center gap-3 px-5 py-3 rounded-2xl border border-white/[0.07] bg-[#FF7A00]/10 backdrop-blur-md cursor-pointer transition-colors"
-            >
-              <MapPin size={15} className="text-[#FF7A00] shrink-0" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF7A00]">
-                {showMap ? "Close Map" : "View Map"}
-              </span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.04, borderColor: "rgba(255,122,0,0.5)" }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setShowPreviousEvents(true)}
-              className="flex items-center gap-3 px-5 py-3 rounded-2xl border border-white/[0.07] bg-black/35 backdrop-blur-md cursor-pointer transition-colors"
-            >
-              <History size={15} className="text-[#FF7A00] shrink-0" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">
-                Previous Events
-              </span>
-            </motion.button>
-          </motion.div>
-        </motion.div>
-
-        <div className="absolute space-x-12 right-10 top-0 bottom-0 w-[1px] bg-white/[0.04] hidden lg:block">
-          <motion.div
-            initial={{ scaleY: 0 }}
-            animate={{ scaleY: 1 }}
-            transition={{ delay: 1, duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-            style={{ transformOrigin: "top" }}
-            className="w-full h-full bg-gradient-to-b from-[#FF7A00] to-transparent"
-          />
-        </div>
-
-        <div className="absolute top-8 right-6 lg:right-14 z-20 flex items-center gap-3">
-          {/* Wishlist Button */}
-          <button
-            onClick={handleWishlistToggle}
-            disabled={wishlistMutation.isLoading}
-            className={`w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all active:scale-90 ${
-              checkWishlist(eventId)
-                ? "bg-[#FF7A00] border-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
-                : "bg-black/40 border-white/10 text-white hover:bg-black/60"
-            }`}
-          >
-            <Heart
-              size={20}
-              fill={checkWishlist(eventId) ? "currentColor" : "none"}
-              strokeWidth={2.5}
-            />
-          </button>
-
-          {/* Share Button */}
-          <button
-            onClick={() => shareEvent(event)}
-            className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-gray-300 hover:text-white hover:bg-black/60 flex items-center justify-center transition-all active:scale-90"
-          >
-            <Share2 size={18} />
-          </button>
-        </div>
       </div>
 
-      {/* ── MAP PANEL ── */}
-      <AnimatePresence>
-        {showMap && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "420px", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full overflow-hidden border-y border-white/[0.05]"
+      <main className="relative z-10 mx-auto flex min-h-[60vh] w-full max-w-[720px] flex-1 flex-col px-3 pb-10 pt-4 sm:px-5 lg:max-w-[1400px] lg:px-6 lg:pt-8">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1.08fr)_520px] lg:items-start lg:gap-6 lg:pl-8">
+          {/* ── HERO POSTER ── */}
+          <motion.section
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="relative overflow-hidden rounded-[28px] bg-[#141518] shadow-[0_18px_52px_rgba(0,0,0,0.42)] lg:col-start-1 lg:row-start-1"
           >
-            <iframe
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              style={{ border: 0 }}
-              src={`https://www.google.com/maps?q=${event?.links?.venues?.name}&output=embed`}
-            />
-            <div className="absolute inset-0 pointer-events-none border-b border-[#FF7A00]/20" />
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowMap(false)}
-              className="absolute top-5 right-5 p-3 bg-black/80 backdrop-blur-lg rounded-full border border-white/10 pointer-events-auto"
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[28px] sm:aspect-[4/3] lg:aspect-[4/3]">
+              <img
+                src={heroImageSrc}
+                onError={(imageEvent) => {
+                  imageEvent.currentTarget.onerror = null;
+                  imageEvent.currentTarget.src = "/Login.jpg";
+                }}
+                alt={event?.name || "Event"}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(circle at center, rgba(18,18,22,0.24) 0%, rgba(18,18,22,0.42) 32%, rgba(11,12,15,0.68) 60%, rgba(11,12,15,0.92) 100%), linear-gradient(to bottom, rgba(11,12,15,0.04) 0%, rgba(11,12,15,0.18) 22%, rgba(11,12,15,0.36) 44%, rgba(11,12,15,0.77) 100%)",
+                }}
+              />
+
+              <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-2">
+                {isSoldOut ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-black/65 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                    Sold out
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-black/65 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#FFB020]" />
+                    Live selling
+                  </span>
+                )}
+
+                {soldPercent > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-black/65 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#FFB020]" />
+                    {soldPercent}% Sold Out
+                  </span>
+                )}
+              </div>
+
+              <div className="absolute right-4 top-14 flex flex-col gap-2">
+                <button
+                  onClick={handleWishlistToggle}
+                  disabled={wishlistMutation.isLoading}
+                  aria-label="Save event"
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition-all active:scale-90 ${
+                    checkWishlist(eventId)
+                      ? "border-[#FF7A00] bg-[#FF7A00] text-black"
+                      : "border-white/15 bg-black/45 text-white hover:bg-black/65"
+                  }`}
+                >
+                  <Heart
+                    size={15}
+                    fill={checkWishlist(eventId) ? "currentColor" : "none"}
+                    strokeWidth={2.5}
+                  />
+                </button>
+                <button
+                  onClick={() => shareEvent(event)}
+                  aria-label="Share event"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white backdrop-blur transition-all hover:bg-black/65 active:scale-90"
+                >
+                  <Share2 size={14} />
+                </button>
+              </div>
+
+              <div className="absolute inset-x-4 bottom-4 sm:inset-x-6 sm:bottom-6">
+                <span className="inline-flex rounded-md border border-[#E0B341]/45 bg-black/45 px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.28em] text-[#E0B341] backdrop-blur">
+                  Exclusive experience
+                </span>
+                <h1 className="mt-3 max-w-[95%] text-[32px] font-black uppercase leading-[0.95] tracking-[-0.02em] text-white sm:text-[44px] lg:text-[64px]">
+                  {event?.name || "Event"}
+                </h1>
+                <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] font-medium sm:text-[13px]">
+                  {genreChips[0] && (
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-[#FFB020]">
+                      <Music2 size={12} />
+                      {genreChips[0]}
+                    </span>
+                  )}
+                  {venue?.name && (
+                    <>
+                      <span className="text-white/30">•</span>
+                      <span className="text-white/85">{venue.name}</span>
+                    </>
+                  )}
+                  {venue?.city && (
+                    <>
+                      <span className="text-white/30">•</span>
+                      <span className="text-white/40">{venue.city}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* ── RIGHT RAIL: TICKET + POLICIES ── */}
+          <aside className="space-y-3 sm:space-y-4 lg:sticky lg:top-20 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:w-full lg:max-w-[520px] lg:self-start">
+            {/* PHYSICAL TICKET STUB */}
+            <motion.div
+              layout
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                delay: 0.2,
+                duration: 0.7,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="overflow-hidden rounded-[22px] border border-white/10 shadow-2xl"
+              style={{
+                background: "linear-gradient(160deg, #141416 0%, #0e0e10 100%)",
+              }}
             >
-              <X size={16} />
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {/* TICKET TOP BAND */}
+              <motion.div
+                key={ticketType}
+                initial={{ opacity: 0.8 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+                className="relative overflow-hidden px-6 pb-6 pt-6 sm:px-7"
+                style={{ background: theme?.bandGradient }}
+              >
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+                <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-black/10" />
+
+                <p className="relative z-10 text-[10px] font-black uppercase tracking-[0.45em] text-black/60">
+                  Paysso · Official Ticket
+                </p>
+                <div className="relative z-10 mt-3 flex items-start justify-between gap-4">
+                  <h2 className="max-w-[420px] text-3xl font-black uppercase leading-[1.05] tracking-tight text-black sm:text-4xl">
+                    {event?.name || "Event"}
+                  </h2>
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-black/10">
+                    <Ticket size={22} className="text-black/70" />
+                  </div>
+                </div>
+
+                <div className="relative z-10 mt-6 flex gap-6">
+                  <div>
+                    <p className="mb-1 text-[8px] font-black uppercase tracking-[0.3em] text-black/50">
+                      Date
+                    </p>
+                    <p className="text-[12px] font-black text-black">
+                      {moment(event?.dates?.start?.localDate).format(
+                        "ddd, MMM DD YYYY",
+                      )}
+                    </p>
+                  </div>
+                  <div className="w-[1px] bg-black/15" />
+                  <div className="min-w-0">
+                    <p className="mb-1 text-[8px] font-black uppercase tracking-[0.3em] text-black/50">
+                      Venue
+                    </p>
+                    <p className="truncate text-[12px] font-black text-black">
+                      {event?.links?.venues?.name}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* TEAR LINE */}
+              <div className="relative flex items-center">
+                <div className="-ml-2.5 h-5 w-5 shrink-0 rounded-full bg-[#0B0C0F]" />
+                <div className="flex-1 border-t-2 border-dashed border-white/[0.07]" />
+                <div className="-mr-2.5 h-5 w-5 shrink-0 rounded-full bg-[#0B0C0F]" />
+              </div>
+
+              {/* TICKET BODY */}
+              <div className="space-y-4 px-6 py-5 sm:px-7 sm:py-6">
+                <div>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-[8px] font-black uppercase tracking-[0.4em] text-gray-600">
+                      Choose Your Ticket
+                    </p>
+                    {!isSoldOut && (
+                      <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-emerald-400">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                        Live
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <div className="flex max-h-[200px] flex-col gap-2 overflow-y-auto pr-0.5">
+                      {allTickets.map((t) => {
+                        const typeKey =
+                          t.name?.toLowerCase()?.trim() || "standard";
+                        const tTheme =
+                          ticketThemes[typeKey] || ticketThemes.standard;
+                        const isActive = t._id === activeTicket?._id;
+                        const rowSoldOut = (t.availableQuantity ?? 0) <= 0;
+
+                        return (
+                          <button
+                            key={t._id}
+                            disabled={rowSoldOut}
+                            onClick={() => setSelectedTicketId(t._id)}
+                            className={`flex w-full shrink-0 items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors sm:px-4 ${
+                              rowSoldOut
+                                ? "cursor-not-allowed border-white/[0.04] bg-white/[0.01] opacity-50"
+                                : isActive
+                                ? "bg-white/[0.04]"
+                                : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
+                            }`}
+                            style={
+                              isActive && !rowSoldOut
+                                ? {
+                                    borderColor: tTheme?.accentColor,
+                                    backgroundColor: `${tTheme?.accentColor}1a`,
+                                  }
+                                : undefined
+                            }
+                          >
+                            <span
+                              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2"
+                              style={{
+                                borderColor: isActive
+                                  ? tTheme?.accentColor
+                                  : "#444",
+                              }}
+                            >
+                              {isActive && (
+                                <span
+                                  className="h-1.5 w-1.5 rounded-full"
+                                  style={{
+                                    backgroundColor: tTheme?.accentColor,
+                                  }}
+                                />
+                              )}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span
+                                className={`block truncate text-[12px] font-black uppercase tracking-wide ${
+                                  isActive ? "text-white" : "text-gray-300"
+                                }`}
+                              >
+                                {t?.name}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-right">
+                              {t?.price === 0 ? (
+                                <span className="text-[14px] font-black text-white">
+                                  FREE
+                                </span>
+                              ) : (
+                                <>
+                                  <span className="text-[17px] font-black text-white">
+                                    {t?.price}
+                                  </span>
+                                  <span className="ml-1 text-[8px] font-bold text-white/40">
+                                    ETB
+                                  </span>
+                                </>
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {allTickets.length > 3 && (
+                      <div className="pointer-events-none absolute bottom-0 left-0 right-1 h-8 rounded-b-2xl bg-gradient-to-t from-[#141416] to-transparent" />
+                    )}
+                  </div>
+                  {allTickets.length > 3 && (
+                    <p className="mt-1.5 text-center text-[8px] font-black uppercase tracking-widest text-gray-600">
+                      Scroll for {allTickets.length - 3} more
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {[
+                    {
+                      label: "Doors Open",
+                      value: doorsOpenLabel || "Check venue",
+                    },
+                    showAvailability && {
+                      label: "Available Tickets",
+                      value: activeTicket?.availableQuantity ?? "—",
+                    },
+                  ]
+                    .filter(Boolean)
+                    .map(({ label, value }) => (
+                      <div
+                        key={label}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">
+                          {label}
+                        </span>
+                        <span className="text-[12px] font-bold text-gray-300">
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+
+                <button
+                  disabled={isSoldOut}
+                  onClick={() => {
+                    if (!user || usererror) {
+                      navigate("/login", { state: { from: location } });
+                      return;
+                    }
+                    setCheckoutOpen(true);
+                  }}
+                  className={`flex w-full items-center justify-center gap-3 rounded-2xl py-4 ${
+                    isSoldOut ? "cursor-not-allowed opacity-80" : ""
+                  }`}
+                  style={{ background: theme?.ctaGradient }}
+                >
+                  <span
+                    className={`text-[13px] font-black uppercase tracking-widest ${
+                      isSoldOut ? "text-red-500" : "text-black"
+                    }`}
+                  >
+                    {isSoldOut ? "Sold Out" : "Get Tickets"}
+                  </span>
+                  {!isSoldOut && <MoveRight size={16} className="text-black" />}
+                </button>
+              </div>
+
+              {/* BARCODE STUB */}
+              <div className="relative">
+                <div className="relative flex items-center">
+                  <div className="-ml-2.5 h-5 w-5 shrink-0 rounded-full bg-[#0B0C0F]" />
+                  <div className="flex-1 border-t-2 border-dashed border-white/[0.07]" />
+                  <div className="-mr-2.5 h-5 w-5 shrink-0 rounded-full bg-[#0B0C0F]" />
+                </div>
+                <div className="flex items-center justify-between px-6 py-5 sm:px-7">
+                  <div className="flex h-8 items-end gap-[1px] sm:h-10 sm:gap-[2px]">
+                    {Array.from({ length: 28 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="rounded-sm"
+                        style={{
+                          backgroundColor: theme?.accentColor,
+                          opacity: 0.55,
+                          width: i % 3 === 0 ? "3px" : "1.5px",
+                          height: `${40 + (i % 5) * 8}%`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[7px] font-black uppercase tracking-widest text-gray-700">
+                      Verified Pass
+                    </p>
+                    <p className="text-[10px] font-black tracking-widest text-gray-500">
+                      #
+                      {(activeTicket?._id || eventId)?.slice(-8)?.toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* TICKETS SELLING FAST */}
+            <div className="flex items-center justify-between px-1 py-2">
+              <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-400">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+                Tickets selling fast
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">
+                Secure checkout
+              </span>
+            </div>
+          </aside>
+
+          {/* ── LEFT COLUMN: DETAILS ── */}
+          <div className="space-y-6 lg:col-start-1 lg:row-start-2 lg:pl-3">
+            {/* DATE + VENUE */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-white/[0.06]">
+              <div className="flex items-center gap-4 py-1 sm:pr-6">
+                <div className="flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
+                    {hasStartDate ? startMoment.format("MMM") : "TBA"}
+                  </span>
+                  <span className="text-2xl font-black leading-none text-white">
+                    {hasStartDate ? startMoment.format("DD") : "—"}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40">
+                    Date &amp; Time
+                  </p>
+                  <p className="mt-1 text-[16px] font-semibold leading-snug text-white">
+                    {eventDateLabel}
+                  </p>
+                  <p className="mt-0.5 text-[13px] text-white/45">
+                    {timeRangeLabel}
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-hidden py-1 sm:pl-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF7A00]/10 text-[#FF7A00]">
+                    <MapPin size={16} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40">
+                      Venue Location
+                    </p>
+                    <p className="mt-1 text-[16px] font-semibold leading-snug text-white">
+                      {venue?.name || "Venue to be announced"}
+                    </p>
+                    {venueLine && (
+                      <p className="mt-0.5 text-[13px] leading-relaxed text-white/45">
+                        {venueLine}
+                      </p>
+                    )}
+                  </div>
+                  <a
+                    href={mapLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Open location in Google Maps"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    <ExternalLink size={14} />
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMap((isOpen) => !isOpen)}
+                  className="relative mt-4 block h-24 w-full overflow-hidden rounded-xl"
+                  aria-label="Toggle venue map"
+                >
+                  <iframe
+                    title="Venue map"
+                    src={mapEmbedUrl}
+                    loading="lazy"
+                    className="pointer-events-none h-full w-full"
+                    style={{
+                      border: 0,
+                      filter:
+                        "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)",
+                    }}
+                  />
+                  <span className="absolute inset-0 bg-[#0B0C0F]/25" />
+                  <span className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#0B0C0F] to-transparent" />
+                  <span className="absolute left-1/2 top-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#FF7A00] bg-[#0B0C0F]/85 text-[#FF7A00]">
+                    <MapPin size={15} />
+                  </span>
+                </button>
+                <AnimatePresence>
+                  {showMap && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 300, opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                      className="relative overflow-hidden border-t border-white/10"
+                    >
+                      <iframe
+                        title="Venue map expanded"
+                        src={mapEmbedUrl}
+                        className="h-full w-full"
+                        style={{
+                          border: 0,
+                          filter:
+                            "invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMap(false)}
+                        aria-label="Close map"
+                        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/80 text-white backdrop-blur"
+                      >
+                        <X size={15} />
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* ABOUT */}
+            <div className="border-t border-white/[0.06] pt-6">
+              <div className="mb-4 flex items-center gap-2">
+                <span className="h-4 w-[3px] rounded-full bg-[#FF7A00]" />
+                <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#FF7A00]">
+                  About this event
+                </span>
+              </div>
+              <div className="space-y-3 text-[14px] leading-relaxed">
+                {descParagraphs.map((paragraph, index) => (
+                  <p
+                    key={index}
+                    className={
+                      index === 0 ? "font-semibold text-white" : "text-white/55"
+                    }
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+              {(metaBits.length > 0 || soundLabel) && (
+                <div className="mt-5 border-t border-white/[0.06] pt-4 text-[12px] text-white/45">
+                  {metaBits.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      {metaBits.slice(0, 3).map((bit, index) => (
+                        <span
+                          key={bit}
+                          className="inline-flex items-center gap-1.5"
+                        >
+                          <ShieldCheck size={12} className="text-[#FF7A00]" />
+                          {bit}
+                          {index < Math.min(metaBits.length, 3) - 1 && (
+                            <span className="ml-1.5 text-white/20">•</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {soundLabel && <p className="mt-1.5">{soundLabel}</p>}
+                </div>
+              )}
+            </div>
+
+            {/* ORGANIZER + COMMUNITY REVIEWS */}
+            <div className="grid grid-cols-1 gap-6 border-t border-white/[0.06] pt-6 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-white/[0.06]">
+              <div className="py-1 text-center sm:pr-6">
+                <div className="relative mx-auto h-16 w-16">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#FF7A00] bg-[#FF7A00]/10 text-lg font-black text-white">
+                    {organizerInitials}
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF7A00] text-black">
+                    <Check size={11} strokeWidth={3.5} />
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-center gap-1.5">
+                  <p className="truncate text-[16px] font-semibold text-white">
+                    {organizerName}
+                  </p>
+                  <BadgeCheck
+                    size={15}
+                    className="shrink-0 text-[#FF7A00]"
+                    fill="currentColor"
+                    color="#141518"
+                  />
+                </div>
+                <p className="mt-1 text-[12px] text-white/40">
+                  {organizerEventsLabel}
+                  {ratingLabel ? ` • ${ratingLabel}` : ""}
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <a
+                    href="mailto:support@paysso.com"
+                    className="rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-center text-[12px] font-semibold text-white transition-colors hover:bg-white/[0.08]"
+                  >
+                    Contact Host
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFollowingOrganizer((isFollowing) => !isFollowing)
+                    }
+                    className={`rounded-xl py-2.5 text-[12px] font-semibold transition-colors ${
+                      followingOrganizer
+                        ? "bg-white/[0.08] text-white"
+                        : "bg-white text-black hover:bg-white/90"
+                    }`}
+                  >
+                    {followingOrganizer ? "Following" : "Follow"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="py-1 sm:pl-6">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/40">
+                    Community Reviews
+                  </span>
+                  <StarRating rating={rating} onRate={setRating} size={14} />
+                </div>
+                <p className="mt-3 text-[13px] leading-relaxed text-white/40">
+                  Have questions or attended previous {organizerName} editions?
+                  Drop your feedback below.
+                </p>
+
+                <div className="mt-4 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 transition-colors focus-within:border-[#FF7A00]/50">
+                  <input
+                    value={commentText}
+                    onChange={(event) => setCommentText(event.target.value)}
+                    onKeyDown={(event) =>
+                      event.key === "Enter" && handlePostComment()
+                    }
+                    placeholder="Leave a comment..."
+                    className="min-w-0 flex-1 border-none bg-transparent text-[12px] uppercase tracking-wide text-white outline-none placeholder:text-white/25"
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePostComment}
+                    disabled={isPending}
+                    aria-label="Post comment"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FF7A00] transition-all hover:bg-amber-400 active:scale-95 disabled:opacity-50"
+                  >
+                    <Send size={13} className="text-black" />
+                  </button>
+                </div>
+
+                {commentsIsLoading ? (
+                  <SkeletonTheme baseColor="#1e2023" highlightColor="#2a2d31">
+                    <div className="mt-4 space-y-2">
+                      {Array.from({ length: 2 }).map((_, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <Skeleton circle width={28} height={28} />
+                          <div className="flex-1 space-y-1.5">
+                            <Skeleton width={80} height={10} />
+                            <Skeleton width="90%" height={8} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SkeletonTheme>
+                ) : (
+                  <>
+                    {comments?.comments?.length > 0 && (
+                      <div className="mt-4 space-y-2.5">
+                        {comments.comments
+                          .slice(0, displayedCommentsCount)
+                          .map((comment, index) => (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, y: 10 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ delay: index * 0.05 }}
+                              className="flex items-start gap-2.5"
+                            >
+                              <img
+                                src={
+                                  comment?.userProfile?.avatarUrl?.startsWith(
+                                    "http",
+                                  )
+                                    ? comment.userProfile.avatarUrl
+                                    : `${API_URL}/${comment?.userProfile?.avatarUrl}`
+                                }
+                                alt={comment?.userProfile?.fullName}
+                                className="h-7 w-7 shrink-0 rounded-full border border-white/10 object-cover"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="truncate text-[12px] font-semibold text-white">
+                                    {comment?.userProfile?.fullName}
+                                  </p>
+                                  {comment?.rating > 0 && (
+                                    <span className="shrink-0 text-[10px] font-bold text-[#FF7A00]">
+                                      {comment.rating}/5
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="break-words text-[12px] leading-relaxed text-white/45">
+                                  {comment?.text}
+                                </p>
+                              </div>
+                            </motion.div>
+                          ))}
+                      </div>
+                    )}
+                    {comments?.comments?.length > displayedCommentsCount && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDisplayedCommentsCount((previous) =>
+                            Math.min(previous + 4, comments.comments.length),
+                          )
+                        }
+                        className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-[#FF7A00] hover:text-amber-300"
+                      >
+                        Show more
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* PREVIOUS EVENTS */}
+            <button
+              type="button"
+              onClick={() => setShowPreviousEvents(true)}
+              className="group flex w-full items-center justify-between gap-3 border-t border-white/[0.06] pt-6 text-left transition-colors"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF7A00]/10 text-[#FF7A00]">
+                  <History size={16} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[11px] font-black uppercase tracking-[0.22em] text-white">
+                    Previous Events
+                  </span>
+                  <span className="block truncate text-[12px] text-white/40">
+                    {previousEvents.length > 0
+                      ? `${previousEvents.length} photos & videos`
+                      : "Photos & videos from past shows"}
+                  </span>
+                </span>
+              </span>
+              <MoveRight
+                size={16}
+                className="shrink-0 text-white/35 transition-transform group-hover:translate-x-1 group-hover:text-[#FF7A00]"
+              />
+            </button>
+
+            {/* EVENT POLICY & ENTRY TERMS */}
+            <div className="pt-1">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={13} className="text-[#FF7A00]" />
+                <h2 className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#E0B341]">
+                  Event Policy &amp; Entry Terms
+                </h2>
+              </div>
+              {event?.policies?.length > 0 && (
+                <ul className="mt-3 space-y-1.5">
+                  {event.policies.map((policy) => (
+                    <li
+                      key={policy?.header}
+                      className="text-[12px] leading-relaxed text-white/40"
+                    >
+                      <span className="font-semibold text-white/60">
+                        {policy?.header}:
+                      </span>{" "}
+                      {policy?.descriptions}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-2 text-[12px] leading-relaxed text-white/40">
+                Policies are set by{" "}
+                <span className="text-[#FF7A00]">
+                  {venue?.name || "the venue"}
+                </span>{" "}
+                &amp; Paysso. Non-refundable after event start. For assistance,
+                contact{" "}
+                <span className="text-[#FF7A00]">support@paysso.com</span>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
 
       {/* ── DEMO ORGANIZER ARCHIVE ── */}
       <AnimatePresence>
@@ -719,7 +1416,7 @@ const EventInfo = () => {
 
               <div className="mb-6 flex flex-col gap-5 border-b border-white/[0.07] pb-6 pr-12">
                 <div>
-                  <p className="mb-2 text-[9px] font-black uppercase tracking-[0.45em] text-[#FF7A00]">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.45em] text-[#FF7A00]">
                     Organizer archive
                   </p>
                   <h2 className="text-2xl font-black uppercase tracking-tight text-white sm:text-3xl">
@@ -742,7 +1439,7 @@ const EventInfo = () => {
                     key={id}
                     type="button"
                     onClick={() => setArchiveFilter(id)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-colors ${
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
                       archiveFilter === id
                         ? "bg-[#FF7A00] text-black"
                         : "text-gray-500 hover:bg-white/[0.06] hover:text-white"
@@ -754,9 +1451,9 @@ const EventInfo = () => {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {visiblePreviousEvents.map((item) => (
+                {visiblePreviousEvents.map((item, index) => (
                   <article
-                    key={item.title}
+                    key={item._id || item.title || index}
                     className="group overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025]"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
@@ -795,7 +1492,7 @@ const EventInfo = () => {
                       <h3 className="text-sm font-bold text-white">
                         {item.title}
                       </h3>
-                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
+                      <p className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-gray-600">
                         {item.date}
                       </p>
                     </div>
@@ -848,7 +1545,7 @@ const EventInfo = () => {
                     onClick={() =>
                       setFollowingOrganizer((isFollowing) => !isFollowing)
                     }
-                    className={`flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                    className={`flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 ${
                       followingOrganizer
                         ? "bg-white/[0.08] text-white"
                         : "bg-[#FF7A00] text-black hover:bg-amber-300"
@@ -863,701 +1560,13 @@ const EventInfo = () => {
                   </button>
                 </div>
               </div>
-              <p className="mt-6 text-center text-[9px] font-bold uppercase tracking-widest text-gray-700">
+              <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-gray-700">
                 Demo organizer content
               </p>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* ── MAIN CONTENT ── */}
-      <main className="max-w-7xl mx-auto px-6 lg:px-14 pt-16 pb-28 relative">
-        <div className="grid lg:grid-cols-12 gap-14 xl:gap-20">
-          {/* ── LEFT COLUMN ── */}
-          <div className="order-2 lg:order-1 lg:col-span-7 space-y-20">
-            {/* IMAGE CAROUSEL */}
-            {images.length > 0 && (
-              <motion.section
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="relative group">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="w-5 h-[2px] bg-[#FF7A00]" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.45em] text-gray-500">
-                      Photos
-                    </span>
-                  </div>
-
-                  <div className="relative aspect-video overflow-hidden rounded-[2rem] border border-white/[0.06]">
-                    <AnimatePresence mode="wait">
-                      <motion.img
-                        key={imgIdx}
-                        src={
-                          images[imgIdx].startsWith("http")
-                            ? images[imgIdx]
-                            : `${API_URL}/${images[imgIdx]}`
-                        }
-                        alt={`Event ${imgIdx + 1}`}
-                        initial={{ opacity: 0, scale: 1.06 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                        transition={{ duration: 0.5 }}
-                        className="w-full h-full object-cover"
-                      />
-                    </AnimatePresence>
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#080809]/80 to-transparent" />
-                    <div className="absolute bottom-4 left-5 flex items-center gap-2">
-                      <Zap size={10} className="text-[#FF7A00]" />
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">
-                        {imgIdx + 1} / {images.length}
-                      </span>
-                    </div>
-
-                    {images.length > 1 && (
-                      <>
-                        <button
-                          onClick={prevImg}
-                          className="absolute left-0 top-0 bottom-0 w-1/4 flex items-center justify-start pl-4 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/20 z-10"
-                        >
-                          <ChevronLeft size={24} className="text-white" />
-                        </button>
-                        <button
-                          onClick={nextImg}
-                          className="absolute right-0 top-0 bottom-0 w-1/4 flex items-center justify-end pr-4 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/20 z-10"
-                        >
-                          <ChevronRight size={24} className="text-white" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  {images.length > 1 && (
-                    <div
-                      ref={galleryRef}
-                      className="flex gap-3 mt-4 overflow-x-auto scroll-hidden"
-                    >
-                      {images.map((img, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setImgIdx(i)}
-                          className={`shrink-0 w-20 h-14 rounded-xl overflow-hidden border-2 transition-all ${
-                            i === imgIdx
-                              ? "border-[#FF7A00] opacity-100"
-                              : "border-white/5 opacity-40 hover:opacity-70"
-                          }`}
-                        >
-                          <img
-                            src={
-                              img.startsWith("http") ? img : `${API_URL}/${img}`
-                            }
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = "/Login.jpg";
-                            }}
-                            className="w-full h-full object-cover"
-                            alt=""
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </motion.section>
-            )}
-
-            {/* DESCRIPTION */}
-            <motion.section
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="relative"
-            >
-              <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-[#FF7A00] via-[#FF7A00]/30 to-transparent" />
-              <div className="pl-8">
-                <span className="text-[9px] font-black uppercase tracking-[0.45em] text-[#FF7A00] mb-4 block">
-                  About This Event
-                </span>
-                <p className="max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg">
-                  {event?.desc || "No description available for this event."}
-                </p>
-              </div>
-            </motion.section>
-
-            {/* COMMENTS */}
-            <motion.section
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="space-y-8"
-            >
-              <div className="flex items-center gap-4">
-                <div className="h-[1px] flex-1 bg-gradient-to-r from-[#FF7A00]/30 to-transparent" />
-                <span className="text-[9px] font-black uppercase tracking-[0.45em] text-gray-600">
-                  Fan Reviews
-                </span>
-                <div className="h-[1px] flex-1 bg-gradient-to-l from-[#FF7A00]/30 to-transparent" />
-              </div>
-
-              {/* WRITE A REVIEW */}
-              <div className="rounded-2xl border border-white/[0.06] bg-[#16181b] p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-[0.35em] text-gray-500">
-                    Your Rating
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <StarRating rating={rating} onRate={setRating} />
-                    {rating > 0 && (
-                      <span className="text-[10px] font-bold text-gray-500 w-6 text-right">
-                        {rating}/5
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 focus-within:border-[#FF7A00]/40 transition-colors">
-                  <input
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
-                    placeholder="Leave a comment..."
-                    className="flex-1 bg-transparent outline-none border-none text-[11px] font-bold uppercase tracking-wide placeholder:text-gray-700 text-white"
-                  />
-                  <button
-                    onClick={handlePostComment}
-                    disabled={isPending}
-                    className="h-10 w-10 bg-[#FF7A00] rounded-xl flex items-center justify-center shrink-0 hover:bg-amber-400 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    <Send size={15} className="text-black" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {commentsIsLoading ? (
-                  <SkeletonTheme baseColor="#1e2023" highlightColor="#2a2d31">
-                    <div className="space-y-6">
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4 sm:p-5"
-                        >
-                          <div className="flex items-start gap-3 sm:gap-4">
-                            <div className="flex-shrink-0">
-                              <Skeleton circle width={48} height={48} />
-                            </div>
-                            <div className="flex-1 min-w-0 space-y-2">
-                              <Skeleton width={96} height={16} />
-                              <Skeleton width={64} height={12} />
-                              <Skeleton width="100%" height={12} />
-                              <Skeleton width="66%" height={12} />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </SkeletonTheme>
-                ) : (
-                  <>
-                    <motion.div className="space-y-6">
-                      {comments?.comments
-                        ?.slice(0, displayedCommentsCount)
-                        .map((c, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 15 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: i * 0.06 }}
-                            className="group rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 p-4 sm:p-5"
-                          >
-                            <div className="flex items-start gap-3 sm:gap-4">
-                              <div className="flex-shrink-0">
-                                <img
-                                  src={
-                                    c?.userProfile?.avatarUrl?.startsWith(
-                                      "http",
-                                    )
-                                      ? c.userProfile.avatarUrl
-                                      : `${API_URL}/${c?.userProfile?.avatarUrl}`
-                                  }
-                                  alt={c?.userProfile?.fullName}
-                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-white/10"
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                  <div>
-                                    <h4 className="text-sm sm:text-base font-semibold text-white truncate">
-                                      {c?.userProfile?.fullName}
-                                    </h4>
-                                    <p className="text-[10px] sm:text-xs text-gray-500">
-                                      {moment(c.createdAt).fromNow()}
-                                    </p>
-                                  </div>
-                                  {c?.rating > 0 && (
-                                    <div className="flex items-center gap-1.5">
-                                      <div className="flex items-center gap-0.5">
-                                        {[1, 2, 3, 4, 5].map((s) => (
-                                          <Star
-                                            key={s}
-                                            size={11}
-                                            fill={
-                                              s <= c.rating
-                                                ? "#FF7A00"
-                                                : "transparent"
-                                            }
-                                            stroke={
-                                              s <= c.rating
-                                                ? "#FF7A00"
-                                                : "#4b4b52"
-                                            }
-                                          />
-                                        ))}
-                                      </div>
-                                      <span className="text-[10px] font-bold text-gray-500">
-                                        {c.rating}/5
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors break-words">
-                                  {c?.text}
-                                </p>
-                                <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
-                                  <button
-                                    onClick={(e) => e.preventDefault()}
-                                    className="hover:text-white transition-colors"
-                                  >
-                                    Like
-                                  </button>
-                                  <button className="hover:text-white transition-colors">
-                                    Reply
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                    </motion.div>
-
-                    {/* Show More / Show Less */}
-                    <div className="flex gap-3 justify-center mt-8 flex-wrap">
-                      {comments?.comments?.length > displayedCommentsCount && (
-                        <motion.button
-                          initial={{ opacity: 0, y: 10 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          onClick={() =>
-                            setDisplayedCommentsCount((prev) =>
-                              Math.min(prev + 4, comments.comments.length),
-                            )
-                          }
-                          className="px-6 py-2 rounded-lg border border-[#FF7A00]/40 bg-white/[0.02] hover:bg-white/[0.04] text-[#FF7A00] font-semibold uppercase text-[10px] tracking-wider transition-all duration-300 hover:border-[#FF7A00]/80"
-                        >
-                          Show More
-                        </motion.button>
-                      )}
-                      {displayedCommentsCount > 4 && (
-                        <motion.button
-                          initial={{ opacity: 0, y: 10 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          onClick={() => setDisplayedCommentsCount(4)}
-                          className="px-6 py-2 rounded-lg border border-gray-500/40 bg-white/[0.02] hover:bg-white/[0.04] text-gray-400 font-semibold uppercase text-[10px] tracking-wider transition-all duration-300 hover:border-gray-500/80"
-                        >
-                          Show Less
-                        </motion.button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            </motion.section>
-          </div>
-
-          {/* ── RIGHT COLUMN — TICKET CARD ── */}
-          <aside className="order-1 lg:order-2 lg:col-span-5">
-            <div className="lg:sticky lg:top-24 space-y-5">
-              {/* PHYSICAL TICKET STUB */}
-              <motion.div
-                layout
-                initial={{ opacity: 0, y: 60 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  delay: 0.6,
-                  duration: 0.9,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                className="rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl"
-                style={{
-                  background:
-                    "linear-gradient(160deg, #141416 0%, #0e0e10 100%)",
-                }}
-              >
-                {/* TICKET TOP BAND */}
-                <motion.div
-                  key={ticketType}
-                  initial={{ opacity: 0.8 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.6 }}
-                  className="relative px-5 sm:px-8 pt-6 sm:pt-8 pb-5 sm:pb-6 overflow-hidden"
-                  style={{ background: theme?.bandGradient }}
-                >
-                  <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10" />
-                  <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-black/10" />
-
-                  <div className="relative z-10 flex items-start justify-between">
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.45em] text-black/60 mb-1">
-                        Paysso · Official Ticket
-                      </p>
-                      <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black leading-tight max-w-[160px] sm:max-w-[200px]">
-                        {event?.name || "Event"}
-                      </h2>
-                    </div>
-                    <div className="h-12 w-12 rounded-2xl bg-black/15 flex items-center justify-center shrink-0">
-                      <Ticket size={22} className="text-black/70" />
-                    </div>
-                  </div>
-
-                  <div className="relative z-10 flex gap-5 mt-5">
-                    <div>
-                      <p className="text-[8px] font-black uppercase tracking-[0.3em] text-black/50 mb-0.5">
-                        Date
-                      </p>
-                      <p className="text-[11px] font-black text-black">
-                        {moment(event?.dates?.start?.localDate).format(
-                          "ddd, MMM DD YYYY",
-                        )}
-                      </p>
-                    </div>
-                    <div className="w-[1px] bg-black/15" />
-                    <div>
-                      <p className="text-[8px] font-black uppercase tracking-[0.3em] text-black/50 mb-0.5">
-                        Venue
-                      </p>
-                      <p className="text-[11px] font-black text-black truncate max-w-[100px] sm:max-w-[130px]">
-                        {event?.links?.venues?.name}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* TEAR LINE */}
-                <div className="relative flex items-center">
-                  <div className="w-5 h-5 rounded-full -ml-2.5 bg-[#080809] shrink-0" />
-                  <div className="flex-1 border-t-2 border-dashed border-white/[0.07]" />
-                  <div className="w-5 h-5 rounded-full -mr-2.5 bg-[#080809] shrink-0" />
-                </div>
-
-                {/* TICKET BODY */}
-                <div className="px-5 sm:px-8 py-5 sm:py-7 space-y-6">
-                  {/* CHOOSE YOUR TICKET — selectable list. Replaces the old
-                      static "Ticket Type / Price" hero plus the separate
-                      "View Ticket Types" button that used to sit below the
-                      fold: ticket choice is now the first thing shown, and
-                      picking a row recolors this whole card (header band +
-                      CTA below) via the same ticketThemes palette. The list
-                      scrolls internally past 3 rows so the card's height
-                      stays fixed regardless of how many tiers an event has. */}
-                  <div>
-                    <p className="text-[8px] font-black text-gray-600 uppercase tracking-[0.4em] mb-2">
-                      Choose Your Ticket
-                    </p>
-                    <div className="relative">
-                      <div className="flex flex-col gap-2 max-h-[248px] overflow-y-auto pr-0.5">
-                        {allTickets.map((t) => {
-                          const typeKey =
-                            t.name?.toLowerCase()?.trim() || "standard";
-                          const tTheme =
-                            ticketThemes[typeKey] || ticketThemes.standard;
-                          const isActive = t._id === ticketId;
-                          const rowSoldOut = (t.availableQuantity ?? 0) <= 0;
-
-                          return (
-                            <button
-                              key={t._id}
-                              disabled={rowSoldOut}
-                              onClick={() =>
-                                navigate(`/events/${eventId}/tickets/${t._id}`)
-                              }
-                              className={`w-full flex items-center gap-3 px-3.5 sm:px-4 py-3 rounded-2xl border text-left transition-colors shrink-0 ${
-                                rowSoldOut
-                                  ? "opacity-50 cursor-not-allowed border-white/[0.04] bg-white/[0.01]"
-                                  : isActive
-                                  ? "bg-white/[0.04]"
-                                  : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
-                              }`}
-                              style={
-                                isActive && !rowSoldOut
-                                  ? {
-                                      borderColor: tTheme?.accentColor,
-                                      backgroundColor: `${tTheme?.accentColor}1a`,
-                                    }
-                                  : undefined
-                              }
-                            >
-                              <span
-                                className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
-                                style={{
-                                  borderColor: isActive
-                                    ? tTheme?.accentColor
-                                    : "#444",
-                                }}
-                              >
-                                {isActive && (
-                                  <span
-                                    className="w-1.5 h-1.5 rounded-full"
-                                    style={{
-                                      backgroundColor: tTheme?.accentColor,
-                                    }}
-                                  />
-                                )}
-                              </span>
-                              <span className="flex-1 min-w-0">
-                                <span
-                                  className={`block text-[11px] font-black uppercase tracking-wide truncate ${
-                                    isActive ? "text-white" : "text-gray-300"
-                                  }`}
-                                >
-                                  {t?.name}
-                                </span>
-                                <span
-                                  className="block text-[9px] font-bold mt-0.5"
-                                  style={{
-                                    color: rowSoldOut
-                                      ? "#777"
-                                      : isActive
-                                      ? tTheme?.accentColor
-                                      : "#666",
-                                  }}
-                                >
-                                  {rowSoldOut
-                                    ? "Sold out"
-                                    : showAvailability
-                                    ? `${t?.availableQuantity} left`
-                                    : "Available"}
-                                </span>
-                              </span>
-                              <span
-                                className="text-[13px] font-black shrink-0"
-                                style={{
-                                  color:
-                                    isActive && !rowSoldOut
-                                      ? tTheme?.accentColor
-                                      : "#999",
-                                }}
-                              >
-                                {t?.price === 0 ? (
-                                  "FREE"
-                                ) : (
-                                  <>
-                                    {t?.price}{" "}
-                                    <span className="text-[8px]">ETB</span>
-                                  </>
-                                )}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {allTickets.length > 3 && (
-                        <div className="pointer-events-none absolute bottom-0 left-0 right-1 h-8 bg-gradient-to-t from-[#141416] to-transparent rounded-b-2xl" />
-                      )}
-                    </div>
-                    {allTickets.length > 3 && (
-                      <p className="text-center text-[8px] font-black text-gray-600 uppercase tracking-widest mt-1.5">
-                        Scroll for {allTickets.length - 3} more
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-3">
-                    {[
-                      {
-                        label: "Doors Open",
-                        value: event?.dates?.start?.localTime
-                          ? moment(
-                              event.dates.start.localTime,
-                              "HH:mm:ss",
-                            ).format("h:mm A")
-                          : "Check venue",
-                      },
-                      showAvailability && {
-                        label: "Available",
-                        value: activeTicket?.availableQuantity ?? "—",
-                      },
-                    ]
-                      .filter(Boolean)
-                      .map(({ label, value }) => (
-                        <div
-                          key={label}
-                          className="flex items-center justify-between py-2 border-b border-white/[0.04]"
-                        >
-                          <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
-                            {label}
-                          </span>
-                          <span className="text-[11px] font-bold text-gray-300">
-                            {value}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-
-                  <button
-                    disabled={isSoldOut}
-                    onClick={() => {
-                      if (!user || usererror) {
-                        navigate("/login", { state: { from: location } });
-                        return;
-                      }
-                      setCheckoutOpen(true);
-                    }}
-                    className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 ${
-                      isSoldOut ? "cursor-not-allowed opacity-80" : ""
-                    }`}
-                    style={{ background: theme?.ctaGradient }}
-                  >
-                    <span
-                      className={`text-[12px] font-black uppercase tracking-widest ${
-                        isSoldOut ? "text-red-500" : "text-black"
-                      }`}
-                    >
-                      {isSoldOut ? "Sold Out" : "Get Tickets"}
-                    </span>
-                    {!isSoldOut && (
-                      <MoveRight size={16} className="text-black" />
-                    )}
-                  </button>
-
-                  <div className="flex justify-around pt-1">
-                    {[
-                      { Icon: ShieldCheck, label: "Secure" },
-                      { Icon: Star, label: "Verified" },
-                      { Icon: Zap, label: "Instant" },
-                    ].map(({ Icon, label }) => (
-                      <div
-                        key={label}
-                        className="flex flex-col items-center gap-1"
-                      >
-                        <Icon size={14} className="text-gray-600" />
-                        <span className="text-[7px] font-black text-gray-700 uppercase tracking-wide">
-                          {label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* BARCODE STUB */}
-                <div className="relative">
-                  <div className="relative flex items-center">
-                    <div className="w-5 h-5 rounded-full -ml-2.5 bg-[#080809] shrink-0" />
-                    <div className="flex-1 border-t-2 border-dashed border-white/[0.07]" />
-                    <div className="w-5 h-5 rounded-full -mr-2.5 bg-[#080809] shrink-0" />
-                  </div>
-                  <div className="px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
-                    <div className="flex items-end gap-[1px] sm:gap-[2px] h-8 sm:h-10">
-                      {Array.from({ length: 28 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="rounded-sm"
-                          style={{
-                            backgroundColor: theme?.accentColor,
-                            opacity: 0.35,
-                            width: i % 3 === 0 ? "3px" : "1.5px",
-                            height: `${40 + (i % 5) * 8}%`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[7px] font-black text-gray-700 uppercase tracking-widest">
-                        Paysso
-                      </p>
-                      <p className="text-[9px] font-black text-gray-500 tracking-widest">
-                        #{ticketId?.slice(-8)?.toUpperCase()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* LIVE BADGE */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.1, duration: 0.6 }}
-                className="px-4 py-3 rounded-2xl border border-white/[0.04] bg-white/[0.015] flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">
-                    Available Now
-                  </span>
-                </div>
-                <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
-                  Ref: {ticketId?.slice(-8)?.toUpperCase()}
-                </span>
-              </motion.div>
-            </div>
-          </aside>
-        </div>
-
-        {/* ── EVENT POLICIES ── */}
-        <motion.section
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-24 border-t border-white/[0.05] pt-16"
-        >
-          <div className="flex items-center gap-4 mb-10">
-            <ShieldCheck size={18} className="text-[#FF7A00]" />
-            <h2 className="text-lg font-black uppercase tracking-[0.2em]">
-              Event Policies
-            </h2>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {event?.policies?.map((po, i) => (
-              <motion.div
-                key={po?.header}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-                whileHover={{ borderColor: "rgba(255,122,0,0.25)" }}
-                className="p-6 rounded-2xl border border-white/[0.05] bg-white/[0.02] transition-all"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <h3 className="text-[11px] font-black uppercase tracking-widest text-white">
-                    {po?.header}
-                  </h3>
-                </div>
-                <p className="text-[12px] text-gray-500 leading-relaxed">
-                  {po?.descriptions}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          <p className="text-[10px] text-gray-700 mt-8 text-center">
-            Policies are set by{" "}
-            <span className="text-[#FF7A00] font-bold">
-              {event?.links?.venues?.name || "the venue"}
-            </span>{" "}
-            and Paysso. For questions, contact{" "}
-            <span className="text-[#FF7A00] font-bold">support@paysso.com</span>
-          </p>
-        </motion.section>
-      </main>
 
       {/* ── CHECKOUT MODAL ── */}
       <AnimatePresence>
@@ -1568,7 +1577,7 @@ const EventInfo = () => {
             amount={activeTicket?.price}
             name={event?.name}
             eventId={eventId}
-            ticketId={ticketId}
+            ticketId={activeTicket?._id || ticketId}
             paymentMethods={event?.adminId?.paymentMethods || []}
           />
         )}
