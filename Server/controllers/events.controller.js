@@ -12,6 +12,8 @@ import mongoose from "mongoose";
 import { Event } from "../models/events.model.js";
 import { resolveStatusUpdate } from "../utils/eventStatus.js";
 import { normalizeDatesUpdate } from "../utils/postponement.js";
+import { validateEventDates } from "../utils/eventDates.js";
+import AppError from "../errors/AppError.js";
 import { adminOwnsEvent } from "../utils/adminOwnership.js";
 import {
   syncEventTickets,
@@ -51,6 +53,18 @@ const storage = multer.diskStorage({
 });
 
 export const upload = multer({ storage });
+
+// Answers with the message when the dates are not acceptable, so the page can
+// show it next to the field.
+const datesProblem = (dates, options) => {
+  try {
+    validateEventDates(dates, options);
+    return null;
+  } catch (error) {
+    if (error instanceof AppError) return error.message;
+    throw error;
+  }
+};
 
 export const addEvent = catchAsync(async (req, res, next) => {
   let {
@@ -110,6 +124,11 @@ export const addEvent = catchAsync(async (req, res, next) => {
     return res
       .status(400)
       .json({ success: false, message: "Venue name  is required" });
+  }
+
+  const addProblem = datesProblem(dates, { requireEnd: status === "published" });
+  if (addProblem) {
+    return res.status(400).json({ success: false, message: addProblem });
   }
   priceRanges = (Array.isArray(priceRanges) ? priceRanges : []).map((p) =>
     p?.isFree ? { ...p, min: 0, max: 0 } : p,
@@ -552,7 +571,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   // Only the organizer who owns the event may change it. Anyone else gets the
   // same answer as for a missing event, so ids cannot be probed.
   const ownedEvent = mongoose.isValidObjectId(eventId)
-    ? await Event.findById(eventId).select("adminId deletedAt").lean()
+    ? await Event.findById(eventId).select("adminId deletedAt status dates").lean()
     : null;
   const mayEdit =
     ownedEvent &&
@@ -611,6 +630,19 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   if (classifications) classifications = safeParse(classifications);
   if (sales) sales = safeParse(sales);
   if (existingPictures) existingPictures = safeParse(existingPictures);
+  // A draft going live needs an end; older published events may stay without
+  // one, but any end that is there has to be after the start. Checked before
+  // anything is uploaded so a refused save costs nothing.
+  const finalStatus = resolveStatusUpdate(ownedEvent.status, status) ?? ownedEvent.status;
+  const publishing = finalStatus === "published" && ownedEvent.status !== "published";
+  const datesToCheck =
+    dates !== undefined && dates !== "" ? normalizeDatesUpdate(ownedEvent.dates, dates) : ownedEvent.dates;
+  const saveProblem = datesProblem(datesToCheck, { requireEnd: publishing });
+  if (saveProblem) {
+    discardUploads(req.files);
+    return res.status(400).json({ success: false, message: saveProblem });
+  }
+
   // Handle images
   let pictures = existingPictures || [];
   if (req.files && req.files.length > 0) {

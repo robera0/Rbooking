@@ -35,11 +35,17 @@ const clientDates = ({ postponement, postponedFrom, dateTbd, ...dates }) => ({
   },
 });
 
+// An end that is already stored survives a save that does not mention one
+// (an older copy of the page, or a draft autosave), so it is never wiped by
+// accident. A page that does send an end replaces it.
+const keepEnd = (existing, dates) =>
+  dates.end === undefined && hasDate(existing?.end) ? { ...dates, end: existing.end } : dates;
+
 export function normalizeDatesUpdate(existing, incoming) {
   if (incoming === undefined) return undefined;
 
   const instruction = incoming.postponement;
-  const base = clientDates(incoming);
+  const base = keepEnd(existing, clientDates(incoming));
   const wasPostponed = existing?.status?.code === "postponed";
   const originalDate = hasDate(existing?.postponedFrom)
     ? existing.postponedFrom
