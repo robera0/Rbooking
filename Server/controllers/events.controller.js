@@ -304,7 +304,7 @@ export const getEvents = catchAsync(async (req, res, next) => {
   // "draft" event (created but never finished/published, possibly with no
   // ticket types configured yet) was showing up here and appearing as
   // "Sold Out" instead of just not being visible at all.
-  const query = { status: "published" };
+  const query = { status: "published", deletedAt: null };
 
   if (type) {
     query.type = {
@@ -384,7 +384,7 @@ export const featuredEvents = catchAsync(async (req, res, next) => {
     });
   }
   console.log("Fetching from database...");
-  const events = await EventService.find({ status: "published" })
+  const events = await EventService.find({ status: "published", deletedAt: null })
     .sort({ "date.start.dateTime": 1 })
     .limit(limit);
 
@@ -473,7 +473,7 @@ export const fetchEventsId = catchAsync(async (req, res, next) => {
   }
 
   const event = await EventService.findById(eventId);
-  if (!event) {
+  if (!event || event.deletedAt) {
     return res.status(404).json({ message: "Event not found" });
   }
 
@@ -522,7 +522,7 @@ export const getEventById = catchAsync(async (req, res, next) => {
     }
   }
   const event = await EventService.findById(eventId);
-  if (!event) {
+  if (!event || event.deletedAt) {
     return res.status(404).json({ success: false, message: "Event not found" });
   }
   // The real Ticket documents (with stable _id), not just the priceRanges
@@ -552,9 +552,14 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   // Only the organizer who owns the event may change it. Anyone else gets the
   // same answer as for a missing event, so ids cannot be probed.
   const ownedEvent = mongoose.isValidObjectId(eventId)
-    ? await Event.findById(eventId).select("adminId").lean()
+    ? await Event.findById(eventId).select("adminId deletedAt").lean()
     : null;
-  if (!ownedEvent || !(await adminOwnsEvent(req.user.id, ownedEvent))) {
+  const mayEdit =
+    ownedEvent &&
+    !ownedEvent.deletedAt &&
+    (req.user.role === "super_admin" ||
+      (await adminOwnsEvent(req.user.id, ownedEvent)));
+  if (!mayEdit) {
     discardUploads(req.files);
     return res.status(404).json({ success: false, message: "Event not found" });
   }
@@ -658,7 +663,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
   );
 
   const existingEvent = await EventService.findById(eventId);
-  if (!existingEvent) {
+  if (!existingEvent || existingEvent.deletedAt) {
     return res.status(404).json({ success: false, message: "Event not found" });
   }
 

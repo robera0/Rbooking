@@ -30,13 +30,13 @@ ticketRouter.post(
   authenticateTokenMiddleware,
   verifyTicket,
 );
-// Changes whether an order counts as paid, so it needs a signed-in admin.
-// (The handler still has to check that the order belongs to that admin before
-// this is wired to a screen.)
+// Changing an order's status affects money and check-in state, so it needs a
+// real session and a role. The controller also checks event ownership and
+// only lets a super admin issue refunds.
 ticketRouter.patch(
   "/ticket/:ticketId/status",
   authenticateTokenMiddleware,
-  requireRole("admin"),
+  requireRole("admin", "super_admin"),
   updateTicketStatus,
 );
 ticketRouter.patch("/tickets/qr", authenticateTokenMiddleware, scanTicket);

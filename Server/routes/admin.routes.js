@@ -33,11 +33,31 @@ const adminRouter = express.Router();
 adminRouter.get("/admin_users", authenticateTokenMiddleware, getAdminProfile);
 adminRouter.get("/users", authenticateTokenMiddleware, adminOnly, getUsers);
 adminRouter.post("/users", authenticateTokenMiddleware, adminOnly, addUser);
-adminRouter.put("/users/:userId", authenticateTokenMiddleware, adminOnly, updateUser);
-adminRouter.post("/users/delete", authenticateTokenMiddleware, adminOnly, deleteUsers);
-adminRouter.post("/users/suspend", authenticateTokenMiddleware, adminOnly, suspendUsers);
+adminRouter.put(
+  "/users/:userId",
+  authenticateTokenMiddleware,
+  adminOnly,
+  updateUser,
+);
+adminRouter.post(
+  "/users/delete",
+  authenticateTokenMiddleware,
+  adminOnly,
+  deleteUsers,
+);
+adminRouter.post(
+  "/users/suspend",
+  authenticateTokenMiddleware,
+  adminOnly,
+  suspendUsers,
+);
 
-adminRouter.delete("/events/delete", authenticateTokenMiddleware, adminOnly, deleteEvents);
+adminRouter.delete(
+  "/events/delete",
+  authenticateTokenMiddleware,
+  adminOnly,
+  deleteEvents,
+);
 adminRouter.post(
   "/addEvents",
   authenticateTokenMiddleware,
@@ -59,10 +79,12 @@ adminRouter.post(
   createTickets,
 );
 
-// Analytics
+// Analytics — every route here reads order or revenue data, so none of them
+// may run without a session and an admin role.
 adminRouter.get(
   "/analytics/dashboard",
   authenticateTokenMiddleware,
+  adminOnly,
   get_dashboard_stats,
 );
 adminRouter.get(
@@ -80,6 +102,7 @@ adminRouter.get(
 adminRouter.get(
   "/analytics/revenue",
   authenticateTokenMiddleware,
+  adminOnly,
   get_revenue_history,
 );
 adminRouter.get(

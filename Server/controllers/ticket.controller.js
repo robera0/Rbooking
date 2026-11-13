@@ -36,6 +36,7 @@ import {
   nameMatchesAny,
   resolveReceiver,
 } from "../service/receiver.service.js";
+import { recordAudit } from "../service/audit.service.js";
 
 export const purchaseTicket = async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -276,24 +277,84 @@ export const getTicketsInfo = async (req, res) => {
 
 export const updateTicketStatus = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { ticketId } = req.params;
     const { status } = req.body;
 
     const validStatus = ["pending", "paid", "cancelled", "refunded"];
-    if (!validStatus.includes(status))
-      return res.status(400).json({ message: "Invalid status" });
+    if (!validStatus.includes(status)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid order id" });
+    }
 
-    const ticket = await TicketService.findByIdAndUpdate(id, status);
-    if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+    const userTicket = await UserTicketModel.findById(ticketId)
+      .populate({ path: "ticketId", select: "eventId" })
+      .lean();
+    if (!userTicket) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Ticket not found" });
+    }
+
+    // An organizer may only change orders for their own events, and only a
+    // super admin may issue a refund.
+    if (req.user.role !== "super_admin") {
+      const event = userTicket.ticketId?.eventId
+        ? await Event.findById(userTicket.ticketId.eventId).lean()
+        : null;
+      const owns = event ? await adminOwnsEvent(req.user.id, event) : false;
+      if (!owns) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have access to this order",
+        });
+      }
+      if (status === "refunded") {
+        return res.status(403).json({
+          success: false,
+          message: "Only a super admin can refund an order",
+        });
+      }
+    }
+
+    const update = { status };
+    if (status === "paid") update.isVerified = true;
+    if (status === "refunded") {
+      update.refundedAt = new Date();
+      update.refundedBy = req.user.id;
+      update.refundAmount = userTicket.totalAmount;
+    }
+
+    const ticket = await UserTicketModel.findByIdAndUpdate(
+      ticketId,
+      { $set: update },
+      { new: true },
+    );
 
     await Promise.all([
       clearTicketCache(ticket.userId),
-      safeRedis(() => redisClient.del(`${REDIS_PREFIX}user:ticket:info:${id}`)),
+      safeRedis(() =>
+        redisClient.del(`${REDIS_PREFIX}user:ticket:info:${ticketId}`),
+      ),
     ]);
+
+    await recordAudit({
+      req,
+      action: "order.status",
+      entityType: "order",
+      entityId: ticketId,
+      message: `Order ${userTicket.orderNo} marked ${status}`,
+      metadata: { before: userTicket.status, after: status },
+    });
 
     res.status(200).json({ success: true, ticket });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

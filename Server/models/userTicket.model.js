@@ -85,6 +85,19 @@ const UserTicketSchema = new mongoose.Schema(
       default: Date.now,
     },
 
+    // Refund + commission snapshots. The snapshot keeps historical revenue
+    // correct when the platform commission rate changes later.
+    refundedAt: { type: Date, default: null },
+    refundedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    refundAmount: { type: Number, default: 0 },
+    refundReason: { type: String, default: "" },
+    commissionRate: { type: Number, default: null },
+    commissionAmount: { type: Number, default: null },
+
     checked: {
       checkedIn: { type: Boolean, default: false },
       checkedInAt: { type: Date, default: null },
@@ -102,6 +115,7 @@ const UserTicketSchema = new mongoose.Schema(
 
 UserTicketSchema.index({ userId: 1, ticketId: 1 });
 // Sales figures group paid and refunded orders by ticket type.
+UserTicketSchema.index({ status: 1, purchasedAt: -1 });
 UserTicketSchema.index({ ticketId: 1, status: 1 });
 // One Telebirr receipt can pay for one order. Partial so tickets without a
 // referenceId (unverified, or verified before this field existed) don't

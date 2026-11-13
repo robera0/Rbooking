@@ -63,7 +63,13 @@ export const safeGet = async (key) => safeRedis(() => redisClient.get(key));
 
 export const clearEventsCache = async () => {
   try {
-    const keys = await redisClient.keys(`${REDIS_PREFIX}events:*`);
+    // The public list is cached under "event:list:", the featured row under
+    // "events:featured"; clear both so a cancelled or deleted event leaves the
+    // list straight away instead of after the cache expires.
+    const keys = [
+      ...(await redisClient.keys(`${REDIS_PREFIX}events:*`)),
+      ...(await redisClient.keys(`${REDIS_PREFIX}event:list:*`)),
+    ];
     if (keys.length > 0) {
       await redisClient.del(keys);
     }

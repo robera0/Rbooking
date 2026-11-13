@@ -133,7 +133,8 @@ export const getEvents = catchAsync(async (req, res, next) => {
   const userId = new mongoose.Types.ObjectId(req.user.id);
   const adminScopeId = await resolveAdminScopeId(userId);
 
-  const events = await EventService.find({ adminId: adminScopeId });
+  // Events removed by a super admin stay in the database but leave the list.
+  const events = await EventService.find({ adminId: adminScopeId, deletedAt: null });
 
   const sales = await salesByEvent(events.map((event) => event._id));
   const withSales = events.map((event) => ({

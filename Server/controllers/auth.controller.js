@@ -262,10 +262,14 @@ export const login = catchAsync(async (req, res, next) => {
     return next(new AppError("User not found", 404));
   }
 
-  if (user.status === "banned") {
-    return next(
-      new AppError("Your account has been banned from using Paysso", 403),
-    );
+  if (user.status !== "active") {
+    const message =
+      user.status === "banned"
+        ? "Your account has been banned from using Paysso"
+        : user.status === "suspended"
+          ? "Your account is suspended. Contact support."
+          : "Your account is not active.";
+    return next(new AppError(message, 403));
   }
 
   const isMatch = await comparePassword(password, user.password);
@@ -283,6 +287,7 @@ export const login = catchAsync(async (req, res, next) => {
   const refreshToken = generateRefreshToken(payload);
 
   const MAX_TOKENS = 5;
+  user.lastLoginAt = new Date();
   user.refreshTokens.push({ token: refreshToken });
   if (user.refreshTokens.length > MAX_TOKENS) {
     user.refreshTokens = user.refreshTokens.slice(-MAX_TOKENS);

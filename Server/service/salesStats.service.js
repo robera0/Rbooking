@@ -167,6 +167,7 @@ export async function salesByEvent(eventIds) {
 export async function salesBreakdown(adminScopeId, eventId) {
   const events = await Event.find({
     adminId: adminScopeId,
+    deletedAt: null,
     ...(eventId ? { _id: toObjectId(eventId) } : {}),
   })
     .select("name")

@@ -48,12 +48,25 @@ const startServer = async () => {
     console.error("Server failed to start:", error);
   }
 };
-const limiter = rateLimit({
-  windowMs: 150 * 60 * 1000, // 15 minutes
-  max: 100, // max 100 requests per IP
+// Two different abuse profiles:
+//  - login: slow, credential-stuffing target -> tight limit
+//  - scan: a busy gate must stay fast -> permissive, but still capped
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
   message: {
     success: false,
-    message: "Too many requests, please try again later.",
+    message: "Too many login attempts, please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const scanLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: {
+    success: false,
+    message: "Too many scans, please slow down.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -65,6 +78,9 @@ app.use(
     origin: function (origin, callback) {
       const allowedOrigins = [
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5180",
+        "http://127.0.0.1:5180",
         "https://paysso.netlify.app",
         "https://paysso.et",
         "https://www.paysso.et",
@@ -105,6 +121,9 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.set("trust proxy", 1);
 
 app.use(passport.initialize());
+
+app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth/super_admin/scan", scanLimiter);
 
 app.use("/api/auth", authRouter);
 

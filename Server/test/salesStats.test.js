@@ -246,6 +246,15 @@ describe("salesBreakdown (database)", () => {
       status,
     });
 
+  test("a soft-deleted event is not in the sales figures", async () => {
+    const admin = oid();
+    const event = await makeEvent(admin, "Removed");
+    await tier(event._id, "Regular", 600, 10, 5);
+    await GenericEvent.updateOne({ _id: event._id }, { $set: { deletedAt: new Date() } });
+    const result = await salesBreakdown(admin, event._id.toString());
+    assert.equal(result.event, null);
+  });
+
   test("gives sold, left and revenue for each ticket type", async () => {
     const admin = oid();
     const event = await makeEvent(admin, "Jazz");

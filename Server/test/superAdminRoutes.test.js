@@ -10,6 +10,7 @@ process.env.ACCESS_TOKEN_SECRET ||= "test-secret";
 const { default: SuperAdminRouter } = await import(
   "../routes/superAdmin.routes.js"
 );
+const { default: redisClient } = await import("../config/redis.js");
 
 let server;
 let base;
@@ -23,7 +24,12 @@ before(async () => {
   base = `http://127.0.0.1:${server.address().port}/api/auth/super_admin`;
 });
 
-after(() => new Promise((resolve) => server.close(resolve)));
+after(async () => {
+  await new Promise((resolve) => server.close(resolve));
+  // Importing the router loads the action service, which opens the shared
+  // Redis client. Close it so the test process can exit.
+  await redisClient.quit().catch(() => {});
+});
 
 const get = (path, role) => {
   const headers = {};

@@ -85,6 +85,17 @@ const adminProfileSchema = new mongoose.Schema(
 
     // Security
     isVerified: { type: Boolean, default: false },
+    verifiedAt: { type: Date, default: null },
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    verificationNote: { type: String, default: "" },
+    rejectionReason: { type: String, default: "" },
+
+    // Platform commission override for this organizer (null = platform rate).
+    commissionRate: { type: Number, default: null, min: 0, max: 1 },
     // twoFactorEnabled: { type: Boolean, default: false },
   },
   { timestamps: true },

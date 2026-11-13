@@ -114,6 +114,9 @@ const BaseEventSchema = new mongoose.Schema(
     // When off, the public page hides how many tickets are left.
     showAvailability: { type: Boolean, default: true },
     status: String,
+    isFeatured: { type: Boolean, default: false },
+    // Soft delete keeps orders/transactions pointing at a real event.
+    deletedAt: { type: Date, default: null },
     invitation: {
       enabled: { type: Boolean, default: false },
     },
@@ -181,6 +184,9 @@ const BaseEventSchema = new mongoose.Schema(
   },
 );
 BaseEventSchema.index({ type: 1 });
+BaseEventSchema.index({ adminId: 1, status: 1 });
+BaseEventSchema.index({ status: 1, "dates.start.dateTime": 1 });
+BaseEventSchema.index({ deletedAt: 1, createdAt: -1 });
 
 export const Event = mongoose.model("Event", BaseEventSchema);
 

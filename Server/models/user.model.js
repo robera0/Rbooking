@@ -40,6 +40,9 @@ const userSchema = new mongoose.Schema(
     },
     resetToken: String,
     resetTokenExpires: Date,
+    lastLoginAt: { type: Date, default: null },
+    // Soft delete: orders and transactions still point at this account.
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

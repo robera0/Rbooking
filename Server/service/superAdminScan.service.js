@@ -26,6 +26,7 @@ async function describe(userTicket, outcome) {
     outcome,
     scannedAt: userTicket.checked.checkedInAt,
     ticket: {
+      userTicketId: userTicket._id,
       orderNo: userTicket.orderNo,
       name: tier?.name ?? userTicket.ticketType ?? "Ticket",
       quantity: userTicket.quantity,
@@ -45,11 +46,25 @@ async function describe(userTicket, outcome) {
 
 // Checks any paid ticket in, whichever event it belongs to. The update is
 // atomic, so two scanners racing on one code can't both get "checked in".
-export async function scanAnyTicket(token, scannerId) {
+// `eventId` (optional) is the scanner's event scope: a ticket for a different
+// event is refused before anything is written.
+export async function scanAnyTicket(token, scannerId, eventId = null) {
   if (typeof token !== "string" || token.trim() === "") {
     throw new ScanError(400, "Invalid QR code.");
   }
   const orderNo = token.trim();
+
+  if (eventId) {
+    const scoped = await UserTicketModel.findOne({ orderNo })
+      .populate({ path: "ticketId", select: "eventId" })
+      .lean();
+    if (
+      scoped?.ticketId?.eventId &&
+      String(scoped.ticketId.eventId) !== String(eventId)
+    ) {
+      throw new ScanError(403, "Ticket belongs to a different event.");
+    }
+  }
 
   const checkedIn = await UserTicketModel.findOneAndUpdate(
     {
