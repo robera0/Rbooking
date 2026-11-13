@@ -68,7 +68,7 @@ const TicketModal = ({ ticket, others, onSave, onClose }) => {
               value={draft.price}
               disabled={free}
               onChange={(e) => patch({ price: e.target.value.replace(/[^\d.]/g, "") })}
-              placeholder="0"
+              placeholder="Amount"
               error={err("price")}
             />
           </div>

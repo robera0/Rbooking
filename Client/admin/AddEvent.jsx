@@ -171,9 +171,9 @@ const AddEvent = () => {
 
   const runSaveDraft = async () => {
     const current = formRef.current;
-    // The server needs a name to create a draft; until there is one there is
-    // nothing worth saving.
-    if (!current.eventName.trim()) return null;
+    // The database needs a name and a venue to create an event, even a draft;
+    // until both are there there is nothing to save yet.
+    if (!current.eventName.trim() || !current.venueName.trim()) return null;
     const payload = buildPayload(current, "draft");
     try {
       if (draftIdRef.current) {
@@ -194,7 +194,7 @@ const AddEvent = () => {
     } catch (err) {
       // One toast, replaced rather than stacked, so a problem that blocks
       // every autosave is visible without spamming every few seconds.
-      toast.error(`Draft not saved: ${err.message}`, { id: "draft-save-error" });
+      toast.error(`Draft not saved: ${readErrorMessage(err, err.message)}`, { id: "draft-save-error" });
       return null;
     }
   };
