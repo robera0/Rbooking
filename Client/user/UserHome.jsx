@@ -2,7 +2,7 @@
 // Posh-inspired Discover page: editorial heading, featured hero, sticky filters
 // and a poster grid. Backed by GET /api/events and GET /api/featuredEvents.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -41,6 +41,7 @@ const GRID_CLASS =
 /* How long each hero event stays on screen before the next one slides in. */
 const HERO_INTERVAL = 6000;
 const HERO_MAX_SLIDES = 5;
+const EVENTS_PER_SCROLL = 16;
 
 const TileSkeleton = () => (
   <div className="animate-pulse">
@@ -55,6 +56,8 @@ const TileSkeleton = () => (
 
 const UserHome = () => {
   const [dateOpen, setDateOpen] = useState(false);
+  const [visibleEventCount, setVisibleEventCount] = useState(EVENTS_PER_SCROLL);
+  const loadMoreRef = useRef(null);
   const {
     user,
     wishlist,
@@ -145,12 +148,41 @@ const UserHome = () => {
 
   const loading = eventLoading || featuredEventLoading;
   const hasFilters = Boolean(type || date || artist || venues || search);
+  const visibleEvents = list.slice(0, visibleEventCount);
+  const hasMoreEvents = visibleEventCount < list.length;
+
+  useEffect(() => {
+    setVisibleEventCount(EVENTS_PER_SCROLL);
+  }, [list]);
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (
+      !sentinel ||
+      !hasMoreEvents ||
+      typeof IntersectionObserver === "undefined"
+    ) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleEventCount((count) =>
+            Math.min(count + EVENTS_PER_SCROLL, list.length),
+          );
+        }
+      },
+      { rootMargin: "480px 0px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreEvents, list.length]);
 
   const checkWishlist = (eventId) =>
     Boolean(
-      wishlist?.wishlist?.items?.some(
-        (item) => item?.eventId?._id === eventId,
-      ),
+      wishlist?.wishlist?.items?.some((item) => item?.eventId?._id === eventId),
     );
 
   const handleWishlistToggle = (event, clickEvent) => {
@@ -237,9 +269,9 @@ const UserHome = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-[#1C1F22]"
+              className="relative overflow-hidden rounded-none border-0"
             >
-              <div className="relative aspect-[16/11] sm:aspect-[21/9]">
+              <div className="relative aspect-[16/8] overflow-hidden sm:aspect-[21/9]">
                 <AnimatePresence initial={false}>
                   <motion.div
                     key={hero._id}
@@ -263,26 +295,47 @@ const UserHome = () => {
                         }}
                         className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/5" />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(7,11,19,0.18),_rgba(7,11,19,0.7)_55%,_rgba(7,11,19,0.9))]" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0b0d10]/80" />
 
-                      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8 lg:p-10">
+                      <div className="absolute left-0 top-0 z-10 flex items-start justify-between w-full p-5 sm:p-8 lg:p-10">
                         <span className="inline-flex items-center rounded-full bg-[#FF7A00] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-black">
-                          Featured
+                          Sold out
                         </span>
-                        <h2 className="mt-3 max-w-4xl text-xl font-semibold leading-tight tracking-tight sm:text-3xl lg:text-4xl">
-                          {hero.name}
-                        </h2>
-                        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-medium text-white/70">
+                        <button
+                          type="button"
+                          aria-label="Save event"
+                          className="flex h-12 w-12 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition hover:bg-black/40"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-5 w-5 fill-none stroke-current stroke-[2]"
+                          >
+                            <path d="M12 20.25s-7.5-4.35-9.75-8.11C.87 9.99 2.13 5.25 6.2 5.25c2.18 0 3.4 1.2 4.05 2.1.65-.9 1.87-2.1 4.05-2.1 4.07 0 5.33 4.74 3.95 6.89C19.5 15.9 12 20.25 12 20.25Z" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-8 lg:p-10">
+                        <span className="inline-flex items-center rounded-md border border-[#FFCA5B]/70 bg-black/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#FFCA5B] backdrop-blur-sm">
+                          Exclusive experience
+                        </span>
+                        <div className="mt-4 inline-block border border-[#58D1FF]/80 bg-black/10 px-3 py-2 shadow-[0_0_0_1px_rgba(88,209,255,0.18)] backdrop-blur-[1px] sm:px-4 sm:py-3">
+                          <h2 className="max-w-5xl text-[2.5rem] font-black uppercase leading-[0.86] tracking-[-0.06em] text-white sm:text-[4.3rem] lg:text-[7.25rem]">
+                            {hero.name}
+                          </h2>
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-medium text-white/80 sm:text-[14px]">
                           <span className="inline-flex items-center gap-2">
-                            <CalendarDays size={14} className="text-[#FF7A00]" />
-                            {eventDateLabel(hero)}
-                          </span>
-                          <span className="inline-flex items-center gap-2">
-                            <MapPin size={14} className="text-[#FF7A00]" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-[#FF7A00]" />
                             {eventVenueLabel(hero)}
                           </span>
-                          <span className="font-semibold text-[#FF7A00]">
-                            {eventPriceLabel(hero)}
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays
+                              size={14}
+                              className="text-[#FF7A00]"
+                            />
+                            {eventDateLabel(hero)}
                           </span>
                         </div>
                       </div>
@@ -468,7 +521,33 @@ const UserHome = () => {
               ))}
             </div>
           ) : list.length > 0 ? (
-            <div className={GRID_CLASS}>{list.slice(0, 16).map(renderTile)}</div>
+            <>
+              <div className={GRID_CLASS}>{visibleEvents.map(renderTile)}</div>
+              {hasMoreEvents && (
+                <div
+                  ref={loadMoreRef}
+                  className="flex min-h-20 items-center justify-center"
+                  aria-live="polite"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleEventCount((count) =>
+                        Math.min(count + EVENTS_PER_SCROLL, list.length),
+                      )
+                    }
+                    className="rounded-full border border-white/10 px-5 py-2.5 text-xs font-semibold text-gray-300 transition hover:border-[#FF7A00]/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00]"
+                  >
+                    Show more events
+                  </button>
+                </div>
+              )}
+              {!hasMoreEvents && list.length > EVENTS_PER_SCROLL && (
+                <p className="mt-10 text-center text-xs font-medium text-gray-500">
+                  You&apos;re all caught up
+                </p>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-24 text-center">
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/[0.03]">
@@ -491,7 +570,7 @@ const UserHome = () => {
             </div>
           )}
 
-          {!loading && list.length > 16 && (
+          {!loading && list.length > visibleEvents.length && (
             <div className="mt-12 flex justify-center">
               <Link
                 to="/event"
