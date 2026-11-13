@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical, MapPin, CalendarDays } from "lucide-react";
+import { MoreVertical, MapPin, CalendarDays, ChevronRight } from "lucide-react";
 import { isPostponed, isDateTbd } from "@/lib/postponed";
 import EventStatusBadge from "./EventStatusBadge";
 
@@ -100,7 +100,17 @@ const EventCardList = ({ events, selected, onSelect, rowKey, loading }) => {
                 </button>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-[#FF7A00]">{ev?.type}</p>
               </div>
-              <div className="flex-none"><EventStatusBadge event={ev} /></div>
+              {/* Tapping the status opens what you would do next: finish a draft,
+                  or see the sales of a live event. */}
+              <button
+                type="button"
+                aria-label={ev?.status === "draft" ? "Continue editing" : "View sales"}
+                onClick={() => navigate(ev?.status === "draft" ? `/admin/events/${id}` : `/admin/events/${id}/sales`)}
+                className="ml-2 flex w-[104px] flex-none items-center gap-1 rounded-lg active:scale-95 [&>div]:min-w-0 [&>div]:flex-1"
+              >
+                <EventStatusBadge event={ev} />
+                <ChevronRight size={16} className="flex-none text-gray-400" />
+              </button>
             </div>
 
             <div className="mt-3 space-y-1.5 text-sm text-gray-400">
