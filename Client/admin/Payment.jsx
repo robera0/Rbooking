@@ -17,11 +17,14 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
 import api from "../src/Context/api/api.config";
+import TelebirrBreakdown from "./TelebirrBreakdown";
+import { useSales } from "./api/sales.api";
 
 const Payment = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const { API_URL } = useService();
+  const { data: sales, isLoading: salesLoading } = useSales();
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['adminDashboardStats'],
@@ -79,6 +82,9 @@ const Payment = () => {
           bg="bg-purple-500/10"
         />
       </div>
+
+      {/* Money received on each Telebirr number, across all events */}
+      <TelebirrBreakdown rows={sales?.byTelebirr} isLoading={salesLoading} />
 
       {/* Main Table Interface */}
       <div className="bg-[#1C1F22] border border-white/[0.04] rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-xl flex flex-col min-h-[500px]">

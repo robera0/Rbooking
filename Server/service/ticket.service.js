@@ -1,5 +1,6 @@
 import { hideExpiredMatch } from "../utils/ticketExpiry.js";
 import { TicketModel } from "../models/ticket.model.js";
+import { Event } from "../models/events.model.js";
 import { UserTicketModel } from "../models/userTicket.model.js";
 import Transaction from "../models/transaction.model.js";
 import mongoose from "mongoose";
@@ -50,51 +51,52 @@ class TicketService {
       .lean();
   }
 
-  static async findTickets(adminId) {
+  // Orders on this organizer's events, newest first. `eventId` narrows the
+  // list to one event; because the organizer's own events are looked up first,
+  // an id that belongs to someone else simply returns nothing. Filtering comes
+  // before the joins so the cost follows this organizer's orders, not the
+  // whole platform's.
+  static async findTickets(adminId, { eventId } = {}) {
+    const eventIds = await Event.find({
+      adminId: new mongoose.Types.ObjectId(adminId),
+      ...(eventId ? { _id: new mongoose.Types.ObjectId(eventId) } : {}),
+    }).distinct("_id");
+    const tierIds = await TicketModel.find({ eventId: { $in: eventIds } }).distinct("_id");
+
     return await UserTicketModel.aggregate([
+      { $match: { ticketId: { $in: tierIds }, ...hideExpiredMatch() } },
       {
         $lookup: {
           from: "users",
           localField: "userId",
           foreignField: "_id",
           as: "user",
-          pipeline: [
-            {
-              $project: {
-                password: 0,
-                refreshTokens: 0,
-                __v: 0,
-              },
-            },
-          ],
+          pipeline: [{ $project: { email: 1, username: 1 } }],
         },
       },
-      // unwind user array to a single object (makes accessing name easier)
       { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-      // lookup user profile (stores fullName)
       {
         $lookup: {
           from: "userprofiles",
           localField: "userId",
           foreignField: "userId",
           as: "profile",
+          pipeline: [{ $project: { fullName: 1 } }],
         },
       },
       { $unwind: { path: "$profile", preserveNullAndEmptyArrays: true } },
-      // add a convenient customerName field (firstName + lastName)
       {
         $addFields: {
           customerName: {
             $trim: {
               input: {
-                $ifNull: ["$profile.fullName", { $concat: [ { $ifNull: ["$user.firstName", ""] }, " ", { $ifNull: ["$user.lastName", ""] } ] }, "$user.username"]
+                $ifNull: ["$profile.fullName", "$user.username", ""],
               },
             },
           },
           customerEmail: { $ifNull: ["$user.email", ""] },
         },
       },
-
       {
         $lookup: {
           from: "tickets",
@@ -103,12 +105,7 @@ class TicketService {
           as: "ticket",
         },
       },
-
-      {
-        $unwind: "$ticket",
-      },
-
-      // Join Event
+      { $unwind: "$ticket" },
       {
         $lookup: {
           from: "events",
@@ -117,21 +114,29 @@ class TicketService {
           as: "event",
         },
       },
-
+      { $unwind: "$event" },
+      { $sort: { purchasedAt: -1 } },
+      // Only what the orders screen shows: nothing else about the buyer.
       {
-        $unwind: "$event",
-      },
-
-      {
-        $match: {
-          "event.adminId": new mongoose.Types.ObjectId(adminId),
-          ...hideExpiredMatch(),
-        },
-      },
-
-      {
-        $sort: {
-          purchasedAt: -1,
+        $project: {
+          orderNo: 1,
+          quantity: 1,
+          totalAmount: 1,
+          status: 1,
+          purchasedAt: 1,
+          phone: 1,
+          paidTo: 1,
+          customerName: 1,
+          customerEmail: 1,
+          "user._id": 1,
+          "user.email": 1,
+          "user.username": 1,
+          "ticket._id": 1,
+          "ticket.name": 1,
+          "ticket.price": 1,
+          "event._id": 1,
+          "event.name": 1,
+          "event.artist.name": 1,
         },
       },
     ]);

@@ -24,6 +24,7 @@ import Venue from "../user/Venue";
 import EventMang from "../admin/EventMang";
 import AddEvent from "../admin/AddEvent";
 import EditEvent from "../admin/EditEvent";
+import EventSales from "../admin/EventSales";
 import TicketOrders from "../admin/TicketOrders";
 import Dashboard from "../admin/Dashboard";
 import User from "../admin/User";
@@ -204,6 +205,14 @@ export const router = createBrowserRouter([
               </PageWrapper>
             ),
             loader: editEventLoader,
+          },
+          {
+            path: "events/:eventId/sales",
+            element: (
+              <PageWrapper>
+                <EventSales />
+              </PageWrapper>
+            ),
           },
           {
             path: "events/:eventId/qr",

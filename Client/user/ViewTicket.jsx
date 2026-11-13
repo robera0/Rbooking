@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
+import PostponedBanner from "./components/PostponedBanner";
+import { isDateTbd } from "@/lib/postponed";
 
 /* ─── design tokens ─── */
 const SURFACE = "bg-[#111214]";
@@ -151,6 +153,11 @@ const ViewTicket = () => {
           </div>
         )}
 
+        {/* ── postponed notice ── */}
+        {!isLoading && !isError && event && (
+          <PostponedBanner event={event} holder className="mb-5" />
+        )}
+
         {/* ── ticket card ── */}
         {!isLoading && !isError && event && (
           <motion.div
@@ -217,7 +224,9 @@ const ViewTicket = () => {
                     icon={Calendar}
                     label="Date"
                     value={
-                      localDate
+                      isDateTbd(event)
+                        ? "To be announced"
+                        : localDate
                         ? moment(localDate).format("dddd, MMMM D, YYYY")
                         : "TBA"
                     }

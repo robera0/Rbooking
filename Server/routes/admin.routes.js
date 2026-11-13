@@ -14,6 +14,7 @@ import {
   get_transaction_by_id,
   get_revenue_history,
   getEvents,
+  getSales,
 } from "../controllers/analytics.controller.js";
 import {
   upload,
@@ -24,6 +25,9 @@ import {
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { requireRole } from "../middlewares/requireRole.js";
 const adminOnly = requireRole("admin");
+// The admin area is also opened by club owners (they see no events, so they
+// get empty lists). Keep that working while still refusing everyone else.
+const adminArea = requireRole("admin", "club_owner");
 const adminRouter = express.Router();
 
 adminRouter.get("/admin_users", authenticateTokenMiddleware, getAdminProfile);
@@ -61,10 +65,16 @@ adminRouter.get(
   authenticateTokenMiddleware,
   get_dashboard_stats,
 );
-adminRouter.get("/analytics/transactions", getTransactionLedger);
+adminRouter.get(
+  "/analytics/transactions",
+  authenticateTokenMiddleware,
+  adminArea,
+  getTransactionLedger,
+);
 adminRouter.get(
   "/analytics/transactions/:id",
   authenticateTokenMiddleware,
+  adminArea,
   get_transaction_by_id,
 );
 adminRouter.get(
@@ -72,6 +82,12 @@ adminRouter.get(
   authenticateTokenMiddleware,
   get_revenue_history,
 );
-adminRouter.get("/events", authenticateTokenMiddleware, getEvents);
+adminRouter.get(
+  "/analytics/sales",
+  authenticateTokenMiddleware,
+  adminArea,
+  getSales,
+);
+adminRouter.get("/events", authenticateTokenMiddleware, adminArea, getEvents);
 
 export default adminRouter;

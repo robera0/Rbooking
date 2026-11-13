@@ -33,6 +33,15 @@ export const DatesSchema = new mongoose.Schema(
     status: {
       code: String, // onsale, cancelled, postponed,upcoming
     },
+    // Set while the event is postponed: where it was originally scheduled, and
+    // whether the new date is still to be announced. Tickets bought before the
+    // postponement stay valid; the gate scan never looks at the date.
+    postponedFrom: {
+      dateTime: Date,
+      localDate: String,
+      localTime: String,
+    },
+    dateTbd: Boolean,
     access: {
       startDateTime: Date,
     },

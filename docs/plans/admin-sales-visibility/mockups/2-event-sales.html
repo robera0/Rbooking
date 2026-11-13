@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mockup 2: Event sales</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#121417;color:#e8e8ea;font:14px/1.5 system-ui,sans-serif;padding:32px;max-width:1100px}
+h1{font-size:30px;margin:0 0 4px;text-transform:uppercase;letter-spacing:-.02em}h1 span{color:#FF7A00}h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#FF7A00;margin:0 0 14px}
+.note{color:#8b8f97;margin:0 0 20px;font-size:13px}a{color:#FF7A00}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.stat{background:#1C1F22;border:1px solid #ffffff0a;border-radius:16px;padding:16px}.stat b{display:block;font-size:26px}.stat small{color:#8b8f97}
+.card{background:#1C1F22;border:1px solid #ffffff0a;border-radius:20px;padding:20px;margin-bottom:18px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:10px 12px;border-bottom:1px solid #ffffff14}td{padding:12px;border-bottom:1px solid #ffffff0a}.r{text-align:right}
+.tag{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:3px 8px}.soldout{color:#f87171;background:#f871711a}.ok{color:#34d399;background:#34d3991a}.warn{color:#fbbf24;background:#fbbf241a}
+.callout{margin-top:6px;padding:12px 16px;border-left:3px solid #FF7A00;background:#FF7A001a;font-size:13px}
+@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<p><a href="1-event-list.html">&larr; Events</a></p>
+<h1>Addis Jazz <span>Night</span></h1>
+<p class="note">Mockup 2 of 4. One event's sales: tickets per ticket type, and money per Telebirr number.</p>
+<div class="grid">
+<div class="stat"><small>Tickets sold</small><b>140 / 190</b></div>
+<div class="stat"><small>Paid</small><b>111,000 ETB</b></div>
+<div class="stat"><small>Refunded</small><b>1,200 ETB</b></div>
+<div class="stat"><small>Net revenue</small><b style="color:#34d399">109,800 ETB</b></div>
+</div>
+<div class="card"><h2>Tickets sold by ticket type</h2>
+<table><thead><tr><th>Type</th><th class="r">Price</th><th class="r">Sold</th><th class="r">Left</th><th class="r">Revenue</th><th></th></tr></thead><tbody>
+<tr><td>Regular</td><td class="r">600 ETB</td><td class="r"><b>110</b></td><td class="r">40</td><td class="r">66,000 ETB</td><td><span class="tag ok">On sale</span></td></tr>
+<tr><td>VIP</td><td class="r">1,500 ETB</td><td class="r"><b>30</b></td><td class="r">10</td><td class="r">45,000 ETB</td><td><span class="tag warn">Almost gone</span></td></tr>
+</tbody></table></div>
+<div class="card"><h2>Received by Telebirr number</h2>
+<table><thead><tr><th>Number</th><th>Account holder</th><th class="r">Tickets</th><th class="r">Orders</th><th class="r">Total received</th></tr></thead><tbody>
+<tr><td>0911 22 33 44</td><td>Selam Tadesse</td><td class="r"><b>85</b></td><td class="r">41</td><td class="r">66,300 ETB</td></tr>
+<tr><td>0922 55 66 77</td><td>Dawit Bekele</td><td class="r"><b>50</b></td><td class="r">20</td><td class="r">41,700 ETB</td></tr>
+<tr><td style="color:#8b8f97">Before tracking</td><td style="color:#8b8f97">Paid before numbers were recorded</td><td class="r">5</td><td class="r">3</td><td class="r">3,000 ETB</td></tr>
+<tr><td colspan="2"><b>Total</b></td><td class="r"><b>140</b></td><td class="r"><b>64</b></td><td class="r"><b>111,000 ETB</b></td></tr>
+</tbody></table>
+<div class="callout">Same breakdown, shown for all events together, appears on the Payments page. Per-number totals add up to the paid figure above.</div></div>
+</body></html>

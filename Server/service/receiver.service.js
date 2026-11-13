@@ -71,3 +71,33 @@ export const nameMatches = (receiptName, expectedName) => {
 // True when the receipt's credited name matches any configured receiver.
 export const nameMatchesAny = (receiptName, expectedNames = []) =>
   expectedNames.some((name) => nameMatches(receiptName, name));
+
+// Which of the organizer's Telebirr numbers a receipt was paid to, judged by
+// the holder name on the receipt. Returns null when none match.
+// If more than one number matches (two numbers held under the same name),
+// the number cannot be known: accountNumber is null and the name is kept so
+// the order can still be reported as "unassigned".
+export const resolveReceiver = (receiptName, paymentMethods = []) => {
+  const matches = (paymentMethods || []).filter(
+    (pm) =>
+      pm?.provider?.toLowerCase() === "telebirr" &&
+      pm.receiverName &&
+      nameMatches(receiptName, pm.receiverName),
+  );
+  if (matches.length === 0) return null;
+
+  if (matches.length === 1) {
+    return {
+      provider: "Telebirr",
+      accountNumber: matches[0].accountNumber ?? null,
+      receiverName: matches[0].receiverName,
+    };
+  }
+
+  const names = [...new Set(matches.map((pm) => pm.receiverName))];
+  return {
+    provider: "Telebirr",
+    accountNumber: null,
+    receiverName: names.length === 1 ? names[0] : receiptName,
+  };
+};

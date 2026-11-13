@@ -70,6 +70,16 @@ const UserTicketSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Which of the organizer's Telebirr numbers received the payment, worked
+    // out when the receipt was verified. accountNumber is null when two of
+    // their numbers share the same holder name. Absent on orders paid before
+    // this was recorded, and on free orders.
+    paidTo: {
+      provider: String,
+      accountNumber: String,
+      receiverName: String,
+    },
+
     purchasedAt: {
       type: Date,
       default: Date.now,
@@ -91,6 +101,8 @@ const UserTicketSchema = new mongoose.Schema(
 );
 
 UserTicketSchema.index({ userId: 1, ticketId: 1 });
+// Sales figures group paid and refunded orders by ticket type.
+UserTicketSchema.index({ ticketId: 1, status: 1 });
 // One Telebirr receipt can pay for one order. Partial so tickets without a
 // referenceId (unverified, or verified before this field existed) don't
 // collide with each other.

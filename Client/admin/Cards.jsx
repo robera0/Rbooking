@@ -18,6 +18,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useService } from "../src/Context/ServiceContext";
 import { renderTableSkeleton } from "./../src/components/Reusable";
 import { useAdminEventService } from "@/Context/EventAdminContest";
+import { isPostponed, isDateTbd } from "@/lib/postponed";
+import EventStatusBadge from "./EventStatusBadge";
+import PaidToCell from "./PaidToCell";
 import { Toaster } from "react-hot-toast";
 import api from "../src/Context/api/api.config";
 export const Cards = ({
@@ -228,7 +231,7 @@ export const EventTable = ({ search = "", filter = "" }) => {
       )}
 
       <div className="event-table-scroll overflow-x-auto">
-        <table className="w-full min-w-[800px] table-fixed text-sm text-left">
+        <table className="w-full min-w-[1000px] table-fixed text-sm text-left">
           <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
             <tr>
               <th className="px-6 py-4 w-12 text-center">
@@ -254,8 +257,11 @@ export const EventTable = ({ search = "", filter = "" }) => {
               <th className="px-6 py-4 w-[150px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
                 Status
               </th>
-              <th className="px-6 py-4 w-[100px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+              <th className="px-6 py-4 w-[140px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
                 Sold
+              </th>
+              <th className="px-6 py-4 w-[140px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+                Net revenue
               </th>
               <th className="px-6 py-4 w-[160px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
                 Action
@@ -271,14 +277,14 @@ export const EventTable = ({ search = "", filter = "" }) => {
           <tbody className="text-gray-300 font-medium">
             {isLoading && (
               <tr>
-                <td colSpan="7" className="text-center py-8">
+                <td colSpan="10" className="text-center py-8">
                   Loading events...
                 </td>
               </tr>
             )}
             {!isLoading && !filteredEvents?.length && (
               <tr>
-                <td colSpan="7" className="px-6 py-10">
+                <td colSpan="10" className="px-6 py-10">
                   <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.02] py-10 text-center">
                     <p className="text-sm font-semibold text-white">
                       No event created.
@@ -317,9 +323,14 @@ export const EventTable = ({ search = "", filter = "" }) => {
                     />
                   </td>
                   <td className="px-6 py-4 border-gray-300">
-                    <h1 className="text-sm text-white font-bold truncate w-40">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/admin/events/${item?._id}/sales`)}
+                      className="block text-left text-sm text-white font-bold truncate w-40 hover:text-[#FF7A00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00]/50 rounded"
+                      title="View sales"
+                    >
                       {item?.name}
-                    </h1>
+                    </button>
                     <p className="text-[10px] text-[#FF7A00] uppercase tracking-widest mt-1">
                       {item?.type}
                     </p>
@@ -328,21 +339,27 @@ export const EventTable = ({ search = "", filter = "" }) => {
                     {item?.links?.venues?.name || item?.locale || "N/A"}
                   </td>
                   <td className="px-6 py-4 text-center font-bold text-gray-400">
-                    {item?.dates?.start?.localDate || "N/A"}
+                    {isDateTbd(item)
+                      ? "Date TBA"
+                      : item?.dates?.start?.localDate || "N/A"}
+                    {isPostponed(item) && item?.dates?.postponedFrom?.localDate && (
+                      <p className="mt-1 text-[10px] font-medium text-gray-500">
+                        was {item.dates.postponedFrom.localDate}
+                      </p>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <div className="w-full h-8 flex justify-center items-center app-success-soft app-success-border rounded-md border">
-                      <h1 className="app-success font-black text-[10px] uppercase tracking-widest">
-                        {item?.status === "published"
-                          ? "Active"
-                          : item?.status === "draft"
-                          ? "Draft"
-                          : "Sold Out"}
-                      </h1>
-                    </div>
+                    <EventStatusBadge event={item} />
                   </td>
                   <td className="px-6 py-4 text-center font-black text-white">
-                    {item?.ticketCount || 0}
+                    <span>{item?.sales?.sold ?? 0}</span>
+                    <span className="text-gray-500">
+                      {" "}
+                      / {item?.sales?.capacity ?? 0}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center font-black text-white">
+                    {(item?.sales?.netRevenue ?? 0).toLocaleString()} ETB
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button
@@ -384,18 +401,15 @@ export const EventTable = ({ search = "", filter = "" }) => {
   );
 };
 
-export const TicketTable = ({ search = "", filter = "" }) => {
+export const TicketTable = ({
+  transactions = [],
+  isLoading = false,
+  search = "",
+  filter = "",
+}) => {
   const navigate = useNavigate();
   const { API_URL } = useService();
   const [selected, setSelected] = useState([]);
-
-  const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ["adminTransactions"],
-    queryFn: async () => {
-      const res = await api.get(`/api/auth/admin/analytics/transactions`);
-      return res.data.transactions || [];
-    },
-  });
 
   const filteredTransactions = transactions.filter((txn) => {
     const userObj = Array.isArray(txn.user) ? txn.user[0] : txn.user || null;
@@ -445,14 +459,16 @@ export const TicketTable = ({ search = "", filter = "" }) => {
 
   const statusStyles = {
     pending: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
+    paid: "bg-green-500/10 text-green-400 border border-green-500/20",
     completed: "bg-green-500/10 text-green-400 border border-green-500/20",
+    refunded: "bg-red-500/10 text-red-400 border border-red-500/20",
     failed: "bg-red-500/10 text-red-400 border border-red-500/20",
     cancelled: "bg-gray-500/10 text-gray-400 border border-gray-500/20",
   };
 
   return (
     <div className="event-table-scroll overflow-x-auto">
-      <table className="w-full min-w-[900px] table-fixed text-sm text-left">
+      <table className="w-full min-w-[1050px] table-fixed text-sm text-left">
         <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
           <tr>
             <th className="px-6 py-4 w-12 text-center">
@@ -481,6 +497,9 @@ export const TicketTable = ({ search = "", filter = "" }) => {
             <th className="px-6 py-4 w-[120px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
               Date
             </th>
+            <th className="px-6 py-4 w-[150px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
+              Paid to
+            </th>
             <th className="px-6 py-4 w-[110px] text-center text-white font-bold uppercase tracking-wider text-[10px]">
               Total
             </th>
@@ -497,7 +516,7 @@ export const TicketTable = ({ search = "", filter = "" }) => {
           {!isLoading && filteredTransactions.length === 0 && (
             <tr>
               <td
-                colSpan={9}
+                colSpan={10}
                 className="px-6 py-12 text-center text-gray-500 text-sm"
               >
                 No transactions found.
@@ -585,6 +604,11 @@ export const TicketTable = ({ search = "", filter = "" }) => {
                         year: "numeric",
                       })
                     : "—"}
+                </td>
+
+                {/* Paid to (the Telebirr number that received the money) */}
+                <td className="px-6 py-4 text-center text-[11px]">
+                  <PaidToCell txn={txn} />
                 </td>
 
                 {/* Total */}

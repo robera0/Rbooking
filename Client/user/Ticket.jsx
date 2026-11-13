@@ -16,6 +16,7 @@ import {
   eventVenueLabel,
 } from "./components/EventTile";
 import toast from "react-hot-toast";
+import { isPostponed } from "@/lib/postponed";
 
 const STATUS_STYLES = {
   paid: {
@@ -445,6 +446,11 @@ const TicketHome = () => {
                         <p className="mt-1 line-clamp-1 text-[11px] text-gray-400">
                           {eventVenueLabel(event)}
                         </p>
+                        {isPostponed(event) && (
+                          <p className="mt-1 text-[11px] font-semibold text-yellow-400">
+                            Postponed · your ticket is still valid
+                          </p>
+                        )}
                       </div>
                       <span
                         className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] ${status.className}`}

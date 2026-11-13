@@ -4,6 +4,7 @@
 
 import { Link } from "react-router-dom";
 import { Heart, Share2 } from "lucide-react";
+import { isDateTbd, isPostponed } from "@/lib/postponed";
 
 const FALLBACK_IMAGE = "/datebackground.jpg";
 const FALLBACK_TZ = "Africa/Addis_Ababa";
@@ -19,6 +20,13 @@ export const eventImageUrl = (event, apiUrl) => {
 };
 
 export const eventDateLabel = (event) => {
+  // Postponed events say so on every card; an undecided date shows no stale date.
+  if (isDateTbd(event)) return "Postponed · date TBA";
+  const label = plainDateLabel(event);
+  return isPostponed(event) ? `Postponed · ${label}` : label;
+};
+
+const plainDateLabel = (event) => {
   const raw = event?.dates?.start?.dateTime;
   if (!raw) return event?.dates?.start?.localDate || "Date TBA";
   const parsed = new Date(raw);

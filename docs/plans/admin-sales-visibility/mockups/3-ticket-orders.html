@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mockup 3: Ticket orders</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#121417;color:#e8e8ea;font:14px/1.5 system-ui,sans-serif;padding:32px}
+h1{font-size:30px;margin:0 0 4px;text-transform:uppercase;letter-spacing:-.02em}h1 span{color:#FF7A00}
+.note{color:#8b8f97;margin:0 0 20px;font-size:13px}
+.bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}.in,.sel{height:44px;border-radius:22px;border:1px solid #ffffff14;background:#1A1D20;color:#fff;padding:0 18px;font:inherit}.in{flex:1;min-width:200px}
+.sel{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.sel.on{border-color:#FF7A00;color:#FF7A00}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.stat{background:#1C1F22;border:1px solid #ffffff0a;border-radius:16px;padding:14px 16px}.stat b{display:block;font-size:22px}.stat small{color:#8b8f97}
+.card{background:#1C1F22;border:1px solid #ffffff0a;border-radius:20px;padding:16px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:12px 14px;border-bottom:1px solid #ffffff14}td{padding:12px 14px;border-bottom:1px solid #ffffff0a}.r{text-align:right}
+.o{color:#FF7A00;font-weight:800;font-size:11px}.tag{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 10px}.paid{color:#34d399;background:#34d3991a}.pend{color:#fbbf24;background:#fbbf241a}.ref{color:#f87171;background:#f871711a}
+.sub{font-size:11px;color:#8b8f97}
+@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<h1>Ticket <span>Orders</span></h1>
+<p class="note">Mockup 3 of 4. Filter by event; the summary strip follows the filter. The Telebirr column shows which number received each payment.</p>
+<div class="bar"><input class="in" placeholder="Search by Order ID or customer..."><span class="sel on">Event: Addis Jazz Night &#9662;</span><span class="sel">All status &#9662;</span></div>
+<div class="stats">
+<div class="stat"><small>Tickets sold</small><b>140</b></div>
+<div class="stat"><small>Paid</small><b>111,000 ETB</b></div>
+<div class="stat"><small>Refunded</small><b>1,200 ETB</b></div>
+<div class="stat"><small>Net revenue (after refunds)</small><b style="color:#34d399">109,800 ETB</b></div>
+</div>
+<div class="card"><table>
+<thead><tr><th>Order</th><th>Customer</th><th>Ticket</th><th>Date</th><th>Paid to</th><th class="r">Total</th><th>Status</th></tr></thead><tbody>
+<tr><td class="o">#ORD-48213</td><td>Hanna Tesfaye<div class="sub">0912 ••• 304</div></td><td>VIP × 2</td><td>22 Oct 2026</td><td>0911 22 33 44</td><td class="r"><b>3,000 ETB</b></td><td><span class="tag paid">paid</span></td></tr>
+<tr><td class="o">#ORD-48199</td><td>Samuel Dereje<div class="sub">0933 ••• 871</div></td><td>Regular × 4</td><td>22 Oct 2026</td><td>0922 55 66 77</td><td class="r"><b>2,400 ETB</b></td><td><span class="tag paid">paid</span></td></tr>
+<tr><td class="o">#ORD-48150</td><td>Bethlehem T.<div class="sub">0944 ••• 120</div></td><td>Regular × 2</td><td>21 Oct 2026</td><td>0911 22 33 44</td><td class="r"><b>1,200 ETB</b></td><td><span class="tag ref">refunded</span></td></tr>
+<tr><td class="o">#ORD-48102</td><td>Abel Mekonnen<div class="sub">0955 ••• 640</div></td><td>Regular × 1</td><td>21 Oct 2026</td><td style="color:#8b8f97">Before tracking</td><td class="r"><b>600 ETB</b></td><td><span class="tag paid">paid</span></td></tr>
+<tr><td class="o">#ORD-48311</td><td>Liya Bekele<div class="sub">0966 ••• 502</div></td><td>VIP × 1</td><td>23 Oct 2026</td><td style="color:#8b8f97">—</td><td class="r"><b>1,500 ETB</b></td><td><span class="tag pend">pending</span></td></tr>
+</tbody></table></div>
+</body></html>

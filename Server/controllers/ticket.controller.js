@@ -22,6 +22,7 @@ import verifyReceipt from "../service/verifyRecipt.service.js";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { Event } from "../models/events.model.js";
+import { adminOwnsEvent } from "../utils/adminOwnership.js";
 import QRCode from "qrcode";
 import { amountsMatch } from "../utils/amount.js";
 import { logVerificationFailure } from "../service/verificationLog.service.js";
@@ -33,6 +34,7 @@ import {
 import {
   getExpectedReceiver,
   nameMatchesAny,
+  resolveReceiver,
 } from "../service/receiver.service.js";
 
 export const purchaseTicket = async (req, res) => {
@@ -449,7 +451,11 @@ export const verifyTicket = async (req, res) => {
       );
     }
 
-    // Mark ticket as paid
+    // Mark ticket as paid, remembering which Telebirr number got the money.
+    const paidTo = resolveReceiver(
+      receipt.creditedPartyName,
+      adminProfile.paymentMethods,
+    );
     const updatedTicket = await UserTicketModel.findByIdAndUpdate(
       userTicketId,
       {
@@ -457,6 +463,7 @@ export const verifyTicket = async (req, res) => {
         isVerified: true,
         receiptUrl,
         referenceId: receipt.receiptNo,
+        ...(paidTo ? { paidTo } : {}),
       },
       { new: true },
     ).populate({
@@ -577,6 +584,24 @@ export const scanTicket = catchAsync(async (req, res, next) => {
   // tickets bought before a past bug fix have a QR-embedded userTicketId
   // that never matched the ticket's real _id, so requiring it here would
   // permanently lock those out of check-in.)
+  // An organizer may only check in tickets for their own events. Looked up
+  // first so a ticket for someone else's event is never marked as used.
+  const scanned = await UserTicketModel.findOne({ orderNo: token })
+    .select("ticketId")
+    .populate({ path: "ticketId", select: "eventId" })
+    .lean();
+  if (scanned?.ticketId?.eventId) {
+    const scannedEvent = await Event.findById(scanned.ticketId.eventId)
+      .select("adminId")
+      .lean();
+    if (!scannedEvent || !(await adminOwnsEvent(scannerUserId, scannedEvent))) {
+      return res.status(403).json({
+        success: false,
+        message: "This ticket is for another organizer's event",
+      });
+    }
+  }
+
   const userTicket = await UserTicketModel.findOneAndUpdate(
     {
       orderNo: token,

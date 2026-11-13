@@ -1,11 +1,17 @@
 import AdminProfileService from "../service/adminProfile.service.js";
 import catchAsync from "../errors/catchAsync.js";
-import UserService from "../service/user.service.js";
 import EventService from "../service/event.service.js";
 import { UserModel } from "../models/user.model.js";
 import { ProfileModel } from "../models/profile.model.js";
 import { filterOwnedEventIds } from "../utils/adminOwnership.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
+import {
+  UserAdminError,
+  createUserByAdmin,
+  updateUserByAdmin,
+  deleteUsersByAdmin,
+  suspendUsersByAdmin,
+} from "../service/userAdmin.service.js";
 
 export const getAdminProfile = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
@@ -15,24 +21,29 @@ export const getAdminProfile = catchAsync(async (req, res, next) => {
   }).populate("userId", "email username role status");
   res.json({ admin: validAdmin });
 });
-export const deleteUsers = catchAsync(async (req, res, next) => {
-  const { userIds } = req.body;
-  if (!userIds || !Array.isArray(userIds))
-    return res
-      .status(400)
-      .json({ success: false, message: "Invalid userIds payload" });
+const sendUserAdminError = (error, res) => {
+  if (error instanceof UserAdminError) {
+    return res.status(error.status).json({ success: false, message: error.message });
+  }
+  throw error;
+};
 
-  await UserService.deleteUsers(userIds);
-  res.status(200).json({ success: true, message: "Users deleted" });
+export const deleteUsers = catchAsync(async (req, res) => {
+  try {
+    const { affected } = await deleteUsersByAdmin(req.user.id, req.body?.userIds);
+    res.status(200).json({ success: true, message: "Users deleted", affected });
+  } catch (error) {
+    sendUserAdminError(error, res);
+  }
 });
 
-export const suspendUsers = catchAsync(async (req, res, next) => {
-  const { userIds } = req.body;
-  if (!userIds || !Array.isArray(userIds))
-    return res.status(400).json({ success: false, message: "Invalid payload" });
-  // Toggle logic or just set to suspended
-  await UserService.suspendUsers(userIds);
-  res.status(200).json({ success: true, message: "Users suspended" });
+export const suspendUsers = catchAsync(async (req, res) => {
+  try {
+    const { affected } = await suspendUsersByAdmin(req.user.id, req.body?.userIds);
+    res.status(200).json({ success: true, message: "Users suspended", affected });
+  } catch (error) {
+    sendUserAdminError(error, res);
+  }
 });
 
 export const deleteEvents = catchAsync(async (req, res, next) => {
@@ -63,23 +74,13 @@ export const addEvent = catchAsync(async (req, res, next) => {
   res.status(201).json({ success: true, event: newEvent });
 });
 
-export const addUser = catchAsync(async (req, res, next) => {
-  const payload = req.body;
-  const newUser = await UserService.create({
-    email: payload.email,
-    password: payload.password || "defaultPass123",
-    role: payload.role || "user",
-    status: "active",
-  });
-
-  const username = payload.username || `user_${Date.now()}`;
-  await ProfileModel.create({
-    userId: newUser._id,
-    username: username,
-    fullName: username,
-  });
-
-  res.status(201).json({ success: true, user: newUser });
+export const addUser = catchAsync(async (req, res) => {
+  try {
+    const user = await createUserByAdmin(req.user.id, req.body);
+    res.status(201).json({ success: true, user });
+  } catch (error) {
+    sendUserAdminError(error, res);
+  }
 });
 
 export const getUsers = catchAsync(async (req, res, next) => {
@@ -106,15 +107,10 @@ export const getUsers = catchAsync(async (req, res, next) => {
 });
 
 export const updateUser = catchAsync(async (req, res) => {
-  const { userId } = req.params;
-  const { role, status } = req.body;
-  const updateData = {};
-  if (role !== undefined) updateData.role = role;
-  if (status !== undefined) updateData.status = status;
-  const user = await UserService.findByIdAndUpdate(userId, updateData);
-
-  if (!user)
-    return res.status(404).json({ success: false, message: "User not found" });
-
-  res.status(200).json({ success: true, user });
+  try {
+    const user = await updateUserByAdmin(req.user.id, req.params.userId, req.body || {});
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    sendUserAdminError(error, res);
+  }
 });

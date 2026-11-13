@@ -1,0 +1,14 @@
+# Slices: Admin sales visibility
+
+Work happens on a feature branch, `feat/admin-sales-visibility`, cut from `main`. Nothing is committed or pushed until the product owner says so. Each slice ends in something that runs and can be shown. Tests are written first for server logic and must fail before the code exists. After every slice: run it, show the result, tick it in `00-status.md`, and ask whether to continue.
+
+1. **Tracer bullet.** `GET /events` returns a hardcoded `sales` object per event; the event table shows `Sold n / m`, a Sold Out badge and a Net revenue column from it. The admin routes get their explicit auth and role check, with the 401/403 route test. Proof: `curl` the endpoint and look at the table in the browser.
+2. **Real numbers for the event table.** `salesStats` (`summarizeOrders`, sold-out rules, `salesByEvent`) with unit and aggregation tests; `getEvents` uses it; the new index is added. Proof: seed a few paid, pending and refunded orders locally and watch the table change.
+3. **Ticket orders by event.** `?eventId=` on the orders endpoint, the `summary` strip, and the event picker on the Ticket Orders page. Proof: pick an event and see the strip and the list follow it; a foreign or invalid id is handled.
+4. **Event sales page.** `GET /analytics/sales?eventId=` with `totals` and `byTicketType`, the `EventSales` page and route, and a link from the table. Proof: open an event and see tickets, left and revenue per ticket type.
+5. **Which Telebirr number got the money.** `paidTo` on orders, `resolveReceiver` with its tests, `verifyTicket` stores it, and a "Paid to" column on the orders table. Proof: unit tests, plus a verified order showing its number.
+6. **Per Telebirr number breakdown.** `groupByTelebirr` with its invariant test, `byTelebirr` in the sales endpoint, the table on the event page and the card on the Payments page. Proof: two numbers with different totals, rows adding up to the total.
+7. **Backfill for single-number organizers.** The script, its tests, run on the local database only. Proof: old paid orders for a one-number organizer get their number; others stay "Before tracking".
+8. **Postponed, organizer side.** Date fields on the event, `normalizeDatesUpdate`, `updateEvent`, the Postponed controls on the edit page, and the gate-scan regression test. Proof: postpone an event, reload, see the original date kept; scan a paid ticket for it.
+9. **Postponed, buyer side.** Banner and new date on the ticket and event pages, `isEventPassed8Hours` for postponed events, and the Postponed badge in the event table. Proof: buyer's ticket shows "Postponed, still valid"; a "date not decided" event does not look finished.
+10. **Edge cases and hardening.** Empty and error states, mobile layout of the new screens, an organizer seeing only their own data, the full server test run, a code review and a security review of the diff.
