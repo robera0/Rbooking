@@ -16,7 +16,7 @@ const Pill = ({ on, onClick, children }) => (
   </button>
 );
 
-const ToggleRow = ({ title, hint, checked, onChange }) => (
+export const ToggleRow = ({ title, hint, checked, onChange }) => (
   <div className="flex items-center justify-between gap-4 rounded-xl bg-white/[0.04] px-4 py-3">
     <div><p className="font-semibold">{title}</p>{hint && <p className="text-[12.5px] text-[#8b9097]">{hint}</p>}</div>
     <Switch label={title} checked={checked} onChange={onChange} />
@@ -106,7 +106,6 @@ const MoreOptions = ({ form, set, extra }) => {
             </div>
           </div>
 
-          <ToggleRow title="Show tickets left" hint="Buyers see how many tickets remain" checked={form.showAvailability} onChange={(v) => set({ showAvailability: v })} />
           <ToggleRow title="Invitations" hint="Send a personal pass to each guest (set up after you save)" checked={form.invitation} onChange={(v) => set({ invitation: v })} />
           {extra}
         </div>

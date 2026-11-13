@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { InputBox, TextAreaBox, Label } from "@/components/form/InputBox";
 import DateTimeSection from "./DateTimeSection";
 import TicketList from "./TicketList";
-import MoreOptions from "./MoreOptions";
+import MoreOptions, { ToggleRow } from "./MoreOptions";
 import CoverCard from "./CoverCard";
 
 const Card = ({ title, required, children }) => (
@@ -75,6 +75,9 @@ const EventForm = ({
           <Card title="Tickets" required>
             <TicketList tickets={form.tickets} onChange={(tickets) => set({ tickets })} />
             {showErrors && form.tickets.length === 0 && <p className="mt-2 text-[12.5px] text-[#ff8a8a]">Add at least one ticket</p>}
+            <div className="mt-4">
+              <ToggleRow title="Show tickets left to buyers" hint="Buyers see how many tickets remain" checked={form.showAvailability} onChange={(v) => set({ showAvailability: v })} />
+            </div>
           </Card>
 
           <MoreOptions form={form} set={set} extra={moreExtra} />

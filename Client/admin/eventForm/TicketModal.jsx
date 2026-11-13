@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { InputBox } from "@/components/form/InputBox";
 import Switch from "@/components/form/Switch";
@@ -22,7 +23,7 @@ const TicketModal = ({ ticket, others, onSave, onClose }) => {
     onSave({ ...draft, name: draft.name.trim() });
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4" onMouseDown={onClose}>
       <div
         role="dialog"
@@ -101,7 +102,8 @@ const TicketModal = ({ ticket, others, onSave, onClose }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

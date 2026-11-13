@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Loader2, Save, Upload, Trash2 } from "lucide-react";
 import { useNavigate, useParams, useLoaderData, useBlocker } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -323,7 +324,7 @@ const EditEvent = () => {
         sidebarExtra={cancelBlock}
         bottomBar={<>{saveBtn}{publishBtn}</>}
       />
-      {showCancelConfirm && (
+      {showCancelConfirm && createPortal(
         <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-[#1C1F22] p-6">
             <h3 className="mb-2 text-xl font-extrabold">Cancel this event?</h3>
@@ -337,7 +338,8 @@ const EditEvent = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
