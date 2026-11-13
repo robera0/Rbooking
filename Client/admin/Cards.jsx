@@ -21,6 +21,7 @@ import { useAdminEventService } from "@/Context/EventAdminContest";
 import { isPostponed, isDateTbd } from "@/lib/postponed";
 import EventStatusBadge from "./EventStatusBadge";
 import PaidToCell from "./PaidToCell";
+import EventCardList from "./EventCardList";
 import { Toaster } from "react-hot-toast";
 import api from "../src/Context/api/api.config";
 export const Cards = ({
@@ -230,7 +231,17 @@ export const EventTable = ({ search = "", filter = "" }) => {
         </div>
       )}
 
-      <div className="event-table-scroll overflow-x-auto">
+      <div className="md:hidden">
+        <EventCardList
+          events={filteredEvents}
+          selected={selected}
+          onSelect={handleSelect}
+          rowKey={getRowKey}
+          loading={isLoading}
+        />
+      </div>
+
+      <div className="event-table-scroll hidden overflow-x-auto md:block">
         <table className="w-full min-w-[1000px] table-fixed text-sm text-left">
           <thead className="bg-[#1C1F22] border-b border-white/[0.08]">
             <tr>
