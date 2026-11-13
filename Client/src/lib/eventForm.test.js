@@ -187,3 +187,12 @@ test("two tickets cannot share a name (ignoring case and extra spaces)", () => {
   assert.ok(ticketProblems({ name: "vip", price: 1, capacity: 1 }, others).name);
   assert.ok(ticketProblems({ name: "general admission", price: 1, capacity: 1 }, others).name);
 });
+
+test("datePartsFromEvent derives a missing local time from dateTime", () => {
+  const parts = datePartsFromEvent({
+    start: { localDate: "2026-11-18", localTime: "19:00:00" },
+    end: { localDate: "2026-11-18", dateTime: "2026-11-18T20:00:00.000Z" },
+  });
+  assert.equal(parts.endD, "2026-11-18");
+  assert.equal(parts.endT, "23:00");
+});

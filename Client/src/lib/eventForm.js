@@ -10,7 +10,9 @@ const trimTime = (t) => (typeof t === "string" ? t.slice(0, 5) : "");
 // Prefers the stored wall-clock strings; falls back to the UTC time shown in
 // Addis Ababa time.
 function readSide(side) {
-  if (side?.localDate) return { d: side.localDate, t: trimTime(side.localTime) };
+  if (side?.localDate && side?.localTime) {
+    return { d: side.localDate, t: trimTime(side.localTime) };
+  }
   if (side?.dateTime) {
     const local = new Date(new Date(side.dateTime).getTime() + VENUE_OFFSET_MS);
     if (!Number.isNaN(local.getTime())) {
@@ -18,7 +20,7 @@ function readSide(side) {
       return { d: iso.slice(0, 10), t: iso.slice(11, 16) };
     }
   }
-  return { d: "", t: "" };
+  return { d: side?.localDate || "", t: "" };
 }
 
 export function datePartsFromEvent(dates) {

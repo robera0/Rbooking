@@ -313,6 +313,7 @@ const EditEvent = () => {
         form={form}
         set={set}
         checklist={checklist}
+        showChecklist={isDraft}
         showErrors={showErrors}
         legacyNoEnd={legacyNoEnd}
         allowPast

@@ -30,7 +30,6 @@ function usePopover() {
     if (!anchor || !pop) return;
     if (window.innerWidth <= SHEET_BREAKPOINT) {
       setSheet(true);
-      setStyle({});
       return;
     }
     setSheet(false);
@@ -40,12 +39,14 @@ function usePopover() {
     let top = r.bottom + 8;
     if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 8);
     const left = Math.min(window.innerWidth - w - 8, Math.max(8, r.right - w));
-    setStyle({ top, left });
+    // Keep the old object when nothing moved, or every render would set
+    // state again and loop.
+    setStyle((prev) => (prev.top === top && prev.left === left ? prev : { top, left }));
   };
 
   useLayoutEffect(() => {
     if (open) place();
-  });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -151,18 +152,18 @@ export const DatePickerField = ({ value, onChange, min = "", disabled, invalid, 
               disabled={!canGoBack}
               aria-label="Previous month"
               onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-              className="grid h-8 w-8 place-items-center rounded-[10px] border border-white/[0.07] bg-[#23272b] hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-30"
+              className="grid h-8 w-8 place-items-center rounded-[10px] border border-white/[0.07] bg-[#23272b] text-white hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-30"
             >
               <ChevronLeft size={16} />
             </button>
-            <b className="text-[15px]">
+            <b className="text-[15px] text-white">
               {MONTHS[month.getMonth()]} {month.getFullYear()}
             </b>
             <button
               type="button"
               aria-label="Next month"
               onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-              className="grid h-8 w-8 place-items-center rounded-[10px] border border-white/[0.07] bg-[#23272b] hover:border-white/25"
+              className="grid h-8 w-8 place-items-center rounded-[10px] border border-white/[0.07] bg-[#23272b] text-white hover:border-white/25"
             >
               <ChevronRight size={16} />
             </button>
@@ -188,7 +189,7 @@ export const DatePickerField = ({ value, onChange, min = "", disabled, invalid, 
                   className={`aspect-square rounded-[10px] text-[14px] font-semibold transition disabled:cursor-not-allowed disabled:text-[#4a4f55] ${
                     value === d
                       ? "bg-[#FF7A00] font-extrabold text-[#111]"
-                      : `hover:bg-white/[0.08] ${d === todayStr ? "shadow-[inset_0_0_0_1.5px_rgba(255,122,0,0.55)]" : ""}`
+                      : `text-white hover:bg-white/[0.08] ${d === todayStr ? "shadow-[inset_0_0_0_1.5px_rgba(255,122,0,0.55)]" : ""}`
                   }`}
                 >
                   {Number(d.slice(8))}
@@ -249,7 +250,7 @@ export const TimePickerField = ({ value, onChange, disabled, invalid, label, isD
                   pop.setOpen(false);
                 }}
                 className={`rounded-[9px] px-3 py-[9px] text-left text-[14px] font-semibold transition disabled:cursor-not-allowed disabled:text-[#4a4f55] ${
-                  value === t ? "bg-[#FF7A00] font-extrabold text-[#111]" : "hover:bg-white/[0.08]"
+                  value === t ? "bg-[#FF7A00] font-extrabold text-[#111]" : "text-white hover:bg-white/[0.08]"
                 }`}
               >
                 {formatTime(t)}

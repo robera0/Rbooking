@@ -25,6 +25,7 @@ const EventForm = ({
   form,
   set,
   checklist,
+  showChecklist = true,
   showErrors,
   legacyNoEnd,
   allowPast,
@@ -80,7 +81,7 @@ const EventForm = ({
         </div>
 
         <aside className="lg:sticky lg:top-4 lg:self-start">
-          <CoverCard existing={form.existingPictures} added={form.newPictures} onExisting={(existingPictures) => set({ existingPictures })} onAdded={(newPictures) => set({ newPictures })} checklist={checklist}>
+          <CoverCard existing={form.existingPictures} added={form.newPictures} onExisting={(existingPictures) => set({ existingPictures })} onAdded={(newPictures) => set({ newPictures })} checklist={showChecklist ? checklist : null}>
             <div className="hidden lg:block">{sidebarExtra}</div>
           </CoverCard>
           <div className="mt-4 lg:hidden">{sidebarExtra}</div>
