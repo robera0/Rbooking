@@ -326,7 +326,7 @@ const EditEvent = () => {
       />
       {showCancelConfirm && createPortal(
         <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-[#1C1F22] p-6">
+          <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-[#1C1F22] p-6 text-white">
             <h3 className="mb-2 text-xl font-extrabold">Cancel this event?</h3>
             <p className="mb-6 text-sm leading-relaxed text-gray-300">
               Cancelling stops all ticket sales and notifies ticket holders. This can't be undone.

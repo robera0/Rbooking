@@ -29,7 +29,7 @@ const TicketModal = ({ ticket, others, onSave, onClose }) => {
         role="dialog"
         aria-label={isNew ? "Add ticket" : "Edit ticket"}
         onMouseDown={(e) => e.stopPropagation()}
-        className="max-h-[92vh] w-full max-w-md overflow-auto rounded-t-3xl border border-white/[0.1] bg-[#1c1f22] p-6 sm:rounded-3xl"
+        className="max-h-[92vh] w-full max-w-md overflow-auto rounded-t-3xl border border-white/[0.1] bg-[#1c1f22] p-6 text-white sm:rounded-3xl"
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-extrabold">{isNew ? "Add a ticket" : "Edit ticket"}</h3>
