@@ -38,7 +38,7 @@ const EMPTY_FORM = {
   durationDays: "",
   stages: [],
   invitation: false,
-  showAvailability: true,
+  showAvailability: false,
 };
 
 const AUTOSAVE_MS = 3000;
