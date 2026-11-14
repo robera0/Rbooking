@@ -7,25 +7,25 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+const toMoment = (side) => {
+  if (!side) return null;
+  if (side.dateTime) return moment(side.dateTime);
+  if (side.localDate) return moment(`${side.localDate}T${side.localTime || "00:00:00"}`);
+  return null;
+};
+
+// An event is over once its end has passed. An event with no end time is
+// treated as over 8 hours after it starts.
 export const isEventPassed8Hours = (event) => {
   if (!event?.dates?.start) return false;
   // Postponed with the new date still to be announced: the old date has
   // passed but the event has not happened, so it must not look finished.
   if (isDateTbd(event)) return false;
 
-  const start = event.dates.start;
-  let eventDateTime;
+  const end = toMoment(event?.dates?.end);
+  if (end?.isValid()) return moment().isAfter(end);
 
-  if (start.dateTime) {
-    eventDateTime = moment(start.dateTime);
-  } else if (start.localDate) {
-    const time = start.localTime || "00:00:00";
-    eventDateTime = moment(`${start.localDate}T${time}`);
-  } else {
-    return false;
-  }
-
-  if (!eventDateTime.isValid()) return false;
-
-  return moment().isAfter(eventDateTime.add(8, "hours"));
+  const start = toMoment(event?.dates?.start);
+  if (!start?.isValid()) return false;
+  return moment().isAfter(start.add(8, "hours"));
 };

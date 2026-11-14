@@ -31,3 +31,20 @@ test("one ticket type with seats left keeps the event on sale", () => {
 test("a ticket type with an unknown seat count is not treated as sold out", () => {
   assert.equal(isEventSoldOut({ dates: future, tickets: [{ _id: "a" }] }), false);
 });
+
+const hours = (n) => new Date(Date.now() + n * 60 * 60 * 1000).toISOString();
+
+test("an event whose start was long ago but whose end is still ahead is not over", () => {
+  const dates = { start: { dateTime: hours(-30) }, end: { dateTime: hours(24 * 10) } };
+  assert.equal(isEventSoldOut({ dates, tickets: [tier(10)] }), false);
+});
+
+test("an event is over once its end has passed", () => {
+  const dates = { start: { dateTime: hours(-72) }, end: { dateTime: hours(-1) } };
+  assert.equal(isEventSoldOut({ dates, tickets: [tier(10)] }), true);
+});
+
+test("an event that never had an end is over 8 hours after it starts", () => {
+  const dates = { start: { dateTime: hours(-9) } };
+  assert.equal(isEventSoldOut({ dates, tickets: [tier(10)] }), true);
+});
