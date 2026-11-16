@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   CalendarDays,
+  Heart,
   MapPin,
   Search,
   Ticket,
@@ -148,9 +149,7 @@ const UserHome = () => {
 
   const checkWishlist = (eventId) =>
     Boolean(
-      wishlist?.wishlist?.items?.some(
-        (item) => item?.eventId?._id === eventId,
-      ),
+      wishlist?.wishlist?.items?.some((item) => item?.eventId?._id === eventId),
     );
 
   const handleWishlistToggle = (event, clickEvent) => {
@@ -186,12 +185,17 @@ const UserHome = () => {
         })
       : "Date";
 
-  const renderTile = (event) => (
+  const renderTile = (event, index) => (
     <motion.div
       key={event._id}
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y: 26 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "0px 0px -60px 0px" }}
+      transition={{
+        duration: 0.45,
+        delay: (index % 4) * 0.06,
+        ease: [0.22, 1, 0.36, 1],
+      }}
     >
       <EventTile
         event={event}
@@ -210,14 +214,14 @@ const UserHome = () => {
         {/* ── Page heading ───────────────────────────────────────────── */}
         <header className="pt-10 sm:pt-14">
           <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#FF7A00]">
-            Addis Ababa · Live events
+            Ethiopia · Live events
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Discover Events
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-gray-400">
-            The city&apos;s best nights, all in one place. Find a show, grab a
-            seat, and go.
+            Find your next night out. Browse top events, grab your tickets, and
+            go
           </p>
         </header>
 
@@ -239,7 +243,7 @@ const UserHome = () => {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-[#1C1F22]"
             >
-              <div className="relative aspect-[16/11] sm:aspect-[21/9]">
+              <div className="relative h-[360px] sm:h-[420px] lg:h-[460px]">
                 <AnimatePresence initial={false}>
                   <motion.div
                     key={hero._id}
@@ -274,7 +278,10 @@ const UserHome = () => {
                         </h2>
                         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-medium text-white/70">
                           <span className="inline-flex items-center gap-2">
-                            <CalendarDays size={14} className="text-[#FF7A00]" />
+                            <CalendarDays
+                              size={14}
+                              className="text-[#FF7A00]"
+                            />
                             {eventDateLabel(hero)}
                           </span>
                           <span className="inline-flex items-center gap-2">
@@ -284,6 +291,50 @@ const UserHome = () => {
                           <span className="font-semibold text-[#FF7A00]">
                             {eventPriceLabel(hero)}
                           </span>
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={(clickEvent) => {
+                              clickEvent.preventDefault();
+                              clickEvent.stopPropagation();
+                              setCommentId(hero._id);
+                              navigate(eventHref(hero, isSoldOut(hero)));
+                            }}
+                            className="inline-flex items-center gap-2 rounded-full bg-[#FF7A00] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-white hover:text-[#FF7A00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] active:scale-95"
+                          >
+                            <Ticket size={15} />
+                            Get Tickets
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(clickEvent) =>
+                              handleWishlistToggle(hero, clickEvent)
+                            }
+                            disabled={wishlistMutation.isLoading}
+                            aria-label={
+                              checkWishlist(hero._id)
+                                ? "Remove from wishlist"
+                                : "Save to wishlist"
+                            }
+                            aria-pressed={checkWishlist(hero._id)}
+                            className={`inline-flex items-center gap-2 rounded-full border px-6 py-3 text-[11px] font-black uppercase tracking-[0.16em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] active:scale-95 ${
+                              checkWishlist(hero._id)
+                                ? "border-[#FF7A00] bg-[#FF7A00]/15 text-[#FF7A00]"
+                                : "border-white/15 bg-black/40 text-white backdrop-blur hover:bg-black/60"
+                            }`}
+                          >
+                            <Heart
+                              size={15}
+                              fill={
+                                checkWishlist(hero._id)
+                                  ? "currentColor"
+                                  : "none"
+                              }
+                            />
+                            Save
+                          </button>
                         </div>
                       </div>
                     </Link>
@@ -468,7 +519,9 @@ const UserHome = () => {
               ))}
             </div>
           ) : list.length > 0 ? (
-            <div className={GRID_CLASS}>{list.slice(0, 16).map(renderTile)}</div>
+            <div className={GRID_CLASS}>
+              {list.slice(0, 16).map(renderTile)}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-white/[0.08] bg-white/[0.01] px-6 py-24 text-center">
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/[0.03]">
