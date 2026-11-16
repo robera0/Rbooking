@@ -17,6 +17,7 @@ import {
 import api from "../src/Context/api/api.config";
 import toast from "react-hot-toast";
 import JSZip from "jszip";
+import { containRect, coverRect } from "@/lib/posterFit";
 import {
   LAYER_LABELS,
   QR_MAX_PADDING,
@@ -77,11 +78,24 @@ const loadImage = (src) =>
     img.src = src;
   });
 
-const drawCover = (ctx, img, w, h) => {
-  const scale = Math.max(w / img.width, h / img.height);
-  const dw = img.width * scale;
-  const dh = img.height * scale;
-  ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+// The whole image is shown, centred, so nothing is cut off. Any space left
+// over is filled with a soft, blurred copy of the same image.
+const BACKDROP_BLUR = 40;
+
+const drawFittedImage = (ctx, img, w, h) => {
+  if ("filter" in ctx) {
+    const back = coverRect(img.width, img.height, w, h);
+    const bleed = BACKDROP_BLUR * 2; // keeps the blurred edges inside the poster
+    ctx.save();
+    ctx.filter = `blur(${BACKDROP_BLUR}px)`;
+    ctx.drawImage(img, back.x - bleed, back.y - bleed, back.w + bleed * 2, back.h + bleed * 2);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = "#111214";
+    ctx.fillRect(0, 0, w, h);
+  }
+  const front = containRect(img.width, img.height, w, h);
+  ctx.drawImage(img, front.x, front.y, front.w, front.h);
 };
 
 const fillRoundRect = (ctx, x, y, w, h, r) => {
@@ -469,7 +483,7 @@ const InvitationQR = () => {
 
     // 1. Background
     if (bg.type === "image") {
-      drawCover(ctx, await loadImage(bg.src), POSTER_W, POSTER_H);
+      drawFittedImage(ctx, await loadImage(bg.src), POSTER_W, POSTER_H);
     } else {
       const gradient = ctx.createLinearGradient(0, 0, POSTER_W, POSTER_H);
 
@@ -661,11 +675,7 @@ const InvitationQR = () => {
 
   const posterBgStyle =
     bg.type === "image"
-      ? {
-          backgroundImage: `url(${bg.src})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }
+      ? { backgroundColor: "#111214" }
       : {
           backgroundImage: gradientCss(activePreset.colors),
         };
@@ -1276,6 +1286,29 @@ const InvitationQR = () => {
                   onTouchEnd={handleTouchEnd}
                   onPointerDown={() => setSelected((s) => s)}
                 >
+                  {bg.type === "image" && (
+                    <>
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          backgroundImage: `url(${bg.src})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                          filter: "blur(20px)",
+                          transform: "scale(1.15)",
+                        }}
+                      />
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          backgroundImage: `url(${bg.src})`,
+                          backgroundSize: "contain",
+                          backgroundPosition: "center",
+                          backgroundRepeat: "no-repeat",
+                        }}
+                      />
+                    </>
+                  )}
                   <div
                     className="absolute inset-0 pointer-events-none"
                     style={{ background: `rgba(0,0,0,${layout.overlay})` }}
