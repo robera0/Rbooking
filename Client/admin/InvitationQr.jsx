@@ -18,6 +18,9 @@ import api from "../src/Context/api/api.config";
 import toast from "react-hot-toast";
 import JSZip from "jszip";
 import { containRect, coverRect } from "@/lib/posterFit";
+import { makeGuestName } from "@/lib/guestName";
+import { drawBrand, loadBrandLogo } from "@/lib/brand";
+import BrandMark from "./BrandMark";
 import {
   LAYER_LABELS,
   QR_MAX_PADDING,
@@ -58,6 +61,11 @@ const WEIGHTS = [
 ];
 
 const EMPTY_GUEST = { guestName: "", email: "", phone: "" };
+const newGuest = () => ({ ...EMPTY_GUEST, guestName: makeGuestName() });
+
+// The Paysso logo and name sit at the bottom of every poster.
+const BRAND_Y_PCT = 93;
+const BRAND_HEIGHT = 56; // poster pixels
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?\d{7,15}$/;
 
@@ -255,7 +263,7 @@ const InvitationQR = () => {
     type: "preset",
     id: PRESET_BGS[0].id,
   });
-  const [guest, setGuest] = useState(EMPTY_GUEST);
+  const [guest, setGuest] = useState(newGuest);
   const [errors, setErrors] = useState({});
   const [generated, setGenerated] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -347,11 +355,9 @@ const InvitationQR = () => {
 
   const validate = () => {
     const next = {};
-    const name = guest.guestName.trim();
     const email = guest.email.trim();
     const phone = guest.phone.replace(/[\s-]/g, "");
 
-    if (!name) next.guestName = "Guest name is required";
     if (email && !EMAIL_RE.test(email)) next.email = "Enter a valid email";
     if (phone && !PHONE_RE.test(phone))
       next.phone = "Enter a valid phone number";
@@ -375,7 +381,7 @@ const InvitationQR = () => {
     }
 
     createMutation.mutate({
-      guestName: guest.guestName.trim(),
+      guestName: guest.guestName.trim() || makeGuestName(),
       email: guest.email.trim(),
       phone: guest.phone.replace(/[\s-]/g, ""),
       quantity: parsedQuantity,
@@ -385,7 +391,7 @@ const InvitationQR = () => {
   const handleNewGuest = () => {
     setGenerated([]);
     setActiveIndex(0);
-    setGuest(EMPTY_GUEST);
+    setGuest(newGuest());
     setQuantity(1);
     setErrors({});
   };
@@ -524,6 +530,13 @@ const InvitationQR = () => {
         q.size - q.padding * 2,
       );
     }
+
+    // 5. Paysso logo and name
+    drawBrand(ctx, await loadBrandLogo(), {
+      centerX: POSTER_W / 2,
+      centerY: (BRAND_Y_PCT / 100) * POSTER_H,
+      height: BRAND_HEIGHT,
+    });
 
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -750,9 +763,12 @@ const InvitationQR = () => {
                     className={`${inputClass} ${
                       errors.guestName ? "border-red-500/50" : ""
                     }`}
-                    placeholder="Guest name *"
+                    placeholder="Guest name (filled in for you, edit if you like)"
                     value={guest.guestName}
                     onChange={(e) => setField("guestName", e.target.value)}
+                    onBlur={() => {
+                      if (!guest.guestName.trim()) setField("guestName", makeGuestName());
+                    }}
                     disabled={formLocked}
                   />
                   {errors.guestName && (
@@ -823,7 +839,7 @@ const InvitationQR = () => {
                 </div>
 
                 <p className="font-bold text-[10px] text-gray-600">
-                  Name is required. Email and phone are optional.
+                  The name is filled in for you, change it any time. Email and phone are optional.
                 </p>
               </div>
 
@@ -1312,6 +1328,16 @@ const InvitationQR = () => {
                   <div
                     className="absolute inset-0 pointer-events-none"
                     style={{ background: `rgba(0,0,0,${layout.overlay})` }}
+                  />
+
+                  <BrandMark
+                    height={cqw(BRAND_HEIGHT)}
+                    className="pointer-events-none absolute"
+                    style={{
+                      left: "50%",
+                      top: `${BRAND_Y_PCT}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
                   />
 
                   {/* Text layers */}

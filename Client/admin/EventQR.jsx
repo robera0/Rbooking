@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import api from "../src/Context/api/api.config";
 import toast from "react-hot-toast";
+import { buildEventQrPoster } from "@/lib/eventQrPoster";
+import BrandMark from "./BrandMark";
 
 const EventQR = () => {
   const { eventId } = useParams();
@@ -36,16 +38,34 @@ const EventQR = () => {
     retry: 1,
   });
 
-  const handleDownload = () => {
-    if (!qrData?.qrCode) return;
-
+  const saveFile = (href, fileName) => {
     const link = document.createElement("a");
-    link.href = qrData.qrCode;
-    link.download = `QR-${qrData.eventName || "event"}-${eventId.slice(-6)}.png`;
+    link.href = href;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("QR Code downloaded!");
+  };
+
+  const handleDownload = async () => {
+    if (!qrData?.qrCode) return;
+
+    const fileName = `QR-${qrData.eventName || "event"}-${eventId.slice(-6)}.png`;
+    try {
+      // The download has the Paysso logo and name and the event name on it.
+      const blob = await buildEventQrPoster({
+        qrCode: qrData.qrCode,
+        eventName: qrData.eventName,
+      });
+      const url = URL.createObjectURL(blob);
+      saveFile(url, fileName);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("QR Code downloaded!");
+    } catch {
+      // If the branded image cannot be made, still give them the plain QR.
+      saveFile(qrData.qrCode, fileName);
+      toast.success("QR Code downloaded!");
+    }
   };
 
   const handleCopyLink = async () => {
@@ -139,6 +159,9 @@ const EventQR = () => {
             {/* QR Display Card */}
             <div className="rounded-3xl bg-[#111214] border border-[#1f2023] overflow-hidden">
               {/* Event name banner */}
+              <div className="px-8 pt-6 pb-2 flex justify-center bg-gradient-to-r from-[#FF7A00]/[0.04] to-transparent">
+                <BrandMark height="2rem" />
+              </div>
               <div className="px-8 py-6 border-b border-[#1f2023] bg-gradient-to-r from-[#FF7A00]/[0.04] to-transparent">
                 <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#FF7A00] mb-1">
                   Event
