@@ -32,6 +32,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Skeleton } from "boneyard-js/react";
 import { eventService } from "@/Context/ApiEvent";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -209,12 +210,15 @@ export default function CheckoutModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+  // Portal to <body>: the sheet stays pinned to the viewport bottom no matter
+  // where the user scrolled or which transformed ancestor it is rendered in.
+  return createPortal(
+    <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/40 backdrop-blur-md p-2 pb-[100px] sm:p-6">
       <div
-        className="relative w-full max-w-[440px] rounded-[2.5rem] p-10 -mt-16
-        bg-[#0A0A0B] border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.8)] 
-        text-[#F4F4F5] overflow-hidden"
+        className="relative w-full max-w-[440px] max-h-[92dvh] overflow-y-auto overflow-x-hidden custom-scrollbar
+        rounded-[2.5rem] p-10 sheet-slide-up
+        bg-[#0A0A0B] border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.8)]
+        text-[#F4F4F5]"
       >
         {/* Subtle Background Glow */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#FF7A00]/10 blur-[100px] pointer-events-none" />
@@ -392,7 +396,8 @@ export default function CheckoutModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 export const MenuBar = ({ icon, header, path, onClick }) => {
