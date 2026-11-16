@@ -18,7 +18,7 @@ import api from "../src/Context/api/api.config";
 import toast from "react-hot-toast";
 import JSZip from "jszip";
 import { containRect, coverRect } from "@/lib/posterFit";
-import { makeGuestName } from "@/lib/guestName";
+import { batchGuestNames, makeGuestName } from "@/lib/guestName";
 import { drawBrand, loadBrandLogo } from "@/lib/brand";
 import BrandMark from "./BrandMark";
 import {
@@ -380,8 +380,12 @@ const InvitationQR = () => {
       return;
     }
 
+    // Every invitation in the batch gets its own name.
+    const guestNames = batchGuestNames(guest.guestName, parsedQuantity);
+
     createMutation.mutate({
-      guestName: guest.guestName.trim() || makeGuestName(),
+      guestName: guest.guestName.trim() || guestNames[0],
+      guestNames,
       email: guest.email.trim(),
       phone: guest.phone.replace(/[\s-]/g, ""),
       quantity: parsedQuantity,

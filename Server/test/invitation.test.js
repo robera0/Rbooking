@@ -75,6 +75,45 @@ test("creates one pass per guest with a shared orderId", async () => {
   assert.equal(await Invitation.countDocuments(), 3);
 });
 
+test("a batch can give every guest their own name", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const { invitations } = await createGuestInvitations(eventId, owner.userId, {
+    quantity: 3,
+    guestNames: ["Guest AAAA", "  Sara  ", "Guest CCCC"],
+  });
+  assert.deepEqual(
+    invitations.map((i) => i.guestName),
+    ["Guest AAAA", "Sara", "Guest CCCC"],
+  );
+});
+
+test("without a list of names every pass in the batch gets the one name", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const { invitations } = await createGuestInvitations(eventId, owner.userId, {
+    ...guest,
+    quantity: 2,
+  });
+  assert.deepEqual(invitations.map((i) => i.guestName), ["Abebe", "Abebe"]);
+});
+
+test("the list of names must match the quantity and have no blanks", async () => {
+  const eventId = await makeEvent(owner.profileId);
+  const bad = [
+    { quantity: 2, guestNames: ["Only one"] },
+    { quantity: 2, guestNames: ["A", "  "] },
+    { quantity: 2, guestNames: "A,B" },
+    { quantity: 1, guestNames: ["x".repeat(81)] },
+  ];
+  for (const input of bad) {
+    await failsWith(
+      createGuestInvitations(eventId, owner.userId, input),
+      400,
+      "INVALID_GUEST_NAMES",
+    );
+  }
+  assert.equal(await Invitation.countDocuments(), 0);
+});
+
 test("another organizer cannot create invitations and nothing is created", async () => {
   const eventId = await makeEvent(owner.profileId);
   await failsWith(

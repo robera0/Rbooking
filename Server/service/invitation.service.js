@@ -14,6 +14,34 @@ export class InvitationError extends Error {
 }
 
 const MAX_QUANTITY = 20;
+const MAX_NAME_LENGTH = 80;
+
+// One name per pass. A page that sends `guestNames` gets exactly those names;
+// an older page that only sends `guestName` gets that one name on every pass.
+function resolveGuestNames(input, guestName, quantity) {
+  if (input.guestNames === undefined) {
+    if (!guestName) {
+      throw new InvitationError(400, "NAME_REQUIRED", "Guest name is required");
+    }
+    return Array.from({ length: quantity }, () => guestName);
+  }
+
+  const names = Array.isArray(input.guestNames)
+    ? input.guestNames.map((name) => String(name ?? "").trim())
+    : null;
+  if (
+    !names ||
+    names.length !== quantity ||
+    names.some((name) => !name || name.length > MAX_NAME_LENGTH)
+  ) {
+    throw new InvitationError(
+      400,
+      "INVALID_GUEST_NAMES",
+      `Send one guest name per invitation, each up to ${MAX_NAME_LENGTH} characters`,
+    );
+  }
+  return names;
+}
 
 // Creates one single-use pass per guest. Only the organizer who owns the
 // event can do this.
@@ -29,9 +57,6 @@ export async function createGuestInvitations(eventId, userId, input = {}) {
   const phone = String(input.phone || "").replace(/[\s-]/g, "");
   const quantity = Number(input.quantity ?? 1);
 
-  if (!guestName) {
-    throw new InvitationError(400, "NAME_REQUIRED", "Guest name is required");
-  }
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new InvitationError(400, "INVALID_EMAIL", "Enter a valid email");
   }
@@ -49,6 +74,8 @@ export async function createGuestInvitations(eventId, userId, input = {}) {
       `Quantity must be between 1 and ${MAX_QUANTITY}`,
     );
   }
+
+  const guestNames = resolveGuestNames(input, guestName, quantity);
 
   const event = await Event.findById(eventId)
     .select("name adminId invitation")
@@ -79,11 +106,11 @@ export async function createGuestInvitations(eventId, userId, input = {}) {
 
   const orderId = new mongoose.Types.ObjectId();
   const invitations = await Invitation.insertMany(
-    Array.from({ length: quantity }, () => ({
+    guestNames.map((name) => ({
       eventId: event._id,
       adminId: adminProfile._id,
       orderId,
-      guestName,
+      guestName: name,
       email: email || undefined,
       phone: phone || undefined,
     })),
