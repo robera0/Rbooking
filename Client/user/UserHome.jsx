@@ -305,14 +305,14 @@ const UserHome = () => {
                             className="inline-flex items-center gap-2 rounded-full bg-[#FF7A00] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-white hover:text-[#FF7A00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] active:scale-95"
                           >
                             <Ticket size={15} />
-                            Get Tickets
+                            {isSoldOut(hero) ? "View event" : "Get Tickets"}
                           </button>
                           <button
                             type="button"
                             onClick={(clickEvent) =>
                               handleWishlistToggle(hero, clickEvent)
                             }
-                            disabled={wishlistMutation.isLoading}
+                            disabled={wishlistMutation.isPending}
                             aria-label={
                               checkWishlist(hero._id)
                                 ? "Remove from wishlist"
