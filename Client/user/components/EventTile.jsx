@@ -9,8 +9,7 @@ import { isDateTbd, isPostponed } from "@/lib/postponed";
 const FALLBACK_IMAGE = "/datebackground.jpg";
 const FALLBACK_TZ = "Africa/Addis_Ababa";
 
-export const eventTimeZone = (event) =>
-  event?.dates?.timezone || FALLBACK_TZ;
+export const eventTimeZone = (event) => event?.dates?.timezone || FALLBACK_TZ;
 
 export const eventImageUrl = (event, apiUrl) => {
   const first = event?.pictures?.[0];
@@ -144,7 +143,7 @@ const EventTile = ({
           aria-pressed={isWishlisted}
           className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A00] focus-visible:ring-offset-2 focus-visible:ring-offset-[#121417] active:scale-90 ${
             isWishlisted
-              ? "border-[#FF7A00] bg-[#FF7A00] text-black shadow-lg shadow-[#FF7A00]/20"
+              ? "border-[#FF7A00]/60 bg-[#FF7A00]/10 text-[#FF7A00] shadow-lg shadow-[#FF7A00]/15"
               : "border-white/10 bg-black/30 text-white hover:bg-black/60"
           }`}
         >

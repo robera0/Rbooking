@@ -23,3 +23,11 @@ Add deposits only after clubs have used the basic flow.
 A rule worth deciding early is the cancellation policy, for example free cancellation until 6pm on the night. It affects the status logic, the refunds and the no-show handling.
 
 Is a reservation here a table booking, or something simpler like a guest list? That one answer decides the real scope.
+
+
+
+// files ive changed  
+
+main
+reusable 
+Tickets

@@ -96,6 +96,15 @@ const adminProfileSchema = new mongoose.Schema(
 
     // Platform commission override for this organizer (null = platform rate).
     commissionRate: { type: Number, default: null, min: 0, max: 1 },
+
+    // Users who follow this organizer (powers the Follow button and the
+    // follower count on the public event page).
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     // twoFactorEnabled: { type: Boolean, default: false },
   },
   { timestamps: true },
