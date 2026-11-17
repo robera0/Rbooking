@@ -23,6 +23,7 @@ import { parseShowAvailability } from "../utils/showAvailability.js";
 import { safeParse } from "../utils/safeParse.js";
 import fs from "fs";
 import QRCode from "qrcode";
+import jwt from "jsonwebtoken";
 import { notificationModel } from "../models/notification.model.js";
 import { AdminProfile } from "../models/adminProfile.model.js";
 import { imageUploader } from "../liberary/index.js";
@@ -783,5 +784,97 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     success: true,
     event: updatedEvent,
     message: "Event updated successfully",
+  });
+});
+
+// ── ORGANIZER PROFILE (public stats, optional auth) ─────────────────────
+// Verifies the access token when one is present but never rejects guests,
+// so the profile card works for signed-out visitors too.
+const optionalUser = (req) => {
+  try {
+    return jwt.verify(
+      req.cookies?.accessToken,
+      process.env.ACCESS_TOKEN_SECRET,
+    );
+  } catch {
+    return null;
+  }
+};
+
+export const getOrganizerStats = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+
+  if (!mongoose.isValidObjectId(eventId)) {
+    return next(new AppError("Event not found", 404));
+  }
+
+  const event = await Event.findById(eventId).select("adminId deletedAt").lean();
+  if (!event || event.deletedAt || !event.adminId) {
+    return next(new AppError("Event not found", 404));
+  }
+
+  const [profile, eventsCount] = await Promise.all([
+    AdminProfile.findById(event.adminId)
+      .select("organizationName avatarUrl companyLogo businessType followers")
+      .lean(),
+    Event.countDocuments({ adminId: event.adminId, deletedAt: null }),
+  ]);
+
+  if (!profile) {
+    return next(new AppError("Event not found", 404));
+  }
+
+  const user = optionalUser(req);
+
+  res.status(200).json({
+    success: true,
+    organizer: {
+      adminId: event.adminId,
+      organizationName: profile.organizationName,
+      avatarUrl: profile.avatarUrl || profile.companyLogo || null,
+      businessType: profile.businessType || "Event Organizer",
+      eventsCount,
+      followersCount: profile.followers?.length || 0,
+      // null = signed out (client keeps the button neutral instead of a state)
+      isFollowing: user
+        ? Boolean(
+            profile.followers?.some((f) => String(f) === String(user.id)),
+          )
+        : null,
+    },
+  });
+});
+
+// Toggles the signed-in user in the organizer's followers list.
+export const toggleOrganizerFollow = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const userId = req.user.id;
+
+  const event = await Event.findById(eventId).select("adminId deletedAt").lean();
+  if (!event || event.deletedAt || !event.adminId) {
+    return next(new AppError("Event not found", 404));
+  }
+
+  const profile = await AdminProfile
+    .findById(event.adminId)
+    .select("followers");
+  if (!profile) {
+    return next(new AppError("Event not found", 404));
+  }
+
+  const isFollowing = profile.followers.some(
+    (f) => String(f) === String(userId),
+  );
+
+  const updated = await AdminProfile.findByIdAndUpdate(
+    event.adminId,
+    isFollowing ? { $pull: { followers: userId } } : { $addToSet: { followers: userId } },
+    { new: true },
+  ).select("followers");
+
+  res.status(200).json({
+    success: true,
+    isFollowing: !isFollowing,
+    followersCount: updated.followers.length,
   });
 });

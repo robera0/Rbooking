@@ -7,6 +7,8 @@ import {
   updateEvent,
   upload,
   generateEventQR,
+  getOrganizerStats,
+  toggleOrganizerFollow,
 } from "../controllers/events.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { requireRole } from "../middlewares/requireRole.js";
@@ -16,6 +18,15 @@ const eventRouter = express.Router();
 eventRouter.get("/events", getEvents);
 eventRouter.get("/featuredEvents", featuredEvents);
 eventRouter.get("/events/:eventId", getEventById);
+// Public organizer profile card (name, avatar, events/followers counts).
+// isFollowing is only filled in when a valid access token cookie is present.
+eventRouter.get("/events/:eventId/organizer", getOrganizerStats);
+// Follow / unfollow the organizer behind this event (requires sign-in).
+eventRouter.post(
+  "/events/:eventId/follow",
+  authenticateTokenMiddleware,
+  toggleOrganizerFollow,
+);
 // Updating an event is an organizer action. The controller also checks that
 // the organizer actually owns the event; the role check here keeps ordinary
 // users away from the upload middleware entirely.
