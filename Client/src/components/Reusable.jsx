@@ -223,7 +223,7 @@ export default function CheckoutModal({
   // Portal to <body>: the sheet stays pinned to the viewport bottom no matter
   // where the user scrolled or which transformed ancestor it is rendered in.
   return createPortal(
-    <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/40 backdrop-blur-md p-2 pb-[100px] sm:p-6">
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-md p-2 pb-[100px] sm:p-6">
       <div
         className="relative w-full max-w-[440px] max-h-[92dvh] overflow-y-auto overflow-x-hidden custom-scrollbar
         rounded-[2.5rem] p-10 sheet-slide-up
