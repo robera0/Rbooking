@@ -379,3 +379,38 @@ body::-webkit-scrollbar {
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
+
+/* Checkout bottom sheet: slides up from the bottom edge so it never has to
+   fight for vertical centering on short viewports. */
+@keyframes sheet-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.sheet-slide-up {
+  animation: sheet-slide-up 0.3s ease-out both;
+}
+
+/* Slim scrollbar used by the checkout bottom sheet (and any other
+   scrollable overlay) so default browser bars don't show up as chunky
+   white strips. */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
