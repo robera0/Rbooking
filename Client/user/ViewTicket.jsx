@@ -183,7 +183,7 @@ const ViewTicket = () => {
               className={`rounded-2xl ${SURFACE} border ${BORDER} overflow-hidden flex flex-col md:flex-row`}
             >
               {/* Left Section (Banner + Details) */}
-              <div className="flex-1 min-w-0 flex flex-col">
+              <div className="flex-1 min-w-0 flex flex-col order-3 md:order-1">
                 {/* event banner */}
                 <div className="relative h-36 md:h-48 overflow-hidden">
                   <img
@@ -275,7 +275,7 @@ const ViewTicket = () => {
 
               {/* ── tear line ── */}
               <div
-                className="relative border-t md:border-t-0 md:border-l border-dashed"
+                className="relative order-2 hidden md:block border-t md:border-t-0 md:border-l border-dashed"
                 style={{ borderColor: "#1f2023" }}
               >
                 {/* Top-Left Cutout (Top for desktop, Left for mobile) */}
@@ -289,15 +289,17 @@ const ViewTicket = () => {
               </div>
 
               {/* Right Section (QR + Footer) */}
-              <div className="flex flex-col md:w-72 bg-[#0f1011] shrink-0">
+              <div className="flex flex-col order-1 md:order-3 md:w-72 bg-[#0f1011] shrink-0">
                 {/* QR section */}
                 <div className="px-6 py-6 flex flex-col items-center justify-center flex-1 gap-4">
                   <div className="p-4 md:p-6 rounded-2xl bg-white inline-block shadow-lg">
                     <img
                       src={qrSrc || "/qr-code.png"}
-                      className="w-32 h-32 md:w-40 md:h-40 object-contain"
+                      className="w-48 h-48 md:w-40 md:h-40 object-contain"
                       alt="Entry QR Code"
-                      onError={(e) => { e.target.src = "/qr-code.png"; }}
+                      onError={(e) => {
+                        e.target.src = "/qr-code.png";
+                      }}
                     />
                   </div>
                   <div className="text-center">
