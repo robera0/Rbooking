@@ -31,7 +31,7 @@ import {
   Gem,
   Copy,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Skeleton } from "boneyard-js/react";
 import { eventService } from "@/Context/ApiEvent";
@@ -207,6 +207,16 @@ export default function CheckoutModal({
       setIsLoading(false);
     }
   };
+
+  // Freeze the page behind the sheet so only the sheet itself can scroll.
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
