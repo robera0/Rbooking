@@ -15,6 +15,7 @@ import {
 import api from "../src/Context/api/api.config";
 import toast from "react-hot-toast";
 import { buildEventQrPoster } from "@/lib/eventQrPoster";
+import { useQrWithLogo } from "@/lib/useQrWithLogo";
 import BrandMark from "./BrandMark";
 
 const EventQR = () => {
@@ -37,6 +38,8 @@ const EventQR = () => {
     enabled: !!eventId,
     retry: 1,
   });
+
+  const qrSrc = useQrWithLogo(qrData?.qrCode);
 
   const saveFile = (href, fileName) => {
     const link = document.createElement("a");
@@ -180,7 +183,7 @@ const EventQR = () => {
                   className="p-6 rounded-3xl bg-white shadow-2xl shadow-black/30"
                 >
                   <img
-                    src={qrData.qrCode}
+                    src={qrSrc}
                     className="w-56 h-56"
                     alt="Event QR Code"
                   />

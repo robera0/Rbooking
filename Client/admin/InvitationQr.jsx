@@ -19,6 +19,8 @@ import toast from "react-hot-toast";
 import JSZip from "jszip";
 import { containRect, coverRect } from "@/lib/posterFit";
 import { batchGuestNames, makeGuestName } from "@/lib/guestName";
+import { useQrWithLogo } from "@/lib/useQrWithLogo";
+import { qrWithLogoOrOriginal } from "@/lib/qrLogo";
 import { drawBrand, loadBrandLogo } from "@/lib/brand";
 import BrandMark from "./BrandMark";
 import {
@@ -346,6 +348,7 @@ const InvitationQR = () => {
       : null;
 
   const currentInvitation = generated[activeIndex] || null;
+  const previewQr = useQrWithLogo(currentInvitation?.qrCode);
   const formLocked = generated.length > 0;
 
   const setField = (field, value) => {
@@ -524,7 +527,7 @@ const InvitationQR = () => {
       ctx.fillStyle = q.bg;
       fillRoundRect(ctx, tileX, tileY, q.size, q.size, q.radius);
 
-      const qrImg = await loadImage(invitation.qrCode);
+      const qrImg = await loadImage(await qrWithLogoOrOriginal(invitation.qrCode));
 
       ctx.drawImage(
         qrImg,
@@ -1402,7 +1405,7 @@ const InvitationQR = () => {
                         {currentInvitation ? (
                           <motion.img
                             key={currentInvitation.ticketId}
-                            src={currentInvitation.qrCode}
+                            src={previewQr}
                             alt={`Invitation QR ${activeIndex + 1}`}
                             initial={{ opacity: 0, x: 18 }}
                             animate={{ opacity: 1, x: 0 }}

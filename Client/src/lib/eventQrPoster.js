@@ -1,4 +1,5 @@
 import { drawBrand, loadBrandLogo, BRAND_ORANGE } from "./brand.js";
+import { qrWithLogoOrOriginal } from "./qrLogo.js";
 
 // The downloadable event QR: Paysso logo and name on top, the event name,
 // then the QR code on a white tile.
@@ -46,7 +47,7 @@ export const buildEventQrPoster = async ({ qrCode, eventName }) => {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not create the QR image");
 
-  const [qrImg, logo] = await Promise.all([loadImage(qrCode), loadBrandLogo()]);
+  const [qrImg, logo] = await Promise.all([qrWithLogoOrOriginal(qrCode).then(loadImage), loadBrandLogo()]);
 
   ctx.fillStyle = "#111214";
   ctx.fillRect(0, 0, W, H);

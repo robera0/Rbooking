@@ -18,6 +18,7 @@ import moment from "moment";
 import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import PostponedBanner from "./components/PostponedBanner";
 import { isDateTbd } from "@/lib/postponed";
+import { useQrWithLogo } from "@/lib/useQrWithLogo";
 
 /* ─── design tokens ─── */
 const SURFACE = "bg-[#111214]";
@@ -78,6 +79,8 @@ const ViewTicket = () => {
   const event = ticketsinfo?.ticket?.ticketId?.eventId;
   const tkt = ticketsinfo?.ticket?.ticketId;
   const orderNo = ticketsinfo?.ticket?.orderNo;
+  // The ticket QR with the Paysso logo in the middle (shown and downloaded).
+  const qrSrc = useQrWithLogo(ticketsinfo?.ticket?.qrCode);
   const tierKey = (tkt?.type || "default").toLowerCase().trim();
   const tier = TIER[tierKey] ?? TIER.default;
 
@@ -85,7 +88,7 @@ const ViewTicket = () => {
   const localTime = event?.dates?.start?.localTime;
 
   const downloadQRCode = () => {
-    const qrDataUrl = ticketsinfo?.ticket?.qrCode;
+    const qrDataUrl = qrSrc;
     if (!qrDataUrl) return;
     const link = document.createElement("a");
     link.href = qrDataUrl;
@@ -291,7 +294,7 @@ const ViewTicket = () => {
                 <div className="px-6 py-6 flex flex-col items-center justify-center flex-1 gap-4">
                   <div className="p-4 md:p-6 rounded-2xl bg-white inline-block shadow-lg">
                     <img
-                      src={ticketsinfo?.ticket?.qrCode || "/qr-code.png"}
+                      src={qrSrc || "/qr-code.png"}
                       className="w-32 h-32 md:w-40 md:h-40 object-contain"
                       alt="Entry QR Code"
                       onError={(e) => { e.target.src = "/qr-code.png"; }}
