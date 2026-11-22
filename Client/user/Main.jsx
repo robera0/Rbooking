@@ -337,16 +337,15 @@ const Main = () => {
         <header className="sticky top-0 z-[80] bg-[#121417]/25 backdrop-blur-xl">
           <div className="mx-auto flex max-w-[1536px] items-center justify-between px-6 py-3 lg:px-12">
             {/* Logo */}
-            <Link
-              to="/"
-              aria-label="PAYSSO home"
-              className="group inline-flex shrink-0 items-center self-end rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
-            >
+            <Link to="/" className="group flex items-center gap-3 w-fit">
               <img
-                src="/paysso-lockup.png"
-                alt="PAYSSO"
-                className="h-[2.6rem] w-auto translate-y-[2px] object-contain opacity-95 transition-opacity group-hover:opacity-100"
+                src="/P_logo.png"
+                alt="Paysso logo"
+                className="h-8 w-8 object-contain"
               />
+              <span className="hidden sm:inline text-2xl lg:text-3xl font-black uppercase tracking-tight group-hover:text-[#FF7A00] transition">
+                Paysso
+              </span>
             </Link>
 
             {/* Desktop Nav */}
@@ -524,17 +523,16 @@ const Main = () => {
           {/* ================= FOOTER ================= */}
           <footer className="relative z-10 border-t border-white/[0.08] bg-[#0D0F11]">
             <div className="mx-auto flex max-w-[1536px] items-center justify-between gap-6 px-6 pt-5 pb-24 md:py-5 lg:px-12">
-              <Link
-                to="/"
-                aria-label="PAYSSO home"
-                className="group inline-flex shrink-0 items-center self-end rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF7A00]"
-              >
-                <img
-                  src="/paysso-lockup.png"
-                  alt="PAYSSO"
-                  className="h-[2.6rem] w-auto translate-y-[2px] object-contain opacity-95 transition-opacity group-hover:opacity-100"
-                />
-              </Link>
+              <Link to="/" className="group flex items-center gap-3 w-fit">
+              <img
+                src="/P_logo.png"
+                alt="Paysso logo"
+                className="h-8 w-8 object-contain"
+              />
+              <span className="hidden sm:inline text-2xl lg:text-3xl font-black uppercase tracking-tight group-hover:text-[#FF7A00] transition">
+                Paysso
+              </span>
+            </Link>
 
               <div className="hidden items-center gap-8 text-[12px] font-medium text-white/80 md:flex">
                 <Link

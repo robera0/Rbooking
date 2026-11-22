@@ -258,6 +258,13 @@ const UserHome = () => {
                       onClick={() => setCommentId(hero._id)}
                       className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FF7A00]"
                     >
+                      {/* Blurred copy fills the frame; the full poster sits on top uncropped. */}
+                      <img
+                        src={eventImageUrl(hero, API_URL)}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+                      />
                       <img
                         src={eventImageUrl(hero, API_URL)}
                         alt={hero.name}
@@ -265,7 +272,7 @@ const UserHome = () => {
                           imageEvent.currentTarget.onerror = null;
                           imageEvent.currentTarget.src = "/datebackground.jpg";
                         }}
-                        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"
+                        className="absolute inset-0 h-full w-full object-contain transition duration-700 group-hover:scale-[1.02]"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/5" />
 
