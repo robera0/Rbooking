@@ -30,7 +30,7 @@ class EventService {
     }).populate({
       path: "adminId",
       model: "AdminProfile",
-      select: "paymentMethods organizationName",
+      select: "paymentMethods organizationName avatarUrl businessType",
     });
 
     // Fallback for legacy events where adminId was mistakenly saved as userId
