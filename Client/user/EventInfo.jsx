@@ -38,6 +38,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { isEventPassed8Hours } from "@/lib/utils";
+import { isDateTbd } from "@/lib/postponed";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
@@ -538,14 +539,15 @@ const EventInfo = () => {
   /* ── stacked card layout data ── */
   const venue = event?.links?.venues || {};
   const startMoment = moment(event?.dates?.start?.localDate);
-  const hasStartDate = startMoment.isValid();
+  const dateTbd = isDateTbd(event);
+  const hasStartDate = startMoment.isValid() && !dateTbd;
   const endMoment = event?.dates?.end?.localDate
     ? moment(event.dates.end.localDate)
     : null;
   const eventDateLabel = hasStartDate
     ? startMoment.format("dddd, MMMM D, YYYY")
     : "Date to be announced";
-  const startTimeLabel = event?.dates?.start?.localTime
+  const startTimeLabel = !dateTbd && event?.dates?.start?.localTime
     ? moment(event.dates.start.localTime, "HH:mm:ss").format("h:mm A")
     : "";
   const endTimeLabel =
@@ -658,7 +660,7 @@ const EventInfo = () => {
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
   const venueLine = [venue?.address, venue?.city].filter(Boolean).join(", ");
-  const doorsOpenLabel = event?.dates?.start?.localTime
+  const doorsOpenLabel = !dateTbd && event?.dates?.start?.localTime
     ? moment(event.dates.start.localTime, "HH:mm:ss").format("h:mm A")
     : "";
   const organizerEventsLabel =
@@ -840,9 +842,9 @@ const EventInfo = () => {
                       Date
                     </p>
                     <p className="text-[12px] font-black text-black">
-                      {moment(event?.dates?.start?.localDate).format(
-                        "ddd, MMM DD YYYY",
-                      )}
+                      {hasStartDate
+                        ? startMoment.format("ddd, MMM DD YYYY")
+                        : "TBA"}
                     </p>
                   </div>
                   <div className="w-[1px] bg-black/15" />
