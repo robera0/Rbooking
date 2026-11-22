@@ -334,8 +334,9 @@ const Main = () => {
     <LayoutGroup>
       <div className="relative min-h-screen w-full bg-[#121417] text-white flex flex-col [overflow-x:clip]">
         {/* ================= HEADER ================= */}
-        <header className="sticky top-0 z-[80] bg-[#121417]/25 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-[1536px] items-center justify-between px-6 py-3 lg:px-12">
+        <header className="sticky top-0 z-[80] bg-[#121417]/90 backdrop-blur-xl">
+          {/* Fixed 64px height so the sticky filter bar (top-[64px]) sits flush under it. */}
+          <div className="mx-auto flex h-16 max-w-[1536px] items-center justify-between px-6 lg:px-12">
             {/* Logo */}
             <Link to="/" className="group flex items-center gap-3 w-fit">
               <img
