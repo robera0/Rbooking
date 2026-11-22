@@ -243,7 +243,7 @@ const UserHome = () => {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-[#1C1F22]"
             >
-              <div className="relative h-[360px] sm:h-[420px] lg:h-[460px]">
+              <div className="relative aspect-[4/5] sm:aspect-auto sm:h-[420px] lg:h-[460px]">
                 <AnimatePresence initial={false}>
                   <motion.div
                     key={hero._id}
