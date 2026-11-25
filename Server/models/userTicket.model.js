@@ -85,6 +85,18 @@ const UserTicketSchema = new mongoose.Schema(
       default: Date.now,
     },
 
+    // Set when the buyer used a promoter's referral code. The name and code
+    // are copied so reports stay right even if the code is edited later.
+    referral: {
+      referralId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Referral",
+        default: undefined,
+      },
+      code: String,
+      name: String,
+    },
+
     // Refund + commission snapshots. The snapshot keeps historical revenue
     // correct when the platform commission rate changes later.
     refundedAt: { type: Date, default: null },
@@ -117,6 +129,7 @@ UserTicketSchema.index({ userId: 1, ticketId: 1 });
 // Sales figures group paid and refunded orders by ticket type.
 UserTicketSchema.index({ status: 1, purchasedAt: -1 });
 UserTicketSchema.index({ ticketId: 1, status: 1 });
+UserTicketSchema.index({ "referral.referralId": 1, status: 1 });
 // One Telebirr receipt can pay for one order. Partial so tickets without a
 // referenceId (unverified, or verified before this field existed) don't
 // collide with each other.

@@ -32,6 +32,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { readRef } from "@/lib/referral";
 import { createPortal } from "react-dom";
 import { Skeleton } from "boneyard-js/react";
 import { eventService } from "@/Context/ApiEvent";
@@ -121,6 +122,11 @@ export default function CheckoutModal({
   const [isLoading, setIsLoading] = useState(false);
   const [quantityStr, setQuantityStr] = useState("1");
   const { setQuantity, API_URL } = useService();
+  // Referral code: starts from a remembered ?ref= link, checked with the server.
+  const [referralCode, setReferralCode] = useState(() =>
+    readRef(window.localStorage),
+  );
+  const [referralCheck, setReferralCheck] = useState({ state: "idle", name: "" });
   const navigate = useNavigate();
 
   const isFree = Number(amount) === 0;
@@ -163,6 +169,9 @@ export default function CheckoutModal({
       const res = await api.post(`/api/auth/ticket/${ticketId}/purchase`, {
         quantity,
         phone,
+        ...(referralCheck.state === "valid" && {
+          referralCode: referralCode.trim().toUpperCase(),
+        }),
       });
       const data = res.data;
 
@@ -207,6 +216,35 @@ export default function CheckoutModal({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const code = referralCode.trim();
+    if (!isOpen || !eventId || code.length < 3) {
+      setReferralCheck({ state: "idle", name: "" });
+      return undefined;
+    }
+    let cancelled = false;
+    setReferralCheck({ state: "checking", name: "" });
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(
+          `/api/events/${eventId}/referral/${encodeURIComponent(code)}`,
+        );
+        if (cancelled) return;
+        setReferralCheck(
+          res.data?.valid
+            ? { state: "valid", name: res.data.name }
+            : { state: "invalid", name: "" },
+        );
+      } catch {
+        if (!cancelled) setReferralCheck({ state: "idle", name: "" });
+      }
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [referralCode, eventId, isOpen]);
 
   // Freeze the page behind the sheet so only the sheet itself can scroll.
   useEffect(() => {
@@ -319,6 +357,34 @@ export default function CheckoutModal({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Referral code (optional) */}
+        <div className="space-y-2 mb-10 -mt-4">
+          <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">
+            Referral code (optional)
+          </label>
+          <input
+            type="text"
+            value={referralCode}
+            maxLength={20}
+            onChange={(e) =>
+              setReferralCode(e.target.value.replace(/[^A-Za-z0-9_-]/g, ""))
+            }
+            placeholder="e.g. ABEL25"
+            className="w-full bg-white/[0.03] border border-white/10 focus:border-[#FF7A00]
+            rounded-2xl px-5 py-3 outline-none font-bold tracking-widest uppercase"
+          />
+          {referralCheck.state === "valid" && (
+            <p className="text-[11px] font-bold text-green-400 ml-1">
+              Code applied: {referralCheck.name}
+            </p>
+          )}
+          {referralCheck.state === "invalid" && (
+            <p className="text-[11px] font-bold text-gray-500 ml-1">
+              We don't know this code. You can still buy without it.
+            </p>
+          )}
         </div>
 
         {!isFree && (

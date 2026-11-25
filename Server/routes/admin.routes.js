@@ -22,6 +22,12 @@ import {
   createTickets,
   createInvitation,
 } from "../controllers/events.controller.js";
+import {
+  listMyReferrals,
+  createMyReferral,
+  getMyReferral,
+  updateMyReferral,
+} from "../controllers/referral.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { requireRole } from "../middlewares/requireRole.js";
 const adminOnly = requireRole("admin");
@@ -29,6 +35,12 @@ const adminOnly = requireRole("admin");
 // get empty lists). Keep that working while still refusing everyone else.
 const adminArea = requireRole("admin", "club_owner");
 const adminRouter = express.Router();
+
+// Promoter referral codes and what each one sold.
+adminRouter.get("/referrals", authenticateTokenMiddleware, adminOnly, listMyReferrals);
+adminRouter.post("/referrals", authenticateTokenMiddleware, adminOnly, createMyReferral);
+adminRouter.get("/referrals/:id", authenticateTokenMiddleware, adminOnly, getMyReferral);
+adminRouter.patch("/referrals/:id", authenticateTokenMiddleware, adminOnly, updateMyReferral);
 
 adminRouter.get("/admin_users", authenticateTokenMiddleware, getAdminProfile);
 adminRouter.get("/users", authenticateTokenMiddleware, adminOnly, getUsers);

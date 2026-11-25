@@ -31,6 +31,7 @@ import User from "../admin/User";
 import InvitationQR from "../admin/InvitationQr";
 import LoginPage from "../admin/LoginPage";
 import Marketing from "../admin/Marketing";
+import Referrals from "../admin/Referrals";
 import Report from "../admin/Report";
 import Payment from "../admin/Payment";
 import AdminAccount from "../admin/AdminAccount";
@@ -289,6 +290,14 @@ export const router = createBrowserRouter([
             element: (
               <PageWrapper>
                 <LoginPage />
+              </PageWrapper>
+            ),
+          },
+          {
+            path: "referrals",
+            element: (
+              <PageWrapper>
+                <Referrals />
               </PageWrapper>
             ),
           },

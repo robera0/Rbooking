@@ -10,6 +10,7 @@ import {
   getOrganizerStats,
   toggleOrganizerFollow,
 } from "../controllers/events.controller.js";
+import { checkReferralCode } from "../controllers/referral.controller.js";
 import { authenticateTokenMiddleware } from "../middlewares/authenticateToken.js";
 import { requireRole } from "../middlewares/requireRole.js";
 
@@ -21,6 +22,8 @@ eventRouter.get("/events/:eventId", getEventById);
 // Public organizer profile card (name, avatar, events/followers counts).
 // isFollowing is only filled in when a valid access token cookie is present.
 eventRouter.get("/events/:eventId/organizer", getOrganizerStats);
+// Is this referral code usable for this event? (checkout field)
+eventRouter.get("/events/:eventId/referral/:code", checkReferralCode);
 // Follow / unfollow the organizer behind this event (requires sign-in).
 eventRouter.post(
   "/events/:eventId/follow",

@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import "leaflet/dist/leaflet.css";
+import { captureRefFromUrl } from "./lib/referral";
+
+// A link like ...?ref=ABEL25 is remembered so checkout can attribute the sale.
+captureRefFromUrl(window.location.search, window.localStorage);
 
 // Fire-and-forget warm-up ping for the backend, which can take a few
 // seconds to spin up an idle process back up (Passenger on cPanel does

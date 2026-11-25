@@ -12,6 +12,7 @@ import {
   X,
   Sofa,
   ClipboardList,
+  Share2,
 } from "lucide-react";
 import api from "../src/Context/api/api.config";
 import { eventService } from "../src/Context/ApiEvent";
@@ -76,6 +77,13 @@ const SideBar = ({ action, onClose }) => {
                 path="/admin/orders"
                 name="Ticket Management"
                 icon={<Ticket size={20} />}
+                onNavigate={onClose}
+              />
+
+              <SideMenu
+                path="/admin/referrals"
+                name="Referrals"
+                icon={<Share2 size={20} />}
                 onNavigate={onClose}
               />
 

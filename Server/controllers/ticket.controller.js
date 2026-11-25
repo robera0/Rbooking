@@ -37,13 +37,14 @@ import {
   resolveReceiver,
 } from "../service/receiver.service.js";
 import { recordAudit } from "../service/audit.service.js";
+import { resolveReferral } from "../service/referral.service.js";
 
 export const purchaseTicket = async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
   const userId = req.user.id;
   const { ticketId } = req.params;
-  const { quantity, phone } = req.body;
+  const { quantity, phone, referralCode } = req.body;
   if (!ticketId) return res.status(400).json({ message: "Ticket ID required" });
   if (!Number.isInteger(quantity) || quantity <= 0)
     return res.status(400).json({ message: "Invalid quantity" });
@@ -98,6 +99,12 @@ export const purchaseTicket = async (req, res) => {
       color: { dark: "#000000", light: "#ffffff" },
     });
 
+    // A code that is wrong or stale never blocks the purchase: the order just
+    // is not attributed to anyone.
+    const referral = referralCode
+      ? await resolveReferral(referralCode, ticket.eventId)
+      : null;
+
     const userTicket = await UserTicketModel.create({
       _id: userTicketId,
       userId,
@@ -111,6 +118,13 @@ export const purchaseTicket = async (req, res) => {
       phone: phone || "",
       status: isFree ? "paid" : "pending",
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+      ...(referral && {
+        referral: {
+          referralId: referral._id,
+          code: referral.code,
+          name: referral.name,
+        },
+      }),
     });
 
     // Two simultaneous requests can both pass the check above; undo the
