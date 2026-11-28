@@ -113,6 +113,17 @@ const BaseEventSchema = new mongoose.Schema(
     },
     // When off, the public page hides how many tickets are left.
     showAvailability: { type: Boolean, default: true },
+    // Optional music: only a validated type + id are kept, never the pasted URL.
+    spotifyType: {
+      type: String,
+      enum: ["track", "album", "playlist"],
+      default: null,
+    },
+    spotifyId: {
+      type: String,
+      match: [/^[A-Za-z0-9]{22}$/, "Invalid Spotify id"],
+      default: null,
+    },
     status: String,
     isFeatured: { type: Boolean, default: false },
     // Soft delete keeps orders/transactions pointing at a real event.

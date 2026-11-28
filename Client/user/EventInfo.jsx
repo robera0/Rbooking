@@ -41,6 +41,7 @@ import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import { eventService } from "@/Context/ApiEvent";
 import CheckoutModal from "@/components/Reusable";
 import PostponedBanner from "./components/PostponedBanner";
+import SpotifyEmbed from "@/components/SpotifyEmbed";
 import { isDateTbd } from "@/lib/postponed";
 import { Navigate, useLocation } from "react-router-dom";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
@@ -1003,6 +1004,27 @@ const EventInfo = () => {
                 </p>
               </div>
             </motion.section>
+
+            {/* MUSIC — nothing is rendered when the event has no Spotify link */}
+            {event?.spotifyId && (
+              <motion.section
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-5 h-[2px] bg-[#FF7A00]" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.45em] text-gray-500">
+                    Soundtrack
+                  </span>
+                </div>
+                <SpotifyEmbed
+                  spotifyType={event.spotifyType}
+                  spotifyId={event.spotifyId}
+                />
+              </motion.section>
+            )}
 
             {/* COMMENTS */}
             <motion.section

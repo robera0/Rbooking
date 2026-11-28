@@ -15,6 +15,7 @@ import {
   requiredItems,
   ticketProblems,
 } from "@/lib/eventForm";
+import { spotifyFieldsFromLink } from "@/lib/spotify";
 
 // An event can carry switched-off leftovers with the same name as a live
 // ticket (from old autosaves). Showing both would make every save fail with
@@ -73,6 +74,12 @@ const initialForm = (eventData) => {
     showAvailability: ev.showAvailability !== false,
     postponed: ev.dates?.status?.code === "postponed",
     dateTbd: ev.dates?.dateTbd === true,
+    // We store type + id, not the pasted URL, so rebuild a canonical link for
+    // the input from those validated values.
+    spotifyLink:
+      ev.spotifyType && ev.spotifyId
+        ? `https://open.spotify.com/${ev.spotifyType}/${ev.spotifyId}`
+        : "",
   };
 };
 
@@ -92,6 +99,7 @@ const EditEvent = () => {
     return f;
   });
   const set = (patch) => setForm((prev) => ({ ...prev, ...patch }));
+  const musicRef = useRef(null);
 
   // Older events were made without an end time. They may stay that way.
   const legacyNoEnd = useMemo(() => !initialRef.current.endD, []);
@@ -157,6 +165,8 @@ const EditEvent = () => {
       body.append("dates", JSON.stringify(payload.dates));
       body.append("amenities", JSON.stringify(payload.amenities));
       body.append("musicGenre", JSON.stringify(payload.musicGenre));
+      body.append("spotifyType", payload.spotifyType ?? "");
+      body.append("spotifyId", payload.spotifyId ?? "");
       body.append("familyFriendly", payload.familyFriendly);
       body.append("invitation", payload.invitation === true);
       body.append("showAvailability", payload.showAvailability !== false);
@@ -197,6 +207,9 @@ const EditEvent = () => {
   };
 
   const submit = (publishStatus = null) => {
+    // A bad link shows its inline error and is dropped; it never blocks the
+    // rest of the event from being saved.
+    musicRef.current?.validateForSave();
     setShowErrors(true);
     const problem = saveProblem();
     if (problem) return toast.error(problem);
@@ -241,6 +254,7 @@ const EditEvent = () => {
       familyFriendly: form.familyFriendly,
       invitation: form.invitation,
       showAvailability: form.showAvailability,
+      ...spotifyFieldsFromLink(form.spotifyLink),
       ...(type === "festival" && { durationDays: Number(form.durationDays) || 0, stages: form.stages }),
     };
     if (publishStatus) payload.status = publishStatus;
@@ -320,6 +334,7 @@ const EditEvent = () => {
         allowPast
         dateDisabled={dateTbd}
         scheduleExtra={scheduleExtra}
+        musicRef={musicRef}
         actions={<>{saveBtn}{publishBtn}</>}
         sidebarExtra={cancelBlock}
         bottomBar={<>{saveBtn}{publishBtn}</>}
