@@ -5,6 +5,7 @@ import {
   spotifyFieldsFromLink,
   spotifyProblem,
   buildSpotifyEmbedUrl,
+  fetchSpotifyTitle,
   INVALID_SPOTIFY_MESSAGE,
 } from "./spotify.js";
 
@@ -89,6 +90,44 @@ test("an empty link is optional; an invalid one shows the friendly error", () =>
   assert.equal(spotifyProblem("   "), "");
   assert.equal(spotifyProblem(`https://open.spotify.com/track/${TRACK_ID}`), "");
   assert.equal(spotifyProblem("https://open.spotify.com/artist/whatever"), INVALID_SPOTIFY_MESSAGE);
+});
+
+// ---- oEmbed title lookup -----------------------------------------------------
+
+test("the label is fetched from Spotify's public oEmbed endpoint", async () => {
+  const original = globalThis.fetch;
+  let requested;
+  globalThis.fetch = async (url) => {
+    requested = url;
+    return { ok: true, json: async () => ({ title: "  Blinding Lights  " }) };
+  };
+  try {
+    assert.equal(await fetchSpotifyTitle("track", TRACK_ID), "Blinding Lights");
+    assert.equal(
+      requested,
+      `https://open.spotify.com/oembed?url=${encodeURIComponent(`https://open.spotify.com/track/${TRACK_ID}`)}`,
+    );
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("no request is made for an invalid type/id, and failures are null", async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return { ok: true, json: async () => ({ title: "nope" }) };
+  };
+  try {
+    assert.equal(await fetchSpotifyTitle("artist", TRACK_ID), null);
+    assert.equal(await fetchSpotifyTitle("track", "short"), null);
+    assert.equal(calls, 0);
+    globalThis.fetch = async () => ({ ok: false });
+    assert.equal(await fetchSpotifyTitle("track", TRACK_ID), null);
+  } finally {
+    globalThis.fetch = original;
+  }
 });
 
 // ---- embed url ---------------------------------------------------------------

@@ -92,6 +92,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
     showAvailability,
     spotifyType,
     spotifyId,
+    spotifyTitle,
   } = req.body;
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
@@ -187,7 +188,7 @@ export const addEvent = catchAsync(async (req, res, next) => {
     invitation: { enabled: invitationEnabled },
     showAvailability: parseShowAvailability(showAvailability),
     // Invalid or missing music is stored as nulls, never a raw URL.
-    ...normalizeSpotify({ spotifyType, spotifyId }),
+    ...normalizeSpotify({ spotifyType, spotifyId, spotifyTitle }),
   };
   if (events.showAvailability === undefined) delete events.showAvailability;
 
@@ -620,6 +621,7 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     showAvailability,
     spotifyType,
     spotifyId,
+    spotifyTitle,
   } = req.body;
 
   const normalizedType = type?.toLowerCase();
@@ -699,8 +701,17 @@ export const updateEvent = catchAsync(async (req, res, next) => {
 
   // Older clients don't send these fields: leave their music untouched. An
   // explicit empty/invalid value clears it, so music can be removed as well.
-  if (spotifyType !== undefined || spotifyId !== undefined) {
-    Object.assign(updateData, normalizeSpotify({ spotifyType, spotifyId }));
+  if (
+    spotifyType !== undefined ||
+    spotifyId !== undefined ||
+    spotifyTitle !== undefined
+  ) {
+    const music = normalizeSpotify({ spotifyType, spotifyId, spotifyTitle });
+    for (const field of ["spotifyType", "spotifyId", "spotifyTitle"]) {
+      if ({ spotifyType, spotifyId, spotifyTitle }[field] !== undefined) {
+        updateData[field] = music[field];
+      }
+    }
   }
 
   // Remove undefined

@@ -54,6 +54,24 @@ export function spotifyProblem(value) {
   return parseSpotifyUrl(value) ? "" : INVALID_SPOTIFY_MESSAGE;
 }
 
+// Spotify's public oEmbed endpoint returns the title with no token/OAuth and
+// allows cross-origin browser calls. We build its URL only from validated
+// values, so a pasted URL can never be forwarded as-is.
+export async function fetchSpotifyTitle(type, id, signal) {
+  const parsed = parseSpotifyUrl(`https://open.spotify.com/${type}/${id}`);
+  if (!parsed) return null;
+  const canonical = `https://open.spotify.com/${parsed.type}/${parsed.id}`;
+  const response = await fetch(
+    `https://open.spotify.com/oembed?url=${encodeURIComponent(canonical)}`,
+    { signal },
+  );
+  if (!response.ok) return null;
+  const data = await response.json();
+  return typeof data.title === "string" && data.title.trim()
+    ? data.title.trim().slice(0, 120)
+    : null;
+}
+
 // The only way an iframe src is built: from a validated type and id. Passing a
 // raw URL here (or anything that is not a known type + valid id) yields null.
 export function buildSpotifyEmbedUrl(type, id) {

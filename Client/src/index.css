@@ -414,3 +414,38 @@ body::-webkit-scrollbar {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 9999px;
 }
+
+/* The Spotify IFrame API creates this iframe itself; keep it fluid so it fits
+   narrow phone columns instead of its own pixel width. */
+.spotify-embed-host iframe {
+  display: block;
+  width: 100% !important;
+  max-width: 100%;
+  border: 0;
+}
+
+/* Little animated equalizer on the cover's now-playing bar. */
+.eq-bars i {
+  display: block;
+  width: 2px;
+  height: 100%;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.85);
+  animation: eq-bounce 0.9s ease-in-out infinite alternate;
+}
+.eq-bars i:nth-child(2) {
+  height: 55%;
+  animation-delay: 0.2s;
+}
+.eq-bars i:nth-child(3) {
+  height: 75%;
+  animation-delay: 0.4s;
+}
+@keyframes eq-bounce {
+  from {
+    transform: scaleY(0.45);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}

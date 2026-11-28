@@ -124,6 +124,8 @@ const BaseEventSchema = new mongoose.Schema(
       match: [/^[A-Za-z0-9]{22}$/, "Invalid Spotify id"],
       default: null,
     },
+    // Optional plain-text label shown on the cover's now-playing bar.
+    spotifyTitle: { type: String, default: null, maxlength: 120 },
     status: String,
     isFeatured: { type: Boolean, default: false },
     // Soft delete keeps orders/transactions pointing at a real event.

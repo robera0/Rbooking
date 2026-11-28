@@ -5,12 +5,18 @@
 const SPOTIFY_TYPES = new Set(["track", "album", "playlist"]);
 const ID_PATTERN = /^[A-Za-z0-9]{22}$/;
 
-export function normalizeSpotify({ spotifyType, spotifyId } = {}) {
+export function normalizeSpotify({ spotifyType, spotifyId, spotifyTitle } = {}) {
   const type = typeof spotifyType === "string" ? spotifyType.toLowerCase() : "";
   const id = typeof spotifyId === "string" ? spotifyId.trim() : "";
+  const title =
+    typeof spotifyTitle === "string"
+      ? spotifyTitle.trim().slice(0, 120)
+      : "";
 
-  if (SPOTIFY_TYPES.has(type) && ID_PATTERN.test(id)) {
-    return { spotifyType: type, spotifyId: id };
-  }
-  return { spotifyType: null, spotifyId: null };
+  const valid = SPOTIFY_TYPES.has(type) && ID_PATTERN.test(id);
+  return {
+    spotifyType: valid ? type : null,
+    spotifyId: valid ? id : null,
+    spotifyTitle: valid && title ? title : null,
+  };
 }

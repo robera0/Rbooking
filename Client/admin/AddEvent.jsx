@@ -41,6 +41,7 @@ const EMPTY_FORM = {
   invitation: false,
   showAvailability: false,
   spotifyLink: "",
+  spotifyTitle: "",
 };
 
 const AUTOSAVE_MS = 3000;
@@ -79,6 +80,7 @@ const buildFormData = (data) => {
   body.append("musicGenre", JSON.stringify(data.musicGenre));
   body.append("spotifyType", data.spotifyType ?? "");
   body.append("spotifyId", data.spotifyId ?? "");
+  body.append("spotifyTitle", data.spotifyTitle ?? "");
   if (data.familyFriendly !== undefined) body.append("familyFriendly", data.familyFriendly);
   if (data.durationDays !== undefined) body.append("durationDays", data.durationDays);
   if (data.stages) body.append("stages", JSON.stringify(data.stages));
@@ -120,6 +122,7 @@ const buildPayload = (form, status) => {
     musicGenre: type === "concert" ? form.musicGenre : ["General"],
     // Only the parsed type + id are sent; an invalid link is dropped here too.
     ...spotifyFieldsFromLink(form.spotifyLink),
+    spotifyTitle: form.spotifyTitle?.trim() || null,
   };
   if (type === "concert") {
     payload.artist.supporting = form.supportingArtists;

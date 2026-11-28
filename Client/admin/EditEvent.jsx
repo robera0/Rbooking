@@ -80,6 +80,7 @@ const initialForm = (eventData) => {
       ev.spotifyType && ev.spotifyId
         ? `https://open.spotify.com/${ev.spotifyType}/${ev.spotifyId}`
         : "",
+    spotifyTitle: ev.spotifyTitle || "",
   };
 };
 
@@ -167,6 +168,7 @@ const EditEvent = () => {
       body.append("musicGenre", JSON.stringify(payload.musicGenre));
       body.append("spotifyType", payload.spotifyType ?? "");
       body.append("spotifyId", payload.spotifyId ?? "");
+      body.append("spotifyTitle", payload.spotifyTitle ?? "");
       body.append("familyFriendly", payload.familyFriendly);
       body.append("invitation", payload.invitation === true);
       body.append("showAvailability", payload.showAvailability !== false);
@@ -255,6 +257,7 @@ const EditEvent = () => {
       invitation: form.invitation,
       showAvailability: form.showAvailability,
       ...spotifyFieldsFromLink(form.spotifyLink),
+      spotifyTitle: form.spotifyTitle?.trim() || null,
       ...(type === "festival" && { durationDays: Number(form.durationDays) || 0, stages: form.stages }),
     };
     if (publishStatus) payload.status = publishStatus;

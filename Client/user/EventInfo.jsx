@@ -39,6 +39,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { isEventPassed8Hours } from "@/lib/utils";
 import { isDateTbd } from "@/lib/postponed";
+import { sampleCoverColor } from "@/lib/coverColor";
 import { useWishlistMutation } from "./api/addwishlist.api.jsx";
 import toast from "react-hot-toast";
 import { useService } from "@/Context/ServiceContext";
@@ -47,6 +48,7 @@ import { eventService } from "@/Context/ApiEvent";
 import api from "../src/Context/api/api.config";
 import CheckoutModal from "@/components/Reusable";
 import SpotifyEmbed from "@/components/SpotifyEmbed";
+import HeroPlayButton from "./components/HeroPlayButton";
 import { Navigate, useLocation } from "react-router-dom";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -654,6 +656,18 @@ const EventInfo = () => {
       : `${API_URL}/${images[0]}`
     : "/Login.jpg";
 
+  // Tint the now-playing glass with the cover's own colour.
+  const [coverTint, setCoverTint] = useState(null);
+  useEffect(() => {
+    let live = true;
+    sampleCoverColor(heroImageSrc).then((color) => {
+      if (live) setCoverTint(color);
+    });
+    return () => {
+      live = false;
+    };
+  }, [heroImageSrc]);
+
   const descParagraphs = (
     event?.desc || "No description available for this event."
   )
@@ -698,6 +712,14 @@ const EventInfo = () => {
       </div>
 
       <main className="relative z-10 mx-auto flex min-h-[60vh] w-full max-w-[720px] flex-1 flex-col px-3 pb-10 pt-4 sm:px-5 lg:max-w-[1400px] lg:px-6 lg:pt-8">
+        {/* Hidden player: the cover's now-playing bar drives this controller. */}
+        {event?.spotifyId && (
+          <SpotifyEmbed
+            spotifyType={event.spotifyType}
+            spotifyId={event.spotifyId}
+            hidden
+          />
+        )}
         <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1.08fr)_520px] lg:items-start lg:gap-6 lg:pl-8">
           {/* ── HERO POSTER ── */}
           <motion.section
@@ -793,6 +815,15 @@ const EventInfo = () => {
                   )}
                 </div>
               </div>
+
+              {event?.spotifyId && (
+                <HeroPlayButton
+                  spotifyType={event.spotifyType}
+                  spotifyId={event.spotifyId}
+                  title={event?.spotifyTitle || event?.artist?.name || event?.name}
+                  tint={coverTint}
+                />
+              )}
             </div>
           </motion.section>
 
@@ -1220,22 +1251,6 @@ const EventInfo = () => {
                 </div>
               )}
             </div>
-
-            {/* MUSIC — nothing is rendered when the event has no Spotify link */}
-            {event?.spotifyId && (
-              <div className="border-t border-white/[0.06] pt-6">
-                <div className="mb-4 flex items-center gap-2">
-                  <span className="h-4 w-[3px] rounded-full bg-[#FF7A00]" />
-                  <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#FF7A00]">
-                    Soundtrack
-                  </span>
-                </div>
-                <SpotifyEmbed
-                  spotifyType={event.spotifyType}
-                  spotifyId={event.spotifyId}
-                />
-              </div>
-            )}
 
             {/* ORGANIZER */}
             <div className="mx-auto max-w-[280px] border-t border-white/[0.06] pt-6">

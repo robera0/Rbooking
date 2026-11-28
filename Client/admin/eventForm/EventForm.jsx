@@ -79,6 +79,8 @@ const EventForm = ({
               ref={musicRef}
               value={form.spotifyLink}
               onChange={(spotifyLink) => set({ spotifyLink })}
+              title={form.spotifyTitle}
+              onTitleChange={(spotifyTitle) => set({ spotifyTitle })}
             />
           </Card>
 
