@@ -361,6 +361,25 @@ const EventInfo = () => {
   const event = event_id?.event || null;
   const ticket = event_id?.ticket || null;
   const images = event?.pictures || [];
+
+  // Tint the now-playing glass with the cover's own colour. These hooks must
+  // sit above the loading early-return below, or React sees a different
+  // number of hooks between renders and crashes the page.
+  const coverSrc = images[0]
+    ? images[0].startsWith("http")
+      ? images[0]
+      : `${API_URL}/${images[0]}`
+    : "/Login.jpg";
+  const [coverTint, setCoverTint] = useState(null);
+  useEffect(() => {
+    let live = true;
+    sampleCoverColor(coverSrc).then((color) => {
+      if (live) setCoverTint(color);
+    });
+    return () => {
+      live = false;
+    };
+  }, [coverSrc]);
   const allTickets = (event_id?.tickets || []).filter(
     (t) => t.isActive !== false,
   );
@@ -655,18 +674,6 @@ const EventInfo = () => {
       ? images[0]
       : `${API_URL}/${images[0]}`
     : "/Login.jpg";
-
-  // Tint the now-playing glass with the cover's own colour.
-  const [coverTint, setCoverTint] = useState(null);
-  useEffect(() => {
-    let live = true;
-    sampleCoverColor(heroImageSrc).then((color) => {
-      if (live) setCoverTint(color);
-    });
-    return () => {
-      live = false;
-    };
-  }, [heroImageSrc]);
 
   const descParagraphs = (
     event?.desc || "No description available for this event."
