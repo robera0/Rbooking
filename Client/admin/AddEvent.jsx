@@ -12,6 +12,7 @@ import {
   requiredItems,
   ticketProblems,
 } from "@/lib/eventForm";
+import { spotifyFieldsFromLink } from "@/lib/spotify";
 
 // Nothing is pre-filled: dates, venue and tickets start empty. The event type
 // defaults to a plain event.
@@ -39,6 +40,8 @@ const EMPTY_FORM = {
   stages: [],
   invitation: false,
   showAvailability: false,
+  spotifyLink: "",
+  spotifyTitle: "",
 };
 
 const AUTOSAVE_MS = 3000;
@@ -75,6 +78,9 @@ const buildFormData = (data) => {
   if (data.status) body.append("status", data.status);
   body.append("amenities", JSON.stringify(data.amenities));
   body.append("musicGenre", JSON.stringify(data.musicGenre));
+  body.append("spotifyType", data.spotifyType ?? "");
+  body.append("spotifyId", data.spotifyId ?? "");
+  body.append("spotifyTitle", data.spotifyTitle ?? "");
   if (data.familyFriendly !== undefined) body.append("familyFriendly", data.familyFriendly);
   if (data.durationDays !== undefined) body.append("durationDays", data.durationDays);
   if (data.stages) body.append("stages", JSON.stringify(data.stages));
@@ -114,6 +120,9 @@ const buildPayload = (form, status) => {
     },
     amenities: { activity: form.amenities, payment_method: [], safety: [], other: [] },
     musicGenre: type === "concert" ? form.musicGenre : ["General"],
+    // Only the parsed type + id are sent; an invalid link is dropped here too.
+    ...spotifyFieldsFromLink(form.spotifyLink),
+    spotifyTitle: form.spotifyTitle?.trim() || null,
   };
   if (type === "concert") {
     payload.artist.supporting = form.supportingArtists;
@@ -146,6 +155,9 @@ const AddEvent = () => {
   // publishing already worked (so no later autosave can touch the event).
   const inFlightSaveRef = useRef(null);
   const publishedRef = useRef(false);
+  // The music field validates itself on blur; publishing asks it to validate
+  // again and drop a bad link without stopping the rest of the save.
+  const musicRef = useRef(null);
 
   const dirty = JSON.stringify(form) !== JSON.stringify(EMPTY_FORM);
 
@@ -288,6 +300,7 @@ const AddEvent = () => {
 
   const handlePublish = () => {
     if (isPublishingRef.current) return;
+    musicRef.current?.validateForSave();
     setShowErrors(true);
     const problem = publishProblem();
     if (problem) return toast.error(problem);
@@ -328,6 +341,7 @@ const AddEvent = () => {
       set={set}
       checklist={checklist}
       showErrors={showErrors}
+      musicRef={musicRef}
       actions={publishBtn}
       bottomBar={<div className="flex w-full items-center justify-between gap-3">{status}{publishBtn}</div>}
     />
