@@ -21,6 +21,7 @@ import {
 } from "../service/ticketSync.service.js";
 import { parseShowAvailability } from "../utils/showAvailability.js";
 import { safeParse } from "../utils/safeParse.js";
+import { normalizeSpotify } from "../utils/spotify.js";
 import fs from "fs";
 import QRCode from "qrcode";
 import jwt from "jsonwebtoken";
@@ -89,6 +90,8 @@ export const addEvent = catchAsync(async (req, res, next) => {
     capacity,
     status,
     showAvailability,
+    spotifyType,
+    spotifyId,
   } = req.body;
   const userId = new mongoose.Types.ObjectId(req.user.id);
 
@@ -183,6 +186,8 @@ export const addEvent = catchAsync(async (req, res, next) => {
     familyFriendly,
     invitation: { enabled: invitationEnabled },
     showAvailability: parseShowAvailability(showAvailability),
+    // Invalid or missing music is stored as nulls, never a raw URL.
+    ...normalizeSpotify({ spotifyType, spotifyId }),
   };
   if (events.showAvailability === undefined) delete events.showAvailability;
 
@@ -613,6 +618,8 @@ export const updateEvent = catchAsync(async (req, res, next) => {
     // common
     familyFriendly,
     showAvailability,
+    spotifyType,
+    spotifyId,
   } = req.body;
 
   const normalizedType = type?.toLowerCase();
@@ -689,6 +696,12 @@ export const updateEvent = catchAsync(async (req, res, next) => {
         ? undefined
         : { enabled: invitation === true || invitation === "true" },
   };
+
+  // Older clients don't send these fields: leave their music untouched. An
+  // explicit empty/invalid value clears it, so music can be removed as well.
+  if (spotifyType !== undefined || spotifyId !== undefined) {
+    Object.assign(updateData, normalizeSpotify({ spotifyType, spotifyId }));
+  }
 
   // Remove undefined
   Object.keys(updateData).forEach(

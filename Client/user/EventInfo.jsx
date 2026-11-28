@@ -46,6 +46,7 @@ import { getFriendlyErrorMessage } from "@/lib/errorMessages";
 import { eventService } from "@/Context/ApiEvent";
 import api from "../src/Context/api/api.config";
 import CheckoutModal from "@/components/Reusable";
+import SpotifyEmbed from "@/components/SpotifyEmbed";
 import { Navigate, useLocation } from "react-router-dom";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -1219,6 +1220,22 @@ const EventInfo = () => {
                 </div>
               )}
             </div>
+
+            {/* MUSIC — nothing is rendered when the event has no Spotify link */}
+            {event?.spotifyId && (
+              <div className="border-t border-white/[0.06] pt-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="h-4 w-[3px] rounded-full bg-[#FF7A00]" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#FF7A00]">
+                    Soundtrack
+                  </span>
+                </div>
+                <SpotifyEmbed
+                  spotifyType={event.spotifyType}
+                  spotifyId={event.spotifyId}
+                />
+              </div>
+            )}
 
             {/* ORGANIZER */}
             <div className="mx-auto max-w-[280px] border-t border-white/[0.06] pt-6">

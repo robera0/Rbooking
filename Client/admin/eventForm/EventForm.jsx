@@ -4,6 +4,7 @@ import DateTimeSection from "./DateTimeSection";
 import TicketList from "./TicketList";
 import MoreOptions, { ToggleRow } from "./MoreOptions";
 import CoverCard from "./CoverCard";
+import MusicField from "./MusicField";
 
 const Card = ({ title, required, children }) => (
   <section className="rounded-3xl border border-white/[0.08] bg-[#1c1f22] p-6">
@@ -32,6 +33,7 @@ const EventForm = ({
   dateDisabled,
   scheduleExtra,
   moreExtra,
+  musicRef,
   actions,
   sidebarExtra,
   bottomBar,
@@ -70,6 +72,14 @@ const EventForm = ({
               <InputBox id="city" label="City" value={form.city} placeholder="e.g. Addis Ababa" onChange={(e) => set({ city: e.target.value })} reserveError={false} />
               <InputBox id="address" label="Address" value={form.address} placeholder="e.g. Bole Road" onChange={(e) => set({ address: e.target.value })} reserveError={false} />
             </div>
+          </Card>
+
+          <Card title="Music">
+            <MusicField
+              ref={musicRef}
+              value={form.spotifyLink}
+              onChange={(spotifyLink) => set({ spotifyLink })}
+            />
           </Card>
 
           <Card title="Tickets" required>
